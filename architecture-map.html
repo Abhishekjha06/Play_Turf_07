@@ -1,0 +1,1694 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Play Turf — Architecture Map</title>
+    <style>
+        :root {
+            --bg: #0F0F0F;
+            --panel: #161616;
+            --panel-2: #1c1c1c;
+            --border: #2a2a2a;
+            --text: #e8e8e8;
+            --muted: #8a8a8a;
+            --frontend: #4ea1ff;
+            --api: #7bd389;
+            --auth: #c792ea;
+            --booking: #ffb86b;
+            --database: #ff6b9d;
+            --external: #f5b942;
+            --critical: #ff3860;
+            --dead: #ff4444;
+            --warning: #ffaa00;
+            --success: #00cc88;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        #app {
+            display: flex;
+            height: 100vh;
+        }
+
+        #sidebar {
+            width: 360px;
+            min-width: 360px;
+            background: var(--panel);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        #sidebar-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        #sidebar-header h1 {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        #sidebar-header .subtitle {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 2px;
+        }
+
+        #sidebar-header .stats {
+            display: flex;
+            gap: 12px;
+            margin-top: 8px;
+            font-size: 11px;
+            color: var(--muted);
+        }
+
+        #sidebar-header .stats span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        #sidebar-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 20px;
+        }
+
+        #sidebar-content::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        #sidebar-content::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 2px;
+        }
+
+        .sidebar-section {
+            margin-bottom: 20px;
+        }
+
+        .sidebar-section h3 {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--muted);
+            margin-bottom: 8px;
+        }
+
+        .sidebar-section p {
+            font-size: 13px;
+            line-height: 1.6;
+            color: var(--text);
+        }
+
+        .sidebar-section .tag {
+            display: inline-block;
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin: 2px;
+            font-weight: 600;
+        }
+
+        .tag-frontend {
+            background: rgba(78, 161, 255, 0.15);
+            color: var(--frontend);
+        }
+
+        .tag-api {
+            background: rgba(123, 211, 137, 0.15);
+            color: var(--api);
+        }
+
+        .tag-auth {
+            background: rgba(199, 146, 234, 0.15);
+            color: var(--auth);
+        }
+
+        .tag-booking {
+            background: rgba(255, 184, 107, 0.15);
+            color: var(--booking);
+        }
+
+        .tag-database {
+            background: rgba(255, 107, 157, 0.15);
+            color: var(--database);
+        }
+
+        .tag-external {
+            background: rgba(245, 185, 66, 0.15);
+            color: var(--external);
+        }
+
+        .tag-critical {
+            background: rgba(255, 56, 96, 0.2);
+            color: var(--critical);
+        }
+
+        .tag-dead {
+            background: rgba(255, 68, 68, 0.2);
+            color: var(--dead);
+        }
+
+        .tag-warning {
+            background: rgba(255, 170, 0, 0.2);
+            color: var(--warning);
+        }
+
+        .tag-success {
+            background: rgba(0, 204, 136, 0.2);
+            color: var(--success);
+        }
+
+        .edge-list {
+            list-style: none;
+        }
+
+        .edge-list li {
+            font-size: 12px;
+            padding: 4px 0;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .edge-list li .edge-type {
+            font-size: 9px;
+            padding: 1px 5px;
+            border-radius: 3px;
+            font-weight: 600;
+        }
+
+        .edge-critical {
+            background: rgba(255, 56, 96, 0.2);
+            color: var(--critical);
+        }
+
+        .edge-api {
+            background: rgba(78, 161, 255, 0.2);
+            color: var(--frontend);
+        }
+
+        .edge-db {
+            background: rgba(255, 107, 157, 0.2);
+            color: var(--database);
+        }
+
+        .edge-auth {
+            background: rgba(199, 146, 234, 0.2);
+            color: var(--auth);
+        }
+
+        .edge-payment {
+            background: rgba(245, 185, 66, 0.2);
+            color: var(--external);
+        }
+
+        .edge-websocket {
+            background: rgba(123, 211, 137, 0.2);
+            color: var(--api);
+        }
+
+        .edge-normal {
+            background: rgba(138, 138, 138, 0.2);
+            color: var(--muted);
+        }
+
+        .notes-list {
+            list-style: none;
+        }
+
+        .notes-list li {
+            font-size: 12px;
+            padding: 6px 0;
+            border-bottom: 1px solid var(--border);
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        .notes-list li::before {
+            content: '•';
+            color: var(--muted);
+            margin-right: 6px;
+        }
+
+        #main {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #canvas-container {
+            width: 100%;
+            height: 100%;
+            cursor: grab;
+        }
+
+        #canvas-container:active {
+            cursor: grabbing;
+        }
+
+        #canvas-container svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        #filters {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            right: 16px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        #filters button {
+            pointer-events: auto;
+        }
+
+        .filter-chip {
+            font-size: 11px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background: var(--panel);
+            color: var(--muted);
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .filter-chip:hover {
+            border-color: var(--text);
+            color: var(--text);
+        }
+
+        .filter-chip.active {
+            background: var(--text);
+            color: var(--bg);
+            border-color: var(--text);
+            font-weight: 600;
+        }
+
+        #zoom-controls {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 4px;
+            z-index: 10;
+        }
+
+        #zoom-controls button {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--panel);
+            color: var(--text);
+            cursor: pointer;
+            font-size: 16px;
+            display: grid;
+            place-items: center;
+            transition: all 0.2s;
+        }
+
+        #zoom-controls button:hover {
+            background: var(--panel-2);
+        }
+
+        #zoom-level {
+            font-size: 11px;
+            color: var(--muted);
+            display: grid;
+            place-items: center;
+            padding: 0 8px;
+        }
+
+        #legend {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            z-index: 10;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 14px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 10px;
+            color: var(--muted);
+        }
+
+        .legend-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .node-group {
+            cursor: pointer;
+        }
+
+        .node-group:hover .node-bg {
+            filter: brightness(1.3);
+        }
+
+        .node-group.selected .node-bg {
+            filter: brightness(1.4);
+            stroke-width: 2.5;
+        }
+
+        .node-group.dead .node-bg {
+            stroke: var(--dead);
+            stroke-dasharray: 4, 3;
+        }
+
+        .node-bg {
+            transition: filter 0.2s, stroke 0.2s;
+        }
+
+        .node-label {
+            font-size: 11px;
+            font-weight: 600;
+            fill: var(--text);
+            text-anchor: middle;
+        }
+
+        .node-sub {
+            font-size: 9px;
+            fill: var(--muted);
+            text-anchor: middle;
+        }
+
+        .node-tag {
+            font-size: 8px;
+            font-weight: 700;
+            text-anchor: middle;
+            text-transform: uppercase;
+        }
+
+        .edge-line {
+            fill: none;
+            stroke-width: 1.5;
+            transition: stroke 0.2s, stroke-width 0.2s;
+        }
+
+        .edge-line:hover {
+            stroke-width: 2.5;
+        }
+
+        .edge-line.highlighted {
+            stroke-width: 2.5;
+        }
+
+        .edge-label {
+            font-size: 8px;
+            fill: var(--muted);
+            text-anchor: middle;
+        }
+
+        .edge-type-label {
+            font-size: 7px;
+            font-weight: 600;
+            text-anchor: middle;
+            text-transform: uppercase;
+        }
+
+        .cluster-bg {
+            fill: var(--panel-2);
+            stroke: var(--border);
+            stroke-width: 1;
+            rx: 12;
+        }
+
+        .cluster-label {
+            font-size: 13px;
+            font-weight: 700;
+            fill: var(--text);
+        }
+
+        .cluster-count {
+            font-size: 10px;
+            fill: var(--muted);
+        }
+
+        .flow-arrow {
+            fill: none;
+            stroke-width: 2;
+            marker-end: url(#arrowhead);
+        }
+
+        .flow-arrow-critical {
+            stroke: var(--critical);
+        }
+
+        .flow-arrow-normal {
+            stroke: var(--muted);
+        }
+
+        .flow-arrow-auth {
+            stroke: var(--auth);
+        }
+
+        .flow-arrow-api {
+            stroke: var(--frontend);
+        }
+
+        .flow-arrow-db {
+            stroke: var(--database);
+        }
+
+        .flow-arrow-payment {
+            stroke: var(--external);
+        }
+
+        .flow-arrow-websocket {
+            stroke: var(--api);
+        }
+
+        #tooltip {
+            position: absolute;
+            display: none;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 12px;
+            max-width: 280px;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        #tooltip.visible {
+            display: block;
+        }
+
+        #tooltip h4 {
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+
+        #tooltip p {
+            color: var(--muted);
+            font-size: 11px;
+            line-height: 1.5;
+        }
+
+        .findings-item {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .findings-item:last-child {
+            border-bottom: none;
+        }
+
+        .findings-item h4 {
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .findings-item p {
+            font-size: 11px;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        .findings-item .severity {
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            padding: 1px 6px;
+            border-radius: 3px;
+        }
+
+        .severity-high {
+            background: rgba(255, 56, 96, 0.2);
+            color: var(--critical);
+        }
+
+        .severity-medium {
+            background: rgba(255, 170, 0, 0.2);
+            color: var(--warning);
+        }
+
+        .severity-low {
+            background: rgba(0, 204, 136, 0.2);
+            color: var(--success);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <div id="sidebar">
+            <div id="sidebar-header">
+                <h1>⚽ Play Turf</h1>
+                <div class="subtitle">Architecture Map — Full-Stack Sports Turf Booking Platform</div>
+                <div class="stats">
+                    <span id="stat-nodes">● 0 nodes</span>
+                    <span id="stat-edges">─ 0 edges</span>
+                    <span id="stat-clusters">▣ 0 clusters</span>
+                </div>
+            </div>
+            <div id="sidebar-content">
+                <div id="sidebar-default">
+                    <div class="sidebar-section">
+                        <h3>Notable Findings</h3>
+                        <div id="findings-list"></div>
+                    </div>
+                </div>
+                <div id="sidebar-node" style="display:none;"></div>
+            </div>
+        </div>
+        <div id="main">
+            <div id="filters"></div>
+            <div id="canvas-container"></div>
+            <div id="legend"></div>
+            <div id="zoom-controls">
+                <button id="zoom-in" title="Zoom In">+</button>
+                <span id="zoom-level">100%</span>
+                <button id="zoom-out" title="Zoom Out">−</button>
+                <button id="zoom-fit" title="Fit to Screen">⊡</button>
+            </div>
+            <div id="tooltip"></div>
+        </div>
+    </div>
+    <script>
+        // ============================================================
+        // DATA: Clusters, Nodes, Edges, Findings, Bugs, Fixes
+        // ============================================================
+
+        const clusters = [
+            { id: 'frontend', label: 'Frontend Layer', color: '#4ea1ff', x: 100, y: 60, w: 340, h: 820 },
+            { id: 'api', label: 'API Layer', color: '#7bd389', x: 500, y: 60, w: 300, h: 500 },
+            { id: 'auth', label: 'Authentication Layer', color: '#c792ea', x: 860, y: 60, w: 300, h: 420 },
+            { id: 'booking', label: 'Booking System', color: '#ffb86b', x: 500, y: 600, w: 300, h: 280 },
+            { id: 'turfs', label: 'Turf Management', color: '#4ea1ff', x: 860, y: 520, w: 300, h: 360 },
+            { id: 'database', label: 'Database Layer', color: '#ff6b9d', x: 1220, y: 60, w: 280, h: 500 },
+            { id: 'external', label: 'External Systems', color: '#f5b942', x: 1220, y: 600, w: 280, h: 280 },
+        ];
+
+        const nodes = [
+            // ---- Frontend Layer ----
+            {
+                id: 'app-wrapper', cluster: 'frontend', x: 100, y: 100,
+                role: 'Root React component that manages splash screen lifecycle and conditionally renders the main App component after a 3.5s timeout.',
+                plain: 'The starting screen that shows a splash animation when you first open the app, then loads the main app after a few seconds.',
+                path: 'components/src/components/AppWrapper.tsx',
+                notes: ['Splash screen timeout: 3500ms', 'Conditional rendering pattern', 'No loading state for splash assets', 'Tight coupling to SplashScreen component'],
+                tag: 'entry', critical: false
+            },
+            {
+                id: 'app', cluster: 'frontend', x: 100, y: 170,
+                role: 'Main App component with React Router route definitions, lazy-loaded pages, QueryClientProvider, TooltipProvider, and Sonner toast integration. Defines all frontend routes including admin and client panels.',
+                plain: 'The main app that sets up all the pages you can visit, like Home, Booking, Login, Admin panel, and Client dashboard.',
+                path: 'components/App.tsx',
+                notes: ['Lazy loading via React.lazy() for all pages', 'TanStack Query client initialized', 'AdminRoute/ClientRoute guard components', 'Profiler wrapper in DEV mode for ClientDashboard'],
+                tag: 'router', critical: true
+            },
+            {
+                id: 'mobile-shell', cluster: 'frontend', x: 100, y: 240,
+                role: 'Layout wrapper providing consistent mobile-first shell with padding, scroll handling, and slot for children content.',
+                plain: 'The main frame that wraps every page to give it a consistent mobile-friendly layout.',
+                path: 'components/src/layout/MobileShell.tsx',
+                notes: ['Mobile-first responsive container', 'Used by every page component', 'Provides consistent padding and scroll'],
+                tag: 'layout', critical: true
+            },
+            {
+                id: 'app-header', cluster: 'frontend', x: 100, y: 300,
+                role: 'Top navigation bar component with logo, search trigger, and user menu. Renders within MobileShell.',
+                plain: 'The top bar of the app that shows the logo and lets you search or access your account.',
+                path: 'components/src/layout/AppHeader.tsx',
+                notes: ['Renders inside MobileShell', 'Contains search trigger', 'User avatar/menu integration'],
+                tag: 'layout', critical: false
+            },
+            {
+                id: 'bottom-nav', cluster: 'frontend', x: 100, y: 360,
+                role: 'Fixed bottom navigation bar with icon-based tab navigation for Home, Bookings, Offers, More sections.',
+                plain: 'The bottom menu bar that lets you jump between the main sections of the app.',
+                path: 'components/src/layout/BottomNav.tsx',
+                notes: ['Fixed position bottom bar', 'Icon + label navigation', 'Active route highlighting'],
+                tag: 'layout', critical: true
+            },
+            {
+                id: 'home', cluster: 'frontend', x: 100, y: 430,
+                role: 'Home page with hero carousel, search bar, location filter, category pills, turf cards grid, offers section, and upcoming bookings. Fetches data from both legacy API and new service layer.',
+                plain: 'The main landing page showing featured turfs, special offers, search options, and your upcoming bookings.',
+                path: 'components/src/pages/Home.tsx',
+                notes: ['Dual data source: api.* and service layer', 'URL search params for all filters', 'Geolocation-based city detection', 'Framer Motion animations'],
+                tag: 'page', critical: true
+            },
+            {
+                id: 'login', cluster: 'frontend', x: 100, y: 500,
+                role: 'Login page supporting OTP-based phone auth, admin password login, mock sign-in, and Google OAuth. Includes lockout mechanism with attempt tracking and countdown timer.',
+                plain: 'The login screen where you can sign in with your phone number (OTP), email/password for admins, or Google account.',
+                path: 'components/src/pages/Login.tsx',
+                notes: ['OTP flow with request + verify steps', 'Admin lockout: 2 attempts → 5 min lock', 'Google login via authService', 'Mock mode detection for dev'],
+                tag: 'page', critical: true
+            },
+            {
+                id: 'admin', cluster: 'frontend', x: 100, y: 570,
+                role: 'Admin dashboard with 7 tabs: dashboard, turfs, banners, offers, tournaments, bookings, security. Full CRUD for all entities, export/import, and account lockout management.',
+                plain: 'The admin control panel where managers can add or edit turfs, manage bookings, create offers, and view security logs.',
+                path: 'components/src/pages/Admin.tsx',
+                notes: ['7-tab interface with lazy tab switching', 'CRUD operations via api.admin.*', 'CSV export for turfs', 'Locked account management in security tab'],
+                tag: 'page', critical: false
+            },
+            {
+                id: 'booking-page', cluster: 'frontend', x: 100, y: 640,
+                role: 'Multi-step booking page with date/slot selection, cricket team management, payment method selection, and booking confirmation. Integrates CricketBookingContext for team-based bookings.',
+                plain: 'The booking screen where you pick a date and time slot, manage cricket teams, choose payment method, and confirm your booking.',
+                path: 'components/src/pages/Booking.tsx',
+                notes: ['3-step flow: pick → confirm → success', 'Cricket team management integration', 'Mock payment methods: UPI, Card, Wallet', 'Slot availability from API'],
+                tag: 'page', critical: true
+            },
+            {
+                id: 'turf-detail', cluster: 'frontend', x: 100, y: 710,
+                role: 'Turf detail page showing full turf info, image gallery, reviews, favorites toggle, share functionality, and booking CTA.',
+                plain: 'The detailed view of a turf with photos, reviews, ratings, and a button to book it.',
+                path: 'components/src/pages/TurfDetail.tsx',
+                notes: ['Favorites toggle with API', 'Review submission system', 'Native share API integration', 'Loading state with fallback'],
+                tag: 'page', critical: true
+            },
+            {
+                id: 'api-client', cluster: 'frontend', x: 100, y: 780,
+                role: 'Centralized API client (731 lines) with dual-mode operation: real backend via fetch with credentials, or full in-memory mock mode with localStorage persistence. Handles auth tokens, OTP, CRUD for all entities.',
+                plain: 'The brain that talks to the server — or if no server is available, creates fake data so the app still works for testing.',
+                path: 'components/src/lib/api.ts',
+                notes: ['731 lines — largest frontend file', 'Mock mode when VITE_BACKEND_URL is unset', 'localStorage-backed mock state', 'Token refresh with retry logic', 'DEAD: some admin mock methods unused'],
+                tag: 'service', critical: true
+            },
+            {
+                id: 'hooks', cluster: 'frontend', x: 100, y: 850,
+                role: 'Custom React hooks including use-auth (auth state subscription), use-mobile (responsive breakpoint), use-toast (notification trigger).',
+                plain: 'Reusable pieces of logic that components use to handle authentication, mobile detection, and notifications.',
+                path: 'components/src/hooks/',
+                notes: ['use-auth: event emitter pattern, not Context', 'use-mobile: window resize listener', 'use-toast: wraps Sonner toast'],
+                tag: 'hooks', critical: true
+            },
+            {
+                id: 'services', cluster: 'frontend', x: 240, y: 100,
+                role: 'Service layer (turfService, offerService, authService) that abstracts data fetching behind Supabase-ready interfaces. Currently all fall back to mock data from seed.ts.',
+                plain: 'A middle layer that prepares the app to connect to a real database later, but for now uses sample data so everything works.',
+                path: 'components/src/services/',
+                notes: ['Supabase-ready with TODO placeholders', 'All services fall back to seed.ts mocks', 'authService: Google OAuth with 3 fallback paths', 'turfService: geo queries stubbed out'],
+                tag: 'service', critical: false
+            },
+            {
+                id: 'mock-data', cluster: 'frontend', x: 240, y: 170,
+                role: 'Seed data layer (353 lines) with typed mock data for Turfs, Banners, Offers, Tournaments, Bookings, Users, Reviews. Used as fallback when no backend is connected.',
+                plain: 'Sample data that makes the app look real during development — fake turfs, offers, and users.',
+                path: 'components/src/data/seed.ts',
+                notes: ['353 lines of mock data', 'All types defined for TypeScript safety', 'Local image imports from assets/', 'Used by both api.ts mock mode and services'],
+                tag: 'data', critical: false
+            },
+            {
+                id: 'websocket-client', cluster: 'frontend', x: 240, y: 240,
+                role: 'WebSocket client (354 lines) with auto-reconnect, ping/pong keepalive, turf subscription management, and event emitter pattern. Connects to backend WS endpoint for real-time updates.',
+                plain: 'A live connection that keeps the app updated instantly when something changes, like a booking being made.',
+                path: 'components/src/lib/websocket.ts',
+                notes: ['354 lines — significant client', 'Auto-reconnect with exponential backoff', 'Visibility change reconnect', 'Turf subscription management', 'DEAD: may not be actively used in all flows'],
+                tag: 'realtime', critical: false
+            },
+            {
+                id: 'auth-lib', cluster: 'frontend', x: 240, y: 310,
+                role: 'Auth library (152 lines) with event-emitter-based store, OTP sign-in, admin password sign-in with lockout, Google sign-in, and mock sign-in for development.',
+                plain: 'The authentication system that handles logging in, signing out, and keeping track of who you are.',
+                path: 'components/src/lib/auth.ts',
+                notes: ['Event emitter pattern (not React Context)', 'Admin lockout: 2 failed attempts', 'OTP flow with request + verify', 'Mock sign-in for dev/testing'],
+                tag: 'auth', critical: true
+            },
+            {
+                id: 'admin-attempt-tracker', cluster: 'frontend', x: 240, y: 380,
+                role: 'Client-side brute force protection (181 lines) using localStorage to track failed admin login attempts. Locks account after 2 attempts for 5 minutes.',
+                plain: 'A security feature that temporarily blocks admin login after too many wrong password attempts.',
+                path: 'components/src/lib/admin-attempt-tracker.ts',
+                notes: ['MAX_ATTEMPTS = 2, LOCKOUT = 5 min', 'localStorage-based persistence', 'Client-side only — no server enforcement', 'Reset on successful login'],
+                tag: 'security', critical: false
+            },
+            {
+                id: 'supabase-client', cluster: 'frontend', x: 240, y: 450,
+                role: 'Supabase client placeholder (51 lines). Returns null until @supabase/supabase-js is installed and env vars configured. All services fall back to mock data.',
+                plain: 'A placeholder that will connect to a real database service, but currently does nothing.',
+                path: 'components/src/lib/supabase.ts',
+                notes: ['Placeholder — not functional', 'Returns null always', 'TODO: install @supabase/supabase-js', 'All services check and fall back'],
+                tag: 'placeholder', critical: false
+            },
+            {
+                id: 'cricket-booking', cluster: 'frontend', x: 240, y: 520,
+                role: 'Cricket booking context and components (BookingContext, TeamAvatar, TeamManagerModal, etc.) for team-based cricket match bookings with player management.',
+                plain: 'Special features for booking cricket matches where you can manage teams and players.',
+                path: 'components/src/cricket/',
+                notes: ['React Context for cricket booking state', 'Team search/select with modal', 'Quick amount presets', 'VsBadge and StepRail UI components'],
+                tag: 'feature', critical: false
+            },
+            {
+                id: 'ui-components', cluster: 'frontend', x: 240, y: 590,
+                role: 'Extensive Radix UI component library (~40+ components) including accordion, dialog, dropdown, form, calendar, chart, sidebar, toast, tooltip, and more. All styled with Tailwind.',
+                plain: 'A big collection of ready-made buttons, menus, forms, and other interface pieces used throughout the app.',
+                path: 'components/src/ui/',
+                notes: ['~40+ Radix UI primitives', 'All dark-mode styled with Tailwind', 'shadcn/ui style components', 'Some components may be unused (dead code)'],
+                tag: 'ui', critical: false
+            },
+            {
+                id: 'client-pages', cluster: 'frontend', x: 240, y: 660,
+                role: 'Client/turf-owner panel pages: ClientDashboard, ClientSlotManagement, ClientBookingManagement, ClientProfileSettings, ClientLogin, ClientPlaceholder.',
+                plain: 'The dashboard where turf owners can manage their turfs, see bookings, and update settings.',
+                path: 'components/src/pages/Client*.tsx',
+                notes: ['Protected by ClientRoute guard', 'DashboardErrorBoundary for error handling', 'Profiler wrapper in DEV mode', 'Slot management with time pickers'],
+                tag: 'page', critical: false
+            },
+
+            // ---- API Layer ----
+            {
+                id: 'fastapi-entry', cluster: 'api', x: 500, y: 100,
+                role: 'FastAPI application entry point with CORS middleware, GZip compression, Redis cache initialization, database seeding on startup, and router mounting for all modules.',
+                plain: 'The main server file that starts the API, sets up security, connects to the database, and loads all the feature modules.',
+                path: 'backend/app/main.py',
+                notes: ['CORS allows 3 localhost origins', 'Redis cache init on startup', 'Auto-seeds turfs and admin user', 'GZip middleware for responses >1KB'],
+                tag: 'entry', critical: true
+            },
+            {
+                id: 'route-mounting', cluster: 'api', x: 500, y: 180,
+                role: 'Router mounting for auth, client auth, bookings, turfs, health, and realtime WebSocket modules under the FastAPI app instance.',
+                plain: 'The part that connects all the different feature areas (like login, bookings, turfs) to the main server.',
+                path: 'backend/app/main.py:18-23',
+                notes: ['6 routers mounted', 'Auth has separate client_router', 'Realtime uses WebSocket protocol', 'Health check at /api/health'],
+                tag: 'routing', critical: true
+            },
+            {
+                id: 'middleware', cluster: 'api', x: 500, y: 250,
+                role: 'CORS middleware allowing configured origins with credentials, and GZip compression middleware for responses larger than 1KB.',
+                plain: 'Security and performance filters that check who can talk to the server and compress data to make it faster.',
+                path: 'backend/app/main.py:29-37',
+                notes: ['CORS with credentials support', 'GZip minimum size: 1000 bytes', 'Origins from settings', 'No rate limiting middleware'],
+                tag: 'middleware', critical: true
+            },
+            {
+                id: 'jwt-validation', cluster: 'api', x: 500, y: 320,
+                role: 'JWT token validation via HTTP Bearer scheme. Decodes tokens, validates type=access, extracts user ID, and fetches user from database. Used as FastAPI dependency.',
+                plain: 'The security guard that checks your login token on every request to make sure you are who you say you are.',
+                path: 'backend/app/modules/auth/deps.py',
+                notes: ['HTTPBearer with auto_error=False', 'Validates token type = "access"', 'Fetches user from DB on every request', 'WebSocket variant returns None on failure'],
+                tag: 'security', critical: true
+            },
+            {
+                id: 'dependency-injection', cluster: 'api', x: 500, y: 390,
+                role: 'FastAPI dependency injection system providing database sessions via get_db() and authenticated user via get_current_user() to all route handlers.',
+                plain: 'A smart system that automatically provides the database connection and user info to any part of the server that needs it.',
+                path: 'backend/app/db/session.py + deps.py',
+                notes: ['SessionLocal per request', 'get_db() yields session, closes after', 'get_current_user() chains on get_db()', 'Clean separation of concerns'],
+                tag: 'di', critical: true
+            },
+            {
+                id: 'request-processing', cluster: 'api', x: 500, y: 460,
+                role: 'Pydantic request/response validation models for all endpoints. Ensures type safety, validation, and serialization for API communication.',
+                plain: 'The part that checks that all data sent to the server is in the right format before processing it.',
+                path: 'backend/app/modules/*/router.py',
+                notes: ['Pydantic BaseModel for all schemas', 'EmailStr validation for emails', 'Automatic 422 on validation failure', 'Response models for documentation'],
+                tag: 'validation', critical: true
+            },
+
+            // ---- Authentication Layer ----
+            {
+                id: 'otp-request', cluster: 'auth', x: 860, y: 100,
+                role: 'OTP request endpoint (POST /auth/otp/request). Validates phone number length >= 10 and returns 202. Placeholder — no actual SMS sent.',
+                plain: 'The part where you enter your phone number to get a one-time password sent to you.',
+                path: 'backend/app/modules/auth/router.py:46-51',
+                notes: ['Placeholder — no SMS provider wired', 'Only validates phone length >= 10', 'Returns 202 Accepted', 'No rate limiting on requests'],
+                tag: 'endpoint', critical: true
+            },
+            {
+                id: 'otp-verification', cluster: 'auth', x: 860, y: 170,
+                role: 'OTP verification endpoint (POST /auth/otp/verify). Hardcoded OTP check against "123456". Creates user if new phone. Returns JWT access token + sets httpOnly refresh cookie.',
+                plain: 'The part where you enter the code sent to your phone to prove it is really you.',
+                path: 'backend/app/modules/auth/router.py:54-78',
+                notes: ['HARDCODED OTP: "123456" — SECURITY RISK', 'Auto-creates user for new phone numbers', 'Sets httpOnly refresh_token cookie', 'No OTP expiry or rate limiting'],
+                tag: 'endpoint', critical: true
+            },
+            {
+                id: 'jwt-creation', cluster: 'auth', x: 860, y: 240,
+                role: 'JWT token creation with access tokens (15min TTL) and refresh tokens (7 day TTL). Uses HS256 algorithm with configurable secret key.',
+                plain: 'The system that creates secure digital passes that prove you are logged in without sending your password every time.',
+                path: 'backend/app/core/security.py',
+                notes: ['Access token TTL: 15 minutes', 'Refresh token TTL: 7 days', 'HS256 algorithm', 'Default secret: "change-me-in-prod" — RISK'],
+                tag: 'security', critical: true
+            },
+            {
+                id: 'refresh-token', cluster: 'auth', x: 860, y: 310,
+                role: 'Token refresh endpoint (POST /auth/refresh). Reads httpOnly cookie, issues new access token. No token persistence or rotation implemented yet.',
+                plain: 'A way to get a new login pass automatically when your current one expires, so you do not have to log in again.',
+                path: 'backend/app/modules/auth/router.py:81-87',
+                notes: ['No token persistence/rotation', 'Reads from httpOnly cookie', 'No refresh token expiry check', 'TODO: implement rotation'],
+                tag: 'endpoint', critical: true
+            },
+            {
+                id: 'admin-login', cluster: 'auth', x: 860, y: 380,
+                role: 'Admin login endpoint (POST /auth/admin-login). Validates email/password against bcrypt hash, checks admin role, returns JWT with role claim.',
+                plain: 'The special login for administrators using email and password instead of phone OTP.',
+                path: 'backend/app/modules/auth/router.py:90-134',
+                notes: ['bcrypt password verification', 'Role check: must be "admin"', 'JWT includes role + email claims', 'No rate limiting on admin login'],
+                tag: 'endpoint', critical: true
+            },
+
+            // ---- Booking System ----
+            {
+                id: 'slot-availability', cluster: 'booking', x: 500, y: 640,
+                role: 'Slot availability endpoint (GET /turfs/{id}/booked-slots?date=). Returns list of booked start times for a turf on a given date, excluding CANCELLED bookings.',
+                plain: 'Shows which time slots are already taken for a turf on a specific date.',
+                path: 'backend/app/modules/turfs/router.py:58-71',
+                notes: ['Excludes CANCELLED status', 'Returns simple string array', 'No caching on this endpoint', 'Used by booking page for availability'],
+                tag: 'endpoint', critical: true
+            },
+            {
+                id: 'booking-creation', cluster: 'booking', x: 500, y: 710,
+                role: 'Booking creation endpoint (POST /bookings). Validates turf exists, creates booking with PENDING status, calculates amount from turf price_per_hour * hours.',
+                plain: 'The part that saves your booking when you confirm a turf, date, and time slot.',
+                path: 'backend/app/modules/bookings/router.py:64-97',
+                notes: ['Requires authentication', 'Amount = price_per_hour * hours', 'Status starts as PENDING', 'Returns serialized BookingOut'],
+                tag: 'endpoint', critical: true
+            },
+            {
+                id: 'conflict-handling', cluster: 'booking', x: 500, y: 780,
+                role: 'Conflict detection via SQLAlchemy IntegrityError on unique constraint (turf_id, date, start_time). Returns 409 Conflict if slot already booked.',
+                plain: 'Prevents two people from booking the same turf at the same time.',
+                path: 'backend/app/modules/bookings/router.py:90-94',
+                notes: ['UniqueConstraint on turf+date+start_time', 'Returns HTTP 409 on conflict', 'Rolls back transaction on conflict', 'No time-range overlap check — only exact start_time'],
+                tag: 'conflict', critical: true
+            },
+            {
+                id: 'payment-trigger', cluster: 'booking', x: 500, y: 850,
+                role: 'Payment trigger — currently a placeholder. Booking is created with PENDING status. No actual payment gateway integration exists.',
+                plain: 'The part that would process payment, but currently just marks the booking as pending without real payment.',
+                path: 'backend/app/modules/bookings/router.py',
+                notes: ['PLACEHOLDER — no real payment', 'Status stays PENDING after creation', 'No payment_id generation', 'TODO: integrate payment gateway'],
+                tag: 'placeholder', critical: true
+            },
+
+            // ---- Turf Management ----
+            {
+                id: 'turf-listing', cluster: 'turfs', x: 860, y: 560,
+                role: 'Turf listing endpoint (GET /turfs) with Redis caching (300s), search query, city filter, popular filter, pagination (skip/limit).',
+                plain: 'Shows all available turfs with options to search, filter by city, or see only popular ones.',
+                path: 'backend/app/modules/turfs/router.py:24-55',
+                notes: ['Redis cache: 300 seconds', 'Case-insensitive search on name/address', 'Pagination: skip/limit up to 100', 'City filter with ilike'],
+                tag: 'endpoint', critical: true
+            },
+            {
+                id: 'search-filters', cluster: 'turfs', x: 860, y: 630,
+                role: 'Search and filter system with query parameter (q), city filter, popular flag, and pagination. Frontend also supports sport, amenity, price, rating, and open-now filters via URL params.',
+                plain: 'Lets you find turfs by name, city, sport type, price range, or rating.',
+                path: 'components/src/pages/Home.tsx + backend turfs/router.py',
+                notes: ['Backend: q, city, popular filters', 'Frontend: 8+ URL search params', 'Sport/amenity filters are frontend-only', 'Open-now filter is client-side'],
+                tag: 'search', critical: true
+            },
+            {
+                id: 'popular-turfs', cluster: 'turfs', x: 860, y: 700,
+                role: 'Popular turfs query with is_popular flag. Seeded with 2 popular turfs on startup. Frontend fetches via service layer with rating sort.',
+                plain: 'Highlights the most popular turfs so users can see the best options first.',
+                path: 'backend/app/main.py:49-71 + turfService.ts',
+                notes: ['Seeded: Arena 7 (4.7), Night Strikers (4.4)', 'Frontend sorts by rating descending', 'Redis cached at API level', 'is_popular boolean flag on Turf model'],
+                tag: 'feature', critical: false
+            },
+            {
+                id: 'turf-details', cluster: 'turfs', x: 860, y: 770,
+                role: 'Turf detail retrieval via api.getTurf(id). Returns full turf object with gallery, amenities, reviews, and pricing. Frontend handles display with favorites and sharing.',
+                plain: 'Shows all the details about a specific turf — photos, what it offers, price, and reviews.',
+                path: 'components/src/pages/TurfDetail.tsx',
+                notes: ['Fetches turf + reviews + favorites', 'Native share API integration', 'Review submission with rating', 'Image gallery display'],
+                tag: 'feature', critical: true
+            },
+
+            // ---- Database Layer ----
+            {
+                id: 'users-table', cluster: 'database', x: 1220, y: 100,
+                role: 'Users table with id, phone (unique), email (unique), name, role (user/admin/client), is_active, client_id, password_hash, company_name, address, timestamps.',
+                plain: 'The database table that stores all user information — players, admins, and turf owners.',
+                path: 'backend/app/db/models.py:9-28',
+                notes: ['3 roles: user, admin, client', 'phone is primary identifier', 'password_hash nullable (OTP users)', 'client_id for turf owner auth'],
+                tag: 'model', critical: true
+            },
+            {
+                id: 'turfs-table', cluster: 'database', x: 1220, y: 180,
+                role: 'Turfs table with id, name, city, address, price_per_hour, rating, is_popular, is_nearby, client_id (FK), description, amenities, hours, pricing rules, cancellation policy.',
+                plain: 'The database table that stores all information about sports turfs — location, price, features, and rules.',
+                path: 'backend/app/db/models.py:31-59',
+                notes: ['FK to users.id for client ownership', 'JSON-like fields stored as Text (amenities, peak_hours)', 'Numeric(3,2) for rating', 'Indexed on name, city, client_id'],
+                tag: 'model', critical: true
+            },
+            {
+                id: 'bookings-table', cluster: 'database', x: 1220, y: 260,
+                role: 'Bookings table with id, user_id (FK), turf_id (FK), date, start_time, hours, amount, status (PENDING/CONFIRMED/CANCELLED/COMPLETED), payment_id, timestamps.',
+                plain: 'The database table that stores all booking records — who booked what turf, when, and for how long.',
+                path: 'backend/app/db/models.py:62-82',
+                notes: ['UniqueConstraint: turf+date+start_time', 'Composite indexes for query performance', 'CASCADE delete on user/turf', 'Status machine: PENDING→CONFIRMED→COMPLETED'],
+                tag: 'model', critical: true
+            },
+            {
+                id: 'relationships', cluster: 'database', x: 1220, y: 340,
+                role: 'SQLAlchemy ORM relationships: User.bookings ↔ Booking.user, User.turfs ↔ Turf.client, Turf.bookings ↔ Booking.turf.',
+                plain: 'The connections between database tables that let the app easily access related data, like finding all bookings for a user.',
+                path: 'backend/app/db/models.py',
+                notes: ['bidirectional relationships', 'back_populates for both directions', 'selectinload for eager loading', 'CASCADE rules on FKs'],
+                tag: 'orm', critical: true
+            },
+            {
+                id: 'constraints', cluster: 'database', x: 1220, y: 410,
+                role: 'Database constraints: unique phone/email on users, unique client_id, unique turf+date+start_time on bookings, foreign keys with CASCADE/SET NULL, NOT NULL defaults.',
+                plain: 'Rules that keep the data clean and prevent duplicates or broken references.',
+                path: 'backend/app/db/models.py',
+                notes: ['uq_booking_turf_date_start unique constraint', 'CASCADE delete on user/turf FKs', 'SET NULL on turf.client_id', 'server_default for role, is_active, status'],
+                tag: 'constraint', critical: true
+            },
+            {
+                id: 'indexes', cluster: 'database', x: 1220, y: 480,
+                role: 'Database indexes: users.phone, users.email, users.client_id, turfs.name, turfs.city, turfs.client_id, bookings.user_id, bookings.turf_id, bookings.date, bookings.status, plus composite indexes.',
+                plain: 'Speed boosters that help the database find information quickly without scanning every row.',
+                path: 'backend/app/db/models.py',
+                notes: ['Composite: ix_bookings_user_date', 'Composite: ix_bookings_turf_date_status', 'Single-column indexes on all FKs', 'Index on booking status for filtering'],
+                tag: 'performance', critical: true
+            },
+
+            // ---- External Systems ----
+            {
+                id: 'sms-service', cluster: 'external', x: 1220, y: 640,
+                role: 'SMS service — placeholder. OTP request endpoint returns 202 but no SMS is actually sent. No SMS provider configured.',
+                plain: 'Would send text messages with login codes, but currently does nothing.',
+                path: 'backend/app/modules/auth/router.py:46-51',
+                notes: ['PLACEHOLDER — no SMS provider', 'No actual SMS sending', 'OTP is hardcoded as "123456"', 'TODO: integrate SMS gateway'],
+                tag: 'placeholder', critical: false
+            },
+            {
+                id: 'payment-gateway', cluster: 'external', x: 1220, y: 710,
+                role: 'Payment gateway — placeholder. No real payment integration. Frontend shows mock payment methods (UPI, Card, Wallet) but no actual transaction occurs.',
+                plain: 'Would process payments, but currently just shows fake payment options.',
+                path: 'components/src/pages/Booking.tsx + backend',
+                notes: ['PLACEHOLDER — no payment gateway', 'Mock methods: UPI, Card, Wallet', 'No payment_id generated server-side', 'TODO: integrate Razorpay/Stripe'],
+                tag: 'placeholder', critical: true
+            },
+            {
+                id: 'redis-cache', cluster: 'external', x: 1220, y: 780,
+                role: 'Redis cache initialized on startup via fastapi-cache2 with RedisBackend. Used for turf listing caching (300s TTL). Falls back gracefully if Redis unavailable.',
+                plain: 'A fast memory storage that remembers frequently requested data so the app responds quicker.',
+                path: 'backend/app/main.py:41-43 + config.py',
+                notes: ['fastapi-cache2 with Redis backend', 'Cache prefix: "playturf-cache"', 'Only turf listing is cached (300s)', 'Redis URL from settings'],
+                tag: 'cache', critical: false
+            },
+            {
+                id: 'websocket-server', cluster: 'external', x: 1220, y: 850,
+                role: 'WebSocket server with ConnectionManager class managing active connections, turf subscriptions, personal messaging, and turf broadcast. Supports client token auth.',
+                plain: 'A live connection system that pushes updates instantly to users when something changes.',
+                path: 'backend/app/modules/realtime/router.py',
+                notes: ['ConnectionManager with subscription model', 'Turf-specific broadcast channels', 'Client token authentication', 'Ping/pong keepalive', 'DEAD: may not be fully utilized'],
+                tag: 'realtime', critical: false
+            },
+        ];
+
+        const edges = [
+            // Frontend internal
+            { from: 'app-wrapper', to: 'app', label: 'renders after splash', type: 'normal', feature: 'app-init' },
+            { from: 'app', to: 'mobile-shell', label: 'wraps pages', type: 'normal', feature: 'layout' },
+            { from: 'app', to: 'home', label: 'route /', type: 'critical', feature: 'routing' },
+            { from: 'app', to: 'login', label: 'route /login', type: 'critical', feature: 'routing' },
+            { from: 'app', to: 'admin', label: 'route /admin', type: 'normal', feature: 'routing' },
+            { from: 'app', to: 'booking-page', label: 'route /booking/:id', type: 'critical', feature: 'routing' },
+            { from: 'app', to: 'turf-detail', label: 'route /turf/:id', type: 'critical', feature: 'routing' },
+            { from: 'app', to: 'client-pages', label: 'route /client/*', type: 'normal', feature: 'routing' },
+            { from: 'mobile-shell', to: 'app-header', label: 'contains', type: 'normal', feature: 'layout' },
+            { from: 'mobile-shell', to: 'bottom-nav', label: 'contains', type: 'normal', feature: 'layout' },
+            { from: 'home', to: 'api-client', label: 'fetches data', type: 'api', feature: 'data-fetch' },
+            { from: 'home', to: 'services', label: 'uses service layer', type: 'normal', feature: 'data-fetch' },
+            { from: 'login', to: 'auth-lib', label: 'calls auth functions', type: 'auth', feature: 'authentication' },
+            { from: 'login', to: 'admin-attempt-tracker', label: 'tracks attempts', type: 'normal', feature: 'security' },
+            { from: 'admin', to: 'api-client', label: 'CRUD operations', type: 'api', feature: 'admin' },
+            { from: 'booking-page', to: 'api-client', label: 'creates booking', type: 'critical', feature: 'booking' },
+            { from: 'booking-page', to: 'cricket-booking', label: 'team management', type: 'normal', feature: 'cricket' },
+            { from: 'turf-detail', to: 'api-client', label: 'fetches details', type: 'api', feature: 'data-fetch' },
+            { from: 'api-client', to: 'mock-data', label: 'mock fallback', type: 'normal', feature: 'mock' },
+            { from: 'api-client', to: 'auth-lib', label: 'auth token mgmt', type: 'auth', feature: 'authentication' },
+            { from: 'services', to: 'mock-data', label: 'mock fallback', type: 'normal', feature: 'mock' },
+            { from: 'services', to: 'supabase-client', label: 'Supabase ready', type: 'normal', feature: 'database' },
+            { from: 'auth-lib', to: 'admin-attempt-tracker', label: 'lockout check', type: 'normal', feature: 'security' },
+            { from: 'websocket-client', to: 'websocket-server', label: 'real-time updates', type: 'websocket', feature: 'realtime' },
+            { from: 'hooks', to: 'auth-lib', label: 'subscribes to auth', type: 'normal', feature: 'state' },
+
+            // Frontend → API
+            { from: 'api-client', to: 'fastapi-entry', label: 'HTTP requests', type: 'api', feature: 'api-comm' },
+            { from: 'api-client', to: 'otp-request', label: 'POST /auth/otp/request', type: 'auth', feature: 'authentication' },
+            { from: 'api-client', to: 'otp-verification', label: 'POST /auth/otp/verify', type: 'auth', feature: 'authentication' },
+            { from: 'api-client', to: 'admin-login', label: 'POST /auth/admin-login', type: 'auth', feature: 'authentication' },
+            { from: 'api-client', to: 'refresh-token', label: 'POST /auth/refresh', type: 'auth', feature: 'authentication' },
+            { from: 'api-client', to: 'turf-listing', label: 'GET /turfs', type: 'api', feature: 'turf-listing' },
+            { from: 'api-client', to: 'slot-availability', label: 'GET /turfs/{id}/booked-slots', type: 'api', feature: 'booking' },
+            { from: 'api-client', to: 'booking-creation', label: 'POST /bookings', type: 'critical', feature: 'booking' },
+
+            // API internal
+            { from: 'fastapi-entry', to: 'route-mounting', label: 'mounts routers', type: 'normal', feature: 'routing' },
+            { from: 'fastapi-entry', to: 'middleware', label: 'applies middleware', type: 'normal', feature: 'middleware' },
+            { from: 'route-mounting', to: 'request-processing', label: 'routes requests', type: 'normal', feature: 'routing' },
+            { from: 'request-processing', to: 'jwt-validation', label: 'validates auth', type: 'auth', feature: 'security' },
+            { from: 'request-processing', to: 'dependency-injection', label: 'injects deps', type: 'normal', feature: 'di' },
+
+            // Auth internal
+            { from: 'otp-request', to: 'otp-verification', label: 'OTP sent → verified', type: 'critical', feature: 'authentication' },
+            { from: 'otp-verification', to: 'jwt-creation', label: 'creates tokens', type: 'auth', feature: 'authentication' },
+            { from: 'admin-login', to: 'jwt-creation', label: 'creates tokens', type: 'auth', feature: 'authentication' },
+            { from: 'jwt-creation', to: 'refresh-token', label: 'refresh flow', type: 'auth', feature: 'authentication' },
+            { from: 'jwt-validation', to: 'jwt-creation', label: 'validates against', type: 'auth', feature: 'security' },
+
+            // Booking flow
+            { from: 'slot-availability', to: 'booking-creation', label: 'check → create', type: 'critical', feature: 'booking' },
+            { from: 'booking-creation', to: 'conflict-handling', label: 'conflict check', type: 'critical', feature: 'booking' },
+            { from: 'booking-creation', to: 'payment-trigger', label: 'triggers payment', type: 'payment', feature: 'payment' },
+
+            // Turf flow
+            { from: 'turf-listing', to: 'search-filters', label: 'filtered results', type: 'normal', feature: 'search' },
+            { from: 'turf-listing', to: 'popular-turfs', label: 'popular subset', type: 'normal', feature: 'turf-listing' },
+            { from: 'turf-listing', to: 'turf-details', label: 'detail view', type: 'critical', feature: 'turf-listing' },
+
+            // API → Database
+            { from: 'otp-verification', to: 'users-table', label: 'create/find user', type: 'db', feature: 'authentication' },
+            { from: 'admin-login', to: 'users-table', label: 'find admin user', type: 'db', feature: 'authentication' },
+            { from: 'jwt-validation', to: 'users-table', label: 'fetch user by ID', type: 'db', feature: 'security' },
+            { from: 'booking-creation', to: 'bookings-table', label: 'INSERT booking', type: 'db', feature: 'booking' },
+            { from: 'booking-creation', to: 'turfs-table', label: 'read turf price', type: 'db', feature: 'booking' },
+            { from: 'slot-availability', to: 'bookings-table', label: 'SELECT booked slots', type: 'db', feature: 'booking' },
+            { from: 'turf-listing', to: 'turfs-table', label: 'SELECT turfs', type: 'db', feature: 'turf-listing' },
+            { from: 'conflict-handling', to: 'bookings-table', label: 'unique constraint', type: 'db', feature: 'booking' },
+
+            // Database internal
+            { from: 'users-table', to: 'relationships', label: 'has bookings/turfs', type: 'normal', feature: 'orm' },
+            { from: 'turfs-table', to: 'relationships', label: 'has bookings/client', type: 'normal', feature: 'orm' },
+            { from: 'bookings-table', to: 'relationships', label: 'belongs to user/turf', type: 'normal', feature: 'orm' },
+            { from: 'relationships', to: 'constraints', label: 'enforced by', type: 'normal', feature: 'constraint' },
+            { from: 'constraints', to: 'indexes', label: 'backed by', type: 'normal', feature: 'performance' },
+
+            // External connections
+            { from: 'payment-trigger', to: 'payment-gateway', label: 'process payment', type: 'payment', feature: 'payment' },
+            { from: 'otp-request', to: 'sms-service', label: 'send SMS', type: 'api', feature: 'authentication' },
+            { from: 'turf-listing', to: 'redis-cache', label: 'cache results', type: 'normal', feature: 'caching' },
+            { from: 'fastapi-entry', to: 'redis-cache', label: 'init cache', type: 'normal', feature: 'caching' },
+            { from: 'websocket-server', to: 'booking-creation', label: 'broadcast update', type: 'websocket', feature: 'realtime' },
+        ];
+
+        const FINDINGS = [
+            { severity: 'high', title: 'Hardcoded OTP (123456)', desc: 'OTP verification accepts "123456" for any phone number. This is a critical security vulnerability that allows unauthorized access. No OTP expiry or rate limiting.' },
+            { severity: 'high', title: 'Default JWT Secret', desc: 'JWT secret key defaults to "change-me-in-prod" in config. If not changed in production, tokens can be forged.' },
+            { severity: 'high', title: 'No Rate Limiting', desc: 'No rate limiting on any endpoint — OTP requests, admin login, booking creation. Vulnerable to brute force and DoS attacks.' },
+            { severity: 'high', title: 'SQLite in Production', desc: 'Database defaults to SQLite (sqlite:///./play_turf.db). SQLite has concurrency limitations and is unsuitable for production workloads.' },
+            { severity: 'high', title: 'Mock Payment System', desc: 'Payment processing is entirely placeholder. No payment gateway integrated. Bookings are created without actual payment.' },
+            { severity: 'medium', title: 'Placeholder SMS Service', desc: 'OTP request endpoint returns 202 but no SMS is sent. The entire OTP flow is non-functional without a real SMS provider.' },
+            { severity: 'medium', title: 'Placeholder Notification Services', desc: 'No email, push notification, or real-time notification system implemented. Users get no booking confirmations.' },
+            { severity: 'medium', title: 'Supabase Not Wired', desc: 'Supabase client returns null. All services fall back to mock data. The service layer has TODO placeholders instead of real queries.' },
+            { severity: 'medium', title: 'Client-Side Only Lockout', desc: 'Admin login lockout is enforced only on the client side. Server has no rate limiting or lockout mechanism.' },
+            { severity: 'medium', title: 'No Token Rotation', desc: 'Refresh token endpoint issues new tokens without validating or rotating the old refresh token.' },
+            { severity: 'low', title: 'Local Image Storage', desc: 'Turf images are stored locally in assets/. No CDN or cloud storage integration. Not scalable for production.' },
+            { severity: 'low', title: 'No WebSocket Fallback', desc: 'WebSocket client has no fallback if the server does not support WebSocket connections.' },
+            { severity: 'low', title: 'No Booking Status Machine', desc: 'Booking status transitions (PENDING→CONFIRMED→COMPLETED) are not enforced. Any status change is possible via direct DB access.' },
+            { severity: 'low', title: 'Overlapping Slot Detection', desc: 'Conflict detection only checks exact start_time match, not overlapping time ranges. A 2-hour booking starting at 06:00 conflicts with a 1-hour booking at 06:00 but not 07:00.' },
+        ];
+
+        const KNOWN_BUGS = {
+            'otp-verification': ['Hardcoded OTP "123456" accepted for any phone', 'No OTP expiry time check', 'No rate limiting on verification attempts'],
+            'booking-creation': ['No time-range overlap check — only exact start_time', 'No payment validation before booking creation', 'Amount calculation does not include peak-hour pricing'],
+            'refresh-token': ['No token rotation — old refresh token remains valid', 'No refresh token expiry validation', 'Subject is hardcoded as "user:session"'],
+            'api-client': ['Mock mode does not simulate network latency', 'localStorage operations are synchronous and can block UI', 'No request retry logic for transient failures'],
+            'turf-listing': ['City filter uses ilike but no city autocomplete', 'No sorting options (price, rating, distance)', 'Popular flag is manually set, not algorithmically determined'],
+            'admin': ['No pagination for large datasets', 'CSV export does not include all turf fields', 'No audit log for admin actions'],
+            'websocket-server': ['No authentication for WebSocket connections in all cases', 'No reconnection state recovery', 'Broadcast does not filter by user permissions'],
+        };
+
+        const FIXES = {
+            'otp-verification': ['Replace hardcoded OTP with real TOTP generation', 'Add OTP expiry (5 min TTL)', 'Add rate limiting (max 5 attempts per phone/hour)', 'Integrate SMS gateway (Twilio, MSG91)'],
+            'jwt-creation': ['Change default JWT secret in production .env', 'Consider RS256 instead of HS256 for key rotation', 'Add token versioning for invalidation'],
+            'payment-trigger': ['Integrate Razorpay or Stripe', 'Add webhook handler for payment confirmation', 'Implement payment_id generation and tracking', 'Add refund flow for cancellations'],
+            'booking-creation': ['Add time-range overlap detection', 'Implement peak-hour pricing logic', 'Add booking confirmation email/SMS', 'Add booking cancellation with refund logic'],
+            'turf-listing': ['Add sorting by price, rating, distance', 'Add city autocomplete', 'Implement algorithmic popularity scoring', 'Add distance-based nearby search with PostGIS'],
+            'fastapi-entry': ['Replace SQLite with PostgreSQL in production', 'Add request rate limiting middleware', 'Add structured logging with request IDs', 'Add health check with dependency status'],
+            'websocket-server': ['Add proper WebSocket authentication', 'Implement reconnection state recovery', 'Add user-permission-based broadcast filtering', 'Add connection health monitoring'],
+        };
+
+        // ============================================================
+        // RENDERER
+        // ============================================================
+
+        const container = document.getElementById('canvas-container');
+        const tooltip = document.getElementById('tooltip');
+        const sidebarDefault = document.getElementById('sidebar-default');
+        const sidebarNode = document.getElementById('sidebar-node');
+        const findingsList = document.getElementById('findings-list');
+        const filtersEl = document.getElementById('filters');
+        const legendEl = document.getElementById('legend');
+
+        let scale = 1;
+        let panX = 0, panY = 0;
+        let isPanning = false, startX, startY;
+        let selectedNodeId = null;
+        let activeFilter = 'overview';
+        let svg, mainGroup;
+
+        const clusterColors = {
+            frontend: '#4ea1ff',
+            api: '#7bd389',
+            auth: '#c792ea',
+            booking: '#ffb86b',
+            turfs: '#4ea1ff',
+            database: '#ff6b9d',
+            external: '#f5b942',
+        };
+
+        const edgeTypeColors = {
+            critical: '#ff3860',
+            api: '#4ea1ff',
+            db: '#ff6b9d',
+            auth: '#c792ea',
+            payment: '#f5b942',
+            websocket: '#7bd389',
+            normal: '#8a8a8a',
+        };
+
+        function init() {
+            renderFindings();
+            renderFilters();
+            renderLegend();
+            renderSVG();
+            updateStats();
+            setupZoom();
+            setupPan();
+            selectNode(null);
+        }
+
+        function renderFindings() {
+            findingsList.innerHTML = FINDINGS.map(f => `
+    <div class="findings-item">
+      <h4><span class="severity severity-${f.severity}">${f.severity}</span> ${f.title}</h4>
+      <p>${f.desc}</p>
+    </div>
+  `).join('');
+        }
+
+        function renderFilters() {
+            const filters = [
+                { id: 'overview', label: 'Overview' },
+                { id: 'auth', label: 'Authentication' },
+                { id: 'booking', label: 'Booking' },
+                { id: 'payment', label: 'Payments' },
+                { id: 'search', label: 'Search' },
+                { id: 'admin', label: 'Admin' },
+                { id: 'user-flow', label: 'User Flow' },
+                { id: 'database', label: 'Database' },
+                { id: 'realtime', label: 'Realtime' },
+                { id: 'critical', label: 'Critical Path' },
+                { id: 'security', label: 'Security Risks' },
+                { id: 'roadmap', label: 'Roadmap & Bugs' },
+                { id: 'all-wires', label: 'Show All Wires' },
+            ];
+            filtersEl.innerHTML = filters.map(f => `
+    <button class="filter-chip ${f.id === activeFilter ? 'active' : ''}" data-filter="${f.id}">${f.label}</button>
+  `).join('');
+            filtersEl.querySelectorAll('.filter-chip').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    filtersEl.querySelectorAll('.filter-chip').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    activeFilter = btn.dataset.filter;
+                    applyFilter();
+                });
+            });
+        }
+
+        function renderLegend() {
+            const items = [
+                { color: '#4ea1ff', label: 'Frontend' },
+                { color: '#7bd389', label: 'API' },
+                { color: '#c792ea', label: 'Auth' },
+                { color: '#ffb86b', label: 'Booking' },
+                { color: '#ff6b9d', label: 'Database' },
+                { color: '#f5b942', label: 'External' },
+                { color: '#ff3860', label: 'Critical' },
+            ];
+            legendEl.innerHTML = items.map(i => `
+    <div class="legend-item"><span class="legend-dot" style="background:${i.color}"></span>${i.label}</div>
+  `).join('');
+        }
+
+        function renderSVG() {
+            const totalW = 1800;
+            const totalH = 1000;
+
+            svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('viewBox', `0 0 ${totalW} ${totalH}`);
+            svg.setAttribute('width', '100%');
+            svg.setAttribute('height', '100%');
+
+            // Defs
+            const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+            defs.innerHTML = `
+    <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#8a8a8a" />
+    </marker>
+    <marker id="arrowhead-critical" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#ff3860" />
+    </marker>
+    <marker id="arrowhead-auth" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#c792ea" />
+    </marker>
+    <marker id="arrowhead-api" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#4ea1ff" />
+    </marker>
+    <marker id="arrowhead-db" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#ff6b9d" />
+    </marker>
+    <marker id="arrowhead-payment" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#f5b942" />
+    </marker>
+    <marker id="arrowhead-websocket" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#7bd389" />
+    </marker>
+  `;
+            svg.appendChild(defs);
+
+            mainGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            svg.appendChild(mainGroup);
+
+            container.innerHTML = '';
+            container.appendChild(svg);
+
+            renderClusters();
+            renderEdges();
+            renderNodes();
+            applyFilter();
+        }
+
+        function renderClusters() {
+            clusters.forEach(c => {
+                const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                rect.setAttribute('x', c.x);
+                rect.setAttribute('y', c.y);
+                rect.setAttribute('width', c.w);
+                rect.setAttribute('height', c.h);
+                rect.setAttribute('class', 'cluster-bg');
+                rect.setAttribute('stroke', c.color);
+                rect.setAttribute('stroke-opacity', '0.3');
+                g.appendChild(rect);
+
+                const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                label.setAttribute('x', c.x + 16);
+                label.setAttribute('y', c.y + 28);
+                label.setAttribute('class', 'cluster-label');
+                label.setAttribute('fill', c.color);
+                label.textContent = c.label;
+                g.appendChild(label);
+
+                const count = nodes.filter(n => n.cluster === c.id).length;
+                const countText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                countText.setAttribute('x', c.x + c.w - 16);
+                countText.setAttribute('y', c.y + 28);
+                countText.setAttribute('class', 'cluster-count');
+                countText.setAttribute('text-anchor', 'end');
+                countText.textContent = `${count} nodes`;
+                g.appendChild(countText);
+
+                mainGroup.appendChild(g);
+            });
+        }
+
+        function renderNodes() {
+            nodes.forEach(n => {
+                const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                g.setAttribute('class', 'node-group');
+                g.dataset.nodeId = n.id;
+
+                const cluster = clusters.find(c => c.id === n.cluster);
+                const color = cluster ? cluster.color : '#8a8a8a';
+
+                const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                rect.setAttribute('x', n.x);
+                rect.setAttribute('y', n.y);
+                rect.setAttribute('width', 200);
+                rect.setAttribute('height', 48);
+                rect.setAttribute('rx', 8);
+                rect.setAttribute('class', 'node-bg');
+                rect.setAttribute('fill', 'var(--panel)');
+                rect.setAttribute('stroke', color);
+                rect.setAttribute('stroke-width', '1.5');
+                g.appendChild(rect);
+
+                const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                label.setAttribute('x', n.x + 100);
+                label.setAttribute('y', n.y + 22);
+                label.setAttribute('class', 'node-label');
+                label.textContent = n.id.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                g.appendChild(label);
+
+                const sub = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                sub.setAttribute('x', n.x + 100);
+                sub.setAttribute('y', n.y + 38);
+                sub.setAttribute('class', 'node-sub');
+                sub.textContent = n.tag;
+                g.appendChild(sub);
+
+                if (n.critical) {
+                    const crit = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    crit.setAttribute('x', n.x + 190);
+                    crit.setAttribute('y', n.y + 14);
+                    crit.setAttribute('class', 'node-tag');
+                    crit.setAttribute('fill', '#ff3860');
+                    crit.setAttribute('font-size', '7px');
+                    crit.textContent = '● CRITICAL';
+                    g.appendChild(crit);
+                }
+
+                // Check for bugs
+                if (KNOWN_BUGS[n.id]) {
+                    const bugIcon = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    bugIcon.setAttribute('x', n.x + 6);
+                    bugIcon.setAttribute('y', n.y + 14);
+                    bugIcon.setAttribute('font-size', '10px');
+                    bugIcon.setAttribute('fill', '#ffaa00');
+                    bugIcon.textContent = '⚠';
+                    g.appendChild(bugIcon);
+                }
+
+                g.addEventListener('click', () => selectNode(n.id));
+                g.addEventListener('mouseenter', (e) => showTooltip(e, n));
+                g.addEventListener('mouseleave', hideTooltip);
+
+                mainGroup.appendChild(g);
+            });
+        }
+
+        function renderEdges() {
+            edges.forEach(e => {
+                const fromNode = nodes.find(n => n.id === e.from);
+                const toNode = nodes.find(n => n.id === e.to);
+                if (!fromNode || !toNode) return;
+
+                const x1 = fromNode.x + 200;
+                const y1 = fromNode.y + 24;
+                const x2 = toNode.x;
+                const y2 = toNode.y + 24;
+
+                const cx1 = x1 + Math.abs(x2 - x1) * 0.4;
+                const cy1 = y1;
+                const cx2 = x2 - Math.abs(x2 - x1) * 0.4;
+                const cy2 = y2;
+
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                const d = `M ${x1} ${y1} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${x2} ${y2}`;
+                path.setAttribute('d', d);
+                path.setAttribute('class', `edge-line flow-arrow flow-arrow-${e.type}`);
+                path.dataset.edgeFrom = e.from;
+                path.dataset.edgeTo = e.to;
+                path.dataset.edgeType = e.type;
+                path.dataset.edgeFeature = e.feature;
+
+                // Marker
+                const markerMap = {
+                    critical: 'url(#arrowhead-critical)',
+                    auth: 'url(#arrowhead-auth)',
+                    api: 'url(#arrowhead-api)',
+                    db: 'url(#arrowhead-db)',
+                    payment: 'url(#arrowhead-payment)',
+                    websocket: 'url(#arrowhead-websocket)',
+                    normal: 'url(#arrowhead)',
+                };
+                path.setAttribute('marker-end', markerMap[e.type] || 'url(#arrowhead)');
+
+                mainGroup.appendChild(path);
+
+                // Edge label at midpoint
+                const midX = (x1 + x2) / 2;
+                const midY = (y1 + y2) / 2 - 10;
+
+                const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                label.setAttribute('x', midX);
+                label.setAttribute('y', midY);
+                label.setAttribute('class', 'edge-label');
+                label.textContent = e.label;
+                mainGroup.appendChild(label);
+
+                const typeLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                typeLabel.setAttribute('x', midX);
+                typeLabel.setAttribute('y', midY + 12);
+                typeLabel.setAttribute('class', 'edge-type-label');
+                typeLabel.setAttribute('fill', edgeTypeColors[e.type] || '#8a8a8a');
+                typeLabel.textContent = e.type;
+                mainGroup.appendChild(typeLabel);
+            });
+        }
+
+        function applyFilter() {
+            const filter = activeFilter;
+
+            // Show/hide edges
+            document.querySelectorAll('.edge-line').forEach(el => {
+                const type = el.dataset.edgeType;
+                const feature = el.dataset.edgeFeature;
+                let visible = true;
+
+                if (filter === 'overview') visible = type === 'critical';
+                else if (filter === 'auth') visible = type === 'auth' || feature === 'authentication';
+                else if (filter === 'booking') visible = feature === 'booking' || type === 'critical';
+                else if (filter === 'payment') visible = type === 'payment';
+                else if (filter === 'search') visible = feature === 'search' || feature === 'turf-listing';
+                else if (filter === 'admin') visible = feature === 'admin';
+                else if (filter === 'user-flow') visible = type === 'critical';
+                else if (filter === 'database') visible = type === 'db';
+                else if (filter === 'realtime') visible = type === 'websocket';
+                else if (filter === 'critical') visible = type === 'critical';
+                else if (filter === 'security') visible = type === 'auth';
+                else if (filter === 'roadmap') visible = true;
+                else if (filter === 'all-wires') visible = true;
+
+                el.style.display = visible ? '' : 'none';
+            });
+
+            // Show/hide edge labels
+            document.querySelectorAll('.edge-label, .edge-type-label').forEach(el => {
+                const sibling = el.previousElementSibling || el.nextElementSibling;
+                if (sibling && sibling.tagName === 'path') {
+                    el.style.display = sibling.style.display;
+                } else {
+                    el.style.display = '';
+                }
+            });
+
+            // Show/hide nodes based on connected edges
+            if (filter !== 'all-wires' && filter !== 'overview' && filter !== 'roadmap') {
+                const visibleEdges = document.querySelectorAll('.edge-line[style*="display: block"], .edge-line:not([style*="display: none"])');
+                const visibleNodeIds = new Set();
+                visibleEdges.forEach(e => {
+                    visibleNodeIds.add(e.dataset.edgeFrom);
+                    visibleNodeIds.add(e.dataset.edgeTo);
+                });
+
+                document.querySelectorAll('.node-group').forEach(g => {
+                    const nid = g.dataset.nodeId;
+                    if (filter === 'overview' || filter === 'all-wires' || filter === 'roadmap') {
+                        g.style.display = '';
+                    } else if (filter === 'security') {
+                        const node = nodes.find(n => n.id === nid);
+                        g.style.display = (node && (node.tag === 'security' || node.cluster === 'auth')) ? '' : 'none';
+                    } else if (filter === 'database') {
+                        const node = nodes.find(n => n.id === nid);
+                        g.style.display = (node && node.cluster === 'database') ? '' : 'none';
+                    } else if (filter === 'realtime') {
+                        const node = nodes.find(n => n.id === nid);
+                        g.style.display = (node && (node.tag === 'realtime' || nid === 'websocket-client' || nid === 'websocket-server')) ? '' : 'none';
+                    } else if (filter === 'admin') {
+                        const node = nodes.find(n => n.id === nid);
+                        g.style.display = (node && (nid === 'admin' || nid === 'client-pages' || nid === 'api-client' || nid === 'admin-login' || nid === 'admin-attempt-tracker')) ? '' : 'none';
+                    } else if (filter === 'user-flow') {
+                        g.style.display = visibleNodeIds.has(nid) ? '' : 'none';
+                    } else if (filter === 'critical') {
+                        const node = nodes.find(n => n.id === nid);
+                        g.style.display = (node && node.critical) ? '' : 'none';
+                    } else {
+                        g.style.display = visibleNodeIds.has(nid) ? '' : 'none';
+                    }
+                });
+            } else {
+                document.querySelectorAll('.node-group').forEach(g => g.style.display = '');
+            }
+
+            updateStats();
+        }
+
+        function selectNode(nodeId) {
+            selectedNodeId = nodeId;
+
+            // Update visual selection
+            document.querySelectorAll('.node-group').forEach(g => g.classList.remove('selected'));
+            if (nodeId) {
+                const el = document.querySelector(`.node-group[data-node-id="${nodeId}"]`);
+                if (el) el.classList.add('selected');
+            }
+
+            // Update sidebar
+            if (!nodeId) {
+                sidebarDefault.style.display = 'block';
+                sidebarNode.style.display = 'none';
+                return;
+            }
+
+            sidebarDefault.style.display = 'none';
+            sidebarNode.style.display = 'block';
+
+            const node = nodes.find(n => n.id === nodeId);
+            if (!node) return;
+
+            const cluster = clusters.find(c => c.id === node.cluster);
+            const color = cluster ? cluster.color : '#8a8a8a';
+
+            const incoming = edges.filter(e => e.to === nodeId);
+            const outgoing = edges.filter(e => e.from === nodeId);
+            const bugs = KNOWN_BUGS[nodeId] || [];
+            const fixes = FIXES[nodeId] || [];
+
+            sidebarNode.innerHTML = `
+    <div class="sidebar-section">
+      <h3 style="color:${color}">${node.id.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}</h3>
+      <p style="margin-top:4px"><span class="tag tag-${node.cluster}">${node.cluster}</span>${node.critical ? ' <span class="tag tag-critical">critical</span>' : ''}${KNOWN_BUGS[nodeId] ? ' <span class="tag tag-warning">has bugs</span>' : ''}</p>
+    </div>
+    <div class="sidebar-section">
+      <h3>Technical Role</h3>
+      <p>${node.role}</p>
+    </div>
+    <div class="sidebar-section">
+      <h3>Plain English</h3>
+      <p>${node.plain}</p>
+    </div>
+    <div class="sidebar-section">
+      <h3>Source Path</h3>
+      <p style="font-family:monospace;font-size:12px;color:var(--muted)">${node.path}</p>
+    </div>
+    <div class="sidebar-section">
+      <h3>Implementation Notes</h3>
+      <ul class="notes-list">
+        ${node.notes.map(n => `<li>${n}</li>`).join('')}
+      </ul>
+    </div>
+    <div class="sidebar-section">
+      <h3>Incoming Edges (${incoming.length})</h3>
+      <ul class="edge-list">
+        ${incoming.length ? incoming.map(e => `<li><span class="edge-type edge-${e.type}">${e.type}</span> from <strong>${e.from}</strong> — ${e.label}</li>`).join('') : '<li style="color:var(--muted)">None</li>'}
+      </ul>
+    </div>
+    <div class="sidebar-section">
+      <h3>Outgoing Edges (${outgoing.length})</h3>
+      <ul class="edge-list">
+        ${outgoing.length ? outgoing.map(e => `<li><span class="edge-type edge-${e.type}">${e.type}</span> to <strong>${e.to}</strong> — ${e.label}</li>`).join('') : '<li style="color:var(--muted)">None</li>'}
+      </ul>
+    </div>
+    ${bugs.length ? `<div class="sidebar-section"><h3>Known Bugs</h3><ul class="notes-list">${bugs.map(b => `<li style="color:var(--critical)">${b}</li>`).join('')}</ul></div>` : ''}
+    ${fixes.length ? `<div class="sidebar-section"><h3>Roadmap Fixes</h3><ul class="notes-list">${fixes.map(f => `<li style="color:var(--success)">${f}</li>`).join('')}</ul></div>` : ''}
+  `;
+        }
+
+        function showTooltip(e, node) {
+            const rect = container.getBoundingClientRect();
+            tooltip.innerHTML = `<h4>${node.id.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}</h4><p>${node.plain}</p>`;
+            tooltip.style.left = (e.clientX - rect.left + 12) + 'px';
+            tooltip.style.top = (e.clientY - rect.top - 10) + 'px';
+            tooltip.classList.add('visible');
+        }
+
+        function hideTooltip() {
+            tooltip.classList.remove('visible');
+        }
+
+        function updateStats() {
+            const visibleNodes = document.querySelectorAll('.node-group[style*="display: block"], .node-group:not([style*="display: none"])').length;
+            const visibleEdges = document.querySelectorAll('.edge-line[style*="display: block"], .edge-line:not([style*="display: none"])').length;
+            document.getElementById('stat-nodes').textContent = `● ${visibleNodes} nodes`;
+            document.getElementById('stat-edges').textContent = `─ ${visibleEdges} edges`;
+            document.getElementById('stat-clusters').textContent = `▣ ${clusters.length} clusters`;
+        }
+
+        function setupZoom() {
+            const zoomIn = document.getElementById('zoom-in');
+            const zoomOut = document.getElementById('zoom-out');
+            const zoomFit = document.getElementById('zoom-fit');
+            const zoomLevel = document.getElementById('zoom-level');
+
+            function updateZoom() {
+                mainGroup.setAttribute('transform', `translate(${panX},${panY}) scale(${scale})`);
+                zoomLevel.textContent = Math.round(scale * 100) + '%';
+            }
+
+            zoomIn.addEventListener('click', () => { scale = Math.min(scale * 1.2, 3); updateZoom(); });
+            zoomOut.addEventListener('click', () => { scale = Math.max(scale / 1.2, 0.3); updateZoom(); });
+            zoomFit.addEventListener('click', () => {
+                scale = 0.7;
+                panX = 0;
+                panY = 0;
+                updateZoom();
+            });
+
+            svg.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const delta = e.deltaY > 0 ? 0.9 : 1.1;
+                scale = Math.max(0.3, Math.min(3, scale * delta));
+                updateZoom();
+            });
+        }
+
+        function setupPan() {
+            svg.addEventListener('mousedown', (e) => {
+                if (e.target.tagName === 'svg' || e.target === mainGroup) {
+                    isPanning = true;
+                    startX = e.clientX - panX;
+                    startY = e.clientY - panY;
+                }
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                if (!isPanning) return;
+                panX = e.clientX - startX;
+                panY = e.clientY - startY;
+                mainGroup.setAttribute('transform', `translate(${panX},${panY}) scale(${scale})`);
+            });
+
+            window.addEventListener('mouseup', () => { isPanning = false; });
+        }
+
+        // ============================================================
+        // INIT
+        // ============================================================
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+
+</html>

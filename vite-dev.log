@@ -1,0 +1,40 @@
+
+> vite_react_shadcn_ts@0.0.0 dev
+> vite --host 127.0.0.1
+
+
+  [32m[1mVITE[22m v5.4.21[39m  [2mready in [0m[1m876[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://127.0.0.1:[1m8080[22m/[39m
+[2m8:56:03 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/App.tsx[22m
+[2m8:56:03 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/index.css[22m
+[2m8:58:08 PM[22m [36m[1m[vite][22m[39m [32m✨ new dependencies optimized: [33m@radix-ui/react-dialog[32m[39m
+[2m8:58:08 PM[22m [36m[1m[vite][22m[39m [32m✨ optimized dependencies changed. reloading[39m
+[2m9:05:23 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/cricket/components/NeonButton.tsx, /index.css[22m
+[2m9:13:45 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/App.tsx[22m
+[2m9:15:45 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/Booking.tsx, /index.css[22m
+[2m9:16:52 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/CricketBooking.tsx, /index.css[22m
+[2m9:43:16 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/index.css, /src/AuthCallback.tsx, /src/pages/Home.tsx, /src/pages/TurfDetail.tsx, /src/pages/Bookings.tsx, /src/pages/Tournaments.tsx, /src/pages/Offers.tsx, /src/pages/Login.tsx, /src/pages/Booking.tsx, /src/pages/Admin.tsx, /src/pages/More.tsx, /src/layout/AppHeader.tsx[22m
+[2m9:43:16 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/index.css, /src/AuthCallback.tsx, /src/pages/Home.tsx, /src/pages/TurfDetail.tsx, /src/pages/Bookings.tsx, /src/pages/Tournaments.tsx, /src/pages/Offers.tsx, /src/pages/Login.tsx, /src/pages/Booking.tsx, /src/pages/Admin.tsx, /src/pages/More.tsx, /src/layout/AppHeader.tsx[22m
+[2m9:43:28 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/index.css, /src/pages/Login.tsx, /src/pages/More.tsx, /src/pages/Bookings.tsx, /src/pages/Booking.tsx, /src/pages/Admin.tsx, /src/layout/AppHeader.tsx[22m
+[2m9:43:28 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/Login.tsx, /index.css[22m
+[2m9:44:18 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/Admin.tsx, /index.css[22m
+[2m9:44:27 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/TurfDetail.tsx, /index.css[22m
+[2m10:00:12 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/index.css, /src/AuthCallback.tsx, /src/pages/Home.tsx, /src/pages/TurfDetail.tsx, /src/pages/Bookings.tsx, /src/pages/Tournaments.tsx, /src/pages/Offers.tsx, /src/pages/Login.tsx, /src/pages/Booking.tsx, /src/pages/Admin.tsx, /src/pages/More.tsx, /src/layout/AppHeader.tsx[22m
+[2m10:00:28 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/Home.tsx, /index.css[22m
+[2m10:10:00 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/home/LocationFilter.tsx, /index.css[22m
+[2m10:22:37 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/index.css, /src/AuthCallback.tsx, /src/pages/Home.tsx, /src/pages/TurfDetail.tsx, /src/pages/Bookings.tsx, /src/pages/Tournaments.tsx, /src/pages/Offers.tsx, /src/pages/Login.tsx, /src/pages/Booking.tsx, /src/pages/Admin.tsx, /src/pages/More.tsx, /src/layout/AppHeader.tsx[22m
+[2m10:22:55 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/index.css, /src/AuthCallback.tsx, /src/pages/Home.tsx, /src/pages/TurfDetail.tsx, /src/pages/Bookings.tsx, /src/pages/Tournaments.tsx, /src/pages/Offers.tsx, /src/pages/Login.tsx, /src/pages/Booking.tsx, /src/pages/Admin.tsx, /src/pages/More.tsx, /src/layout/AppHeader.tsx[22m
+[2m10:23:08 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/home/LocationFilter.tsx, /index.css[22m
+[2m10:23:19 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/Home.tsx, /index.css[22m
+[2m10:23:30 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/turf/TurfCard.tsx, /index.css[22m
+[2m10:23:35 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/turf/CompactTurfCard.tsx, /index.css[22m
+[2m10:23:40 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/Home.tsx, /index.css[22m
+[2m10:23:47 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/Booking.tsx, /index.css[22m
+[2m10:24:02 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/TurfDetail.tsx, /index.css[22m
+[2m10:24:18 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/Admin.tsx, /index.css[22m
+[2m10:24:29 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/App.tsx[22m
+[2m10:32:31 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/Booking.tsx, /index.css[22m
+[2m10:32:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/Booking.tsx, /index.css[22m
+[2m10:32:56 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/Booking.tsx, /index.css[22m
+[2m10:42:49 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/App.tsx[22m

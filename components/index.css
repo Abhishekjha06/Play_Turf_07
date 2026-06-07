@@ -1,0 +1,416 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* play_Turf design system — DARK ONLY. All colors HSL. */
+
+@layer base {
+  :root {
+    /* Core palette */
+    --background: 215 25% 10%;
+    /* #13171f */
+    --foreground: 210 20% 98%;
+    --foreground-soft: 215 15% 75%;
+    --foreground-muted: 215 10% 60%;
+
+    --panel: 215 22% 14%;
+    /* #1b212c */
+    --panel-2: 215 20% 18%;
+    /* #252b36 */
+    --panel-3: 215 18% 22%;
+
+    --card: 215 22% 14%;
+    --card-foreground: 210 20% 98%;
+
+    --popover: 215 22% 14%;
+    --popover-foreground: 210 20% 98%;
+
+    /* Cyan / Electric blue accent */
+    --primary: 195 90% 50%;
+    /* #0cc0f5 */
+    --primary-foreground: 215 30% 10%;
+    --primary-glow: 195 90% 50%;
+
+    --secondary: 215 15% 20%;
+    --secondary-foreground: 210 20% 98%;
+
+    --muted: 215 15% 16%;
+    --muted-foreground: 215 10% 60%;
+
+    --accent: 195 90% 50%;
+    --accent-foreground: 215 30% 10%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 20% 98%;
+
+    --success: 150 70% 45%;
+    --warning: 38 92% 55%;
+
+    --border: 215 15% 22%;
+    --input: 215 15% 20%;
+    --ring: 195 90% 50%;
+
+    --radius: 1rem;
+
+    /* Gradients */
+    --gradient-bg: radial-gradient(1000px 500px at 50% -10%,
+        hsl(195 90% 50% / 0.08),
+        transparent 60%),
+      hsl(var(--background));
+    --gradient-card: linear-gradient(180deg, hsl(215 22% 16%), hsl(215 22% 12%));
+    --gradient-neon: linear-gradient(135deg, hsl(195 90% 50%), hsl(210 90% 55%));
+    /* Softer overlay for sharper images */
+    --gradient-overlay: linear-gradient(180deg,
+        transparent 0%,
+        transparent 30%,
+        hsl(215 25% 8% / 0.5) 60%,
+        hsl(215 25% 8% / 0.85) 100%);
+
+    /* Shadows */
+    --shadow-neon: 0 0 16px hsl(195 90% 50% / 0.35);
+    --shadow-neon-lg: 0 0 32px hsl(195 90% 50% / 0.4),
+      0 0 10px hsl(195 90% 50% / 0.25);
+    --shadow-card: 0 4px 20px hsl(0 0% 0% / 0.3);
+
+    /* Sidebar (unused but kept) */
+    --sidebar-background: 215 25% 10%;
+    --sidebar-foreground: 210 20% 98%;
+    --sidebar-primary: 195 90% 50%;
+    --sidebar-primary-foreground: 215 30% 10%;
+    --sidebar-accent: 215 20% 16%;
+    --sidebar-accent-foreground: 210 20% 98%;
+    --sidebar-border: 215 15% 22%;
+    --sidebar-ring: 195 90% 50%;
+  }
+
+  html {
+    color-scheme: dark;
+    width: 100%;
+    min-height: 100%;
+    overflow-x: hidden;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    width: 100%;
+    min-height: 100dvh;
+    margin: 0;
+    overflow-x: hidden;
+    color: hsl(var(--foreground));
+    background: var(--gradient-bg);
+    background-color: hsl(var(--background));
+    font-family: "Outfit", system-ui, sans-serif;
+    font-feature-settings: "ss01", "cv11";
+    -webkit-text-size-adjust: 100%;
+  }
+
+  #root {
+    width: 100%;
+    max-width: 100%;
+    min-height: 100dvh;
+    margin: 0;
+    padding: 0;
+    overflow-x: clip;
+  }
+
+  * {
+    @apply border-border;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  img,
+  video,
+  canvas,
+  svg {
+    max-width: 100%;
+    height: auto;
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+    max-width: 100%;
+  }
+
+  button,
+  a {
+    overflow-wrap: anywhere;
+  }
+
+  /* Hide scrollbars on horizontal scrollers */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply backdrop-blur-sm;
+    background: var(--l-glass-bg, hsl(0 0% 4% / 0.72));
+    border: 1px solid var(--l-glass-border, hsl(0 0% 100% / 0.06));
+  }
+
+  .glass-strong {
+    @apply backdrop-blur-md;
+    background: var(--l-glass-bg, hsl(0 0% 6% / 0.85));
+    border: 1px solid var(--l-glass-border, hsl(0 0% 100% / 0.08));
+  }
+
+  .neon-text {
+    color: hsl(var(--primary));
+    text-shadow: 0 0 18px hsl(var(--primary) / 0.55);
+  }
+
+  .neon-ring {
+    box-shadow: var(--shadow-neon);
+  }
+
+  .neon-ring-lg {
+    box-shadow: var(--shadow-neon-lg);
+  }
+
+  .card-panel {
+    background: var(--gradient-card);
+    border: 1px solid hsl(var(--border));
+    box-shadow: var(--shadow-card);
+  }
+
+  .pressable {
+    @apply transition-transform duration-150 active:scale-[0.97];
+  }
+
+  .stadium-grid {
+    background-image:
+      linear-gradient(rgba(34, 211, 238, 0.08) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(168, 85, 247, 0.08) 1px, transparent 1px);
+    background-size: 42px 42px;
+    mask-image: linear-gradient(to bottom, transparent, black 18%, transparent 88%);
+  }
+}
+
+@layer utilities {
+  .text-soft {
+    color: hsl(var(--foreground-soft));
+  }
+
+  .text-muted2 {
+    color: hsl(var(--foreground-muted));
+  }
+
+  .bg-panel {
+    background-color: hsl(var(--panel));
+  }
+
+  .bg-panel-2 {
+    background-color: hsl(var(--panel-2));
+  }
+
+  .bg-panel-3 {
+    background-color: hsl(var(--panel-3));
+  }
+
+  /* ── Mobile-first safe-area helpers ─────────────────────────── */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  /* ── Touch target enforcement ────────────────────────────────── */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* ── Responsive text truncation ─────────────────────────────── */
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+@keyframes confetti {
+  0% {
+    transform: translateY(-10vh) rotate(0deg);
+    opacity: 0;
+  }
+
+  12% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(110vh) rotate(720deg);
+    opacity: 0;
+  }
+}
+
+.animate-confetti {
+  animation: confetti 3.2s ease-in infinite;
+}
+
+/* ── Shimmer skeleton wave ───────────────────────────────────── */
+@keyframes shimmerWave {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* ── Floating background glow pulse ──────────────────────────── */
+@keyframes glowPulse {
+
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.60;
+    transform: scale(1.06);
+  }
+}
+
+.animate-glow-pulse {
+  animation: glowPulse 3.5s ease-in-out infinite;
+}
+
+/* ── Parallax wave header background ─────────────────────────── */
+@keyframes waveShift {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-wave-bg {
+  background-size: 300% 300%;
+  animation: waveShift 15s ease infinite;
+}
+
+/* ── Button ripple ────────────────────────────────────────────── */
+@keyframes rippleOut {
+  0% {
+    transform: scale(0);
+    opacity: 0.35;
+  }
+
+  100% {
+    transform: scale(2.8);
+    opacity: 0;
+  }
+}
+
+.animate-ripple {
+  animation: rippleOut 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* 3D Transform Utilities */
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+}
+
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+/* Gold Neon Text */
+.neon-text-gold {
+  color: #f2ca50;
+  text-shadow: 0 0 15px rgba(242, 202, 80, 0.6),
+    0 0 30px rgba(242, 202, 80, 0.3);
+}
+
+/* Dynamic Pulse Glow Keyframes Override using Theme Primary */
+@keyframes pulse-glow {
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 hsla(var(--primary), 0.55), 0 0 22px hsla(var(--primary), 0.5);
+  }
+
+  50% {
+    box-shadow: 0 0 0 14px hsla(var(--primary), 0), 0 0 32px hsla(var(--primary), 0.7);
+  }
+}
+
+
+/* ── Premium Teal Light Theme Overrides ──────────────────────────────── */
+html.light body {
+  background: #F1F5F9;
+  background-image: none;
+  background-color: #F1F5F9;
+  color: #0F172A;
+}
+
+html.light #root {
+  background: #F1F5F9;
+}
+
+/* Ensure card backgrounds show as white in premium teal */
+html.light .card-panel {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 8px 30px rgba(15, 23, 42, 0.08);
+}
+
+html.light .glass {
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+}
+
+html.light .glass-strong {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(226, 232, 240, 0.95);
+}
+
+html.light .neon-text {
+  color: #14B8B0;
+  text-shadow: none;
+}
+
+html.light .text-soft {
+  color: #64748B;
+}
+
+html.light .text-muted2 {
+  color: #94A3B8;
+}
+
+html.light .bg-panel {
+  background-color: #F1F5F9;
+}
+
+html.light .bg-panel-2 {
+  background-color: #FFFFFF;
+}
+
+html.light .bg-panel-3 {
+  background-color: #F8FAFC;
+}
