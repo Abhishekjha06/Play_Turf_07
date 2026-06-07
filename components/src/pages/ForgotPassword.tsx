@@ -6,6 +6,7 @@ import { getSupabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import heroNight from "@/assets/hero-night-turf.webp";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
@@ -19,6 +20,12 @@ const ForgotPassword = () => {
     }
     setLoading(true);
     try {
+      const isAllowed = await checkRateLimit(email, 'reset', 3, 60);
+      if (!isAllowed) {
+        toast.error("Too many reset attempts. Please try again later.");
+        return;
+      }
+
       const supabase = await getSupabase();
       if (!supabase) throw new Error("Supabase is not configured");
 

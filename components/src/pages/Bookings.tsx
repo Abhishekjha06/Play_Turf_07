@@ -8,6 +8,7 @@ import { api } from "@/lib/api";
 import type { Booking } from "@/data/seed";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/ui/skeleton";
 
 type Tab = "all" | "upcoming" | "past";
 
@@ -15,9 +16,15 @@ const Bookings = () => {
   const { user } = useAuth();
   const [tab, setTab] = useState<Tab>("all");
   const [list, setList] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user) api.myBookings().then(setList);
+    if (user) {
+      setLoading(true);
+      api.myBookings().then(setList).finally(() => setLoading(false));
+    } else {
+      setLoading(false);
+    }
   }, [user]);
 
   const today = new Date().toISOString().slice(0, 10);
@@ -49,7 +56,13 @@ const Bookings = () => {
       </div>
 
       <div className="px-4 mt-5 flex flex-col gap-2">
-        {!user ? (
+        {loading ? (
+          <>
+            <Skeleton className="h-24 w-full rounded-2xl" />
+            <Skeleton className="h-24 w-full rounded-2xl" />
+            <Skeleton className="h-24 w-full rounded-2xl" />
+          </>
+        ) : !user ? (
           <EmptyState
             title="Sign in to see your bookings"
             cta={<Link to="/login" className="bg-primary text-primary-foreground rounded-full px-5 py-2 font-semibold shadow-neon">Sign in</Link>}

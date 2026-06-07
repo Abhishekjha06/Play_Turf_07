@@ -19,6 +19,7 @@ import { api } from "@/lib/api";
 import type { Banner, Booking, Turf, Offer } from "@/data/seed";
 import { toast } from "sonner";
 import { pageEnter, sectionReveal, staggerContainer, fadeSlideUp } from "@/lib/motion";
+import { trackEvent } from "@/lib/analytics";
 
 const cityCoords: Record<string, { lat: number; lon: number }> = {
   Bangalore: { lat: 12.9716, lon: 77.5946 },
@@ -64,6 +65,7 @@ const Home = () => {
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
 
   useEffect(() => {
+    trackEvent("Landing Page Viewed");
     void Promise.all([
       // Banners & bookings still use the legacy api (no service yet)
       api.listBanners().then(setBanners),

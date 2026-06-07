@@ -2,6 +2,7 @@ import { Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useLuxuryTheme } from "@/luxury/LuxuryThemeProvider";
+import { trackEvent } from "@/lib/analytics";
 
 export function SearchBar() {
   const [q, setQ] = useState("");
@@ -23,7 +24,10 @@ export function SearchBar() {
         <Search className="h-5 w-5 text-muted2" />
         <input
           value={q}
-          onChange={(e) => setQ(e.target.value)}
+          onChange={(e) => {
+            setQ(e.target.value);
+            trackEvent("Search Executed", { query: e.target.value });
+          }}
           placeholder="Search for turfs, locations, offers…"
           className="flex-1 bg-transparent outline-none text-sm placeholder:text-muted2"
           data-testid="search-input"

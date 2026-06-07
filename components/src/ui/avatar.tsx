@@ -62,7 +62,7 @@ const AvatarImage = React.forwardRef<HTMLImageElement, AvatarImageProps>(
         onError={handleError}
         onLoad={handleLoad}
         {...props}
-      />
+      loading="lazy" decoding="async" />
     );
   }
 );

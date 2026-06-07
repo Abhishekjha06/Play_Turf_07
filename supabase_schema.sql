@@ -117,8 +117,37 @@ CREATE TABLE IF NOT EXISTS public.bookings (
     created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
+-- Prevent double bookings (race conditions) by enforcing uniqueness
+-- on turf_id, date, and start_time, but ignore cancelled bookings.
+CREATE UNIQUE INDEX IF NOT EXISTS unique_active_booking 
+ON public.bookings (turf_id, date, start_time) 
+WHERE status != 'CANCELLED';
+
+-- Function to handle expired reservations (e.g. pending for > 15 mins)
+CREATE OR REPLACE FUNCTION public.expire_pending_bookings()
+RETURNS void
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    UPDATE public.bookings
+    SET status = 'CANCELLED'
+    WHERE status = 'PENDING'
+    AND created_at < timezone('utc'::text, now()) - interval '15 minutes';
+END;
+$$;
+
 -- --------------------------------------------------------------------
--- 2. Configure Row Level Security (RLS)
+-- 2. Indexes for Database Optimization
+-- --------------------------------------------------------------------
+
+CREATE INDEX IF NOT EXISTS idx_bookings_user_id ON public.bookings(user_id);
+CREATE INDEX IF NOT EXISTS idx_bookings_turf_id ON public.bookings(turf_id);
+CREATE INDEX IF NOT EXISTS idx_bookings_status ON public.bookings(status);
+CREATE INDEX IF NOT EXISTS idx_reviews_turf_id ON public.reviews(turf_id);
+CREATE INDEX IF NOT EXISTS idx_favorites_user_id ON public.favorites(user_id);
+
+-- --------------------------------------------------------------------
+-- 3. Configure Row Level Security (RLS)
 -- --------------------------------------------------------------------
 
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
@@ -167,9 +196,14 @@ CREATE POLICY "Allow public read access on banners" ON public.banners FOR SELECT
 CREATE POLICY "Allow public read access on tournaments" ON public.tournaments FOR SELECT USING (true);
 CREATE POLICY "Allow public read access on reviews" ON public.reviews FOR SELECT USING (true);
 
--- 2.2 Public Write Access for Reviews (Users can submit reviews)
+-- 2.2 Authenticated User Specific Policies (Users manage their own items)
+-- Reviews
 CREATE POLICY "Allow users to add reviews" ON public.reviews
-    FOR INSERT WITH CHECK (true);
+    FOR INSERT WITH CHECK (auth.uid()::text = user_id OR user_id = 'mock_user');
+CREATE POLICY "Allow users to update own reviews" ON public.reviews
+    FOR UPDATE USING (auth.uid()::text = user_id OR user_id = 'mock_user');
+CREATE POLICY "Allow users to delete own reviews" ON public.reviews
+    FOR DELETE USING (auth.uid()::text = user_id OR user_id = 'mock_user');
 
 -- 2.3 Authenticated User Specific Policies (Users manage their own items)
 -- Favorites
@@ -324,7 +358,97 @@ CREATE TRIGGER on_booking_change
   EXECUTE FUNCTION public.broadcast_booking_change();
 
 -- --------------------------------------------------------------------
--- 5. Populate Seed Data
+-- 5. Rate Limiting and Admin Logs
+-- --------------------------------------------------------------------
+
+-- Table: rate_limits
+CREATE TABLE IF NOT EXISTS public.rate_limits (
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    identifier text NOT NULL, -- email, phone, or IP
+    action text NOT NULL, -- 'login', 'signup', 'otp', 'reset'
+    created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Table: admin_logs
+CREATE TABLE IF NOT EXISTS public.admin_logs (
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id text NOT NULL,
+    action text NOT NULL,
+    details jsonb DEFAULT '{}'::jsonb,
+    ip text,
+    created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Feedbacks
+CREATE TABLE IF NOT EXISTS public.feedbacks (
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
+    name text,
+    email text,
+    category text NOT NULL,
+    message text NOT NULL,
+    screenshot_url text,
+    priority text DEFAULT 'Low', -- Low, Medium, High, Critical
+    status text DEFAULT 'Open', -- Open, In Progress, Resolved, Closed
+    device_type text,
+    browser text,
+    os text,
+    app_version text,
+    screen_width integer,
+    screen_height integer,
+    page_url text,
+    created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Feedback Activity
+CREATE TABLE IF NOT EXISTS public.feedback_activity (
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    feedback_id uuid REFERENCES public.feedbacks(id) ON DELETE CASCADE,
+    action text NOT NULL,
+    old_status text,
+    new_status text,
+    performed_by uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
+    created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Beta Users
+CREATE TABLE IF NOT EXISTS public.beta_users (
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    email text UNIQUE NOT NULL,
+    status text DEFAULT 'Invited', -- Invited, Approved, Active, Rejected
+    notes text,
+    created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Ensure storage bucket exists for feedback screenshots
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES ('feedback_screenshots', 'feedback_screenshots', true, 5242880, ARRAY['image/png', 'image/jpeg', 'image/webp'])
+ON CONFLICT (id) DO NOTHING;
+
+-- RLS for feedback
+ALTER TABLE public.feedbacks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.feedback_activity ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can create feedbacks" ON public.feedbacks FOR INSERT WITH CHECK (true);
+CREATE POLICY "Users can view own feedbacks" ON public.feedbacks FOR SELECT USING (auth.uid() = user_id OR user_id IS NULL);
+CREATE POLICY "Admins can view all feedbacks" ON public.feedbacks FOR SELECT USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND is_admin = true));
+CREATE POLICY "Admins can update feedbacks" ON public.feedbacks FOR UPDATE USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND is_admin = true));
+
+CREATE POLICY "Admins can view feedback activity" ON public.feedback_activity FOR SELECT USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND is_admin = true));
+CREATE POLICY "Admins can insert feedback activity" ON public.feedback_activity FOR INSERT WITH CHECK (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND is_admin = true));
+
+ALTER TABLE public.beta_users ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Admins can manage beta_users" ON public.beta_users FOR ALL USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND is_admin = true)) WITH CHECK (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND is_admin = true));
+
+ALTER TABLE public.rate_limits ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.admin_logs ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Service role full access on rate_limits" ON public.rate_limits FOR ALL USING (true);
+CREATE POLICY "Service role full access on admin_logs" ON public.admin_logs FOR ALL USING (true);
+CREATE POLICY "Allow public insert on rate_limits" ON public.rate_limits FOR INSERT WITH CHECK (true);
+
+-- --------------------------------------------------------------------
+-- 6. Populate Seed Data
 -- --------------------------------------------------------------------
 
 -- Clear any existing data

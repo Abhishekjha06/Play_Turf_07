@@ -9,12 +9,15 @@ import { Switch } from "@/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/ui/tabs";
 import { Badge } from "@/ui/badge";
 import { toast } from "sonner";
-import { User, Lock, Bell, History, Save, Eye, EyeOff, Key, LogOut } from "lucide-react";
+import { User, Lock, Bell, History, Save, Eye, EyeOff, Key, LogOut, ChevronRight, MessageSquarePlus } from "lucide-react";
+import { clientProfileUpdateSchema } from "@/lib/validations";
+import { FeedbackModal } from "@/ui/FeedbackModal";
 
 const ClientProfileSettings = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const [feedbackOpen, setFeedbackOpen] = useState(false);
 
     // Profile state
     const [profile, setProfile] = useState({
@@ -55,6 +58,12 @@ const ClientProfileSettings = () => {
     }, [navigate]);
 
     const handleProfileUpdate = () => {
+        const result = clientProfileUpdateSchema.safeParse(profile);
+        if (!result.success) {
+            toast.error(result.error.errors[0].message);
+            return;
+        }
+
         setLoading(true);
         setTimeout(() => {
             toast.success("Profile updated successfully");
@@ -223,6 +232,26 @@ const ClientProfileSettings = () => {
                                     {loading ? "Updating…" : <><Key className="h-4 w-4 mr-2" />Change Password</>}
                                 </Button>
                             </div>
+
+                            {/* Support Section */}
+                            <div className="mt-8">
+                                <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-muted2">Support</h2>
+                                <div className="card-panel flex flex-col overflow-hidden rounded-3xl">
+                                    <button
+                                        onClick={() => setFeedbackOpen(true)}
+                                        className="pressable flex items-center gap-3 border-b border-white/5 p-4 text-left transition-colors hover:bg-white/5"
+                                    >
+                                        <div className="grid h-10 w-10 place-items-center rounded-2xl bg-primary/20 text-primary">
+                                            <MessageSquarePlus className="h-5 w-5" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <p className="font-semibold text-sm">Provide Feedback</p>
+                                            <p className="text-[11px] text-muted2">Report a bug or request a feature</p>
+                                        </div>
+                                        <ChevronRight className="h-4 w-4 text-soft" />
+                                    </button>
+                                </div>
+                            </div>
                         </TabsContent>
 
                         {/* Notifications Tab */}
@@ -285,6 +314,8 @@ const ClientProfileSettings = () => {
                     </Tabs>
                 </div>
             </div>
+
+            <FeedbackModal isOpen={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
         </MobileShell>
     );
 };

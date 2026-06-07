@@ -216,6 +216,7 @@ const StylishCarousel = ({
                       clickToNavigate && !isActive && "cursor-pointer"
                     )}
                     loading="lazy"
+                    decoding="async"
                   />
 
                   {/* Active glow ring */}

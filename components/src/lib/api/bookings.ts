@@ -93,6 +93,18 @@ export async function bookedSlots(turfId: string, date: string): Promise<string[
 export async function payMock(bookingId: string): Promise<Booking> {
   const supabase = await getSupabase();
   if (supabase) {
+    // Audit: Prevent duplicate payments
+    const { data: currentBooking, error: fetchError } = await supabase
+      .from("bookings")
+      .select("status")
+      .eq("id", bookingId)
+      .single();
+      
+    if (fetchError) throw fetchError;
+    if (currentBooking.status === "CONFIRMED") {
+      throw new Error("This booking has already been paid for.");
+    }
+
     const paymentId = uid("pay");
     const { data, error } = await supabase
       .from("bookings")

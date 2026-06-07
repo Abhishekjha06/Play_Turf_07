@@ -4,6 +4,7 @@ import "./index.css";
 
 // MON-1: Core Web Vitals tracking
 import { onCLS, onINP, onLCP } from "web-vitals";
+import { initMonitoring } from "@/lib/monitoring";
 
 function sendToAnalytics(metric: { name: string; value: number; id: string }) {
     // In production, send to your analytics endpoint
@@ -15,5 +16,7 @@ function sendToAnalytics(metric: { name: string; value: number; id: string }) {
 onCLS(sendToAnalytics);
 onINP(sendToAnalytics);
 onLCP(sendToAnalytics);
+
+initMonitoring();
 
 createRoot(document.getElementById("root")!).render(<AppWrapper />);

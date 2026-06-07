@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 import { MobileShell } from "@/layout/MobileShell";
@@ -7,6 +7,11 @@ import { getSupabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import heroNight from "@/assets/hero-night-turf.webp";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { loginSchema, type LoginFormValues } from "@/lib/validations";
+import { checkRateLimit } from "@/lib/rate-limit";
+import { trackEvent, identifyUser } from "@/lib/analytics";
 
 // Mock mode fallback logic is retained for when Supabase is not configured
 import { isMockMode } from "@/lib/api";
@@ -14,24 +19,43 @@ import { signInUser } from "@/lib/auth";
 
 const Login = () => {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const handleSupabaseLogin = async () => {
-    if (!email || !password) {
-      toast.error("Please enter email and password");
-      return;
-    }
+  useEffect(() => {
+    trackEvent("Login Started");
+  }, []);
+
+  const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { email: "", password: "" }
+  });
+
+  const onSubmit = async (data: LoginFormValues) => {
     setLoading(true);
+    const supabase = await getSupabase();
+    if (supabase) {
+      await handleSupabaseLogin(data);
+    } else {
+      await handleMockLogin(data);
+    }
+    setLoading(false);
+  };
+
+  const handleSupabaseLogin = async (formData: LoginFormValues) => {
     try {
+      const isAllowed = await checkRateLimit(formData.email, 'login', 5, 15);
+      if (!isAllowed) {
+        toast.error("Too many login attempts. Please try again later.");
+        return;
+      }
+
       const supabase = await getSupabase();
       if (!supabase) throw new Error("Supabase is not configured");
 
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+        email: formData.email,
+        password: formData.password,
       });
 
       if (error) throw error;
@@ -71,11 +95,15 @@ const Login = () => {
       }
 
       toast.success("Signed in successfully");
+      identifyUser(data.user.id, { email: formData.email });
+      trackEvent("Login", { method: "supabase" });
       navigate("/");
     } catch (err: any) {
-      toast.error(err.message);
-    } finally {
-      setLoading(false);
+      if (err.message === "Invalid login credentials") {
+        toast.error("Invalid credentials. If you just signed up, please check your email to verify your account first.");
+      } else {
+        toast.error(err.message);
+      }
     }
   };
 
@@ -91,16 +119,15 @@ const Login = () => {
         }
       });
       if (error) throw error;
+      trackEvent("Login", { method: "google" });
     } catch (e: any) {
       toast.error(e.message);
     }
   };
 
-  const handleMockLogin = async () => {
-    // Original mock login logic for local testing without Supabase
-    setLoading(true);
+  const handleMockLogin = async (formData: LoginFormValues) => {
     try {
-      const user = await signInUser(email, password);
+      const user = await signInUser(formData.email, formData.password);
       if (user.role === "admin") {
         toast.success("Signed in as admin");
         navigate("/admin");
@@ -109,12 +136,12 @@ const Login = () => {
         navigate("/client/dashboard");
       } else {
         toast.success("Signed in successfully");
+        identifyUser(user.id || user.email, { email: formData.email, role: user.role });
+        trackEvent("Login", { method: "mock" });
         navigate("/");
       }
     } catch (e: any) {
       toast.error(e.message);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -161,19 +188,19 @@ const Login = () => {
               <div className="h-px flex-1 bg-white/10" />
             </div>
 
-            <div className="rounded-3xl border border-white/10 bg-panel-2/80 p-5 text-left">
+            <form onSubmit={handleSubmit(onSubmit)} className="rounded-3xl border border-white/10 bg-panel-2/80 p-5 text-left">
               <input
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                {...register("email")}
                 className="mt-3 h-12 w-full rounded-2xl border border-white/10 bg-background px-4 text-sm outline-none focus:border-primary"
                 placeholder="Email Address"
                 type="email"
               />
+              {errors.email && <p className="text-destructive text-xs mt-1 ml-1">{errors.email.message}</p>}
+              
               <div className="relative mt-3">
                 <input
                   type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  {...register("password")}
                   className="h-12 w-full rounded-2xl border border-white/10 bg-background px-4 pr-10 text-sm outline-none focus:border-primary"
                   placeholder="Password"
                 />
@@ -185,6 +212,7 @@ const Login = () => {
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
+              {errors.password && <p className="text-destructive text-xs mt-1 ml-1">{errors.password.message}</p>}
               
               <div className="flex justify-end mt-2">
                 <Link to="/forgot-password" className="text-xs text-soft hover:text-primary">
@@ -193,13 +221,13 @@ const Login = () => {
               </div>
 
               <button
-                onClick={!isMockMode ? handleSupabaseLogin : handleMockLogin}
+                type="submit"
                 disabled={loading}
                 className="mt-4 w-full bg-foreground text-background font-semibold rounded-full py-3 text-sm pressable disabled:opacity-50"
               >
                 {loading ? "Signing in..." : "Sign In"}
               </button>
-            </div>
+            </form>
             
             <p className="text-sm text-soft mt-4">
               Don't have an account?{" "}

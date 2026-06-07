@@ -252,3 +252,120 @@ export async function listAllBookings(): Promise<Booking[]> {
   if (USE_MOCK) { await delay(100); return getMockBookings(); }
   return http<Booking[]>("/admin/bookings");
 }
+
+export async function listFeedback(): Promise<any[]> {
+  const supabase = await getSupabase();
+  if (supabase) {
+    const { data, error } = await supabase
+      .from("feedbacks")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    return data;
+  }
+  return [];
+}
+
+export async function updateFeedbackStatus(id: string, payload: { status?: string; priority?: string }): Promise<void> {
+  const supabase = await getSupabase();
+  if (supabase) {
+    const { error } = await supabase
+      .from("feedbacks")
+      .update(payload)
+      .eq("id", id);
+    if (error) throw error;
+    
+    // Log activity
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      await supabase.from("feedback_activity").insert({
+        feedback_id: id,
+        action: payload.status ? "Status Update" : "Priority Update",
+        new_status: payload.status || payload.priority,
+        performed_by: user.id
+      });
+    }
+  }
+}
+
+// Beta Users
+export async function listBetaUsers(): Promise<any[]> {
+  const supabase = await getSupabase();
+  if (supabase) {
+    const { data, error } = await supabase
+      .from("beta_users")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    return data;
+  }
+  return [];
+}
+
+export async function inviteBetaUser(email: string, notes?: string): Promise<any> {
+  const supabase = await getSupabase();
+  if (supabase) {
+    const { data, error } = await supabase
+      .from("beta_users")
+      .insert({ email, notes, status: "Invited" })
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  }
+  return null;
+}
+
+export async function updateBetaUserStatus(id: string, status: string): Promise<void> {
+  const supabase = await getSupabase();
+  if (supabase) {
+    const { error } = await supabase
+      .from("beta_users")
+      .update({ status })
+      .eq("id", id);
+    if (error) throw error;
+  }
+}
+
+// System Health
+export async function getSystemHealth(): Promise<{ latency: number; realtime: string; db_status: string }> {
+  const supabase = await getSupabase();
+  if (!supabase) {
+    return { latency: 0, realtime: 'Offline', db_status: 'Offline' };
+  }
+
+  // 1. Measure DB Latency
+  const start = performance.now();
+  const { error } = await supabase.from('turfs').select('id').limit(1);
+  const latency = performance.now() - start;
+
+  // 2. Realtime Status
+  // We can subscribe to a dummy channel to check realtime connectivity
+  let realtimeStatus = 'Connecting...';
+  try {
+    const channel = supabase.channel('health_check');
+    await new Promise<void>((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error("Timeout")), 2000);
+      channel.subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          realtimeStatus = 'Connected';
+          clearTimeout(timeout);
+          resolve();
+        } else if (status === 'CHANNEL_ERROR') {
+          realtimeStatus = 'Error';
+          clearTimeout(timeout);
+          reject(new Error("Channel Error"));
+        }
+      });
+    });
+    await supabase.removeChannel(channel);
+  } catch (e) {
+    realtimeStatus = 'Offline';
+  }
+
+  return {
+    latency: Math.round(latency),
+    realtime: realtimeStatus,
+    db_status: error ? 'Error' : 'Healthy',
+  };
+}

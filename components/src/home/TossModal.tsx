@@ -123,10 +123,10 @@ export function TossModal({ open, onClose }: TossModalProps) {
                                     transition={{ duration: 1.2, ease: "easeInOut" }}
                                 >
                                     <div className="absolute inset-0 backface-hidden">
-                                        <img src={headsImg} alt="Heads" className="w-full h-full object-contain rounded-full" />
+                                        <img src={headsImg} alt="Heads" className="w-full h-full object-contain rounded-full" loading="lazy" decoding="async" />
                                     </div>
                                     <div className="absolute inset-0 backface-hidden" style={{ transform: "rotateY(180deg)" }}>
-                                        <img src={tailsImg} alt="Tails" className="w-full h-full object-contain rounded-full" />
+                                        <img src={tailsImg} alt="Tails" className="w-full h-full object-contain rounded-full" loading="lazy" decoding="async" />
                                     </div>
                                 </motion.div>
                             </div>

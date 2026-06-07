@@ -44,6 +44,31 @@ export async function refreshUser() {
   _loading = false; emit();
 }
 
+// Setup Supabase auth state listener
+getSupabase().then(supabase => {
+  if (supabase) {
+    supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        const user = session?.user;
+        if (user) {
+          _user = {
+            user_id: user.id,
+            email: user.email || "",
+            name: user.user_metadata?.full_name || user.user_metadata?.name || "Player",
+            picture: user.user_metadata?.avatar_url || user.user_metadata?.picture || "",
+            is_admin: user.user_metadata?.role === "admin" || user.user_metadata?.is_admin || false,
+            role: user.user_metadata?.role || "user",
+          };
+          emit();
+        }
+      } else if (event === 'SIGNED_OUT') {
+        _user = null;
+        emit();
+      }
+    });
+  }
+});
+
 export function updateUserAvatar(avatarUrl: string) {
   if (_user) {
     _user = { ..._user, picture: avatarUrl };

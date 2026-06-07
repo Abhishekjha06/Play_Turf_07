@@ -23,6 +23,8 @@ import { useRealtimeSlots } from "@/lib/realtime";
 import { CricketBookingProvider, useCricketBooking } from "@/cricket/BookingContext";
 import { TeamManagerModal } from "@/cricket/components/TeamManagerModal";
 import { ExclusiveTabs } from "@/ui/exclusive-tab";
+import { bookingSchema } from "@/lib/validations";
+import { trackEvent } from "@/lib/analytics";
 
 // Extracted Components
 import { BookingDateSelect } from "@/booking/BookingDateSelect";
@@ -118,11 +120,21 @@ const BookingContent = () => {
         cricket.setAmount(total);
     }, [total, cricket]);
 
+    const initiatePayment = () => {
+        if (!turf || !slot) return;
+        trackEvent("Payment Started", { turfId: turf.id, amount: turf.price_per_hour, date, time: slot });
+    };
+
     const onBack = () => {
         if (step === "confirm") setStep("pick");
         else if (step === "success") navigate("/");
         else if (window.history.length > 1) navigate(-1);
         else navigate("/");
+    };
+
+    const selectSlot = (s: string) => {
+        setSlot(s);
+        trackEvent("Slot Selected", { turfId: turf?.id, date, time: s });
     };
 
     const proceed = async () => {
@@ -141,23 +153,45 @@ const BookingContent = () => {
         }
         if (!turf) return;
 
+        const validationResult = bookingSchema.safeParse({
+            date,
+            startTime: slot,
+            hours
+        });
+
+        if (!validationResult.success) {
+            toast.error(validationResult.error.errors[0].message);
+            return;
+        }
+
         try {
             const b = await api.createBooking({ turf_id: turf.id, date, start_time: slot, hours });
             setBooking(b);
             setStep("confirm");
+            trackEvent("Booking Start", { turf_id: turf.id, turf_name: turf.name, amount: total, hours });
         } catch (e) {
             toast.error((e as Error).message);
         }
     };
 
     const pay = async () => {
-        if (!booking) return;
+        if (!booking || !turf || !slot) return;
         try {
+            initiatePayment();
             const b = await api.payMock(booking.id);
             setBooking(b);
             cricket.completeBooking();
             setStep("success");
-            toast.success("Payment successful");
+            
+            trackEvent("Payment Success", { bookingId: b.id, amount: turf.price_per_hour });
+            trackEvent("Booking Complete", {
+              turfId: turf.id,
+              bookingId: b.id,
+              date,
+              time: slot,
+              amount: turf.price_per_hour,
+            });
+            toast.success("Payment successful!");
         } catch (e) {
             toast.error((e as Error).message);
         }
@@ -272,7 +306,7 @@ const BookingContent = () => {
                             <Card className="p-4 flex flex-col gap-3.5 transition-all duration-300" bordered hoverable>
                                 <div className="flex gap-4">
                                     <div className="relative w-28 h-20 rounded-2xl overflow-hidden border border-border/20 flex-shrink-0">
-                                        <img src={turf.image} alt={turf.name} className="w-full h-full object-cover" />
+                                        <img src={turf.image} alt={turf.name} className="w-full h-full object-cover" loading="lazy" decoding="async" />
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-1.5">
@@ -326,7 +360,7 @@ const BookingContent = () => {
                             handleNextDate={handleNextDate}
                             slots={slots}
                             slot={slot}
-                            setSlot={setSlot}
+                            setSlot={selectSlot}
                             bookedSlots={bookedSlots}
                             hours={hours}
                             setHours={setHours}

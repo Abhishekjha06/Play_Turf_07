@@ -5,6 +5,7 @@ import { BackButton } from "@/layout/BackButton";
 import { api } from "@/lib/api";
 import type { Turf } from "@/data/seed";
 import type { Review } from "@/data/seed";
+import { trackEvent } from "@/lib/analytics";
 import { Star, MapPin, Clock, Heart, Share2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
@@ -51,7 +52,12 @@ const TurfDetail = () => {
   }, [carouselApi, slideCount]);
 
   useEffect(() => {
-    if (id) api.getTurf(id).then(setTurf).catch((e) => setError((e as Error).message));
+    if (id) {
+      api.getTurf(id).then((data) => {
+        setTurf(data);
+        trackEvent("Turf Viewed", { turf_id: data.id, turf_name: data.name });
+      }).catch((e) => setError((e as Error).message));
+    }
   }, [id]);
 
   useEffect(() => {

@@ -91,7 +91,7 @@ export function BookingConfirmPay({
             >
                 <div className="flex items-center gap-3.5 pb-2 border-b border-[var(--border-primary)]">
                     <div className="relative w-16 h-16 rounded-xl overflow-hidden border border-border/20 flex-shrink-0">
-                        <img src={turf.image} alt={turf.name} className="w-full h-full object-cover" />
+                        <img src={turf.image} alt={turf.name} className="w-full h-full object-cover" loading="lazy" decoding="async" />
                     </div>
                     <div>
                         <p className="font-black text-foreground font-display text-sm">{turf.name}</p>

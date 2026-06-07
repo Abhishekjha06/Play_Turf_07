@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 import { MobileShell } from "@/layout/MobileShell";
@@ -7,53 +7,46 @@ import { getSupabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import heroNight from "@/assets/hero-night-turf.webp";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { signupSchema, type SignupFormValues } from "@/lib/validations";
+import { checkRateLimit } from "@/lib/rate-limit";
+import { trackEvent, identifyUser } from "@/lib/analytics";
 
 const Signup = () => {
   const navigate = useNavigate();
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const handleSignup = async () => {
-    if (!fullName || !email || !phone || !password || !confirmPassword) {
-      toast.error("Please fill in all fields");
-      return;
-    }
+  useEffect(() => {
+    trackEvent("Signup Started");
+  }, []);
 
-    if (password !== confirmPassword) {
-      toast.error("Passwords do not match");
-      return;
-    }
+  const { register, handleSubmit, formState: { errors } } = useForm<SignupFormValues>({
+    resolver: zodResolver(signupSchema),
+    defaultValues: { fullName: "", email: "", phone: "", password: "", confirmPassword: "" }
+  });
 
-    if (!/^[0-9]{10}$/.test(phone)) {
-      toast.error("Phone number must be exactly 10 digits");
-      return;
-    }
-
-    // Basic password strength check as requested
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
-    if (!passwordRegex.test(password)) {
-      toast.error("Password must be at least 8 chars, 1 uppercase, 1 lowercase, 1 number");
-      return;
-    }
-
+  const onSubmit = async (data: SignupFormValues) => {
     setLoading(true);
     try {
+      const isAllowed = await checkRateLimit(data.email, 'signup', 5, 60);
+      if (!isAllowed) {
+        toast.error("Too many signup attempts. Please try again later.");
+        return;
+      }
+
       const supabase = await getSupabase();
       if (!supabase) throw new Error("Supabase is not configured.");
 
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
+      const { data: authData, error } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
         options: {
           data: {
-            full_name: fullName,
-            phone: phone,
+            full_name: data.fullName,
+            phone: data.phone,
           },
           emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
@@ -62,6 +55,11 @@ const Signup = () => {
       if (error) {
         throw error;
       }
+
+      if (authData.user) {
+        identifyUser(authData.user.id, { email: data.email, full_name: data.fullName });
+      }
+      trackEvent("Signup Completed", { method: "email" });
 
       toast.success("Verification email sent! Please check your inbox.");
       navigate("/login");
@@ -96,33 +94,41 @@ const Signup = () => {
           className="mt-8 w-full max-w-sm"
         >
           <div className="space-y-4">
-            <div className="rounded-3xl border border-white/10 bg-panel-2/80 p-5 text-left space-y-4">
-              <input
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                className="h-12 w-full rounded-2xl border border-white/10 bg-background px-4 text-sm outline-none focus:border-primary"
-                placeholder="Full Name"
-                type="text"
-              />
-              <input
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="h-12 w-full rounded-2xl border border-white/10 bg-background px-4 text-sm outline-none focus:border-primary"
-                placeholder="Email Address"
-                type="email"
-              />
-              <input
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="h-12 w-full rounded-2xl border border-white/10 bg-background px-4 text-sm outline-none focus:border-primary"
-                placeholder="Phone Number (10 digits)"
-                type="tel"
-              />
+            <form onSubmit={handleSubmit(onSubmit)} className="rounded-3xl border border-white/10 bg-panel-2/80 p-5 text-left space-y-4">
+              <div>
+                <input
+                  {...register("fullName")}
+                  className="h-12 w-full rounded-2xl border border-white/10 bg-background px-4 text-sm outline-none focus:border-primary"
+                  placeholder="Full Name"
+                  type="text"
+                />
+                {errors.fullName && <p className="text-destructive text-xs mt-1 ml-1">{errors.fullName.message}</p>}
+              </div>
+
+              <div>
+                <input
+                  {...register("email")}
+                  className="h-12 w-full rounded-2xl border border-white/10 bg-background px-4 text-sm outline-none focus:border-primary"
+                  placeholder="Email Address"
+                  type="email"
+                />
+                {errors.email && <p className="text-destructive text-xs mt-1 ml-1">{errors.email.message}</p>}
+              </div>
+
+              <div>
+                <input
+                  {...register("phone")}
+                  className="h-12 w-full rounded-2xl border border-white/10 bg-background px-4 text-sm outline-none focus:border-primary"
+                  placeholder="Phone Number (10 digits)"
+                  type="tel"
+                />
+                {errors.phone && <p className="text-destructive text-xs mt-1 ml-1">{errors.phone.message}</p>}
+              </div>
+
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  {...register("password")}
                   className="h-12 w-full rounded-2xl border border-white/10 bg-background px-4 pr-10 text-sm outline-none focus:border-primary"
                   placeholder="Password"
                 />
@@ -134,12 +140,12 @@ const Signup = () => {
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
+              {errors.password && <p className="text-destructive text-xs mt-1 ml-1">{errors.password.message}</p>}
 
               <div className="relative">
                 <input
                   type={showConfirmPassword ? "text" : "password"}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  {...register("confirmPassword")}
                   className="h-12 w-full rounded-2xl border border-white/10 bg-background px-4 pr-10 text-sm outline-none focus:border-primary"
                   placeholder="Confirm Password"
                 />
@@ -151,15 +157,16 @@ const Signup = () => {
                   {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
+              {errors.confirmPassword && <p className="text-destructive text-xs mt-1 ml-1">{errors.confirmPassword.message}</p>}
               
               <button
-                onClick={handleSignup}
+                type="submit"
                 disabled={loading}
                 className="mt-4 w-full bg-primary text-primary-foreground font-semibold rounded-full py-3 text-sm pressable disabled:opacity-50"
               >
                 {loading ? "Signing up..." : "Sign Up"}
               </button>
-            </div>
+            </form>
 
             <p className="text-sm text-soft mt-6">
               Already have an account?{" "}

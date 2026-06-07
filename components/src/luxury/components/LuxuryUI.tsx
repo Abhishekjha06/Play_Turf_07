@@ -360,7 +360,7 @@ export function LuxuryAvatar({
                 alt={name}
                 className={`rounded-full object-cover ${className}`}
                 style={{ width: size, height: size }}
-            />
+            loading="lazy" decoding="async" />
         );
     }
 

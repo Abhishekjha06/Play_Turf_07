@@ -28,6 +28,7 @@ import * as bookingsModule from "./api/bookings";
 import * as tournamentsModule from "./api/tournaments";
 import * as authModule from "./api/auth";
 import * as adminModule from "./api/admin";
+import * as feedbackModule from "./api/feedback";
 
 export const api = {
   // Banners
@@ -87,6 +88,10 @@ export const api = {
   getBooking: (id: string) => bookingsModule.getBooking(id),
   cancelBooking: (id: string) => bookingsModule.cancelBooking(id),
 
+  // Feedback
+  submitFeedback: (payload: feedbackModule.FeedbackPayload) => feedbackModule.submitFeedback(payload, () => authModule.me()),
+  uploadScreenshot: (file: File) => feedbackModule.uploadScreenshot(file),
+
   // Admin
   admin: {
     addTurf: (t: Partial<Turf>) => adminModule.addTurf(t, seedTurfs),
@@ -99,6 +104,12 @@ export const api = {
     addTournament: (t: Partial<Tournament>) => adminModule.addTournament(t),
     deleteTournament: (id: string) => adminModule.deleteTournament(id),
     listAllBookings: () => adminModule.listAllBookings(),
+    listFeedback: () => adminModule.listFeedback(),
+    updateFeedbackStatus: (id: string, payload: any) => adminModule.updateFeedbackStatus(id, payload),
+    listBetaUsers: () => adminModule.listBetaUsers(),
+    inviteBetaUser: (email: string, notes?: string) => adminModule.inviteBetaUser(email, notes),
+    updateBetaUserStatus: (id: string, status: string) => adminModule.updateBetaUserStatus(id, status),
+    getSystemHealth: () => adminModule.getSystemHealth(),
   },
 };
 
