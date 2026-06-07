@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import type { Turf } from "@/data/seed";
 import React, { useEffect, useState, useRef } from "react";
 import { api } from "@/lib/api";
-import { Card, CardContent, CardTitle, CardDescription, CardFooter } from "@/ui/Card";
+import { Card, CardContent, CardTitle, CardDescription, CardFooter } from "@/ui/card";
 import { toast } from "sonner";
 import { useLuxuryTheme } from "@/luxury/LuxuryThemeProvider";
 import { cardLift, cardLiftDark, ease } from "@/lib/motion";

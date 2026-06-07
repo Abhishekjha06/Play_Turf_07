@@ -1,6 +1,6 @@
 import React from "react";
 import { Calendar, Clock, IndianRupee, ShieldCheck } from "lucide-react";
-import { Card } from "@/ui/Card";
+import { Card } from "@/ui/card";
 import { SlideToConfirm } from "@/ui/SlideToConfirm";
 import { VsBadge } from "@/cricket/components/VsBadge";
 import { TeamAvatar } from "@/cricket/components/TeamAvatar";

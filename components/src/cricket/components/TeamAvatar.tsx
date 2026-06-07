@@ -1,7 +1,7 @@
 import { Shield, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Team } from "../types";
-import { Avatar, AvatarFallback, AvatarImage } from "@/ui/Avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/ui/avatar";
 
 export function TeamAvatar({ team, size = "md", className }: { team?: Team; size?: "sm" | "md" | "lg"; className?: string }) {
   const dimensions = size === "lg" ? "h-24 w-24 text-2xl" : size === "sm" ? "h-10 w-10 text-xs" : "h-16 w-16 text-lg";

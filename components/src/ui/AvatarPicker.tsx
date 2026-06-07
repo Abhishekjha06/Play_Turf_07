@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Avatar, AvatarImage } from "@/ui/Avatar";
+import { Avatar, AvatarImage } from "@/ui/avatar";
 import { updateUserAvatar } from "@/lib/auth";
 import { X, Check, Upload } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";

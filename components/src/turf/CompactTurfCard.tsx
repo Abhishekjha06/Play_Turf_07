@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import type { Turf } from "@/data/seed";
 import { api } from "@/lib/api";
-import { Card, CardContent, CardTitle, CardDescription } from "@/ui/Card";
+import { Card, CardContent, CardTitle, CardDescription } from "@/ui/card";
 import { useLuxuryTheme } from "@/luxury/LuxuryThemeProvider";
 
 export function CompactTurfCard({

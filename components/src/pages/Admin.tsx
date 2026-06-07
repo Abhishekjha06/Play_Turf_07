@@ -9,7 +9,6 @@ import { api } from "@/lib/api";
 import type { Banner, Booking, Offer, Tournament, Turf } from "@/data/seed";
 import { cn } from "@/lib/utils";
 import { getLockedAccounts, resetLockout, getTimeUntilUnlocked, formatTimeRemaining } from "@/lib/admin-attempt-tracker";
-import { SimpleList } from "./admin/SimpleList";
 import { FeedbackDashboard } from "./admin/FeedbackDashboard";
 import { BetaTestingDashboard } from "./admin/BetaTestingDashboard";
 import { SystemHealthDashboard } from "./admin/SystemHealthDashboard";

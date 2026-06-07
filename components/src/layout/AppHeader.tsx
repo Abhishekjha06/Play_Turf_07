@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
 import { useLuxuryTheme } from "@/luxury/LuxuryThemeProvider";
 import { CoolThemeToggle } from "@/ui/CoolThemeToggle";
-import { Avatar, AvatarImage } from "@/ui/Avatar";
+import { Avatar, AvatarImage } from "@/ui/avatar";
 import { AvatarPicker } from "@/ui/AvatarPicker";
 import { useState } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";

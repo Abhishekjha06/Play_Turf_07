@@ -15,7 +15,7 @@ import {
 import { toast } from "sonner";
 import { MobileShell } from "@/layout/MobileShell";
 import { BackButton } from "@/layout/BackButton";
-import { Card } from "@/ui/Card";
+import { Card } from "@/ui/card";
 import { api } from "@/lib/api";
 import type { Booking as TurfBooking, Turf } from "@/data/seed";
 import { useAuth } from "@/hooks/use-auth";
