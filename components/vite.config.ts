@@ -55,6 +55,7 @@ export default defineConfig(({ mode }) => ({
   build: {
     // BUILD-1: Terser minification with console/debugger removal in production
     minify: "terser",
+    chunkSizeWarningLimit: 1000,
     terserOptions: {
       compress: {
         drop_console: mode === "production",

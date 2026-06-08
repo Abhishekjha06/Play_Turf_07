@@ -3,7 +3,7 @@
   "framework": "vite",
   "buildCommand": "cd components && npm run build",
   "outputDirectory": "components/dist",
-  "installCommand": "cd components && npm install --production=false && chmod +x node_modules/.bin/vite",
+  "installCommand": "cd components && npm install && chmod +x node_modules/.bin/vite",
   "rewrites": [
     {
       "source": "/(.*)",
