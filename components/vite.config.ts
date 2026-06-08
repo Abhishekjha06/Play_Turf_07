@@ -65,11 +65,20 @@ export default defineConfig(({ mode }) => ({
       output: {
         manualChunks(id) {
           // Core React — smallest, most stable, best cached
-          if (id.includes("node_modules/react/") || id.includes("node_modules/react-dom/")) {
+          if (
+            id.includes("node_modules/react/") ||
+            id.includes("node_modules/react-dom/") ||
+            id.includes("node_modules/scheduler/") ||
+            id.includes("node_modules/object-assign/")
+          ) {
             return "vendor-react";
           }
           // Router
-          if (id.includes("node_modules/react-router-dom/") || id.includes("node_modules/@remix-run/")) {
+          if (
+            id.includes("node_modules/react-router/") ||
+            id.includes("node_modules/react-router-dom/") ||
+            id.includes("node_modules/@remix-run/")
+          ) {
             return "vendor-router";
           }
           // Radix UI — large, very stable, rarely changes
