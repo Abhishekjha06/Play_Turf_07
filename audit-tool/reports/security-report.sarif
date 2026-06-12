@@ -1,0 +1,321 @@
+{
+  "$schema": "https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0-rtm.5.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "Enterprise Security & Code Auditor",
+          "version": "1.0.0",
+          "rules": []
+        }
+      },
+      "results": [
+        {
+          "ruleId": "SEC-GIT-SECURITY",
+          "message": {
+            "text": "Missing .gitignore file in root directory"
+          },
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".gitignore"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SEC-SENSITIVE-FILE-LEAK",
+          "message": {
+            "text": "Sensitive config/key/backup file \".env\" exposed in project repository directory."
+          },
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".env"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SEC-HARDCODED-SECRET",
+          "message": {
+            "text": "Potential aws_secret hardcoded secret/credential detected: \"@/componen...\""
+          },
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "App.tsx"
+                },
+                "region": {
+                  "startLine": 12
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SEC-REACT-SECURITY",
+          "message": {
+            "text": "Sensitive token stored inside browser web storage API."
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src\\lib\\api\\auth.ts"
+                },
+                "region": {
+                  "startLine": 172
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SEC-REACT-SECURITY",
+          "message": {
+            "text": "Sensitive token stored inside browser web storage API."
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src\\lib\\api\\auth.ts"
+                },
+                "region": {
+                  "startLine": 186
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SEC-REACT-SECURITY",
+          "message": {
+            "text": "Sensitive token stored inside browser web storage API."
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src\\lib\\api\\auth.ts"
+                },
+                "region": {
+                  "startLine": 202
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SEC-REACT-SECURITY",
+          "message": {
+            "text": "Sensitive token stored inside browser web storage API."
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src\\pages\\ClientLogin.tsx"
+                },
+                "region": {
+                  "startLine": 24
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SEC-REACT-SECURITY",
+          "message": {
+            "text": "Sensitive token stored inside browser web storage API."
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src\\pages\\ClientLogin.tsx"
+                },
+                "region": {
+                  "startLine": 40
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SEC-XSS-RISK",
+          "message": {
+            "text": "dangerouslySetInnerHTML attribute detected in JSX component."
+          },
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src\\ui\\chart.tsx"
+                },
+                "region": {
+                  "startLine": 70
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SEC-PATH-TRAVERSAL",
+          "message": {
+            "text": "Relative path resolution containing '..' navigation in path.resolve"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "vite.config.ts"
+                },
+                "region": {
+                  "startLine": 115
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SEC-DEPENDENCY-VULNERABILITY",
+          "message": {
+            "text": "Vulnerable dependency \"brace-expansion\" detected. Range: 5.0.2 - 5.0.5"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "package.json"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SEC-DEPENDENCY-VULNERABILITY",
+          "message": {
+            "text": "Vulnerable dependency \"esbuild\" detected. Range: <=0.24.2"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "package.json"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SEC-DEPENDENCY-VULNERABILITY",
+          "message": {
+            "text": "Vulnerable dependency \"react-router\" detected. Range: 6.7.0 - 6.30.3"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "package.json"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SEC-DEPENDENCY-VULNERABILITY",
+          "message": {
+            "text": "Vulnerable dependency \"react-router-dom\" detected. Range: 6.6.3-pre.0 - 6.30.3"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "package.json"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SEC-DEPENDENCY-VULNERABILITY",
+          "message": {
+            "text": "Vulnerable dependency \"vite\" detected. Range: <=6.4.1"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "package.json"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SEC-DEPENDENCY-VULNERABILITY",
+          "message": {
+            "text": "Vulnerable dependency \"vitest\" detected. Range: <3.2.6"
+          },
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "package.json"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

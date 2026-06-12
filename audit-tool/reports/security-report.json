@@ -1,0 +1,539 @@
+{
+  "generatedAt": "2026-06-12T16:51:38.559Z",
+  "summary": {
+    "totalFindings": 16,
+    "critical": 3,
+    "high": 2,
+    "medium": 11,
+    "low": 0,
+    "importIssues": 44
+  },
+  "findings": [
+    {
+      "severity": "HIGH",
+      "category": "Git Security",
+      "file": ".gitignore",
+      "line": 0,
+      "description": "Missing .gitignore file in root directory",
+      "recommendation": "Create a .gitignore file to prevent checking in sensitive assets."
+    },
+    {
+      "severity": "CRITICAL",
+      "category": "Sensitive File Leak",
+      "file": ".env",
+      "line": 0,
+      "description": "Sensitive config/key/backup file \".env\" exposed in project repository directory.",
+      "recommendation": "Move config files to a secure path outside of version control or encrypt private resources."
+    },
+    {
+      "severity": "CRITICAL",
+      "category": "Hardcoded Secret",
+      "file": "App.tsx",
+      "line": 12,
+      "description": "Potential aws_secret hardcoded secret/credential detected: \"@/componen...\"",
+      "recommendation": "Move sensitive credentials, secrets, or tokens to environment variables."
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "React Security",
+      "file": "src\\lib\\api\\auth.ts",
+      "line": 172,
+      "description": "Sensitive token stored inside browser web storage API.",
+      "recommendation": "Store sensitive authorization session states in secure, HttpOnly, SameSite cookies."
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "React Security",
+      "file": "src\\lib\\api\\auth.ts",
+      "line": 186,
+      "description": "Sensitive token stored inside browser web storage API.",
+      "recommendation": "Store sensitive authorization session states in secure, HttpOnly, SameSite cookies."
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "React Security",
+      "file": "src\\lib\\api\\auth.ts",
+      "line": 202,
+      "description": "Sensitive token stored inside browser web storage API.",
+      "recommendation": "Store sensitive authorization session states in secure, HttpOnly, SameSite cookies."
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "React Security",
+      "file": "src\\pages\\ClientLogin.tsx",
+      "line": 24,
+      "description": "Sensitive token stored inside browser web storage API.",
+      "recommendation": "Store sensitive authorization session states in secure, HttpOnly, SameSite cookies."
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "React Security",
+      "file": "src\\pages\\ClientLogin.tsx",
+      "line": 40,
+      "description": "Sensitive token stored inside browser web storage API.",
+      "recommendation": "Store sensitive authorization session states in secure, HttpOnly, SameSite cookies."
+    },
+    {
+      "severity": "HIGH",
+      "category": "XSS Risk",
+      "file": "src\\ui\\chart.tsx",
+      "line": 70,
+      "description": "dangerouslySetInnerHTML attribute detected in JSX component.",
+      "recommendation": "Sanitize content before rendering or use safer components."
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "Path Traversal",
+      "file": "vite.config.ts",
+      "line": 115,
+      "description": "Relative path resolution containing '..' navigation in path.resolve",
+      "recommendation": "Use safe path resolution and sanitize input variables using path.normalize or custom sandbox checkers."
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "Dependency Vulnerability",
+      "file": "package.json",
+      "line": 1,
+      "description": "Vulnerable dependency \"brace-expansion\" detected. Range: 5.0.2 - 5.0.5",
+      "recommendation": "Run \"npm audit fix\" or upgrade \"brace-expansion\" to a secure version."
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "Dependency Vulnerability",
+      "file": "package.json",
+      "line": 1,
+      "description": "Vulnerable dependency \"esbuild\" detected. Range: <=0.24.2",
+      "recommendation": "Run \"npm audit fix\" or upgrade \"esbuild\" to a secure version."
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "Dependency Vulnerability",
+      "file": "package.json",
+      "line": 1,
+      "description": "Vulnerable dependency \"react-router\" detected. Range: 6.7.0 - 6.30.3",
+      "recommendation": "Run \"npm audit fix\" or upgrade \"react-router\" to a secure version."
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "Dependency Vulnerability",
+      "file": "package.json",
+      "line": 1,
+      "description": "Vulnerable dependency \"react-router-dom\" detected. Range: 6.6.3-pre.0 - 6.30.3",
+      "recommendation": "Run \"npm audit fix\" or upgrade \"react-router-dom\" to a secure version."
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "Dependency Vulnerability",
+      "file": "package.json",
+      "line": 1,
+      "description": "Vulnerable dependency \"vite\" detected. Range: <=6.4.1",
+      "recommendation": "Run \"npm audit fix\" or upgrade \"vite\" to a secure version."
+    },
+    {
+      "severity": "CRITICAL",
+      "category": "Dependency Vulnerability",
+      "file": "package.json",
+      "line": 1,
+      "description": "Vulnerable dependency \"vitest\" detected. Range: <3.2.6",
+      "recommendation": "Run \"npm audit fix\" or upgrade \"vitest\" to a secure version."
+    }
+  ],
+  "imports": [
+    {
+      "type": "MISSING_IMPORT",
+      "file": "App.tsx",
+      "line": 2,
+      "importPath": "@tanstack/react-query",
+      "description": "Import target \"@tanstack/react-query\" cannot be resolved.",
+      "recommendation": "Verify the import relative path reference or check alias mapping configuration.",
+      "isFixable": false
+    },
+    {
+      "type": "MISSING_IMPORT",
+      "file": "eslint.config.js",
+      "line": 1,
+      "importPath": "@eslint/js",
+      "description": "Import target \"@eslint/js\" cannot be resolved.",
+      "recommendation": "Verify the import relative path reference or check alias mapping configuration.",
+      "isFixable": false
+    },
+    {
+      "type": "MISSING_IMPORT",
+      "file": "src\\lib\\analytics.ts",
+      "line": 2,
+      "importPath": "@sentry/react",
+      "description": "Import target \"@sentry/react\" cannot be resolved.",
+      "recommendation": "Verify the import relative path reference or check alias mapping configuration.",
+      "isFixable": false
+    },
+    {
+      "type": "MISSING_IMPORT",
+      "file": "src\\lib\\monitoring.ts",
+      "line": 1,
+      "importPath": "@sentry/react",
+      "description": "Import target \"@sentry/react\" cannot be resolved.",
+      "recommendation": "Verify the import relative path reference or check alias mapping configuration.",
+      "isFixable": false
+    },
+    {
+      "type": "MISSING_IMPORT",
+      "file": "src\\lib\\realtime.ts",
+      "line": 24,
+      "importPath": "@supabase/supabase-js",
+      "description": "Import target \"@supabase/supabase-js\" cannot be resolved.",
+      "recommendation": "Verify the import relative path reference or check alias mapping configuration.",
+      "isFixable": false
+    },
+    {
+      "type": "MISSING_IMPORT",
+      "file": "src\\lib\\supabase.ts",
+      "line": 1,
+      "importPath": "@supabase/supabase-js",
+      "description": "Import target \"@supabase/supabase-js\" cannot be resolved.",
+      "recommendation": "Verify the import relative path reference or check alias mapping configuration.",
+      "isFixable": false
+    },
+    {
+      "type": "MISSING_IMPORT",
+      "file": "src\\pages\\Login.tsx",
+      "line": 11,
+      "importPath": "@hookform/resolvers/zod",
+      "description": "Import target \"@hookform/resolvers/zod\" cannot be resolved.",
+      "recommendation": "Verify the import relative path reference or check alias mapping configuration.",
+      "isFixable": false
+    },
+    {
+      "type": "MISSING_IMPORT",
+      "file": "src\\pages\\Offers.tsx",
+      "line": 1,
+      "importPath": "@tanstack/react-query",
+      "description": "Import target \"@tanstack/react-query\" cannot be resolved.",
+      "recommendation": "Verify the import relative path reference or check alias mapping configuration.",
+      "isFixable": false
+    },
+    {
+      "type": "MISSING_IMPORT",
+      "file": "src\\pages\\Signup.tsx",
+      "line": 11,
+      "importPath": "@hookform/resolvers/zod",
+      "description": "Import target \"@hookform/resolvers/zod\" cannot be resolved.",
+      "recommendation": "Verify the import relative path reference or check alias mapping configuration.",
+      "isFixable": false
+    },
+    {
+      "type": "MISSING_IMPORT",
+      "file": "src\\test\\setup.ts",
+      "line": 1,
+      "importPath": "@testing-library/jest-dom",
+      "description": "Import target \"@testing-library/jest-dom\" cannot be resolved.",
+      "recommendation": "Verify the import relative path reference or check alias mapping configuration.",
+      "isFixable": false
+    },
+    {
+      "type": "MISSING_IMPORT",
+      "file": "src\\ui\\accordion.tsx",
+      "line": 2,
+      "importPath": "@radix-ui/react-accordion",
+      "description": "Import target \"@radix-ui/react-accordion\" cannot be resolved.",
+      "recommendation": "Verify the import relative path reference or check alias mapping configuration.",
+      "isFixable": false
+    },
+    {
+      "type": "MISSING_IMPORT",
+      "file": "src\\ui\\alert-dialog.tsx",
+      "line": 2,
+      "importPath": "@radix-ui/react-alert-dialog",
+      "description": "Import target \"@radix-ui/react-alert-dialog\" cannot be resolved.",
+      "recommendation": "Verify the import relative path reference or check alias mapping configuration.",
+      "isFixable": false
+    },
+    {
+      "type": "MISSING_IMPORT",
+      "file": "src\\ui\\aspect-ratio.tsx",
+      "line": 1,
+      "importPath": "@radix-ui/react-aspect-ratio",
+      "description": "Import target \"@radix-ui/react-aspect-ratio\" cannot be resolved.",
+      "recommendation": "Verify the import relative path reference or check alias mapping configuration.",
+      "isFixable": false
+    },
+    {
+      "type": "MISSING_IMPORT",
+      "file": "src\\ui\\breadcrumb.tsx",
+      "line": 2,
+      "importPath": "@radix-ui/react-slot",
+      "description": "Import target \"@radix-ui/react-slot\" cannot be resolved.",
+      "recommendation": "Verify the import relative path reference or check alias mapping configuration.",
+      "isFixable": false
+    },
+    {
+      "type": "MISSING_IMPORT",
+      "file": "src\\ui\\button.tsx",
+      "line": 2,
+      "importPath": "@radix-ui/react-slot",
+      "description": "Import target \"@radix-ui/react-slot\" cannot be resolved.",
+      "recommendation": "Verify the import relative path reference or check alias mapping configuration.",
+      "isFixable": false
+    },
+    {
+      "type": "MISSING_IMPORT",
+      "file": "src\\ui\\checkbox.tsx",
+      "line": 2,
+      "importPath": "@radix-ui/react-checkbox",
+      "description": "Import target \"@radix-ui/react-checkbox\" cannot be resolved.",
+      "recommendation": "Verify the import relative path reference or check alias mapping configuration.",
+      "isFixable": false
+    },
+    {
+      "type": "MISSING_IMPORT",
+      "file": "src\\ui\\collapsible.tsx",
+      "line": 1,
+      "importPath": "@radix-ui/react-collapsible",
+      "description": "Import target \"@radix-ui/react-collapsible\" cannot be resolved.",
+      "recommendation": "Verify the import relative path reference or check alias mapping configuration.",
+      "isFixable": false
+    },
+    {
+      "type": "MISSING_IMPORT",
+      "file": "src\\ui\\command.tsx",
+      "line": 2,
+      "importPath": "@radix-ui/react-dialog",
+      "description": "Import target \"@radix-ui/react-dialog\" cannot be resolved.",
+      "recommendation": "Verify the import relative path reference or check alias mapping configuration.",
+      "isFixable": false
+    },
+    {
+      "type": "MISSING_IMPORT",
+      "file": "src\\ui\\context-menu.tsx",
+      "line": 2,
+      "importPath": "@radix-ui/react-context-menu",
+      "description": "Import target \"@radix-ui/react-context-menu\" cannot be resolved.",
+      "recommendation": "Verify the import relative path reference or check alias mapping configuration.",
+      "isFixable": false
+    },
+    {
+      "type": "MISSING_IMPORT",
+      "file": "src\\ui\\dialog.tsx",
+      "line": 2,
+      "importPath": "@radix-ui/react-dialog",
+      "description": "Import target \"@radix-ui/react-dialog\" cannot be resolved.",
+      "recommendation": "Verify the import relative path reference or check alias mapping configuration.",
+      "isFixable": false
+    },
+    {
+      "type": "MISSING_IMPORT",
+      "file": "src\\ui\\dropdown-menu.tsx",
+      "line": 2,
+      "importPath": "@radix-ui/react-dropdown-menu",
+      "description": "Import target \"@radix-ui/react-dropdown-menu\" cannot be resolved.",
+      "recommendation": "Verify the import relative path reference or check alias mapping configuration.",
+      "isFixable": false
+    },
+    {
+      "type": "MISSING_IMPORT",
+      "file": "src\\ui\\form.tsx",
+      "line": 2,
+      "importPath": "@radix-ui/react-label",
+      "description": "Import target \"@radix-ui/react-label\" cannot be resolved.",
+      "recommendation": "Verify the import relative path reference or check alias mapping configuration.",
+      "isFixable": false
+    },
+    {
+      "type": "MISSING_IMPORT",
+      "file": "src\\ui\\form.tsx",
+      "line": 3,
+      "importPath": "@radix-ui/react-slot",
+      "description": "Import target \"@radix-ui/react-slot\" cannot be resolved.",
+      "recommendation": "Verify the import relative path reference or check alias mapping configuration.",
+      "isFixable": false
+    },
+    {
+      "type": "MISSING_IMPORT",
+      "file": "src\\ui\\hover-card.tsx",
+      "line": 2,
+      "importPath": "@radix-ui/react-hover-card",
+      "description": "Import target \"@radix-ui/react-hover-card\" cannot be resolved.",
+      "recommendation": "Verify the import relative path reference or check alias mapping configuration.",
+      "isFixable": false
+    },
+    {
+      "type": "MISSING_IMPORT",
+      "file": "src\\ui\\label.tsx",
+      "line": 2,
+      "importPath": "@radix-ui/react-label",
+      "description": "Import target \"@radix-ui/react-label\" cannot be resolved.",
+      "recommendation": "Verify the import relative path reference or check alias mapping configuration.",
+      "isFixable": false
+    },
+    {
+      "type": "MISSING_IMPORT",
+      "file": "src\\ui\\menubar.tsx",
+      "line": 2,
+      "importPath": "@radix-ui/react-menubar",
+      "description": "Import target \"@radix-ui/react-menubar\" cannot be resolved.",
+      "recommendation": "Verify the import relative path reference or check alias mapping configuration.",
+      "isFixable": false
+    },
+    {
+      "type": "MISSING_IMPORT",
+      "file": "src\\ui\\navigation-menu.tsx",
+      "line": 2,
+      "importPath": "@radix-ui/react-navigation-menu",
+      "description": "Import target \"@radix-ui/react-navigation-menu\" cannot be resolved.",
+      "recommendation": "Verify the import relative path reference or check alias mapping configuration.",
+      "isFixable": false
+    },
+    {
+      "type": "MISSING_IMPORT",
+      "file": "src\\ui\\popover.tsx",
+      "line": 2,
+      "importPath": "@radix-ui/react-popover",
+      "description": "Import target \"@radix-ui/react-popover\" cannot be resolved.",
+      "recommendation": "Verify the import relative path reference or check alias mapping configuration.",
+      "isFixable": false
+    },
+    {
+      "type": "MISSING_IMPORT",
+      "file": "src\\ui\\progress.tsx",
+      "line": 2,
+      "importPath": "@radix-ui/react-progress",
+      "description": "Import target \"@radix-ui/react-progress\" cannot be resolved.",
+      "recommendation": "Verify the import relative path reference or check alias mapping configuration.",
+      "isFixable": false
+    },
+    {
+      "type": "MISSING_IMPORT",
+      "file": "src\\ui\\radio-group.tsx",
+      "line": 2,
+      "importPath": "@radix-ui/react-radio-group",
+      "description": "Import target \"@radix-ui/react-radio-group\" cannot be resolved.",
+      "recommendation": "Verify the import relative path reference or check alias mapping configuration.",
+      "isFixable": false
+    },
+    {
+      "type": "MISSING_IMPORT",
+      "file": "src\\ui\\scroll-area.tsx",
+      "line": 2,
+      "importPath": "@radix-ui/react-scroll-area",
+      "description": "Import target \"@radix-ui/react-scroll-area\" cannot be resolved.",
+      "recommendation": "Verify the import relative path reference or check alias mapping configuration.",
+      "isFixable": false
+    },
+    {
+      "type": "MISSING_IMPORT",
+      "file": "src\\ui\\select.tsx",
+      "line": 2,
+      "importPath": "@radix-ui/react-select",
+      "description": "Import target \"@radix-ui/react-select\" cannot be resolved.",
+      "recommendation": "Verify the import relative path reference or check alias mapping configuration.",
+      "isFixable": false
+    },
+    {
+      "type": "MISSING_IMPORT",
+      "file": "src\\ui\\separator.tsx",
+      "line": 2,
+      "importPath": "@radix-ui/react-separator",
+      "description": "Import target \"@radix-ui/react-separator\" cannot be resolved.",
+      "recommendation": "Verify the import relative path reference or check alias mapping configuration.",
+      "isFixable": false
+    },
+    {
+      "type": "MISSING_IMPORT",
+      "file": "src\\ui\\sheet.tsx",
+      "line": 1,
+      "importPath": "@radix-ui/react-dialog",
+      "description": "Import target \"@radix-ui/react-dialog\" cannot be resolved.",
+      "recommendation": "Verify the import relative path reference or check alias mapping configuration.",
+      "isFixable": false
+    },
+    {
+      "type": "MISSING_IMPORT",
+      "file": "src\\ui\\sidebar.tsx",
+      "line": 2,
+      "importPath": "@radix-ui/react-slot",
+      "description": "Import target \"@radix-ui/react-slot\" cannot be resolved.",
+      "recommendation": "Verify the import relative path reference or check alias mapping configuration.",
+      "isFixable": false
+    },
+    {
+      "type": "MISSING_IMPORT",
+      "file": "src\\ui\\slider.tsx",
+      "line": 2,
+      "importPath": "@radix-ui/react-slider",
+      "description": "Import target \"@radix-ui/react-slider\" cannot be resolved.",
+      "recommendation": "Verify the import relative path reference or check alias mapping configuration.",
+      "isFixable": false
+    },
+    {
+      "type": "MISSING_IMPORT",
+      "file": "src\\ui\\switch.tsx",
+      "line": 2,
+      "importPath": "@radix-ui/react-switch",
+      "description": "Import target \"@radix-ui/react-switch\" cannot be resolved.",
+      "recommendation": "Verify the import relative path reference or check alias mapping configuration.",
+      "isFixable": false
+    },
+    {
+      "type": "MISSING_IMPORT",
+      "file": "src\\ui\\tabs.tsx",
+      "line": 2,
+      "importPath": "@radix-ui/react-tabs",
+      "description": "Import target \"@radix-ui/react-tabs\" cannot be resolved.",
+      "recommendation": "Verify the import relative path reference or check alias mapping configuration.",
+      "isFixable": false
+    },
+    {
+      "type": "MISSING_IMPORT",
+      "file": "src\\ui\\toast.tsx",
+      "line": 2,
+      "importPath": "@radix-ui/react-toast",
+      "description": "Import target \"@radix-ui/react-toast\" cannot be resolved.",
+      "recommendation": "Verify the import relative path reference or check alias mapping configuration.",
+      "isFixable": false
+    },
+    {
+      "type": "MISSING_IMPORT",
+      "file": "src\\ui\\toggle-group.tsx",
+      "line": 2,
+      "importPath": "@radix-ui/react-toggle-group",
+      "description": "Import target \"@radix-ui/react-toggle-group\" cannot be resolved.",
+      "recommendation": "Verify the import relative path reference or check alias mapping configuration.",
+      "isFixable": false
+    },
+    {
+      "type": "MISSING_IMPORT",
+      "file": "src\\ui\\toggle.tsx",
+      "line": 2,
+      "importPath": "@radix-ui/react-toggle",
+      "description": "Import target \"@radix-ui/react-toggle\" cannot be resolved.",
+      "recommendation": "Verify the import relative path reference or check alias mapping configuration.",
+      "isFixable": false
+    },
+    {
+      "type": "MISSING_IMPORT",
+      "file": "src\\ui\\tooltip.tsx",
+      "line": 2,
+      "importPath": "@radix-ui/react-tooltip",
+      "description": "Import target \"@radix-ui/react-tooltip\" cannot be resolved.",
+      "recommendation": "Verify the import relative path reference or check alias mapping configuration.",
+      "isFixable": false
+    },
+    {
+      "type": "MISSING_IMPORT",
+      "file": "vite.config.ts",
+      "line": 2,
+      "importPath": "@vitejs/plugin-react-swc",
+      "description": "Import target \"@vitejs/plugin-react-swc\" cannot be resolved.",
+      "recommendation": "Verify the import relative path reference or check alias mapping configuration.",
+      "isFixable": false
+    },
+    {
+      "type": "MISSING_IMPORT",
+      "file": "vitest.config.ts",
+      "line": 2,
+      "importPath": "@vitejs/plugin-react-swc",
+      "description": "Import target \"@vitejs/plugin-react-swc\" cannot be resolved.",
+      "recommendation": "Verify the import relative path reference or check alias mapping configuration.",
+      "isFixable": false
+    }
+  ]
+}

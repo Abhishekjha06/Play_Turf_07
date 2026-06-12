@@ -1,0 +1,852 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enterprise Code Audit Report</title>
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --card-bg: #1e293b;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --critical: #ef4444;
+      --high: #f97316;
+      --medium: #eab308;
+      --low: #3b82f6;
+    }
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: 'Outfit', sans-serif;
+      margin: 0;
+      padding: 24px;
+    }
+    header {
+      border-bottom: 1px solid #334155;
+      padding-bottom: 16px;
+      margin-bottom: 24px;
+    }
+    h1 { margin: 0; font-size: 2rem; background: linear-gradient(to right, #60a5fa, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .meta-summary {
+      display: flex;
+      gap: 16px;
+      margin-top: 8px;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .stat-card {
+      background-color: var(--card-bg);
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 16px;
+      text-align: center;
+    }
+    .stat-num { font-size: 2rem; font-weight: bold; margin-top: 8px; }
+    .stat-num.critical { color: var(--critical); }
+    .stat-num.high { color: var(--high); }
+    .stat-num.medium { color: var(--medium); }
+    .stat-num.low { color: var(--low); }
+    .section-title { font-size: 1.5rem; margin-bottom: 16px; border-left: 4px solid #3b82f6; padding-left: 8px; }
+    .card {
+      background-color: var(--card-bg);
+      border-radius: 8px;
+      margin-bottom: 16px;
+      border-left: 6px solid var(--text-muted);
+      overflow: hidden;
+    }
+    .card.severity-critical { border-left-color: var(--critical); }
+    .card.severity-high { border-left-color: var(--high); }
+    .card.severity-medium { border-left-color: var(--medium); }
+    .card.severity-low { border-left-color: var(--low); }
+    .card.import-card { border-left-color: var(--medium); }
+    .card-header {
+      padding: 12px 16px;
+      background-color: rgba(255,255,255,0.02);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .badge {
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+    .badge-critical { background-color: var(--critical); color: #fff; }
+    .badge-high { background-color: var(--high); color: #fff; }
+    .badge-medium { background-color: var(--medium); color: #000; }
+    .badge-low { background-color: var(--low); color: #fff; }
+    .badge-warning { background-color: var(--medium); color: #000; }
+    .file-info { margin-left: auto; font-size: 0.85rem; color: var(--text-muted); }
+    .card-body { padding: 16px; }
+    .description { margin: 0 0 8px 0; font-size: 0.95rem; }
+    .recommendation { margin: 0; font-size: 0.9rem; color: var(--text-muted); }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Enterprise Code Audit Dashboard</h1>
+    <div class="meta-summary">
+      <span>Files Scanned: <strong>214</strong></span> |
+      <span>Scan Duration: <strong>7634ms</strong></span> |
+      <span>Report Generated: <strong>6/12/2026</strong></span>
+    </div>
+  </header>
+
+  <div class="grid">
+    <div class="stat-card">
+      <div>CRITICAL</div>
+      <div class="stat-num critical">3</div>
+    </div>
+    <div class="stat-card">
+      <div>HIGH</div>
+      <div class="stat-num high">2</div>
+    </div>
+    <div class="stat-card">
+      <div>MEDIUM</div>
+      <div class="stat-num medium">11</div>
+    </div>
+    <div class="stat-card">
+      <div>LOW</div>
+      <div class="stat-num low">0</div>
+    </div>
+  </div>
+
+  <h2 class="section-title">Vulnerability Findings</h2>
+  
+    <div class="card severity-high">
+      <div class="card-header">
+        <span class="badge badge-high">HIGH</span>
+        <strong>Git Security</strong>
+        <span class="file-info">.gitignore:0</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Missing .gitignore file in root directory</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Create a .gitignore file to prevent checking in sensitive assets.</p>
+      </div>
+    </div>
+  
+    <div class="card severity-critical">
+      <div class="card-header">
+        <span class="badge badge-critical">CRITICAL</span>
+        <strong>Sensitive File Leak</strong>
+        <span class="file-info">.env:0</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Sensitive config/key/backup file ".env" exposed in project repository directory.</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Move config files to a secure path outside of version control or encrypt private resources.</p>
+      </div>
+    </div>
+  
+    <div class="card severity-critical">
+      <div class="card-header">
+        <span class="badge badge-critical">CRITICAL</span>
+        <strong>Hardcoded Secret</strong>
+        <span class="file-info">App.tsx:12</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Potential aws_secret hardcoded secret/credential detected: "@/componen..."</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Move sensitive credentials, secrets, or tokens to environment variables.</p>
+      </div>
+    </div>
+  
+    <div class="card severity-medium">
+      <div class="card-header">
+        <span class="badge badge-medium">MEDIUM</span>
+        <strong>React Security</strong>
+        <span class="file-info">src\lib\api\auth.ts:172</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Sensitive token stored inside browser web storage API.</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Store sensitive authorization session states in secure, HttpOnly, SameSite cookies.</p>
+      </div>
+    </div>
+  
+    <div class="card severity-medium">
+      <div class="card-header">
+        <span class="badge badge-medium">MEDIUM</span>
+        <strong>React Security</strong>
+        <span class="file-info">src\lib\api\auth.ts:186</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Sensitive token stored inside browser web storage API.</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Store sensitive authorization session states in secure, HttpOnly, SameSite cookies.</p>
+      </div>
+    </div>
+  
+    <div class="card severity-medium">
+      <div class="card-header">
+        <span class="badge badge-medium">MEDIUM</span>
+        <strong>React Security</strong>
+        <span class="file-info">src\lib\api\auth.ts:202</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Sensitive token stored inside browser web storage API.</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Store sensitive authorization session states in secure, HttpOnly, SameSite cookies.</p>
+      </div>
+    </div>
+  
+    <div class="card severity-medium">
+      <div class="card-header">
+        <span class="badge badge-medium">MEDIUM</span>
+        <strong>React Security</strong>
+        <span class="file-info">src\pages\ClientLogin.tsx:24</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Sensitive token stored inside browser web storage API.</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Store sensitive authorization session states in secure, HttpOnly, SameSite cookies.</p>
+      </div>
+    </div>
+  
+    <div class="card severity-medium">
+      <div class="card-header">
+        <span class="badge badge-medium">MEDIUM</span>
+        <strong>React Security</strong>
+        <span class="file-info">src\pages\ClientLogin.tsx:40</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Sensitive token stored inside browser web storage API.</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Store sensitive authorization session states in secure, HttpOnly, SameSite cookies.</p>
+      </div>
+    </div>
+  
+    <div class="card severity-high">
+      <div class="card-header">
+        <span class="badge badge-high">HIGH</span>
+        <strong>XSS Risk</strong>
+        <span class="file-info">src\ui\chart.tsx:70</span>
+      </div>
+      <div class="card-body">
+        <p class="description">dangerouslySetInnerHTML attribute detected in JSX component.</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Sanitize content before rendering or use safer components.</p>
+      </div>
+    </div>
+  
+    <div class="card severity-medium">
+      <div class="card-header">
+        <span class="badge badge-medium">MEDIUM</span>
+        <strong>Path Traversal</strong>
+        <span class="file-info">vite.config.ts:115</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Relative path resolution containing '..' navigation in path.resolve</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Use safe path resolution and sanitize input variables using path.normalize or custom sandbox checkers.</p>
+      </div>
+    </div>
+  
+    <div class="card severity-medium">
+      <div class="card-header">
+        <span class="badge badge-medium">MEDIUM</span>
+        <strong>Dependency Vulnerability</strong>
+        <span class="file-info">package.json:1</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Vulnerable dependency "brace-expansion" detected. Range: 5.0.2 - 5.0.5</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Run "npm audit fix" or upgrade "brace-expansion" to a secure version.</p>
+      </div>
+    </div>
+  
+    <div class="card severity-medium">
+      <div class="card-header">
+        <span class="badge badge-medium">MEDIUM</span>
+        <strong>Dependency Vulnerability</strong>
+        <span class="file-info">package.json:1</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Vulnerable dependency "esbuild" detected. Range: <=0.24.2</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Run "npm audit fix" or upgrade "esbuild" to a secure version.</p>
+      </div>
+    </div>
+  
+    <div class="card severity-medium">
+      <div class="card-header">
+        <span class="badge badge-medium">MEDIUM</span>
+        <strong>Dependency Vulnerability</strong>
+        <span class="file-info">package.json:1</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Vulnerable dependency "react-router" detected. Range: 6.7.0 - 6.30.3</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Run "npm audit fix" or upgrade "react-router" to a secure version.</p>
+      </div>
+    </div>
+  
+    <div class="card severity-medium">
+      <div class="card-header">
+        <span class="badge badge-medium">MEDIUM</span>
+        <strong>Dependency Vulnerability</strong>
+        <span class="file-info">package.json:1</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Vulnerable dependency "react-router-dom" detected. Range: 6.6.3-pre.0 - 6.30.3</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Run "npm audit fix" or upgrade "react-router-dom" to a secure version.</p>
+      </div>
+    </div>
+  
+    <div class="card severity-medium">
+      <div class="card-header">
+        <span class="badge badge-medium">MEDIUM</span>
+        <strong>Dependency Vulnerability</strong>
+        <span class="file-info">package.json:1</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Vulnerable dependency "vite" detected. Range: <=6.4.1</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Run "npm audit fix" or upgrade "vite" to a secure version.</p>
+      </div>
+    </div>
+  
+    <div class="card severity-critical">
+      <div class="card-header">
+        <span class="badge badge-critical">CRITICAL</span>
+        <strong>Dependency Vulnerability</strong>
+        <span class="file-info">package.json:1</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Vulnerable dependency "vitest" detected. Range: <3.2.6</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Run "npm audit fix" or upgrade "vitest" to a secure version.</p>
+      </div>
+    </div>
+  
+
+  <h2 class="section-title">Import & Alias Findings</h2>
+  
+    <div class="card import-card">
+      <div class="card-header">
+        <span class="badge badge-warning">MISSING_IMPORT</span>
+        <strong>Import Issue</strong>
+        <span class="file-info">App.tsx:2</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Import target "@tanstack/react-query" cannot be resolved.</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Verify the import relative path reference or check alias mapping configuration.</p>
+      </div>
+    </div>
+  
+    <div class="card import-card">
+      <div class="card-header">
+        <span class="badge badge-warning">MISSING_IMPORT</span>
+        <strong>Import Issue</strong>
+        <span class="file-info">eslint.config.js:1</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Import target "@eslint/js" cannot be resolved.</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Verify the import relative path reference or check alias mapping configuration.</p>
+      </div>
+    </div>
+  
+    <div class="card import-card">
+      <div class="card-header">
+        <span class="badge badge-warning">MISSING_IMPORT</span>
+        <strong>Import Issue</strong>
+        <span class="file-info">src\lib\analytics.ts:2</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Import target "@sentry/react" cannot be resolved.</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Verify the import relative path reference or check alias mapping configuration.</p>
+      </div>
+    </div>
+  
+    <div class="card import-card">
+      <div class="card-header">
+        <span class="badge badge-warning">MISSING_IMPORT</span>
+        <strong>Import Issue</strong>
+        <span class="file-info">src\lib\monitoring.ts:1</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Import target "@sentry/react" cannot be resolved.</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Verify the import relative path reference or check alias mapping configuration.</p>
+      </div>
+    </div>
+  
+    <div class="card import-card">
+      <div class="card-header">
+        <span class="badge badge-warning">MISSING_IMPORT</span>
+        <strong>Import Issue</strong>
+        <span class="file-info">src\lib\realtime.ts:24</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Import target "@supabase/supabase-js" cannot be resolved.</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Verify the import relative path reference or check alias mapping configuration.</p>
+      </div>
+    </div>
+  
+    <div class="card import-card">
+      <div class="card-header">
+        <span class="badge badge-warning">MISSING_IMPORT</span>
+        <strong>Import Issue</strong>
+        <span class="file-info">src\lib\supabase.ts:1</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Import target "@supabase/supabase-js" cannot be resolved.</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Verify the import relative path reference or check alias mapping configuration.</p>
+      </div>
+    </div>
+  
+    <div class="card import-card">
+      <div class="card-header">
+        <span class="badge badge-warning">MISSING_IMPORT</span>
+        <strong>Import Issue</strong>
+        <span class="file-info">src\pages\Login.tsx:11</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Import target "@hookform/resolvers/zod" cannot be resolved.</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Verify the import relative path reference or check alias mapping configuration.</p>
+      </div>
+    </div>
+  
+    <div class="card import-card">
+      <div class="card-header">
+        <span class="badge badge-warning">MISSING_IMPORT</span>
+        <strong>Import Issue</strong>
+        <span class="file-info">src\pages\Offers.tsx:1</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Import target "@tanstack/react-query" cannot be resolved.</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Verify the import relative path reference or check alias mapping configuration.</p>
+      </div>
+    </div>
+  
+    <div class="card import-card">
+      <div class="card-header">
+        <span class="badge badge-warning">MISSING_IMPORT</span>
+        <strong>Import Issue</strong>
+        <span class="file-info">src\pages\Signup.tsx:11</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Import target "@hookform/resolvers/zod" cannot be resolved.</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Verify the import relative path reference or check alias mapping configuration.</p>
+      </div>
+    </div>
+  
+    <div class="card import-card">
+      <div class="card-header">
+        <span class="badge badge-warning">MISSING_IMPORT</span>
+        <strong>Import Issue</strong>
+        <span class="file-info">src\test\setup.ts:1</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Import target "@testing-library/jest-dom" cannot be resolved.</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Verify the import relative path reference or check alias mapping configuration.</p>
+      </div>
+    </div>
+  
+    <div class="card import-card">
+      <div class="card-header">
+        <span class="badge badge-warning">MISSING_IMPORT</span>
+        <strong>Import Issue</strong>
+        <span class="file-info">src\ui\accordion.tsx:2</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Import target "@radix-ui/react-accordion" cannot be resolved.</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Verify the import relative path reference or check alias mapping configuration.</p>
+      </div>
+    </div>
+  
+    <div class="card import-card">
+      <div class="card-header">
+        <span class="badge badge-warning">MISSING_IMPORT</span>
+        <strong>Import Issue</strong>
+        <span class="file-info">src\ui\alert-dialog.tsx:2</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Import target "@radix-ui/react-alert-dialog" cannot be resolved.</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Verify the import relative path reference or check alias mapping configuration.</p>
+      </div>
+    </div>
+  
+    <div class="card import-card">
+      <div class="card-header">
+        <span class="badge badge-warning">MISSING_IMPORT</span>
+        <strong>Import Issue</strong>
+        <span class="file-info">src\ui\aspect-ratio.tsx:1</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Import target "@radix-ui/react-aspect-ratio" cannot be resolved.</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Verify the import relative path reference or check alias mapping configuration.</p>
+      </div>
+    </div>
+  
+    <div class="card import-card">
+      <div class="card-header">
+        <span class="badge badge-warning">MISSING_IMPORT</span>
+        <strong>Import Issue</strong>
+        <span class="file-info">src\ui\breadcrumb.tsx:2</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Import target "@radix-ui/react-slot" cannot be resolved.</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Verify the import relative path reference or check alias mapping configuration.</p>
+      </div>
+    </div>
+  
+    <div class="card import-card">
+      <div class="card-header">
+        <span class="badge badge-warning">MISSING_IMPORT</span>
+        <strong>Import Issue</strong>
+        <span class="file-info">src\ui\button.tsx:2</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Import target "@radix-ui/react-slot" cannot be resolved.</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Verify the import relative path reference or check alias mapping configuration.</p>
+      </div>
+    </div>
+  
+    <div class="card import-card">
+      <div class="card-header">
+        <span class="badge badge-warning">MISSING_IMPORT</span>
+        <strong>Import Issue</strong>
+        <span class="file-info">src\ui\checkbox.tsx:2</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Import target "@radix-ui/react-checkbox" cannot be resolved.</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Verify the import relative path reference or check alias mapping configuration.</p>
+      </div>
+    </div>
+  
+    <div class="card import-card">
+      <div class="card-header">
+        <span class="badge badge-warning">MISSING_IMPORT</span>
+        <strong>Import Issue</strong>
+        <span class="file-info">src\ui\collapsible.tsx:1</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Import target "@radix-ui/react-collapsible" cannot be resolved.</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Verify the import relative path reference or check alias mapping configuration.</p>
+      </div>
+    </div>
+  
+    <div class="card import-card">
+      <div class="card-header">
+        <span class="badge badge-warning">MISSING_IMPORT</span>
+        <strong>Import Issue</strong>
+        <span class="file-info">src\ui\command.tsx:2</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Import target "@radix-ui/react-dialog" cannot be resolved.</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Verify the import relative path reference or check alias mapping configuration.</p>
+      </div>
+    </div>
+  
+    <div class="card import-card">
+      <div class="card-header">
+        <span class="badge badge-warning">MISSING_IMPORT</span>
+        <strong>Import Issue</strong>
+        <span class="file-info">src\ui\context-menu.tsx:2</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Import target "@radix-ui/react-context-menu" cannot be resolved.</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Verify the import relative path reference or check alias mapping configuration.</p>
+      </div>
+    </div>
+  
+    <div class="card import-card">
+      <div class="card-header">
+        <span class="badge badge-warning">MISSING_IMPORT</span>
+        <strong>Import Issue</strong>
+        <span class="file-info">src\ui\dialog.tsx:2</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Import target "@radix-ui/react-dialog" cannot be resolved.</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Verify the import relative path reference or check alias mapping configuration.</p>
+      </div>
+    </div>
+  
+    <div class="card import-card">
+      <div class="card-header">
+        <span class="badge badge-warning">MISSING_IMPORT</span>
+        <strong>Import Issue</strong>
+        <span class="file-info">src\ui\dropdown-menu.tsx:2</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Import target "@radix-ui/react-dropdown-menu" cannot be resolved.</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Verify the import relative path reference or check alias mapping configuration.</p>
+      </div>
+    </div>
+  
+    <div class="card import-card">
+      <div class="card-header">
+        <span class="badge badge-warning">MISSING_IMPORT</span>
+        <strong>Import Issue</strong>
+        <span class="file-info">src\ui\form.tsx:2</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Import target "@radix-ui/react-label" cannot be resolved.</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Verify the import relative path reference or check alias mapping configuration.</p>
+      </div>
+    </div>
+  
+    <div class="card import-card">
+      <div class="card-header">
+        <span class="badge badge-warning">MISSING_IMPORT</span>
+        <strong>Import Issue</strong>
+        <span class="file-info">src\ui\form.tsx:3</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Import target "@radix-ui/react-slot" cannot be resolved.</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Verify the import relative path reference or check alias mapping configuration.</p>
+      </div>
+    </div>
+  
+    <div class="card import-card">
+      <div class="card-header">
+        <span class="badge badge-warning">MISSING_IMPORT</span>
+        <strong>Import Issue</strong>
+        <span class="file-info">src\ui\hover-card.tsx:2</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Import target "@radix-ui/react-hover-card" cannot be resolved.</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Verify the import relative path reference or check alias mapping configuration.</p>
+      </div>
+    </div>
+  
+    <div class="card import-card">
+      <div class="card-header">
+        <span class="badge badge-warning">MISSING_IMPORT</span>
+        <strong>Import Issue</strong>
+        <span class="file-info">src\ui\label.tsx:2</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Import target "@radix-ui/react-label" cannot be resolved.</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Verify the import relative path reference or check alias mapping configuration.</p>
+      </div>
+    </div>
+  
+    <div class="card import-card">
+      <div class="card-header">
+        <span class="badge badge-warning">MISSING_IMPORT</span>
+        <strong>Import Issue</strong>
+        <span class="file-info">src\ui\menubar.tsx:2</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Import target "@radix-ui/react-menubar" cannot be resolved.</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Verify the import relative path reference or check alias mapping configuration.</p>
+      </div>
+    </div>
+  
+    <div class="card import-card">
+      <div class="card-header">
+        <span class="badge badge-warning">MISSING_IMPORT</span>
+        <strong>Import Issue</strong>
+        <span class="file-info">src\ui\navigation-menu.tsx:2</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Import target "@radix-ui/react-navigation-menu" cannot be resolved.</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Verify the import relative path reference or check alias mapping configuration.</p>
+      </div>
+    </div>
+  
+    <div class="card import-card">
+      <div class="card-header">
+        <span class="badge badge-warning">MISSING_IMPORT</span>
+        <strong>Import Issue</strong>
+        <span class="file-info">src\ui\popover.tsx:2</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Import target "@radix-ui/react-popover" cannot be resolved.</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Verify the import relative path reference or check alias mapping configuration.</p>
+      </div>
+    </div>
+  
+    <div class="card import-card">
+      <div class="card-header">
+        <span class="badge badge-warning">MISSING_IMPORT</span>
+        <strong>Import Issue</strong>
+        <span class="file-info">src\ui\progress.tsx:2</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Import target "@radix-ui/react-progress" cannot be resolved.</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Verify the import relative path reference or check alias mapping configuration.</p>
+      </div>
+    </div>
+  
+    <div class="card import-card">
+      <div class="card-header">
+        <span class="badge badge-warning">MISSING_IMPORT</span>
+        <strong>Import Issue</strong>
+        <span class="file-info">src\ui\radio-group.tsx:2</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Import target "@radix-ui/react-radio-group" cannot be resolved.</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Verify the import relative path reference or check alias mapping configuration.</p>
+      </div>
+    </div>
+  
+    <div class="card import-card">
+      <div class="card-header">
+        <span class="badge badge-warning">MISSING_IMPORT</span>
+        <strong>Import Issue</strong>
+        <span class="file-info">src\ui\scroll-area.tsx:2</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Import target "@radix-ui/react-scroll-area" cannot be resolved.</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Verify the import relative path reference or check alias mapping configuration.</p>
+      </div>
+    </div>
+  
+    <div class="card import-card">
+      <div class="card-header">
+        <span class="badge badge-warning">MISSING_IMPORT</span>
+        <strong>Import Issue</strong>
+        <span class="file-info">src\ui\select.tsx:2</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Import target "@radix-ui/react-select" cannot be resolved.</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Verify the import relative path reference or check alias mapping configuration.</p>
+      </div>
+    </div>
+  
+    <div class="card import-card">
+      <div class="card-header">
+        <span class="badge badge-warning">MISSING_IMPORT</span>
+        <strong>Import Issue</strong>
+        <span class="file-info">src\ui\separator.tsx:2</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Import target "@radix-ui/react-separator" cannot be resolved.</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Verify the import relative path reference or check alias mapping configuration.</p>
+      </div>
+    </div>
+  
+    <div class="card import-card">
+      <div class="card-header">
+        <span class="badge badge-warning">MISSING_IMPORT</span>
+        <strong>Import Issue</strong>
+        <span class="file-info">src\ui\sheet.tsx:1</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Import target "@radix-ui/react-dialog" cannot be resolved.</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Verify the import relative path reference or check alias mapping configuration.</p>
+      </div>
+    </div>
+  
+    <div class="card import-card">
+      <div class="card-header">
+        <span class="badge badge-warning">MISSING_IMPORT</span>
+        <strong>Import Issue</strong>
+        <span class="file-info">src\ui\sidebar.tsx:2</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Import target "@radix-ui/react-slot" cannot be resolved.</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Verify the import relative path reference or check alias mapping configuration.</p>
+      </div>
+    </div>
+  
+    <div class="card import-card">
+      <div class="card-header">
+        <span class="badge badge-warning">MISSING_IMPORT</span>
+        <strong>Import Issue</strong>
+        <span class="file-info">src\ui\slider.tsx:2</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Import target "@radix-ui/react-slider" cannot be resolved.</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Verify the import relative path reference or check alias mapping configuration.</p>
+      </div>
+    </div>
+  
+    <div class="card import-card">
+      <div class="card-header">
+        <span class="badge badge-warning">MISSING_IMPORT</span>
+        <strong>Import Issue</strong>
+        <span class="file-info">src\ui\switch.tsx:2</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Import target "@radix-ui/react-switch" cannot be resolved.</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Verify the import relative path reference or check alias mapping configuration.</p>
+      </div>
+    </div>
+  
+    <div class="card import-card">
+      <div class="card-header">
+        <span class="badge badge-warning">MISSING_IMPORT</span>
+        <strong>Import Issue</strong>
+        <span class="file-info">src\ui\tabs.tsx:2</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Import target "@radix-ui/react-tabs" cannot be resolved.</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Verify the import relative path reference or check alias mapping configuration.</p>
+      </div>
+    </div>
+  
+    <div class="card import-card">
+      <div class="card-header">
+        <span class="badge badge-warning">MISSING_IMPORT</span>
+        <strong>Import Issue</strong>
+        <span class="file-info">src\ui\toast.tsx:2</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Import target "@radix-ui/react-toast" cannot be resolved.</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Verify the import relative path reference or check alias mapping configuration.</p>
+      </div>
+    </div>
+  
+    <div class="card import-card">
+      <div class="card-header">
+        <span class="badge badge-warning">MISSING_IMPORT</span>
+        <strong>Import Issue</strong>
+        <span class="file-info">src\ui\toggle-group.tsx:2</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Import target "@radix-ui/react-toggle-group" cannot be resolved.</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Verify the import relative path reference or check alias mapping configuration.</p>
+      </div>
+    </div>
+  
+    <div class="card import-card">
+      <div class="card-header">
+        <span class="badge badge-warning">MISSING_IMPORT</span>
+        <strong>Import Issue</strong>
+        <span class="file-info">src\ui\toggle.tsx:2</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Import target "@radix-ui/react-toggle" cannot be resolved.</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Verify the import relative path reference or check alias mapping configuration.</p>
+      </div>
+    </div>
+  
+    <div class="card import-card">
+      <div class="card-header">
+        <span class="badge badge-warning">MISSING_IMPORT</span>
+        <strong>Import Issue</strong>
+        <span class="file-info">src\ui\tooltip.tsx:2</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Import target "@radix-ui/react-tooltip" cannot be resolved.</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Verify the import relative path reference or check alias mapping configuration.</p>
+      </div>
+    </div>
+  
+    <div class="card import-card">
+      <div class="card-header">
+        <span class="badge badge-warning">MISSING_IMPORT</span>
+        <strong>Import Issue</strong>
+        <span class="file-info">vite.config.ts:2</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Import target "@vitejs/plugin-react-swc" cannot be resolved.</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Verify the import relative path reference or check alias mapping configuration.</p>
+      </div>
+    </div>
+  
+    <div class="card import-card">
+      <div class="card-header">
+        <span class="badge badge-warning">MISSING_IMPORT</span>
+        <strong>Import Issue</strong>
+        <span class="file-info">vitest.config.ts:2</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Import target "@vitejs/plugin-react-swc" cannot be resolved.</p>
+        <p class="recommendation"><strong>Recommendation:</strong> Verify the import relative path reference or check alias mapping configuration.</p>
+      </div>
+    </div>
+  
+</body>
+</html>
+  

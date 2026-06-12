@@ -1,0 +1,42 @@
+name: Enterprise Security & Code Audit
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  security-audit:
+    name: Code & Security Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-dir: '20'
+          cache: 'npm'
+          cache-dependency-path: './components/package-lock.json'
+
+      - name: Install dependencies
+        run: |
+          npm ci --prefix components
+          npm ci --prefix audit-tool
+
+      - name: Build Audit Tool
+        run: |
+          npm run build --prefix audit-tool
+
+      - name: Run Full Audit Scan
+        run: |
+          npm run audit:full --prefix audit-tool
+
+      - name: Upload SARIF Report
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: audit-tool/reports/security-report.sarif
