@@ -1,10 +1,11 @@
-import React from "react";
-import { Calendar, Clock, IndianRupee, ShieldCheck } from "lucide-react";
+import React, { useState } from "react";
+import { Calendar, Clock, IndianRupee, ShieldCheck, X } from "lucide-react";
 import { Card } from "@/ui/card";
 import { SlideToConfirm } from "@/ui/SlideToConfirm";
 import { VsBadge } from "@/cricket/components/VsBadge";
 import { TeamAvatar } from "@/cricket/components/TeamAvatar";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface BookingConfirmPayProps {
     turf: any;
@@ -56,6 +57,17 @@ export function BookingConfirmPay({
     pay,
     paymentMethods
 }: BookingConfirmPayProps) {
+    const [agreed, setAgreed] = useState(false);
+    const [showPolicyModal, setShowPolicyModal] = useState(false);
+
+    const handleConfirm = async () => {
+        if (!agreed) {
+            toast.error("Please agree to the Privacy Policy to proceed.");
+            throw new Error("Must agree to Privacy Policy");
+        }
+        await pay();
+    };
+
     return (
         <div className="mt-4 px-4 pb-32">
             <Card
@@ -140,6 +152,32 @@ export function BookingConfirmPay({
                 </div>
             </Card>
 
+            {/* Privacy Policy Checkbox Card */}
+            <Card
+                className="mt-4 p-4 transition-all duration-300"
+                bordered
+            >
+                <div className="flex items-start gap-3">
+                    <input
+                        type="checkbox"
+                        id="agree-privacy-policy"
+                        checked={agreed}
+                        onChange={(e) => setAgreed(e.target.checked)}
+                        className="h-5 w-5 rounded border-white/10 bg-background text-primary focus:ring-primary accent-primary cursor-pointer shrink-0 mt-0.5"
+                    />
+                    <label htmlFor="agree-privacy-policy" className="text-xs text-muted-foreground leading-relaxed select-none cursor-pointer font-semibold">
+                        I agree to the{" "}
+                        <button
+                            type="button"
+                            onClick={() => setShowPolicyModal(true)}
+                            className="text-primary underline font-bold cursor-pointer inline"
+                        >
+                            Privacy Policy, Booking, Cancellation & Refund Terms
+                        </button>
+                    </label>
+                </div>
+            </Card>
+
             <div
                 className="sticky bottom-0 mx-4 mb-4 z-40 flex items-center justify-between rounded-[24px] border p-4 shadow-2xl backdrop-blur-xl"
                 style={{
@@ -154,13 +192,84 @@ export function BookingConfirmPay({
                     </p>
                 </div>
                 <SlideToConfirm
-                    onConfirm={pay}
+                    onConfirm={handleConfirm}
                     text="Slide to Pay"
                     successText="Paid & Confirmed"
                     width={200}
                     className="bg-panel hover:bg-panel-2 border-border shadow-neon h-11"
                 />
             </div>
+
+            {/* Privacy Policy Modal */}
+            {showPolicyModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm pointer-events-auto">
+                    <div className="card-panel relative flex flex-col gap-4 overflow-hidden rounded-3xl p-6 shadow-2xl bg-panel-2 w-full max-w-lg max-h-[85vh]">
+                        <button
+                            onClick={() => setShowPolicyModal(false)}
+                            className="absolute right-4 top-4 rounded-full bg-white/5 p-2 text-soft transition-colors hover:bg-white/10 hover:text-white"
+                        >
+                            <X className="h-4 w-4" />
+                        </button>
+
+                        <div className="flex items-center gap-3">
+                            <h2 className="text-lg font-bold font-display">Privacy Policy & Terms</h2>
+                        </div>
+
+                        <div className="overflow-y-auto pr-2 text-xs text-muted-foreground space-y-4 leading-relaxed max-h-[60vh] no-scrollbar">
+                            <p className="text-muted-foreground font-semibold">
+                                Please read our Booking, Cancellation & Refund Terms carefully.
+                            </p>
+                            
+                            <div>
+                                <h3 className="font-bold text-foreground text-sm mb-1">Booking Information</h3>
+                                <p>When a user makes a booking through PlayTurf, we collect and store information necessary to process and manage the reservation, including Name, Contact number, Email address, Booking date/time, Duration, Payment info, and transaction history.</p>
+                            </div>
+
+                            <div>
+                                <h3 className="font-bold text-foreground text-sm mb-1">Slot Reservation Policy</h3>
+                                <p>Upon successful payment, the selected booking slot(s) are immediately marked as "Booked" and become unavailable to other users. For multi-hour bookings, all covered time slots are reserved and displayed as booked (e.g. 12:00 PM to 03:00 PM blocks 12:00 PM, 01:00 PM, and 02:00 PM).</p>
+                            </div>
+
+                            <div>
+                                <h3 className="font-bold text-foreground text-sm mb-1">Cancellation Policy</h3>
+                                <p>Users are eligible for a full refund if they cancel their booking within 15 minutes of successful payment. The cancellation window is calculated from the booking creation time, not the scheduled play time.</p>
+                            </div>
+
+                            <div>
+                                <h3 className="font-bold text-foreground text-sm mb-1">Refund Policy</h3>
+                                <p>A 100% refund will be issued when the booking is cancelled within 15 minutes of creation. Approved refunds will be processed through the original payment method. Processing times may vary depending on the financial institution or UPI provider.</p>
+                            </div>
+
+                            <div>
+                                <h3 className="font-bold text-foreground text-sm mb-1">Booking Confirmation</h3>
+                                <p>Immediately after payment, the booking is confirmed and slots become unavailable to others. After the 15-minute cancellation window expires, the booking remains confirmed, cancellation is no longer available, and no automatic refund will be issued.</p>
+                            </div>
+
+                            <div>
+                                <h3 className="font-bold text-foreground text-sm mb-1">Automatic Slot Release</h3>
+                                <p>If a booking is cancelled within the permitted cancellation period, the status is changed to Cancelled, reserved slots are released automatically, and they become available for other users.</p>
+                            </div>
+
+                            <div>
+                                <h3 className="font-bold text-foreground text-sm mb-1">Expired Time Slots</h3>
+                                <p>For same-day bookings, time slots that have already passed are automatically marked as unavailable and cannot be booked to ensure accurate scheduling.</p>
+                            </div>
+
+                            <div>
+                                <h3 className="font-bold text-foreground text-sm mb-1">Data Protection</h3>
+                                <p>We implement reasonable technical and organizational measures to protect user information from unauthorized access. While we strive to protect user data, no transmission method is 100% secure.</p>
+                            </div>
+                        </div>
+
+                        <button
+                            onClick={() => setShowPolicyModal(false)}
+                            className="mt-4 w-full py-3 rounded-full bg-primary font-bold text-primary-foreground shadow-neon text-xs cursor-pointer hover:opacity-95 transition-opacity"
+                        >
+                            I Understand & Close
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

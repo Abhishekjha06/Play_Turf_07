@@ -23,7 +23,7 @@ import { MobileShell } from "@/layout/MobileShell";
 import { useRealtimeBookingStatus } from "@/lib/realtime";
 
 const statusConfig: Record<string, { icon: typeof CheckCircle2; color: string; bg: string; label: string }> = {
-    CONFIRMED: { icon: CheckCircle2, color: "text-[#4ade80]", bg: "bg-[#0d2e1a] border-[#0d2e1a]", label: "Confirmed" },
+    CONFIRMED: { icon: CheckCircle2, color: "text-[#4ade80]", bg: "bg-[#0d2e1a] border-[#0d2e1a]", label: "Booked" },
     PENDING: { icon: AlertCircle, color: "text-[#f5b942]", bg: "bg-[#2d1e00] border-[#2d1e00]", label: "Pending Payment" },
     CANCELLED: { icon: XCircle, color: "text-[#f87171]", bg: "bg-[#3d1a1a] border-[#3d1a1a]", label: "Cancelled" },
     COMPLETED: { icon: CheckCircle2, color: "text-soft", bg: "bg-white/10 border-white/15", label: "Completed" },
@@ -38,6 +38,8 @@ const BookingDetail = () => {
     const [cancelling, setCancelling] = useState(false);
     const [paying, setPaying] = useState(false);
     const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+    const [timeLeftStr, setTimeLeftStr] = useState<string | null>(null);
+    const [cancellationExpired, setCancellationExpired] = useState(true);
 
     useEffect(() => {
         if (!id) return;
@@ -47,6 +49,37 @@ const BookingDetail = () => {
             .catch((err) => setError(err.message || "Booking not found"))
             .finally(() => setLoading(false));
     }, [id]);
+
+    // Track 15-minute cancellation window
+    useEffect(() => {
+        if (!booking || booking.status !== "CONFIRMED") {
+            setTimeLeftStr(null);
+            setCancellationExpired(true);
+            return;
+        }
+
+        const updateCountdown = () => {
+            const createdAtTime = new Date(booking.created_at).getTime();
+            const deadlineTime = createdAtTime + 15 * 60 * 1000;
+            const now = Date.now();
+            const diff = deadlineTime - now;
+
+            if (diff <= 0) {
+                setTimeLeftStr(null);
+                setCancellationExpired(true);
+                return;
+            }
+
+            setCancellationExpired(false);
+            const minutes = Math.floor(diff / 60000);
+            const seconds = Math.floor((diff % 60000) / 1000);
+            setTimeLeftStr(`${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`);
+        };
+
+        updateCountdown();
+        const interval = setInterval(updateCountdown, 1000);
+        return () => clearInterval(interval);
+    }, [booking]);
 
     // Subscribe to real-time booking status changes.
     // When the booking is confirmed/cancelled by an external action,
@@ -193,7 +226,7 @@ const BookingDetail = () => {
 
     const cfg = statusConfig[booking.status] || statusConfig.PENDING;
     const StatusIcon = cfg.icon;
-    const canCancel = booking.status === "PENDING" || booking.status === "CONFIRMED";
+    const canCancel = booking.status === "PENDING" || (booking.status === "CONFIRMED" && !cancellationExpired);
     const canPay = booking.status === "PENDING";
 
     return (
@@ -221,7 +254,11 @@ const BookingDetail = () => {
                         <div>
                             <p className={`font-bold text-lg ${cfg.color}`}>{cfg.label}</p>
                             <p className="text-xs text-muted2 mt-0.5">
-                                {booking.status === "CONFIRMED" && "Your booking is confirmed. See you at the turf!"}
+                                {booking.status === "CONFIRMED" && (
+                                    cancellationExpired
+                                    ? "This booking has been confirmed and can no longer be cancelled."
+                                    : `Free cancellation available for: ${timeLeftStr || "15:00"}`
+                                )}
                                 {booking.status === "PENDING" && "Complete payment to confirm your booking."}
                                 {booking.status === "CANCELLED" && "This booking has been cancelled."}
                                 {booking.status === "COMPLETED" && "This session has been completed."}

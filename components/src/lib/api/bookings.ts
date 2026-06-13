@@ -281,6 +281,21 @@ export async function getBooking(id: string): Promise<Booking> {
 export async function cancelBooking(id: string): Promise<Booking> {
   const supabase = await getSupabase();
   if (supabase) {
+    // Check 15-min cancellation deadline
+    const { data: booking, error: fetchErr } = await supabase
+      .from("bookings")
+      .select("created_at, status, payment_id")
+      .eq("id", id)
+      .single();
+      
+    if (fetchErr) throw fetchErr;
+    if (booking.status === "CONFIRMED" && booking.payment_id) {
+      const createdAtTime = new Date(booking.created_at).getTime();
+      if (Date.now() - createdAtTime > 15 * 60 * 1000) {
+        throw new Error("This booking has been confirmed and can no longer be cancelled.");
+      }
+    }
+
     const { data, error } = await supabase
       .from("bookings")
       .update({ status: "CANCELLED" })
@@ -310,6 +325,13 @@ export async function cancelBooking(id: string): Promise<Booking> {
     if (idx < 0) throw new Error("Booking not found");
     if (list[idx].status === "CANCELLED") throw new Error("Already cancelled");
     
+    if (list[idx].status === "CONFIRMED" && list[idx].payment_id) {
+      const createdAtTime = new Date(list[idx].created_at).getTime();
+      if (Date.now() - createdAtTime > 15 * 60 * 1000) {
+        throw new Error("This booking has been confirmed and can no longer be cancelled.");
+      }
+    }
+
     const targetPaymentId = list[idx].payment_id;
     list[idx] = { ...list[idx], status: "CANCELLED" };
     
