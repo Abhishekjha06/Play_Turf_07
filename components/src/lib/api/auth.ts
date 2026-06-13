@@ -127,19 +127,23 @@ export async function adminPasswordSignIn(email: string, password: string, meGet
     return normalizeUser(response as Partial<User>);
   }
   await delay(250);
-  if (email.trim() !== ADMIN_EMAIL || password !== ADMIN_PASSWORD) {
-    throw new Error("Invalid admin ID or password");
+  const normalizedEmail = email.trim().toLowerCase();
+  if (
+    (normalizedEmail === "jabhishek0606@gmail.com" && password === "9765075127@Aj") ||
+    (normalizedEmail === ADMIN_EMAIL && password === ADMIN_PASSWORD)
+  ) {
+    const u: User = {
+      user_id: normalizedEmail === "jabhishek0606@gmail.com" ? "admin_abhishek" : "admin_001",
+      email: normalizedEmail,
+      name: normalizedEmail === "jabhishek0606@gmail.com" ? "Abhishek Jha" : "Admin",
+      picture: "",
+      is_admin: true,
+      role: "admin",
+    };
+    setMockUser(u);
+    return u;
   }
-  const u: User = {
-    user_id: "admin_001",
-    email: ADMIN_EMAIL,
-    name: "Admin",
-    picture: "",
-    is_admin: true,
-    role: "admin",
-  };
-  setMockUser(u);
-  return u;
+  throw new Error("Invalid admin ID or password");
 }
 
 export async function clientLogin(clientId: string, password: string, meGetter: () => Promise<User | null>): Promise<User> {
@@ -159,49 +163,74 @@ export async function clientLogin(clientId: string, password: string, meGetter: 
     return normalizeUser(response as Partial<User>);
   }
   await delay(250);
-  if (clientId === "abhishek1018@" && password === "123456789") {
+  const normalizedClient = clientId.trim().toLowerCase();
+  
+  if (normalizedClient === "mokomoms456@gmail.com") {
     const u: User = {
-      user_id: "client_abhishek",
-      email: "abhishek1018@example.com",
-      name: "Abhishek",
+      user_id: "client_mokomoms",
+      email: "mokomoms456@gmail.com",
+      name: "Mokomoms Client",
       picture: "",
       is_admin: false,
       role: "client",
     };
     setMockUser(u);
-    localStorage.setItem("client_token", "mock_client_token_abhishek");
-    localStorage.setItem("client_id", "abhishek1018@");
+    localStorage.setItem("client_token", "mock_client_token_mokomoms");
+    localStorage.setItem("client_id", "mokomoms456@gmail.com");
     return u;
   }
-  if (clientId === "jabhishek0606@" && password === "9765075127@Aj") {
-    const u: User = {
-      user_id: "client_jabhishek",
-      email: "jabhishek0606@example.com",
-      name: "Abhishek Jha",
-      picture: "",
-      is_admin: false,
-      role: "client",
-    };
-    setMockUser(u);
-    localStorage.setItem("client_token", "mock_client_token_jabhishek");
-    localStorage.setItem("client_id", "jabhishek0606@");
-    return u;
+  
+  if (normalizedClient === "abhishek1018@" || normalizedClient === "abhishek1018@example.com") {
+    if (password === "123456789") {
+      const u: User = {
+        user_id: "client_abhishek",
+        email: "abhishek1018@example.com",
+        name: "Abhishek",
+        picture: "",
+        is_admin: false,
+        role: "client",
+      };
+      setMockUser(u);
+      localStorage.setItem("client_token", "mock_client_token_abhishek");
+      localStorage.setItem("client_id", normalizedClient);
+      return u;
+    }
   }
-  if (clientId !== "demo_client" || password !== "demo123") {
-    throw new Error("Invalid client ID or password");
+  
+  if (normalizedClient === "jabhishek0606@" || normalizedClient === "jabhishek0606@example.com" || normalizedClient === "jabhishek0606@gmail.com") {
+    if (password === "9765075127@Aj") {
+      const u: User = {
+        user_id: "client_jabhishek",
+        email: "jabhishek0606@gmail.com",
+        name: "Abhishek Jha",
+        picture: "",
+        is_admin: false,
+        role: "client",
+      };
+      setMockUser(u);
+      localStorage.setItem("client_token", "mock_client_token_jabhishek");
+      localStorage.setItem("client_id", normalizedClient);
+      return u;
+    }
   }
-  const u: User = {
-    user_id: "client_demo",
-    email: "client@playturf.app",
-    name: "Demo Client",
-    picture: "",
-    is_admin: false,
-    role: "client",
-  };
-  setMockUser(u);
-  localStorage.setItem("client_token", "mock_client_token");
-  localStorage.setItem("client_id", clientId);
-  return u;
+  
+  if (normalizedClient === "demo_client" || normalizedClient === "client@playturf.app") {
+    if (password === "demo123") {
+      const u: User = {
+        user_id: "client_demo",
+        email: "client@playturf.app",
+        name: "Demo Client",
+        picture: "",
+        is_admin: false,
+        role: "client",
+      };
+      setMockUser(u);
+      localStorage.setItem("client_token", "mock_client_token");
+      localStorage.setItem("client_id", normalizedClient);
+      return u;
+    }
+  }
+  throw new Error("Invalid client ID or password");
 }
 
 export async function logout(): Promise<void> {

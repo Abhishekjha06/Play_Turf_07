@@ -14,7 +14,7 @@ export function AdminRoute({ children }: AdminRouteProps) {
         return <Navigate to="/more" replace />;
     }
 
-    if (user.role !== "admin") {
+    if (user.role !== "admin" && user.role !== "super_admin") {
         // User is not an admin, show access denied
         return (
             <div className="min-h-screen flex items-center justify-center bg-background">

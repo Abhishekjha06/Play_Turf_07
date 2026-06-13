@@ -14,8 +14,8 @@ export function ClientRoute({ children }: ClientRouteProps) {
         return <Navigate to="/more" replace />;
     }
 
-    if (user.role !== "client" && user.role !== "admin") {
-        // User is not a client or admin, show access denied
+    if (user.role !== "client" && user.role !== "admin" && user.role !== "super_admin") {
+        // User is not a client, admin or super_admin, show access denied
         return (
             <div className="min-h-screen flex items-center justify-center bg-background">
                 <div className="text-center p-8">

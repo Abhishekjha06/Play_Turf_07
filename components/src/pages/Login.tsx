@@ -128,18 +128,10 @@ const Login = () => {
   const handleMockLogin = async (formData: LoginFormValues) => {
     try {
       const user = await signInUser(formData.email, formData.password);
-      if (user.role === "admin") {
-        toast.success("Signed in as admin");
-        navigate("/admin");
-      } else if (user.role === "client") {
-        toast.success("Signed in as client");
-        navigate("/client/dashboard");
-      } else {
-        toast.success("Signed in successfully");
-        identifyUser(user.id || user.email, { email: formData.email, role: user.role });
-        trackEvent("Login", { method: "mock" });
-        navigate("/");
-      }
+      toast.success("Signed in successfully");
+      identifyUser(user.id || user.email, { email: formData.email, role: user.role });
+      trackEvent("Login", { method: "mock" });
+      navigate("/");
     } catch (e: any) {
       toast.error(e.message);
     }

@@ -11,6 +11,7 @@ import { ClientRoute } from "@/components/ClientRoute";
 import { GlobalErrorBoundary } from "@/components/GlobalErrorBoundary";
 import { RealtimeNotificationsProvider } from "@/components/RealtimeNotificationsProvider";
 import { LuxuryThemeProvider } from "@/luxury/LuxuryThemeProvider";
+import { MultiRoleLoginModal } from "@/components/MultiRoleLoginModal";
 
 const ThemeSelect = lazy(() => import("@/pages/ThemeSelect"));
 const Home = lazy(() => import("@/pages/Home"));
@@ -97,6 +98,7 @@ export default function App() {
               <RealtimeNotificationsProvider>
                 <Suspense fallback={<LoadingFallback />}>
                   <GlobalErrorBoundary>
+                    <MultiRoleLoginModal />
                     <Routes>
                     {/* Public pages inside MobileShell */}
                     <Route element={<AppLayout />}>
