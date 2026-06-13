@@ -12,6 +12,17 @@ export async function createBooking(payload: {
   turf_id: string; date: string; start_time: string; hours: number;
 }, getTurfById: (id: string) => Promise<any>, userGetter: () => Promise<any>): Promise<Booking> {
   const supabase = await getSupabase();
+  
+  // Validation for both mock and real modes
+  const todayStr = new Date().toLocaleDateString('en-CA');
+  if (payload.date === todayStr) {
+    const [h, m] = payload.start_time.split(":").map(Number);
+    const now = new Date();
+    if (now.getHours() > h || (now.getHours() === h && now.getMinutes() > m)) {
+      throw new Error("This slot has already expired and cannot be booked.");
+    }
+  }
+
   if (supabase) {
     const { data: { user } } = await supabase.auth.getUser();
     const userId = user ? user.id : 'mock_user';
@@ -46,6 +57,26 @@ export async function createBooking(payload: {
     if (!user) throw new Error("Not signed in");
     const turf = getMockTurfs().find((t) => t.id === payload.turf_id);
     if (!turf) throw new Error("Turf missing");
+
+    // Overlap validation for mock mode
+    const [newH, newM] = payload.start_time.split(":").map(Number);
+    const newStartMins = newH * 60 + newM;
+    const newEndMins = newStartMins + payload.hours * 60;
+    
+    const isOverlap = getMockBookings().some((b) => {
+      if (b.turf_id !== payload.turf_id || b.date !== payload.date || b.status === "CANCELLED") {
+        return false;
+      }
+      const [bh, bm] = b.start_time.split(":").map(Number);
+      const bStartMins = bh * 60 + bm;
+      const bEndMins = bStartMins + b.hours * 60;
+      return (newStartMins < bEndMins && newEndMins > bStartMins);
+    });
+
+    if (isOverlap) {
+      throw new Error("One or more slots in this time range are already booked.");
+    }
+
     const [h, m] = payload.start_time.split(":").map(Number);
     const endH = (h + payload.hours).toString().padStart(2, "0");
     const booking: Booking = {
@@ -74,18 +105,35 @@ export async function bookedSlots(turfId: string, date: string): Promise<string[
   if (supabase) {
     const { data, error } = await supabase
       .from("bookings")
-      .select("start_time")
+      .select("start_time, hours")
       .eq("turf_id", turfId)
       .eq("date", date)
       .neq("status", "CANCELLED");
     if (error) throw error;
-    return (data || []).map((b: any) => b.start_time);
+    
+    const covered: string[] = [];
+    (data || []).forEach((b: any) => {
+      const [h, m] = b.start_time.split(":").map(Number);
+      for (let i = 0; i < b.hours; i++) {
+        const slotHour = (h + i).toString().padStart(2, "0");
+        covered.push(`${slotHour}:${String(m).padStart(2, "0")}`);
+      }
+    });
+    return covered;
   }
   if (USE_MOCK) {
     await delay(80);
-    return getMockBookings()
+    const covered: string[] = [];
+    getMockBookings()
       .filter((booking) => booking.turf_id === turfId && booking.date === date && booking.status !== "CANCELLED")
-      .map((booking) => booking.start_time);
+      .forEach((b) => {
+        const [h, m] = b.start_time.split(":").map(Number);
+        for (let i = 0; i < b.hours; i++) {
+          const slotHour = (h + i).toString().padStart(2, "0");
+          covered.push(`${slotHour}:${String(m).padStart(2, "0")}`);
+        }
+      });
+    return covered;
   }
   return http<string[]>(`/turfs/${turfId}/booked-slots?date=${encodeURIComponent(date)}`);
 }

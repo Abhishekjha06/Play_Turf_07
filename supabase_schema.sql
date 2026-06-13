@@ -13,9 +13,13 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     id uuid primary key references auth.users(id) on delete cascade,
     full_name text not null,
     phone varchar(10) not null,
+    is_admin boolean DEFAULT false NOT NULL,
     created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
     constraint phone_length check (phone ~ '^[0-9]{10}$')
 );
+
+-- Ensure is_admin column exists if table was already created
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS is_admin boolean DEFAULT false NOT NULL;
 
 -- Table: turfs
 CREATE TABLE IF NOT EXISTS public.turfs (
@@ -348,20 +352,60 @@ BEGIN
 END;
 $$;
 
--- Drop existing trigger (if re-running the script)
+-- Drop existing triggers (if re-running the script)
 DROP TRIGGER IF EXISTS on_booking_change ON public.bookings;
+DROP TRIGGER IF EXISTS trg_check_booking_overlap_and_expiry ON public.bookings;
 
--- Create the trigger on bookings
+-- Create the AFTER trigger on bookings (Realtime broadcasts)
 CREATE TRIGGER on_booking_change
   AFTER INSERT OR UPDATE OR DELETE ON public.bookings
   FOR EACH ROW
   EXECUTE FUNCTION public.broadcast_booking_change();
 
--- --------------------------------------------------------------------
--- 5. Rate Limiting and Admin Logs
--- --------------------------------------------------------------------
+-- Create the BEFORE validation function
+CREATE OR REPLACE FUNCTION public.check_booking_overlap_and_expiry()
+RETURNS trigger AS $$
+DECLARE
+    existing_count integer;
+    slot_timestamp timestamp;
+    current_server_time timestamp;
+BEGIN
+    -- 1. Expiry Validation (using Asia/Kolkata timezone for Indian turf locations)
+    IF NEW.date = to_char(timezone('Asia/Kolkata'::text, now()), 'YYYY-MM-DD') THEN
+        slot_timestamp := (NEW.date || ' ' || NEW.start_time)::timestamp;
+        current_server_time := timezone('Asia/Kolkata'::text, now())::timestamp;
+        
+        IF slot_timestamp <= current_server_time THEN
+            RAISE EXCEPTION 'This slot has already expired and cannot be booked.';
+        END IF;
+    END IF;
 
--- Table: rate_limits
+    -- 2. Multi-hour Overlap Check
+    SELECT COUNT(*) INTO existing_count
+    FROM public.bookings
+    WHERE turf_id = NEW.turf_id
+      AND date = NEW.date
+      AND status != 'CANCELLED'
+      AND id != NEW.id
+      AND (
+        (NEW.start_time::time < end_time::time) AND 
+        (NEW.end_time::time > start_time::time)
+      );
+
+    IF existing_count > 0 THEN
+        RAISE EXCEPTION 'One or more slots in this time range are already booked.';
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create the BEFORE trigger on bookings (Expiry and overlap checks)
+CREATE TRIGGER trg_check_booking_overlap_and_expiry
+    BEFORE INSERT OR UPDATE ON public.bookings
+    FOR EACH ROW
+    EXECUTE FUNCTION public.check_booking_overlap_and_expiry();
+
 CREATE TABLE IF NOT EXISTS public.rate_limits (
     id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
     identifier text NOT NULL, -- email, phone, or IP

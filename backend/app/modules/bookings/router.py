@@ -77,6 +77,47 @@ def create_booking(
     if turf is None:
         raise HTTPException(status_code=404, detail="Turf not found")
 
+    # 1. Expiry Validation (IST - Asia/Kolkata timezone)
+    import pytz
+    ist = pytz.timezone('Asia/Kolkata')
+    now_ist = datetime.now(ist)
+    today_str = now_ist.strftime("%Y-%m-%d")
+    
+    if payload.date == today_str:
+        try:
+            h, m = map(int, payload.start_time.split(":"))
+            slot_dt = ist.localize(datetime.strptime(f"{payload.date} {h:02d}:{m:02d}", "%Y-%m-%d %H:%M"))
+            if slot_dt <= now_ist:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This slot has already expired and cannot be booked.")
+        except Exception as e:
+            if isinstance(e, HTTPException):
+                raise e
+            pass
+
+    # 2. Multi-hour Overlap Check
+    existing = db.scalars(
+        select(Booking)
+        .where(Booking.turf_id == turf.id)
+        .where(Booking.date == payload.date)
+        .where(Booking.status != "CANCELLED")
+    ).all()
+    
+    try:
+        new_h, new_m = map(int, payload.start_time.split(":"))
+        new_start = new_h * 60 + new_m
+        new_end = new_start + payload.hours * 60
+        
+        for b in existing:
+            bh, bm = map(int, b.start_time.split(":"))
+            b_start = bh * 60 + bm
+            b_end = b_start + b.hours * 60
+            if new_start < b_end and new_end > b_start:
+                raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="One or more slots in this time range are already booked.")
+    except Exception as e:
+        if isinstance(e, HTTPException):
+            raise e
+        pass
+
     booking = Booking(
         user_id=user.id,
         turf_id=turf.id,

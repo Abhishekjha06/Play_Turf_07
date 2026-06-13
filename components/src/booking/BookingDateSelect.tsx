@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Calendar, ChevronLeft, ChevronRight, Clock, Check, Lock } from "lucide-react";
+import { toast } from "sonner";
 
 interface DateOption {
     iso: string;
@@ -20,6 +21,7 @@ interface BookingDateSelectProps {
     hours: number;
     setHours: (h: number) => void;
     formatSlotTime: (s: string) => string;
+    currentTime: Date;
 }
 
 export function BookingDateSelect({
@@ -34,8 +36,24 @@ export function BookingDateSelect({
     bookedSlots,
     hours,
     setHours,
-    formatSlotTime
+    formatSlotTime,
+    currentTime
 }: BookingDateSelectProps) {
+    React.useEffect(() => {
+        if (slot) {
+            const todayStr = new Date().toLocaleDateString('en-CA');
+            if (date === todayStr) {
+                const [sh, sm] = slot.split(":").map(Number);
+                const currentHour = currentTime.getHours();
+                const currentMin = currentTime.getMinutes();
+                if (currentHour > sh || (currentHour === sh && currentMin > sm)) {
+                    setSlot(null);
+                    toast.warning("Your selected slot has expired.");
+                }
+            }
+        }
+    }, [currentTime, slot, date, setSlot]);
+
     return (
         <>
             {/* DATE SELECTOR */}
@@ -104,24 +122,37 @@ export function BookingDateSelect({
                         const isSelected = slot === s;
                         const formattedTime = formatSlotTime(s);
 
+                        const isExpired = (() => {
+                            const todayStr = new Date().toLocaleDateString('en-CA');
+                            if (date !== todayStr) return false;
+                            const [sh, sm] = s.split(":").map(Number);
+                            const currentHour = currentTime.getHours();
+                            const currentMin = currentTime.getMinutes();
+                            if (currentHour > sh) return true;
+                            if (currentHour === sh && currentMin > sm) return true;
+                            return false;
+                        })();
+
+                        const isDisabled = booked || isExpired;
+
                         return (
                             <button
                                 key={s}
-                                disabled={booked}
+                                disabled={isDisabled}
                                 onClick={() => setSlot(s)}
                                 className="pressable relative rounded-2xl border p-3 flex flex-col items-center justify-center gap-1.5 transition-all duration-300 disabled:cursor-not-allowed"
                                 style={{
                                     backgroundColor: isSelected
                                         ? "var(--l-accent-soft)"
-                                        : booked
+                                        : isDisabled
                                             ? "var(--bg-secondary)"
                                             : "var(--card-bg)",
                                     borderColor: isSelected
                                         ? "var(--gold-primary)"
-                                        : booked
+                                        : isDisabled
                                             ? "var(--border-primary)"
                                             : "var(--border-primary)",
-                                    opacity: booked ? 0.45 : 1,
+                                    opacity: isDisabled ? 0.45 : 1,
                                     boxShadow: isSelected ? "var(--l-shadow-glow)" : "none",
                                 }}
                             >
@@ -135,7 +166,11 @@ export function BookingDateSelect({
                                     {formattedTime}
                                 </span>
 
-                                {booked ? (
+                                {isExpired ? (
+                                    <span className="flex items-center gap-1 text-[8px] text-red-500 uppercase font-extrabold tracking-wider">
+                                        <Lock className="w-2.5 h-2.5 text-red-500" /> Lock
+                                    </span>
+                                ) : booked ? (
                                     <span className="flex items-center gap-1 text-[8px] text-muted-foreground uppercase font-extrabold tracking-wider">
                                         <Lock className="w-2.5 h-2.5 text-muted-foreground" /> Booked
                                     </span>

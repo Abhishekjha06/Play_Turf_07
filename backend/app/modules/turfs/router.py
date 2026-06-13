@@ -62,10 +62,21 @@ def booked_slots(turf_id: str, date: str = Query(...), db: Session = Depends(get
     except ValueError as exc:
         raise HTTPException(status_code=400, detail="Invalid turf_id") from exc
 
-    slots = db.scalars(
-        select(Booking.start_time)
+    bookings = db.scalars(
+        select(Booking)
         .where(Booking.turf_id == turf_int)
         .where(Booking.date == date)
         .where(Booking.status != "CANCELLED")
     ).all()
-    return list(slots)
+    
+    covered_slots = []
+    for b in bookings:
+        try:
+            h, m = map(int, b.start_time.split(":"))
+            for i in range(b.hours):
+                slot_hour = f"{h + i:02d}:{m:02d}"
+                covered_slots.append(slot_hour)
+        except Exception:
+            covered_slots.append(b.start_time)
+            
+    return covered_slots

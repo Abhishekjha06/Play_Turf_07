@@ -79,6 +79,7 @@ const BookingContent = () => {
     const [managerOpen, setManagerOpen] = useState(false);
     const [bookedSlots, setBookedSlots] = useState<string[]>([]);
     const [activeView, setActiveView] = useState("all");
+    const [currentTime, setCurrentTime] = useState(new Date());
 
     useEffect(() => {
         if (turfId) api.getTurf(turfId).then(setTurf);
@@ -91,6 +92,20 @@ const BookingContent = () => {
             setBookedSlots(booked);
             if (slot && booked.includes(slot)) setSlot(null);
         });
+    }, [turfId, date, slot]);
+
+    // Auto-refresh slots and update current time every 30 seconds
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setCurrentTime(new Date());
+            if (turfId && date) {
+                api.bookedSlots(turfId, date).then((booked) => {
+                    setBookedSlots(booked);
+                    if (slot && booked.includes(slot)) setSlot(null);
+                });
+            }
+        }, 30000);
+        return () => clearInterval(timer);
     }, [turfId, date, slot]);
 
     // Subscribe to real-time slot changes for this turf
@@ -365,6 +380,7 @@ const BookingContent = () => {
                             hours={hours}
                             setHours={setHours}
                             formatSlotTime={formatSlotTime}
+                            currentTime={currentTime}
                         />
 
                         {/* Extracted Match Summary Component */}
