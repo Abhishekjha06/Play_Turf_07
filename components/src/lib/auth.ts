@@ -24,6 +24,22 @@ export function isLoading() { return _loading; }
 
 export async function refreshUser() {
   _loading = true; emit();
+  
+  // Prefer the mock user session if it exists in localStorage
+  const lsUser = localStorage.getItem("playturf:user");
+  if (lsUser) {
+    try {
+      const parsed = JSON.parse(lsUser);
+      if (parsed && parsed.email) {
+        _user = parsed;
+        _loading = false; emit();
+        return;
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
+
   const supabase = await getSupabase();
   if (supabase) {
     const { data: { user } } = await supabase.auth.getUser();

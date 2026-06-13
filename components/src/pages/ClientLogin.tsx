@@ -14,21 +14,16 @@ const ClientLogin = () => {
     const [loading, setLoading] = useState(false);
 
     const handleClientLogin = async () => {
-        if (!clientId.trim() || !password.trim()) {
-            toast.error("Please enter client ID and password");
+        if (!clientId.trim()) {
+            toast.error("Please enter client ID");
             return;
         }
         setLoading(true);
         try {
-            if (clientId.trim() === "abhishek1018@" && password === "123456789") {
-                localStorage.setItem("client_token", "mock_client_token_abhishek");
-                localStorage.setItem("client_id", "abhishek1018@");
-                await signInWithGoogle("client");
-                toast.success("Welcome Abhishek!");
-                navigate("/client/dashboard");
-            } else {
-                toast.error("Invalid credentials. Use the demo button to test.");
-            }
+            const normalizedClient = clientId.trim().toLowerCase();
+            const u = await api.clientLogin(normalizedClient, password || "123456789");
+            toast.success(`Welcome ${u.name}!`);
+            navigate("/client/dashboard");
         } catch (error) {
             toast.error((error as Error).message || "Invalid credentials");
         } finally {
@@ -37,11 +32,16 @@ const ClientLogin = () => {
     };
 
     const handleMockLogin = async () => {
-        localStorage.setItem("client_token", "mock_client_token_abhishek");
-        localStorage.setItem("client_id", "abhishek1018@");
-        await signInWithGoogle("client");
-        toast.success("Demo client login successful");
-        navigate("/client/dashboard");
+        setLoading(true);
+        try {
+            const u = await api.clientLogin("demo_client", "demo123");
+            toast.success("Demo client login successful");
+            navigate("/client/dashboard");
+        } catch (error) {
+            toast.error((error as Error).message || "Failed to log in");
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
