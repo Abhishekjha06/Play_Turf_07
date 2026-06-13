@@ -5,12 +5,21 @@ import { useLuxuryTheme } from "@/luxury/LuxuryThemeProvider";
 import { CoolThemeToggle } from "@/ui/CoolThemeToggle";
 import { Avatar, AvatarImage } from "@/ui/avatar";
 import { AvatarPicker } from "@/ui/AvatarPicker";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import { fadeSlideDown } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { getNotifications, markAllAsRead, addNotification, clearNotifications, type AppNotification } from "@/lib/notifications";
+import {
+  getNotifications,
+  markAllAsRead,
+  addNotification,
+  clearNotifications,
+  getCategoryForType,
+  type AppNotification,
+  type NotificationType,
+  type NotificationCategory
+} from "@/lib/notifications";
 
 export function AppHeader() {
   const { user } = useAuth();
@@ -66,6 +75,8 @@ function CollapsingHeader({
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isBlinking, setIsBlinking] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<NotificationCategory | "All">("All");
+  const [selectedNotifForDetail, setSelectedNotifForDetail] = useState<AppNotification | null>(null);
 
   useEffect(() => {
     // Initial load
@@ -90,6 +101,20 @@ function CollapsingHeader({
   }, []);
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
+
+  const filteredNotifications = useMemo(() => {
+    if (activeFilter === "All") return notifications;
+    return notifications.filter(n => getCategoryForType(n.type) === activeFilter);
+  }, [notifications, activeFilter]);
+
+  const getButtonLabelForDeepLink = (deepLink?: string) => {
+    if (!deepLink) return "View Details";
+    if (deepLink.startsWith("/turf/")) return "View Turf";
+    if (deepLink.startsWith("/turfs")) return "Book Now";
+    if (deepLink.startsWith("/tournaments")) return "Register Now";
+    if (deepLink.startsWith("/offers")) return "View Offer";
+    return "Go to Page";
+  };
 
   return (
     <>
@@ -261,7 +286,7 @@ function CollapsingHeader({
         onClose={() => setIsAvatarPickerOpen(false)}
       />
 
-      {/* Notifications Panel */}
+      {/* Notifications Drawer */}
       <AnimatePresence>
         {isNotifOpen && (
           <>
@@ -305,6 +330,24 @@ function CollapsingHeader({
                 </button>
               </div>
 
+              {/* Category Filters */}
+              <div className="px-4 py-2 overflow-x-auto no-scrollbar flex gap-2 border-b" style={{ borderColor: "var(--border-primary)" }}>
+                {(["All", "Bookings", "Refunds", "Offers", "Announcements", "Tournaments", "System Updates"] as const).map(cat => (
+                  <button
+                    key={cat}
+                    onClick={() => setActiveFilter(cat)}
+                    className={cn(
+                      "px-2.5 py-1 text-[9px] font-black uppercase tracking-wider rounded-full shrink-0 cursor-pointer border transition",
+                      activeFilter === cat
+                        ? "bg-primary border-transparent text-primary-foreground"
+                        : "bg-white/5 border-white/5 text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+
               {/* Actions */}
               <div className="px-4.5 py-2.5 bg-white/5 flex items-center justify-between text-[10px] font-extrabold uppercase tracking-wider">
                 <button
@@ -329,77 +372,207 @@ function CollapsingHeader({
 
               {/* List */}
               <div className="flex-1 overflow-y-auto p-4.5 space-y-3">
-                {notifications.length === 0 ? (
+                {filteredNotifications.length === 0 ? (
                   <div className="text-center py-20 text-muted-foreground flex flex-col items-center gap-3">
                     <Bell className="h-10 w-10 text-muted-foreground/30 animate-pulse" />
-                    <p className="text-xs font-semibold">You're all caught up!</p>
+                    <p className="text-xs font-semibold">No notifications in this category</p>
                   </div>
                 ) : (
-                  notifications.map(notif => (
-                    <div
-                      key={notif.id}
-                      onClick={() => {
-                        if (notif.booking_id) {
-                          setIsNotifOpen(false);
-                          navigate(`/booking/${notif.booking_id}`);
-                        }
-                      }}
-                      className={cn(
-                        "p-3.5 rounded-2xl border text-left transition relative cursor-pointer",
-                        notif.isRead ? "border-white/5 bg-white/5 opacity-80" : "border-primary/20 bg-primary/5 hover:bg-primary/10"
-                      )}
-                      style={{
-                        borderColor: notif.isRead ? "var(--border-primary)" : undefined
-                      }}
-                    >
-                      {!notif.isRead && (
-                        <span className="absolute top-3.5 right-3.5 h-1.5 w-1.5 rounded-full animate-pulse" style={{ backgroundColor: accentColor }} />
-                      )}
-                      <div className="flex items-center gap-2">
-                        <span className="text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-white/10 text-foreground">
-                          {notif.type.replace("_", " ")}
-                        </span>
-                        <span className="text-[9px] text-muted-foreground">
-                          {new Date(notif.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </span>
+                  filteredNotifications.map(notif => {
+                    const isPromoOffer = ["promotional_offer", "discount_coupon", "tournament_announcement", "new_turf_launch", "system_announcement", "offer"].includes(notif.type);
+                    return (
+                      <div
+                        key={notif.id}
+                        onClick={() => {
+                          if (isPromoOffer) {
+                            setSelectedNotifForDetail(notif);
+                          } else if (notif.booking_id) {
+                            setIsNotifOpen(false);
+                            navigate(`/booking/${notif.booking_id}`);
+                          } else if (notif.deepLink) {
+                            setIsNotifOpen(false);
+                            navigate(notif.deepLink);
+                          }
+                        }}
+                        className={cn(
+                          "p-3.5 rounded-2xl border text-left transition relative cursor-pointer",
+                          notif.isRead ? "border-white/5 bg-white/5 opacity-80" : "border-primary/20 bg-primary/5 hover:bg-primary/10"
+                        )}
+                        style={{
+                          borderColor: notif.isRead ? "var(--border-primary)" : undefined
+                        }}
+                      >
+                        {!notif.isRead && (
+                          <span className="absolute top-3.5 right-3.5 h-1.5 w-1.5 rounded-full animate-pulse" style={{ backgroundColor: accentColor }} />
+                        )}
+                        <div className="flex items-center gap-2">
+                          <span className="text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-white/10 text-foreground">
+                            {notif.type.replace("_", " ")}
+                          </span>
+                          <span className="text-[9px] text-muted-foreground">
+                            {new Date(notif.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                        <h4 className={cn("mt-2 text-xs text-foreground font-display", notif.isRead ? "font-semibold" : "font-black")}>
+                          {notif.title}
+                        </h4>
+                        <p className="mt-1 text-[11px] text-muted-foreground leading-relaxed font-semibold">{notif.body}</p>
                       </div>
-                      <h4 className="mt-2 text-xs font-black text-foreground font-display">{notif.title}</h4>
-                      <p className="mt-1 text-[11px] text-muted-foreground leading-relaxed font-semibold">{notif.body}</p>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
 
-              {/* Bottom Test Button */}
+              {/* Bottom Simulation Button */}
               <div className="p-4 border-t" style={{ borderColor: "var(--border-primary)", backgroundColor: "rgba(0,0,0,0.15)" }}>
                 <button
                   onClick={() => {
                     const promos = [
                       {
-                        type: "offer" as const,
-                        title: "Exclusive 30% Promo Code! ⚽",
-                        body: "Unlock 30% off all bookings for tomorrow! Use code GOAL30.",
+                        type: "promotional_offer" as const,
+                        title: "Weekend Football Offer ⚽",
+                        body: "Get 20% off on all football bookings this weekend.",
+                        deepLink: "/turfs",
+                        expiryDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
+                        targetAudience: "All Users"
                       },
                       {
-                        type: "offer" as const,
-                        title: "Free Booking Upgrade! 🏆",
-                        body: "Book 2 hours and get the 3rd hour absolutely free this weekend.",
+                        type: "tournament_announcement" as const,
+                        title: "National Box Cricket Cup 🏆",
+                        body: "Registrations are now open for the summer national league! Register your roster today.",
+                        deepLink: "/tournaments",
+                        targetAudience: "All Users"
                       },
                       {
-                        type: "booking_reminder" as const,
-                        title: "Friendly Match Reminder! 🏟️",
-                        body: "Your slot starts in 1 hour at Greenfield Arena cage 2.",
+                        type: "new_turf_launch" as const,
+                        title: "Arena Grand Opening! 🎉",
+                        body: "Greenfield Arena Indiranagar is now live. Check slots and view early-bird rates.",
+                        deepLink: "/turf/turf-01",
+                        targetAudience: "All Users"
                       }
                     ];
                     const selected = promos[Math.floor(Math.random() * promos.length)];
                     addNotification(selected);
-                    toast.success("Mock notification pushed!");
+                    toast.success("Promo notification pushed!");
                   }}
                   className="w-full py-2.5 rounded-xl bg-gradient-neon text-primary-foreground text-xs font-black uppercase tracking-wider shadow-neon border-none cursor-pointer"
                 >
                   Push Mock Promo Offer
                 </button>
               </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Detailed Offer Modal */}
+      <AnimatePresence>
+        {selectedNotifForDetail && (
+          <>
+            {/* Backdrop */}
+            <div
+              onClick={() => setSelectedNotifForDetail(null)}
+              className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-md"
+              style={{ maxWidth: "480px", left: "50%", transform: "translateX(-50%)" }}
+            />
+            
+            {/* Modal Container */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: "-40%", x: "-50%" }}
+              animate={{ opacity: 1, scale: 1, y: "-50%", x: "-50%" }}
+              exit={{ opacity: 0, scale: 0.95, y: "-40%", x: "-50%" }}
+              className="fixed left-1/2 top-1/2 z-[70] w-[90%] max-w-[400px] rounded-[2rem] border overflow-hidden p-5 space-y-4 text-left"
+              style={{
+                backgroundColor: "var(--card-bg, #1a1a1a)",
+                borderColor: "var(--border-primary, #333)",
+                boxShadow: "0 20px 50px rgba(0,0,0,0.6)"
+              }}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-white/5 pb-3">
+                <span className="text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded bg-white/10 text-foreground">
+                  {selectedNotifForDetail.type.replace("_", " ")}
+                </span>
+                <button
+                  onClick={() => setSelectedNotifForDetail(null)}
+                  className="p-1 hover:bg-white/10 rounded-full cursor-pointer text-muted-foreground hover:text-foreground transition border-none"
+                  style={{ backgroundColor: "transparent" }}
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Banner */}
+              {selectedNotifForDetail.bannerImage && (
+                <div className="w-full h-40 rounded-2xl overflow-hidden border border-white/10 bg-black/20">
+                  <img src={selectedNotifForDetail.bannerImage} alt="Banner" className="w-full h-full object-cover" />
+                </div>
+              )}
+
+              {/* Title & Description */}
+              <div className="space-y-1.5 text-left">
+                <h3 className="font-display font-black text-lg text-foreground leading-tight">
+                  {selectedNotifForDetail.title}
+                </h3>
+                <p className="text-xs text-muted-foreground leading-relaxed font-semibold">
+                  {selectedNotifForDetail.body}
+                </p>
+              </div>
+
+              {/* Expiry date check */}
+              {(() => {
+                const isExpired = selectedNotifForDetail.expiryDate && new Date(selectedNotifForDetail.expiryDate).getTime() < Date.now();
+                return (
+                  <div className="space-y-4 text-left">
+                    <div className="border border-white/5 p-3 rounded-xl bg-white/5 space-y-1.5 text-[11px] font-semibold text-muted-foreground">
+                      <div className="flex justify-between items-center">
+                        <span>Valid Until:</span>
+                        <span className={cn("font-bold", isExpired ? "text-red-400" : "text-foreground")}>
+                          {selectedNotifForDetail.expiryDate
+                            ? new Date(selectedNotifForDetail.expiryDate).toLocaleString()
+                            : "N/A"}
+                        </span>
+                      </div>
+                      {isExpired && (
+                        <div className="text-[10px] text-red-400 font-extrabold uppercase tracking-wide flex items-center gap-1.5 pt-1 border-t border-white/5 mt-1">
+                          <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-ping" />
+                          Offer Expired. This promotion is no longer available.
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Terms */}
+                    <div className="space-y-1">
+                      <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-black block">Terms & Conditions</span>
+                      <p className="text-[10px] text-muted-foreground leading-relaxed">
+                        * Offer valid on booking values above ₹500.<br />
+                        * Subject to slot availability and cannot be merged with other codes.<br />
+                        * Promotion is valid only inside the PlayTurf app logs.
+                      </p>
+                    </div>
+
+                    {/* Action button */}
+                    <button
+                      disabled={isExpired}
+                      onClick={() => {
+                        setSelectedNotifForDetail(null);
+                        setIsNotifOpen(false);
+                        if (selectedNotifForDetail.deepLink) {
+                          navigate(selectedNotifForDetail.deepLink);
+                        }
+                      }}
+                      className={cn(
+                        "w-full py-3 rounded-2xl text-xs font-black uppercase tracking-wider shadow-neon border-none cursor-pointer text-center block transition",
+                        isExpired
+                          ? "bg-zinc-800 text-zinc-500 shadow-none cursor-not-allowed"
+                          : "bg-gradient-neon text-primary-foreground"
+                      )}
+                    >
+                      {getButtonLabelForDeepLink(selectedNotifForDetail.deepLink)}
+                    </button>
+                  </div>
+                );
+              })()}
             </motion.div>
           </>
         )}

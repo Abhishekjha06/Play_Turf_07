@@ -1,11 +1,60 @@
+export type NotificationType =
+  | "booking_confirmed"
+  | "booking_cancelled"
+  | "booking_reminder"
+  | "promotional_offer"
+  | "discount_coupon"
+  | "tournament_announcement"
+  | "new_turf_launch"
+  | "maintenance_notice"
+  | "system_announcement"
+  | "feature_update"
+  | "offer"; // Legacy compat
+
+export type NotificationCategory =
+  | "Bookings"
+  | "Refunds"
+  | "Offers"
+  | "Announcements"
+  | "Tournaments"
+  | "System Updates";
+
 export interface AppNotification {
   id: string;
-  type: "booking_confirmed" | "booking_cancelled" | "booking_reminder" | "offer";
+  type: NotificationType;
   title: string;
   body: string;
   timestamp: string;
   isRead: boolean;
   booking_id?: string;
+  bannerImage?: string;
+  deepLink?: string;
+  expiryDate?: string;
+  targetAudience?: string; // "All Users", "Selected Users", "User Segments"
+}
+
+export function getCategoryForType(type: NotificationType): NotificationCategory {
+  switch (type) {
+    case "booking_confirmed":
+    case "booking_reminder":
+      return "Bookings";
+    case "booking_cancelled":
+      return "Refunds";
+    case "promotional_offer":
+    case "discount_coupon":
+    case "offer":
+      return "Offers";
+    case "new_turf_launch":
+    case "system_announcement":
+      return "Announcements";
+    case "tournament_announcement":
+      return "Tournaments";
+    case "maintenance_notice":
+    case "feature_update":
+      return "System Updates";
+    default:
+      return "Announcements";
+  }
 }
 
 const STORAGE_KEY = "play_turf_notifications";
@@ -18,11 +67,13 @@ export function getNotifications(): AppNotification[] {
       const initial: AppNotification[] = [
         {
           id: "initial-promo",
-          type: "offer",
+          type: "promotional_offer",
           title: "Monsoon Turf Carnival! 🌧️",
           body: "Get flat 20% off on Greenfield Arena and Net Practice cages. Use code: MONSOON20 at checkout.",
-          timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(), // 30 mins ago
+          timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
           isRead: false,
+          expiryDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days in future
+          deepLink: "/offers"
         }
       ];
       localStorage.setItem(STORAGE_KEY, JSON.stringify(initial));
@@ -66,4 +117,24 @@ export function markAllAsRead() {
 
 export function clearNotifications() {
   saveNotifications([]);
+}
+
+// Admin Operations
+export function adminCreateNotification(payload: Omit<AppNotification, "id" | "timestamp" | "isRead">) {
+  addNotification(payload);
+}
+
+export function adminEditNotification(id: string, patch: Partial<AppNotification>) {
+  const list = getNotifications();
+  const idx = list.findIndex(n => n.id === id);
+  if (idx > -1) {
+    list[idx] = { ...list[idx], ...patch };
+    saveNotifications(list);
+  }
+}
+
+export function adminDeleteNotification(id: string) {
+  const list = getNotifications();
+  const filtered = list.filter(n => n.id !== id);
+  saveNotifications(filtered);
 }
