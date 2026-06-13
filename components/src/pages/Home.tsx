@@ -145,27 +145,31 @@ const Home = () => {
     navigate(`/?${next.toString()}`);
   }, [params, navigate]);
 
-  useEffect(() => {
-    if (!nearby || selectedCity || !navigator.geolocation || allTurfs.length === 0) return;
+  const getGPSLocation = useCallback(() => {
+    if (!navigator.geolocation) {
+      toast.error("Geolocation is not supported by your browser.");
+      return;
+    }
     setLocating(true);
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        const cities = Array.from(new Set(allTurfs.map((t) => t.city)));
-        const city = closestCity(position.coords.latitude, position.coords.longitude, cities);
         setUserLocation({ lat: position.coords.latitude, lng: position.coords.longitude });
         setLocating(false);
-        if (city) {
-          toast.success(`Showing turfs near ${city}`);
-          updateLocation(city, "");
-        }
+        toast.success("Location access granted. Sorting by distance.");
       },
       () => {
         setLocating(false);
         toast.error("Location access denied. Please select a location manually.");
       },
-      { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 },
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 300000 },
     );
-  }, [nearby, selectedCity, allTurfs, updateLocation]);
+  }, []);
+
+  useEffect(() => {
+    if (nearby && !userLocation && navigator.geolocation) {
+      getGPSLocation();
+    }
+  }, [nearby, userLocation, getGPSLocation]);
 
   const setParam = useCallback((key: string, value: string | boolean) => {
     const next = new URLSearchParams(params);
@@ -180,9 +184,11 @@ const Home = () => {
     next.set("nearby", "1");
     next.delete("city");
     next.delete("area");
-    next.delete("q");
+    localStorage.removeItem("play_turf_selected_city");
+    localStorage.removeItem("play_turf_selected_area");
     navigate(`/?${next.toString()}`);
-  }, [params, navigate]);
+    getGPSLocation();
+  }, [params, navigate, getGPSLocation]);
 
   return (
     <MobileShell>

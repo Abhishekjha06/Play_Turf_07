@@ -276,45 +276,44 @@ function LocationSheet({
         </button>
       </div>
 
-      {/* City row + Near Me */}
-      <div className="flex gap-2 mb-3">
-        <div className="flex-1 relative">
-          <MapPin
-            className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none"
-            style={{ color: isPremium ? "#14B8B0" : "hsl(var(--primary))" }}
-          />
-          <select
-            value={city}
-            onChange={(e) => onCity(e.target.value)}
-            style={{ ...inputStyle, paddingLeft: "36px" }}
-          >
-            <option value="">All cities</option>
-            {cities.map((item) => (
-              <option key={item} value={item}>
-                {item}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <button
-          type="button"
-          onClick={onNearMe}
-          disabled={locating}
-          className="pressable inline-flex items-center gap-2 rounded-xl px-4 text-xs font-bold disabled:opacity-60 flex-shrink-0 cursor-pointer border-none"
-          style={{
-            height: "44px",
-            background: isPremium ? "#14B8B0" : "hsl(var(--primary))",
-            color: isPremium ? "white" : "hsl(var(--primary-foreground))",
-            boxShadow: isPremium
-              ? "0 4px 14px rgba(20,184,176,0.30)"
-              : "var(--shadow-neon)",
-          }}
+      {/* City selector */}
+      <div className="relative mb-3">
+        <MapPin
+          className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none"
+          style={{ color: isPremium ? "#14B8B0" : "hsl(var(--primary))" }}
+        />
+        <select
+          value={city}
+          onChange={(e) => onCity(e.target.value)}
+          style={{ ...inputStyle, paddingLeft: "36px" }}
         >
-          <LocateFixed className="h-4 w-4" />
-          {locating ? "Locating…" : "Near Me"}
-        </button>
+          <option value="">All cities</option>
+          {cities.map((item) => (
+            <option key={item} value={item}>
+              {item}
+            </option>
+          ))}
+        </select>
       </div>
+
+      {/* Use My Current Location Button */}
+      <button
+        type="button"
+        onClick={onNearMe}
+        disabled={locating}
+        className="pressable w-full flex items-center justify-center gap-2 rounded-xl mb-3 text-xs font-bold disabled:opacity-60 cursor-pointer border-none"
+        style={{
+          height: "44px",
+          background: isPremium ? "#14B8B0" : "hsl(var(--primary))",
+          color: isPremium ? "white" : "hsl(var(--primary-foreground))",
+          boxShadow: isPremium
+            ? "0 4px 14px rgba(20,184,176,0.30)"
+            : "var(--shadow-neon)",
+        }}
+      >
+        <LocateFixed className="h-4 w-4" />
+        {locating ? "Locating…" : "Use My Current Location"}
+      </button>
 
       {/* Area */}
       <select
