@@ -6,7 +6,14 @@ import {
 import { getSupabase } from "../supabase";
 import { USE_MOCK, lsGet, lsSet, LS_TURFS, LS_FAVORITES, LS_REVIEWS, delay, http, uid, uid as makeUid } from "./core";
 
-export function getMockTurfs(): Turf[] { return lsGet<Turf[]>(LS_TURFS, seedTurfs); }
+export function getMockTurfs(): Turf[] {
+  const current = lsGet<Turf[]>(LS_TURFS, []);
+  if (current.length === 0 || !current.some(t => t.city === "Virar")) {
+    lsSet(LS_TURFS, seedTurfs);
+    return seedTurfs;
+  }
+  return current;
+}
 export function setMockTurfs(v: Turf[]) { lsSet(LS_TURFS, v); }
 export function getMockFavorites(): string[] { return lsGet<string[]>(LS_FAVORITES, []); }
 export function setMockFavorites(v: string[]) { lsSet(LS_FAVORITES, v); }

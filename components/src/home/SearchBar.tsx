@@ -16,7 +16,13 @@ export function SearchBar() {
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        if (q.trim()) navigate(`/?q=${encodeURIComponent(q.trim())}`);
+        const next = new URLSearchParams(window.location.search);
+        if (q.trim()) {
+          next.set("q", q.trim());
+        } else {
+          next.delete("q");
+        }
+        navigate(`/?${next.toString()}`);
       }}
       className="px-4 mt-3"
     >

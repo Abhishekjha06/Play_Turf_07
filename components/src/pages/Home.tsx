@@ -45,13 +45,35 @@ const Home = () => {
   const navigate = useNavigate();
   const q = params.get("q") || "";
   const nearby = params.get("nearby") === "1";
-  const selectedCity = params.get("city") || "";
-  const selectedArea = params.get("area") || "";
+  
+  const selectedCity = useMemo(() => {
+    return params.get("city") || localStorage.getItem("play_turf_selected_city") || "";
+  }, [params]);
+
+  const selectedArea = useMemo(() => {
+    return params.get("area") || localStorage.getItem("play_turf_selected_area") || "";
+  }, [params]);
+
   const selectedSport = params.get("sport") || "";
   const selectedAmenity = params.get("amenity") || "";
   const maxPrice = params.get("maxPrice") || "";
   const minRating = params.get("minRating") || "";
   const openNow = params.get("openNow") === "1";
+
+  // Sync localStorage with URL search params on mount or param updates
+  useEffect(() => {
+    const cityInUrl = params.get("city");
+    const areaInUrl = params.get("area");
+    const cityInStore = localStorage.getItem("play_turf_selected_city");
+    const areaInStore = localStorage.getItem("play_turf_selected_area");
+
+    if (!cityInUrl && !areaInUrl && (cityInStore || areaInStore)) {
+      const next = new URLSearchParams(params);
+      if (cityInStore) next.set("city", cityInStore);
+      if (areaInStore) next.set("area", areaInStore);
+      navigate(`/?${next.toString()}`, { replace: true });
+    }
+  }, [params, navigate]);
 
   // ── Section data via service layer (mock → Supabase ready) ────────
   const [banners, setBanners] = useState<Banner[]>([]);
@@ -103,16 +125,25 @@ const Home = () => {
   }, [hasActiveFilter, nearby, filterOpts, userLocation]);
 
 
-  const updateLocation = useCallback((city: string, area = selectedArea) => {
+  const updateLocation = useCallback((city: string, area = "") => {
     const next = new URLSearchParams(params);
-    next.delete("q");
     next.delete("nearby");
-    if (city) next.set("city", city);
-    else next.delete("city");
-    if (area) next.set("area", area);
-    else next.delete("area");
+    if (city) {
+      next.set("city", city);
+      localStorage.setItem("play_turf_selected_city", city);
+    } else {
+      next.delete("city");
+      localStorage.removeItem("play_turf_selected_city");
+    }
+    if (area) {
+      next.set("area", area);
+      localStorage.setItem("play_turf_selected_area", area);
+    } else {
+      next.delete("area");
+      localStorage.removeItem("play_turf_selected_area");
+    }
     navigate(`/?${next.toString()}`);
-  }, [params, navigate, selectedArea]);
+  }, [params, navigate]);
 
   useEffect(() => {
     if (!nearby || selectedCity || !navigator.geolocation || allTurfs.length === 0) return;
@@ -130,7 +161,7 @@ const Home = () => {
       },
       () => {
         setLocating(false);
-        toast.error("Location permission blocked. Please select your city.");
+        toast.error("Location access denied. Please select a location manually.");
       },
       { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 },
     );

@@ -115,8 +115,7 @@ export function LocationPill({
             <motion.div
               className="fixed inset-0 z-40"
               style={{
-                background: "rgba(15,23,42,0.35)",
-                backdropFilter: "blur(2px)",
+                background: "rgba(0, 0, 0, 0.45)",
                 maxWidth: "480px",
                 left: "50%",
                 transform: "translateX(-50%)"
@@ -124,7 +123,7 @@ export function LocationPill({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.18 }}
+              transition={{ duration: 0.15 }}
               onClick={() => setOpen(false)}
               aria-hidden
             />
@@ -202,16 +201,16 @@ function LocationSheet({
   const sheetStyle = isPremium
     ? {
       background: "#FFFFFF",
-      borderRadius: "20px",
+      borderRadius: "12px",
       border: "1px solid #E2E8F0",
-      boxShadow: "0 10px 40px rgba(15,23,42,0.14)",
+      boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
       padding: "16px",
     }
     : {
-      background: "hsl(var(--panel))",
-      borderRadius: "20px",
-      border: "1px solid hsl(var(--border))",
-      boxShadow: "0 10px 40px rgba(0,0,0,0.5)",
+      background: "var(--card-bg, hsl(var(--panel)))",
+      borderRadius: "12px",
+      border: "1px solid rgba(255,255,255,0.1)",
+      boxShadow: "0 4px 12px rgba(0,0,0,0.12)",
       padding: "16px",
     };
 
