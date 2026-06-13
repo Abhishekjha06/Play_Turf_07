@@ -21,11 +21,14 @@ export async function submitFeedback(payload: FeedbackPayload, userGetter: () =>
   const user = await userGetter();
   
   if (supabase) {
+    const userId = user?.user_id || user?.id || null;
+    const isValidUUID = typeof userId === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId);
+    
     const { data, error } = await supabase
       .from("feedbacks")
       .insert({
         ...payload,
-        user_id: user?.user_id || user?.id || null,
+        user_id: isValidUUID ? userId : null,
         status: "Open"
       })
       .select()

@@ -172,13 +172,14 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose })
             className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm"
             onClick={onClose}
           />
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="fixed left-1/2 top-1/2 z-[101] w-full max-w-lg -translate-x-1/2 -translate-y-1/2 p-4"
-          >
-            <div className="card-panel relative flex flex-col gap-4 overflow-hidden rounded-3xl p-6 shadow-2xl bg-panel-2">
+          <div className="fixed inset-0 z-[101] flex items-center justify-center p-4 pointer-events-none">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="w-full max-w-lg pointer-events-auto"
+            >
+              <div className="card-panel relative flex flex-col gap-4 overflow-hidden rounded-3xl p-6 shadow-2xl bg-panel-2">
               <button
                 onClick={onClose}
                 className="absolute right-4 top-4 rounded-full bg-white/5 p-2 text-soft transition-colors hover:bg-white/10 hover:text-white"
@@ -286,7 +287,8 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose })
               )}
             </div>
           </motion.div>
-        </>
+        </div>
+      </>
       )}
     </AnimatePresence>
   );
