@@ -92,11 +92,19 @@ function CollapsingHeader({
       setTimeout(() => setIsBlinking(false), 8000);
     };
 
+    const handleOpenNotif = () => {
+      setIsNotifOpen(true);
+      setIsBlinking(false);
+      markAllAsRead();
+    };
+
     window.addEventListener("notifications_updated", handleUpdate);
     window.addEventListener("notification_blink", handleBlink);
+    window.addEventListener("open_notifications", handleOpenNotif);
     return () => {
       window.removeEventListener("notifications_updated", handleUpdate);
       window.removeEventListener("notification_blink", handleBlink);
+      window.removeEventListener("open_notifications", handleOpenNotif);
     };
   }, []);
 

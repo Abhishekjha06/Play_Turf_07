@@ -27,9 +27,17 @@ const More = () => {
   const [switching, setSwitching] = useState(false);
 
   const menuItems = [
-    { label: "App Appearance", icon: Palette, to: "/theme", toast: "" },
-    { label: "Notifications", icon: Bell, to: "", toast: "Notifications coming soon!" },
-    { label: "Terms of Service", icon: FileText, to: "", toast: "Terms of Service coming soon!" },
+    { label: "App Appearance", icon: Palette, to: "/theme", toast: "", action: null },
+    {
+      label: "Notifications",
+      icon: Bell,
+      to: "",
+      toast: "",
+      action: () => {
+        window.dispatchEvent(new Event("open_notifications"));
+      },
+    },
+    { label: "Terms of Service", icon: FileText, to: "", toast: "Terms of Service coming soon!", action: null },
   ];
 
   const handleSignOut = async () => {
@@ -85,7 +93,15 @@ const More = () => {
         {menuItems.map((it) => (
           <button
             key={it.label}
-            onClick={() => it.to ? navigate(it.to) : toast.info(it.toast)}
+            onClick={() => {
+              if (it.action) {
+                it.action();
+              } else if (it.to) {
+                navigate(it.to);
+              } else {
+                toast.info(it.toast);
+              }
+            }}
             className="card-panel rounded-2xl px-4 py-3 flex items-center gap-3 pressable text-left w-full"
           >
             <div className="h-9 w-9 rounded-full bg-panel-3 grid place-items-center">
