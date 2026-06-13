@@ -439,43 +439,7 @@ function CollapsingHeader({
                 )}
               </div>
 
-              {/* Bottom Simulation Button */}
-              <div className="p-4 border-t" style={{ borderColor: "var(--border-primary)", backgroundColor: "rgba(0,0,0,0.15)" }}>
-                <button
-                  onClick={() => {
-                    const promos = [
-                      {
-                        type: "promotional_offer" as const,
-                        title: "Weekend Football Offer ⚽",
-                        body: "Get 20% off on all football bookings this weekend.",
-                        deepLink: "/turfs",
-                        expiryDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
-                        targetAudience: "All Users"
-                      },
-                      {
-                        type: "tournament_announcement" as const,
-                        title: "National Box Cricket Cup 🏆",
-                        body: "Registrations are now open for the summer national league! Register your roster today.",
-                        deepLink: "/tournaments",
-                        targetAudience: "All Users"
-                      },
-                      {
-                        type: "new_turf_launch" as const,
-                        title: "Arena Grand Opening! 🎉",
-                        body: "Greenfield Arena Indiranagar is now live. Check slots and view early-bird rates.",
-                        deepLink: "/turf/turf-01",
-                        targetAudience: "All Users"
-                      }
-                    ];
-                    const selected = promos[Math.floor(Math.random() * promos.length)];
-                    addNotification(selected);
-                    toast.success("Promo notification pushed!");
-                  }}
-                  className="w-full py-2.5 rounded-xl bg-gradient-neon text-primary-foreground text-xs font-black uppercase tracking-wider shadow-neon border-none cursor-pointer"
-                >
-                  Push Mock Promo Offer
-                </button>
-              </div>
+
             </motion.div>
           </>
         )}
