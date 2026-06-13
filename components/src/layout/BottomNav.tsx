@@ -45,7 +45,11 @@ export function BottomNav() {
           <motion.button
             whileTap={{ scale: 0.88 }}
             whileHover={{ scale: 1.05 }}
-            onClick={() => navigate("/")}
+            onClick={() => {
+              localStorage.removeItem("play_turf_selected_city");
+              localStorage.removeItem("play_turf_selected_area");
+              navigate("/");
+            }}
             aria-label="Quick book"
             className="relative -mt-10 grid place-items-center rounded-full"
             style={{
@@ -89,7 +93,11 @@ export function BottomNav() {
         <motion.button
           whileTap={{ scale: 0.88 }}
           whileHover={{ scale: 1.05 }}
-          onClick={() => navigate("/")}
+          onClick={() => {
+            localStorage.removeItem("play_turf_selected_city");
+            localStorage.removeItem("play_turf_selected_area");
+            navigate("/");
+          }}
           aria-label="Quick book"
           className="relative -mt-10 h-16 w-16 rounded-full bg-gradient-neon text-primary-foreground grid place-items-center animate-pulse-glow"
           data-testid="fab-book"
@@ -121,6 +129,12 @@ function PremiumNavItem({
   return (
     <Link
       to={to}
+      onClick={() => {
+        if (to === "/") {
+          localStorage.removeItem("play_turf_selected_city");
+          localStorage.removeItem("play_turf_selected_area");
+        }
+      }}
       data-testid={testid}
       aria-label={label}
       aria-current={active ? "page" : undefined}
@@ -179,6 +193,12 @@ function LegacyNavItem({
   return (
     <Link
       to={to}
+      onClick={() => {
+        if (to === "/") {
+          localStorage.removeItem("play_turf_selected_city");
+          localStorage.removeItem("play_turf_selected_area");
+        }
+      }}
       data-testid={testid}
       aria-label={label}
       aria-current={active ? "page" : undefined}

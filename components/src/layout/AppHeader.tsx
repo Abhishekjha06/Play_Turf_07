@@ -159,7 +159,15 @@ function CollapsingHeader({
         <div className="relative z-10 h-full flex flex-col justify-between px-5 pt-4 pb-5">
           {/* Top row: logo + actions (remains visible in collapsed header) */}
           <div className="flex items-center justify-between h-[48px] min-h-[48px]">
-            <Link to="/" className="leading-tight origin-left" data-testid="header-logo">
+            <Link
+              to="/"
+              onClick={() => {
+                localStorage.removeItem("play_turf_selected_city");
+                localStorage.removeItem("play_turf_selected_area");
+              }}
+              className="leading-tight origin-left"
+              data-testid="header-logo"
+            >
               <motion.div
                 style={{ scale: logoScale, transformOrigin: "left center" }}
                 className="flex flex-col justify-center"
