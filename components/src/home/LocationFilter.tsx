@@ -6,8 +6,8 @@ import { AnimatePresence, motion } from "framer-motion";
 
 /* ─────────────────────────────────────────────────────────────────────
    LocationPill — compact trigger shown inline in the category row.
-   Clicking opens the full LocationSheet below it.
-───────────────────────────────────────────────────────────────────── */
+   Clicking opens the full LocationSheet in the middle of the screen.
+ ───────────────────────────────────────────────────────────────────── */
 export function LocationPill({
   turfs,
   city,
@@ -107,14 +107,20 @@ export function LocationPill({
         </span>
       </button>
 
-      {/* ── Drop-down sheet ── */}
+      {/* ── Drop-down sheet centered in viewport ── */}
       <AnimatePresence>
         {open && (
           <>
             {/* Backdrop */}
             <motion.div
               className="fixed inset-0 z-40"
-              style={{ background: "rgba(15,23,42,0.35)", backdropFilter: "blur(2px)" }}
+              style={{
+                background: "rgba(15,23,42,0.35)",
+                backdropFilter: "blur(2px)",
+                maxWidth: "480px",
+                left: "50%",
+                transform: "translateX(-50%)"
+              }}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -123,14 +129,14 @@ export function LocationPill({
               aria-hidden
             />
 
-            {/* Sheet */}
+            {/* Sheet - Centered layout */}
             <motion.div
               ref={sheetRef}
-              className="fixed left-1/2 z-50 w-[calc(100vw-32px)] max-w-[448px]"
-              style={{ top: "auto", bottom: "88px", transform: "translateX(-50%)" }}
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 24 }}
+              className="fixed left-1/2 top-1/2 z-50 w-[calc(100vw-32px)] max-w-[448px]"
+              style={{ x: "-50%", y: "-50%" }}
+              initial={{ opacity: 0, scale: 0.95, x: "-50%", y: "-50%" }}
+              animate={{ opacity: 1, scale: 1, x: "-50%", y: "-50%" }}
+              exit={{ opacity: 0, scale: 0.95, x: "-50%", y: "-50%" }}
               transition={{ type: "spring", stiffness: 380, damping: 32 }}
             >
               <LocationSheet
@@ -154,7 +160,7 @@ export function LocationPill({
 
 /* ─────────────────────────────────────────────────────────────────────
    LocationSheet — the full filter panel that slides up
-───────────────────────────────────────────────────────────────────── */
+ ───────────────────────────────────────────────────────────────────── */
 function LocationSheet({
   turfs,
   city,
@@ -198,14 +204,14 @@ function LocationSheet({
       background: "#FFFFFF",
       borderRadius: "20px",
       border: "1px solid #E2E8F0",
-      boxShadow: "0 -4px 40px rgba(15,23,42,0.14)",
+      boxShadow: "0 10px 40px rgba(15,23,42,0.14)",
       padding: "16px",
     }
     : {
       background: "hsl(var(--panel))",
       borderRadius: "20px",
       border: "1px solid hsl(var(--border))",
-      boxShadow: "0 -4px 40px rgba(0,0,0,0.4)",
+      boxShadow: "0 10px 40px rgba(0,0,0,0.5)",
       padding: "16px",
     };
 
@@ -258,7 +264,7 @@ function LocationSheet({
         </div>
         <button
           onClick={onClose}
-          className="pressable h-7 w-7 rounded-full grid place-items-center"
+          className="pressable h-7 w-7 rounded-full grid place-items-center cursor-pointer border-none"
           style={{
             background: isPremium ? "#F1F5F9" : "hsl(var(--panel-2))",
           }}
@@ -296,7 +302,7 @@ function LocationSheet({
           type="button"
           onClick={onNearMe}
           disabled={locating}
-          className="pressable inline-flex items-center gap-2 rounded-xl px-4 text-xs font-bold disabled:opacity-60 flex-shrink-0"
+          className="pressable inline-flex items-center gap-2 rounded-xl px-4 text-xs font-bold disabled:opacity-60 flex-shrink-0 cursor-pointer border-none"
           style={{
             height: "44px",
             background: isPremium ? "#14B8B0" : "hsl(var(--primary))",
@@ -328,7 +334,7 @@ function LocationSheet({
       {/* Clear filters */}
       {(city || area) && (
         <button
-          className="pressable mt-3 w-full text-center text-xs font-semibold rounded-xl py-2.5"
+          className="pressable mt-3 w-full text-center text-xs font-semibold rounded-xl py-2.5 cursor-pointer"
           style={{
             background: isPremium ? "#FEF2F2" : "hsl(var(--destructive) / 0.10)",
             color: isPremium ? "#EF4444" : "hsl(var(--destructive))",
@@ -345,7 +351,7 @@ function LocationSheet({
 
 /* ─────────────────────────────────────────────────────────────────────
    Legacy LocationFilter — kept for backward compat if needed elsewhere
-───────────────────────────────────────────────────────────────────── */
+ ───────────────────────────────────────────────────────────────────── */
 export function LocationFilter({
   turfs,
   city,
@@ -412,7 +418,7 @@ export function LocationFilter({
               type="button"
               onClick={onNearMe}
               disabled={locating}
-              className="pressable inline-flex h-11 items-center gap-2 rounded-xl px-3 text-xs font-bold disabled:opacity-60"
+              className="pressable inline-flex h-11 items-center gap-2 rounded-xl px-3 text-xs font-bold disabled:opacity-60 cursor-pointer border-none"
               style={{ background: "#14B8B0", color: "white", boxShadow: "0 4px 14px rgba(20,184,176,0.30)" }}
             >
               <LocateFixed className="h-4 w-4" />
@@ -456,7 +462,7 @@ export function LocationFilter({
             type="button"
             onClick={onNearMe}
             disabled={locating}
-            className="pressable inline-flex h-11 items-center gap-2 rounded-xl bg-primary px-3 text-xs font-bold text-primary-foreground shadow-neon disabled:opacity-60"
+            className="pressable inline-flex h-11 items-center gap-2 rounded-xl bg-primary px-3 text-xs font-bold text-primary-foreground shadow-neon disabled:opacity-60 cursor-pointer border-none"
           >
             <LocateFixed className="h-4 w-4" />
             {locating ? "Locating..." : "Near Me"}

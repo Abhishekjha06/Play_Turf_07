@@ -1,13 +1,16 @@
-import { Bell, MapPin, Search } from "lucide-react";
+import { Bell, MapPin, Search, X } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
 import { useLuxuryTheme } from "@/luxury/LuxuryThemeProvider";
 import { CoolThemeToggle } from "@/ui/CoolThemeToggle";
 import { Avatar, AvatarImage } from "@/ui/avatar";
 import { AvatarPicker } from "@/ui/AvatarPicker";
-import { useState } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { useState, useEffect } from "react";
+import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import { fadeSlideDown } from "@/lib/motion";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import { getNotifications, markAllAsRead, addNotification, clearNotifications, type AppNotification } from "@/lib/notifications";
 
 export function AppHeader() {
   const { user } = useAuth();
@@ -35,6 +38,7 @@ function CollapsingHeader({
 }) {
   const { scrollY } = useScroll();
   const { themeId } = useLuxuryTheme();
+  const navigate = useNavigate();
   
   const isPremiumTeal = themeId === "premium-teal";
   const accentColor = isPremiumTeal ? "#14B8B0" : "#00E676";
@@ -57,6 +61,35 @@ function CollapsingHeader({
   // Translate elements up as we scroll (search bar scrolls away with content)
   const greetingY = useTransform(scrollY, [0, 220], [0, -100]);
   const searchBarY = useTransform(scrollY, [0, 220], [0, -180]);
+
+  // Notification states
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const [isBlinking, setIsBlinking] = useState(false);
+
+  useEffect(() => {
+    // Initial load
+    setNotifications(getNotifications());
+
+    const handleUpdate = () => {
+      setNotifications(getNotifications());
+    };
+
+    const handleBlink = () => {
+      setIsBlinking(true);
+      // Automatically stop blinking after 8s
+      setTimeout(() => setIsBlinking(false), 8000);
+    };
+
+    window.addEventListener("notifications_updated", handleUpdate);
+    window.addEventListener("notification_blink", handleBlink);
+    return () => {
+      window.removeEventListener("notifications_updated", handleUpdate);
+      window.removeEventListener("notification_blink", handleBlink);
+    };
+  }, []);
+
+  const unreadCount = notifications.filter(n => !n.isRead).length;
 
   return (
     <>
@@ -141,8 +174,18 @@ function CollapsingHeader({
 
               <motion.button
                 whileTap={{ scale: 0.88 }}
+                onClick={() => {
+                  setIsNotifOpen(true);
+                  setIsBlinking(false);
+                  markAllAsRead();
+                }}
+                animate={isBlinking ? {
+                  rotate: [0, -15, 15, -15, 15, -10, 10, -5, 5, 0],
+                  scale: [1, 1.1, 1.1, 1.1, 1.1, 1]
+                } : {}}
+                transition={{ duration: 0.8, repeat: isBlinking ? Infinity : 0, repeatDelay: 1 }}
                 aria-label="Notifications"
-                className="relative h-9 w-9 rounded-full grid place-items-center"
+                className="relative h-9 w-9 rounded-full grid place-items-center cursor-pointer"
                 style={{
                   background: "rgba(255,255,255,0.15)",
                   border: "1px solid rgba(255,255,255,0.20)",
@@ -150,10 +193,17 @@ function CollapsingHeader({
                 data-testid="header-notifications"
               >
                 <Bell className="h-[18px] w-[18px] text-white" />
-                <span
-                  className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full animate-glow-pulse"
-                  style={{ background: accentColor }}
-                />
+                {unreadCount > 0 && (
+                  <span
+                    className={cn(
+                      "absolute -top-1 -right-1 h-4 w-4 rounded-full text-[9px] font-black grid place-items-center text-white border border-[#0f172a]",
+                      isBlinking ? "animate-bounce" : ""
+                    )}
+                    style={{ background: accentColor }}
+                  >
+                    {unreadCount}
+                  </span>
+                )}
               </motion.button>
 
               <motion.button
@@ -210,6 +260,150 @@ function CollapsingHeader({
         open={isAvatarPickerOpen}
         onClose={() => setIsAvatarPickerOpen(false)}
       />
+
+      {/* Notifications Panel */}
+      <AnimatePresence>
+        {isNotifOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.5 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsNotifOpen(false)}
+              className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
+              style={{ maxWidth: "480px", left: "50%", transform: "translateX(-50%)" }}
+            />
+
+            {/* Panel */}
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="fixed right-0 top-0 bottom-0 z-50 w-[85%] max-w-[400px] border-l backdrop-blur-xl flex flex-col"
+              style={{
+                backgroundColor: "var(--card-bg, #1e1e1e)",
+                borderColor: "var(--border-primary, #333)",
+                boxShadow: "var(--shadow-primary, 0 10px 30px rgba(0,0,0,0.5))"
+              }}
+            >
+              {/* Header */}
+              <div className="p-4.5 border-b flex items-center justify-between" style={{ borderColor: "var(--border-primary)" }}>
+                <div>
+                  <h3 className="font-display font-black text-base text-foreground">Notifications</h3>
+                  {unreadCount > 0 && (
+                    <span className="text-[10px] font-bold text-primary uppercase tracking-wider">{unreadCount} Unread Alerts</span>
+                  )}
+                </div>
+                <button
+                  onClick={() => setIsNotifOpen(false)}
+                  className="p-1.5 hover:bg-white/10 rounded-full cursor-pointer text-muted-foreground hover:text-foreground transition border-none"
+                  style={{ backgroundColor: "transparent" }}
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Actions */}
+              <div className="px-4.5 py-2.5 bg-white/5 flex items-center justify-between text-[10px] font-extrabold uppercase tracking-wider">
+                <button
+                  onClick={() => {
+                    markAllAsRead();
+                    toast.success("All marked as read");
+                  }}
+                  className="text-primary hover:underline cursor-pointer border-none bg-transparent"
+                >
+                  Mark all as read
+                </button>
+                <button
+                  onClick={() => {
+                    clearNotifications();
+                    toast.info("Notifications cleared");
+                  }}
+                  className="text-red-400 hover:underline cursor-pointer border-none bg-transparent"
+                >
+                  Clear all
+                </button>
+              </div>
+
+              {/* List */}
+              <div className="flex-1 overflow-y-auto p-4.5 space-y-3">
+                {notifications.length === 0 ? (
+                  <div className="text-center py-20 text-muted-foreground flex flex-col items-center gap-3">
+                    <Bell className="h-10 w-10 text-muted-foreground/30 animate-pulse" />
+                    <p className="text-xs font-semibold">You're all caught up!</p>
+                  </div>
+                ) : (
+                  notifications.map(notif => (
+                    <div
+                      key={notif.id}
+                      onClick={() => {
+                        if (notif.booking_id) {
+                          setIsNotifOpen(false);
+                          navigate(`/booking/${notif.booking_id}`);
+                        }
+                      }}
+                      className={cn(
+                        "p-3.5 rounded-2xl border text-left transition relative cursor-pointer",
+                        notif.isRead ? "border-white/5 bg-white/5 opacity-80" : "border-primary/20 bg-primary/5 hover:bg-primary/10"
+                      )}
+                      style={{
+                        borderColor: notif.isRead ? "var(--border-primary)" : undefined
+                      }}
+                    >
+                      {!notif.isRead && (
+                        <span className="absolute top-3.5 right-3.5 h-1.5 w-1.5 rounded-full animate-pulse" style={{ backgroundColor: accentColor }} />
+                      )}
+                      <div className="flex items-center gap-2">
+                        <span className="text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-white/10 text-foreground">
+                          {notif.type.replace("_", " ")}
+                        </span>
+                        <span className="text-[9px] text-muted-foreground">
+                          {new Date(notif.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                      <h4 className="mt-2 text-xs font-black text-foreground font-display">{notif.title}</h4>
+                      <p className="mt-1 text-[11px] text-muted-foreground leading-relaxed font-semibold">{notif.body}</p>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* Bottom Test Button */}
+              <div className="p-4 border-t" style={{ borderColor: "var(--border-primary)", backgroundColor: "rgba(0,0,0,0.15)" }}>
+                <button
+                  onClick={() => {
+                    const promos = [
+                      {
+                        type: "offer" as const,
+                        title: "Exclusive 30% Promo Code! ⚽",
+                        body: "Unlock 30% off all bookings for tomorrow! Use code GOAL30.",
+                      },
+                      {
+                        type: "offer" as const,
+                        title: "Free Booking Upgrade! 🏆",
+                        body: "Book 2 hours and get the 3rd hour absolutely free this weekend.",
+                      },
+                      {
+                        type: "booking_reminder" as const,
+                        title: "Friendly Match Reminder! 🏟️",
+                        body: "Your slot starts in 1 hour at Greenfield Arena cage 2.",
+                      }
+                    ];
+                    const selected = promos[Math.floor(Math.random() * promos.length)];
+                    addNotification(selected);
+                    toast.success("Mock notification pushed!");
+                  }}
+                  className="w-full py-2.5 rounded-xl bg-gradient-neon text-primary-foreground text-xs font-black uppercase tracking-wider shadow-neon border-none cursor-pointer"
+                >
+                  Push Mock Promo Offer
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </>
   );
 }

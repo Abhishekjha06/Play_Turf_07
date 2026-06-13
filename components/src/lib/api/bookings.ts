@@ -4,6 +4,8 @@ import {
 import { getSupabase } from "../supabase";
 import { USE_MOCK, lsGet, lsSet, LS_BOOKINGS, delay, http, uid } from "./core";
 import { getMockTurfs } from "./turfs";
+import { addNotification } from "../notifications";
+
 
 export function getMockBookings(): Booking[] { return lsGet<Booking[]>(LS_BOOKINGS, []); }
 export function setMockBookings(v: Booking[]) { lsSet(LS_BOOKINGS, v); }
@@ -184,6 +186,13 @@ export async function payMock(bookingId: string): Promise<Booking> {
       .update({ status: "CONFIRMED", payment_id: paymentId })
       .eq("payment_id", `parent_${bookingId}`);
 
+    addNotification({
+      type: "booking_confirmed",
+      title: "Booking Confirmed! 🎉",
+      body: `Your booking for ${data.turf_name} on ${data.date} is confirmed!`,
+      booking_id: bookingId,
+    });
+
     return data as Booking;
   }
   if (USE_MOCK) {
@@ -203,6 +212,14 @@ export async function payMock(bookingId: string): Promise<Booking> {
     }
     
     setMockBookings(list);
+
+    addNotification({
+      type: "booking_confirmed",
+      title: "Booking Confirmed! 🎉",
+      body: `Your booking for ${list[idx].turf_name} on ${list[idx].date} is confirmed!`,
+      booking_id: bookingId,
+    });
+
     return list[idx];
   }
   return http<Booking>(`/bookings/${bookingId}/pay-mock`, { method: "POST" });
@@ -315,6 +332,13 @@ export async function cancelBooking(id: string): Promise<Booking> {
       .from("bookings")
       .update({ status: "CANCELLED" })
       .eq("payment_id", `parent_${id}`);
+
+    addNotification({
+      type: "booking_cancelled",
+      title: "Booking Cancelled ❌",
+      body: `Your booking for ${data.turf_name} on ${data.date} has been cancelled.`,
+      booking_id: id,
+    });
       
     return data as Booking;
   }
@@ -345,6 +369,14 @@ export async function cancelBooking(id: string): Promise<Booking> {
     }
     
     setMockBookings(list);
+
+    addNotification({
+      type: "booking_cancelled",
+      title: "Booking Cancelled ❌",
+      body: `Your booking for ${list[idx].turf_name} on ${list[idx].date} has been cancelled.`,
+      booking_id: id,
+    });
+    
     return list[idx];
   }
   return http<Booking>(`/bookings/${id}/cancel`, { method: "POST" });
