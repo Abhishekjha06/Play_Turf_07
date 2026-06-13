@@ -28,28 +28,35 @@ export async function createBooking(payload: {
     const userId = user ? user.id : 'mock_user';
     const turf = await getTurfById(payload.turf_id);
     
+    const bookingsToInsert: Booking[] = [];
+    const mainBookingId = uid("bkg");
     const [h, m] = payload.start_time.split(":").map(Number);
-    const endH = (h + payload.hours).toString().padStart(2, "0");
     
-    const booking: Booking = {
-      id: uid("bkg"),
-      user_id: userId,
-      turf_id: turf.id,
-      turf_name: turf.name,
-      turf_image: turf.image,
-      date: payload.date,
-      start_time: payload.start_time,
-      end_time: `${endH}:${String(m).padStart(2, "0")}`,
-      hours: payload.hours,
-      amount: turf.price_per_hour * payload.hours,
-      status: "PENDING",
-      payment_id: null,
-      created_at: new Date().toISOString(),
-    };
+    for (let i = 0; i < payload.hours; i++) {
+      const slotHour = (h + i).toString().padStart(2, "0");
+      const slotTime = `${slotHour}:${String(m).padStart(2, "0")}`;
+      const endHour = (h + i + 1).toString().padStart(2, "0");
+      
+      bookingsToInsert.push({
+        id: i === 0 ? mainBookingId : uid("bkg"),
+        user_id: userId,
+        turf_id: turf.id,
+        turf_name: turf.name,
+        turf_image: turf.image,
+        date: payload.date,
+        start_time: slotTime,
+        end_time: `${endHour}:${String(m).padStart(2, "0")}`,
+        hours: 1,
+        amount: i === 0 ? turf.price_per_hour * payload.hours : 0,
+        status: "PENDING",
+        payment_id: i === 0 ? null : `parent_${mainBookingId}`,
+        created_at: new Date().toISOString(),
+      });
+    }
     
-    const { error } = await supabase.from("bookings").insert(booking);
+    const { error } = await supabase.from("bookings").insert(bookingsToInsert);
     if (error) throw error;
-    return booking;
+    return bookingsToInsert[0];
   }
   if (USE_MOCK) {
     await delay(200);
@@ -77,25 +84,34 @@ export async function createBooking(payload: {
       throw new Error("One or more slots in this time range are already booked.");
     }
 
+    const bookingsToInsert: Booking[] = [];
+    const mainBookingId = uid("bkg");
     const [h, m] = payload.start_time.split(":").map(Number);
-    const endH = (h + payload.hours).toString().padStart(2, "0");
-    const booking: Booking = {
-      id: uid("bkg"),
-      user_id: user.user_id,
-      turf_id: turf.id,
-      turf_name: turf.name,
-      turf_image: turf.image,
-      date: payload.date,
-      start_time: payload.start_time,
-      end_time: `${endH}:${String(m).padStart(2, "0")}`,
-      hours: payload.hours,
-      amount: turf.price_per_hour * payload.hours,
-      status: "PENDING",
-      payment_id: null,
-      created_at: new Date().toISOString(),
-    };
-    setMockBookings([booking, ...getMockBookings()]);
-    return booking;
+    
+    for (let i = 0; i < payload.hours; i++) {
+      const slotHour = (h + i).toString().padStart(2, "0");
+      const slotTime = `${slotHour}:${String(m).padStart(2, "0")}`;
+      const endHour = (h + i + 1).toString().padStart(2, "0");
+      
+      bookingsToInsert.push({
+        id: i === 0 ? mainBookingId : uid("bkg"),
+        user_id: user.user_id,
+        turf_id: turf.id,
+        turf_name: turf.name,
+        turf_image: turf.image,
+        date: payload.date,
+        start_time: slotTime,
+        end_time: `${endHour}:${String(m).padStart(2, "0")}`,
+        hours: 1,
+        amount: i === 0 ? turf.price_per_hour * payload.hours : 0,
+        status: "PENDING",
+        payment_id: i === 0 ? null : `parent_${mainBookingId}`,
+        created_at: new Date().toISOString(),
+      });
+    }
+    
+    setMockBookings([...bookingsToInsert, ...getMockBookings()]);
+    return bookingsToInsert[0];
   }
   return http<Booking>("/bookings", { method: "POST", body: JSON.stringify(payload) });
 }
@@ -161,6 +177,13 @@ export async function payMock(bookingId: string): Promise<Booking> {
       .select()
       .single();
     if (error) throw error;
+
+    // Update secondary bookings
+    await supabase
+      .from("bookings")
+      .update({ status: "CONFIRMED", payment_id: paymentId })
+      .eq("payment_id", `parent_${bookingId}`);
+
     return data as Booking;
   }
   if (USE_MOCK) {
@@ -168,7 +191,17 @@ export async function payMock(bookingId: string): Promise<Booking> {
     const list = getMockBookings();
     const idx = list.findIndex((b) => b.id === bookingId);
     if (idx < 0) throw new Error("Booking missing");
-    list[idx] = { ...list[idx], status: "CONFIRMED", payment_id: uid("pay") };
+    
+    const paymentId = uid("pay");
+    list[idx] = { ...list[idx], status: "CONFIRMED", payment_id: paymentId };
+    
+    // Update secondary bookings in mock list
+    for (let i = 0; i < list.length; i++) {
+      if (list[i].payment_id === `parent_${bookingId}`) {
+        list[i] = { ...list[i], status: "CONFIRMED", payment_id: paymentId };
+      }
+    }
+    
     setMockBookings(list);
     return list[idx];
   }
@@ -255,6 +288,19 @@ export async function cancelBooking(id: string): Promise<Booking> {
       .select()
       .single();
     if (error) throw error;
+    
+    if (data.payment_id) {
+      await supabase
+        .from("bookings")
+        .update({ status: "CANCELLED" })
+        .eq("payment_id", data.payment_id);
+    }
+    
+    await supabase
+      .from("bookings")
+      .update({ status: "CANCELLED" })
+      .eq("payment_id", `parent_${id}`);
+      
     return data as Booking;
   }
   if (USE_MOCK) {
@@ -263,7 +309,19 @@ export async function cancelBooking(id: string): Promise<Booking> {
     const idx = list.findIndex((b) => b.id === id);
     if (idx < 0) throw new Error("Booking not found");
     if (list[idx].status === "CANCELLED") throw new Error("Already cancelled");
+    
+    const targetPaymentId = list[idx].payment_id;
     list[idx] = { ...list[idx], status: "CANCELLED" };
+    
+    for (let i = 0; i < list.length; i++) {
+      if (
+        (targetPaymentId && list[i].payment_id === targetPaymentId) ||
+        list[i].payment_id === `parent_${id}`
+      ) {
+        list[i] = { ...list[i], status: "CANCELLED" };
+      }
+    }
+    
     setMockBookings(list);
     return list[idx];
   }
