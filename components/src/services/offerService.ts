@@ -20,14 +20,20 @@ import { offers as seedOffers, type Offer } from "@/data/seed";
 export async function getOffers(limit = 10): Promise<Offer[]> {
     const supabase = await getSupabase();
     if (supabase) {
-        const { data, error } = await supabase
-          .from("offers")
-          .select("*")
-          .eq("is_active", true)
-          .order("created_at", { ascending: false })
-          .limit(limit);
-        if (error) throw error;
-        return data as Offer[];
+        try {
+            const { data, error } = await supabase
+              .from("offers")
+              .select("*")
+              .eq("is_active", true)
+              .order("created_at", { ascending: false })
+              .limit(limit);
+            if (error) throw error;
+            if (data && data.length > 0) {
+                return data as Offer[];
+            }
+        } catch (err) {
+            console.warn("Failed to query offers from Supabase:", err);
+        }
     }
 
     // Mock fallback
@@ -41,13 +47,19 @@ export async function getOffers(limit = 10): Promise<Offer[]> {
 export async function getOfferById(id: string): Promise<Offer | null> {
     const supabase = await getSupabase();
     if (supabase) {
-        const { data, error } = await supabase
-          .from("offers")
-          .select("*")
-          .eq("id", id)
-          .single();
-        if (error) throw error;
-        return data as Offer;
+        try {
+            const { data, error } = await supabase
+              .from("offers")
+              .select("*")
+              .eq("id", id)
+              .single();
+            if (error) throw error;
+            if (data) {
+                return data as Offer;
+            }
+        } catch (err) {
+            console.warn("Failed to query offer by ID from Supabase:", err);
+        }
     }
 
     // Mock fallback

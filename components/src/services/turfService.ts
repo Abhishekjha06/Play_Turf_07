@@ -20,14 +20,20 @@ import { turfs as seedTurfs, type Turf } from "@/data/seed";
 export async function getPopularTurfs(limit = 10): Promise<Turf[]> {
     const supabase = await getSupabase();
     if (supabase) {
-        const { data, error } = await supabase
-          .from("turfs")
-          .select("*")
-          .eq("is_popular", true)
-          .order("rating", { ascending: false })
-          .limit(limit);
-        if (error) throw error;
-        return data as Turf[];
+        try {
+            const { data, error } = await supabase
+              .from("turfs")
+              .select("*")
+              .eq("is_popular", true)
+              .order("rating", { ascending: false })
+              .limit(limit);
+            if (error) throw error;
+            if (data && data.length > 0) {
+                return data as Turf[];
+            }
+        } catch (err) {
+            console.warn("Failed to query popular turfs from Supabase:", err);
+        }
     }
 
     // Mock fallback
@@ -48,13 +54,19 @@ export async function getNearbyTurfs(
 ): Promise<Turf[]> {
     const supabase = await getSupabase();
     if (supabase) {
-        const { data, error } = await supabase
-          .from("turfs")
-          .select("*")
-          .eq("is_nearby", true)
-          .limit(limit);
-        if (error) throw error;
-        return data as Turf[];
+        try {
+            const { data, error } = await supabase
+              .from("turfs")
+              .select("*")
+              .eq("is_nearby", true)
+              .limit(limit);
+            if (error) throw error;
+            if (data && data.length > 0) {
+                return data as Turf[];
+            }
+        } catch (err) {
+            console.warn("Failed to query nearby turfs from Supabase:", err);
+        }
     }
 
     // Mock fallback
@@ -73,14 +85,20 @@ export async function getAllTurfs(filters?: {
 }): Promise<Turf[]> {
     const supabase = await getSupabase();
     if (supabase) {
-        let query = supabase.from("turfs").select("*");
-        if (filters?.city) query = query.eq("city", filters.city);
-        if (filters?.sport) query = query.contains("sport_types", [filters.sport]);
-        if (filters?.maxPrice) query = query.lte("price_per_hour", filters.maxPrice);
-        if (filters?.minRating) query = query.gte("rating", filters.minRating);
-        const { data, error } = await query;
-        if (error) throw error;
-        return data as Turf[];
+        try {
+            let query = supabase.from("turfs").select("*");
+            if (filters?.city) query = query.eq("city", filters.city);
+            if (filters?.sport) query = query.contains("sport_types", [filters.sport]);
+            if (filters?.maxPrice) query = query.lte("price_per_hour", filters.maxPrice);
+            if (filters?.minRating) query = query.gte("rating", filters.minRating);
+            const { data, error } = await query;
+            if (error) throw error;
+            if (data && data.length > 0) {
+                return data as Turf[];
+            }
+        } catch (err) {
+            console.warn("Failed to query all turfs from Supabase:", err);
+        }
     }
 
     // Mock fallback with basic filtering

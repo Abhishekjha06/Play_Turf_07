@@ -11,10 +11,16 @@ export function setMockBanners(v: Banner[]) { lsSet(LS_BANNERS, v); }
 export async function listBanners(): Promise<Banner[]> {
   const supabase = await getSupabase();
   if (supabase) {
-    const { data, error } = await supabase.from("banners").select("*").order("order", { ascending: true });
-    if (error) throw error;
-    return data as Banner[];
+    try {
+      const { data, error } = await supabase.from("banners").select("*").order("order", { ascending: true });
+      if (error) throw error;
+      if (data && data.length > 0) {
+        return data as Banner[];
+      }
+    } catch (err) {
+      console.warn("Failed to query banners from Supabase:", err);
+    }
   }
-  if (USE_MOCK) { await delay(150); return [...getMockBanners()].sort((a, b) => a.order - b.order); }
+  if (USE_MOCK || supabase) { await delay(150); return [...getMockBanners()].sort((a, b) => a.order - b.order); }
   return http<Banner[]>("/banners");
 }
