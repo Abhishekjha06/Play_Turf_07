@@ -228,17 +228,21 @@ export async function payMock(bookingId: string): Promise<Booking> {
 export async function myBookings(userGetter: () => Promise<any>): Promise<Booking[]> {
   const supabase = await getSupabase();
   if (supabase) {
-    const { data: { user } } = await supabase.auth.getUser();
-    const userId = user ? user.id : 'mock_user';
-    const { data, error } = await supabase
-      .from("bookings")
-      .select("*")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false });
-    if (error) throw error;
-    return data as Booking[];
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const userId = user ? user.id : 'mock_user';
+      const { data, error } = await supabase
+        .from("bookings")
+        .select("*")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as Booking[];
+    } catch (err) {
+      console.warn("Failed to query myBookings from Supabase:", err);
+    }
   }
-  if (USE_MOCK) {
+  if (USE_MOCK || supabase) {
     await delay(120);
     const u = await userGetter();
     if (!u) return [];
@@ -250,20 +254,24 @@ export async function myBookings(userGetter: () => Promise<any>): Promise<Bookin
 export async function upcomingBookings(userGetter: () => Promise<any>): Promise<Booking[]> {
   const supabase = await getSupabase();
   if (supabase) {
-    const { data: { user } } = await supabase.auth.getUser();
-    const userId = user ? user.id : 'mock_user';
-    const today = new Date().toISOString().slice(0, 10);
-    const { data, error } = await supabase
-      .from("bookings")
-      .select("*")
-      .eq("user_id", userId)
-      .eq("status", "CONFIRMED")
-      .gte("date", today)
-      .order("date", { ascending: true });
-    if (error) throw error;
-    return data as Booking[];
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const userId = user ? user.id : 'mock_user';
+      const today = new Date().toISOString().slice(0, 10);
+      const { data, error } = await supabase
+        .from("bookings")
+        .select("*")
+        .eq("user_id", userId)
+        .eq("status", "CONFIRMED")
+        .gte("date", today)
+        .order("date", { ascending: true });
+      if (error) throw error;
+      return data as Booking[];
+    } catch (err) {
+      console.warn("Failed to query upcomingBookings from Supabase:", err);
+    }
   }
-  if (USE_MOCK) {
+  if (USE_MOCK || supabase) {
     await delay(100);
     const u = await userGetter();
     if (!u) return [];

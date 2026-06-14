@@ -119,57 +119,65 @@ export async function getTurf(id: string): Promise<Turf> {
 export async function listFavorites(): Promise<string[]> {
   const supabase = await getSupabase();
   if (supabase) {
-    const { data: { user } } = await supabase.auth.getUser();
-    const userId = user ? user.id : 'mock_user';
-    const { data, error } = await supabase
-      .from("favorites")
-      .select("turf_id")
-      .eq("user_id", userId);
-    if (error) throw error;
-    return (data || []).map((fav: any) => fav.turf_id);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const userId = user ? user.id : 'mock_user';
+      const { data, error } = await supabase
+        .from("favorites")
+        .select("turf_id")
+        .eq("user_id", userId);
+      if (error) throw error;
+      return (data || []).map((fav: any) => fav.turf_id);
+    } catch (err) {
+      console.warn("Failed to query favorites from Supabase:", err);
+    }
   }
-  if (USE_MOCK) { await delay(60); return getMockFavorites(); }
+  if (USE_MOCK || supabase) { await delay(60); return getMockFavorites(); }
   return http<string[]>("/favorites");
 }
 
 export async function toggleFavorite(turfId: string): Promise<string[]> {
   const supabase = await getSupabase();
   if (supabase) {
-    const { data: { user } } = await supabase.auth.getUser();
-    const userId = user ? user.id : 'mock_user';
-    
-    // Check if it already exists
-    const { data: existing, error: checkError } = await supabase
-      .from("favorites")
-      .select("id")
-      .eq("user_id", userId)
-      .eq("turf_id", turfId)
-      .maybeSingle();
-    if (checkError) throw checkError;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const userId = user ? user.id : 'mock_user';
+      
+      // Check if it already exists
+      const { data: existing, error: checkError } = await supabase
+        .from("favorites")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("turf_id", turfId)
+        .maybeSingle();
+      if (checkError) throw checkError;
 
-    if (existing) {
-      // Delete it
-      const { error: deleteError } = await supabase
-        .from("favorites")
-        .delete()
-        .eq("id", existing.id);
-      if (deleteError) throw deleteError;
-    } else {
-      // Insert it
-      const { error: insertError } = await supabase
-        .from("favorites")
-        .insert({
-          id: uid("fav"),
-          user_id: userId,
-          turf_id: turfId,
-        });
-      if (insertError) throw insertError;
+      if (existing) {
+        // Delete it
+        const { error: deleteError } = await supabase
+          .from("favorites")
+          .delete()
+          .eq("id", existing.id);
+        if (deleteError) throw deleteError;
+      } else {
+        // Insert it
+        const { error: insertError } = await supabase
+          .from("favorites")
+          .insert({
+            id: uid("fav"),
+            user_id: userId,
+            turf_id: turfId,
+          });
+        if (insertError) throw insertError;
+      }
+      
+      // Return updated list
+      return listFavorites();
+    } catch (err) {
+      console.warn("Failed to toggle favorite on Supabase:", err);
     }
-    
-    // Return updated list
-    return listFavorites();
   }
-  if (USE_MOCK) {
+  if (USE_MOCK || supabase) {
     await delay(80);
     const favorites = getMockFavorites();
     const next = favorites.includes(turfId) ? favorites.filter((id) => id !== turfId) : [...favorites, turfId];
@@ -182,42 +190,50 @@ export async function toggleFavorite(turfId: string): Promise<string[]> {
 export async function listReviews(turfId: string): Promise<Review[]> {
   const supabase = await getSupabase();
   if (supabase) {
-    const { data, error } = await supabase
-      .from("reviews")
-      .select("*")
-      .eq("turf_id", turfId)
-      .order("created_at", { ascending: false });
-    if (error) throw error;
-    return data as Review[];
+    try {
+      const { data, error } = await supabase
+        .from("reviews")
+        .select("*")
+        .eq("turf_id", turfId)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as Review[];
+    } catch (err) {
+      console.warn("Failed to list reviews from Supabase:", err);
+    }
   }
-  if (USE_MOCK) { await delay(80); return getMockReviews().filter((review) => review.turf_id === turfId); }
+  if (USE_MOCK || supabase) { await delay(80); return getMockReviews().filter((review) => review.turf_id === turfId); }
   return http<Review[]>(`/turfs/${turfId}/reviews`);
 }
 
 export async function addReview(turfId: string, rating: number, comment: string, userGetter: () => Promise<any>): Promise<Review> {
   const supabase = await getSupabase();
   if (supabase) {
-    const { data: { user } } = await supabase.auth.getUser();
-    const userId = user ? user.id : 'mock_user';
-    const userName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email || 'Player';
-    
-    const review: Review = {
-      id: uid("rev"),
-      turf_id: turfId,
-      user_id: userId,
-      user_name: userName,
-      rating,
-      comment,
-      created_at: new Date().toISOString(),
-    };
-    
-    const { error } = await supabase
-      .from("reviews")
-      .insert(review);
-    if (error) throw error;
-    return review;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const userId = user ? user.id : 'mock_user';
+      const userName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email || 'Player';
+      
+      const review: Review = {
+        id: uid("rev"),
+        turf_id: turfId,
+        user_id: userId,
+        user_name: userName,
+        rating,
+        comment,
+        created_at: new Date().toISOString(),
+      };
+      
+      const { error } = await supabase
+        .from("reviews")
+        .insert(review);
+      if (error) throw error;
+      return review;
+    } catch (err) {
+      console.warn("Failed to add review to Supabase:", err);
+    }
   }
-  if (USE_MOCK) {
+  if (USE_MOCK || supabase) {
     await delay(120);
     const user = await userGetter();
     if (!user) throw new Error("Please sign in first");
