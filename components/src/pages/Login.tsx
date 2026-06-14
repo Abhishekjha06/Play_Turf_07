@@ -74,10 +74,11 @@ const Login = () => {
       }
 
       // Check / Create profile if missing
+      let role = "user";
       if (data.user) {
         const { data: profile } = await supabase
           .from("profiles")
-          .select("id")
+          .select("id, role")
           .eq("id", data.user.id)
           .single();
 
@@ -97,13 +98,20 @@ const Login = () => {
             console.error("Failed to create profile:", profileError);
             toast.error("Error creating user profile");
           }
+        } else {
+          role = profile.role || "user";
         }
       }
 
       toast.success("Signed in successfully");
       identifyUser(data.user.id, { email: formData.email });
       trackEvent("Login", { method: "supabase" });
-      navigate("/");
+      
+      if (role === "super_admin" || role === "admin") {
+        navigate("/admin");
+      } else {
+        navigate("/");
+      }
     } catch (err: any) {
       if (err.message === "Invalid login credentials") {
         toast.error("Invalid credentials. If you just signed up, please check your email to verify your account first.");

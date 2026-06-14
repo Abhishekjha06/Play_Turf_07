@@ -12,30 +12,23 @@ export default function AuthCallbackRoute() {
         if (supabase) {
           const { data, error } = await supabase.auth.getSession();
           if (data.session) {
-            // Let's create profile if it's a first time OAuth login
+            // Fetch profile and check role
             const { data: profile } = await supabase
               .from("profiles")
-              .select("id")
+              .select("role")
               .eq("id", data.session.user.id)
               .single();
 
-            if (!profile) {
-              const fullName = data.session.user.user_metadata?.full_name || "User";
-              const phone = data.session.user.user_metadata?.phone || "0000000000";
-
-              await supabase.from("profiles").insert({
-                id: data.session.user.id,
-                full_name: fullName,
-                phone: phone,
-              });
+            if (profile?.role === "super_admin") {
+              navigate("/admin", { replace: true });
+              return;
             }
           }
         }
       } catch (err) {
         console.error("Auth callback error:", err);
-      } finally {
-        navigate("/", { replace: true });
       }
+      navigate("/", { replace: true });
     };
     
     processAuth();

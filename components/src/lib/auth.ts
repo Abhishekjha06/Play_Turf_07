@@ -44,13 +44,19 @@ export async function refreshUser() {
   if (supabase) {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+
       _user = {
         user_id: user.id,
         email: user.email || "",
         name: user.user_metadata?.full_name || user.user_metadata?.name || "Player",
         picture: user.user_metadata?.avatar_url || user.user_metadata?.picture || "",
-        is_admin: user.user_metadata?.role === "admin" || user.user_metadata?.is_admin || false,
-        role: user.user_metadata?.role || "user",
+        is_admin: profile?.role === "super_admin" || profile?.role === "admin" || false,
+        role: profile?.role || "user",
       };
       _loading = false; emit();
       return;
@@ -63,17 +69,23 @@ export async function refreshUser() {
 // Setup Supabase auth state listener
 getSupabase().then(supabase => {
   if (supabase) {
-    supabase.auth.onAuthStateChange((event, session) => {
+    supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         const user = session?.user;
         if (user) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("role")
+            .eq("id", user.id)
+            .single();
+
           _user = {
             user_id: user.id,
             email: user.email || "",
             name: user.user_metadata?.full_name || user.user_metadata?.name || "Player",
             picture: user.user_metadata?.avatar_url || user.user_metadata?.picture || "",
-            is_admin: user.user_metadata?.role === "admin" || user.user_metadata?.is_admin || false,
-            role: user.user_metadata?.role || "user",
+            is_admin: profile?.role === "super_admin" || profile?.role === "admin" || false,
+            role: profile?.role || "user",
           };
           emit();
         }
