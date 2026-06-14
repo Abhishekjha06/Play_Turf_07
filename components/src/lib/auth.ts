@@ -84,6 +84,7 @@ export async function refreshUser() {
 getSupabase().then(supabase => {
   if (supabase) {
     supabase.auth.onAuthStateChange(async (event, session) => {
+      _loading = true; emit();
       try {
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
           const user = session?.user;
@@ -104,14 +105,15 @@ getSupabase().then(supabase => {
               is_admin: userRole === "super_admin" || userRole === "admin" || false,
               role: userRole,
             };
-            emit();
           }
         } else if (event === 'SIGNED_OUT') {
           _user = null;
-          emit();
         }
       } catch (err) {
         console.error("onAuthStateChange error:", err);
+      } finally {
+        _loading = false;
+        emit();
       }
     });
   }
