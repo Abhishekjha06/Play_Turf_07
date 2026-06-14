@@ -16,7 +16,7 @@ import { TurfCardSkeleton, BookingRowSkeleton } from "@/ui/Shimmer";
 import { getPopularTurfs, getNearbyTurfs, getAllTurfs } from "@/services/turfService";
 import { getOffers } from "@/services/offerService";
 import { api } from "@/lib/api";
-import type { Banner, Booking, Turf, Offer } from "@/data/seed";
+import { banners as seedBanners, turfs as seedTurfs, offers as seedOffers, type Banner, type Booking, type Turf, type Offer } from "@/data/seed";
 import { toast } from "sonner";
 import { pageEnter, sectionReveal, staggerContainer, fadeSlideUp } from "@/lib/motion";
 import { trackEvent } from "@/lib/analytics";
@@ -88,16 +88,37 @@ const Home = () => {
 
   useEffect(() => {
     trackEvent("Landing Page Viewed");
-    void Promise.all([
-      // Banners & bookings still use the legacy api (no service yet)
-      api.listBanners().then(setBanners),
-      api.upcomingBookings().then(setUpcoming),
-      // Turf & offer data via the new service layer
-      getAllTurfs().then(setAllTurfs),
-      getPopularTurfs(10).then(setPopular),
-      getNearbyTurfs(null, 10).then(setNear),
-      getOffers(10).then(setOffers),
-    ]);
+    
+    // Banners & bookings still use the legacy api
+    api.listBanners().then(setBanners).catch(err => {
+      console.warn("Banners fetch failed, using fallback:", err);
+      setBanners(seedBanners);
+    });
+
+    api.upcomingBookings().then(setUpcoming).catch(err => {
+      console.warn("Upcoming bookings fetch failed:", err);
+    });
+
+    // Turf & offer data via the service layer
+    getAllTurfs().then(setAllTurfs).catch(err => {
+      console.warn("All turfs fetch failed, using fallback:", err);
+      setAllTurfs(seedTurfs);
+    });
+
+    getPopularTurfs(10).then(setPopular).catch(err => {
+      console.warn("Popular turfs fetch failed, using fallback:", err);
+      setPopular(seedTurfs.filter(t => t.is_popular));
+    });
+
+    getNearbyTurfs(null, 10).then(setNear).catch(err => {
+      console.warn("Nearby turfs fetch failed, using fallback:", err);
+      setNear(seedTurfs.filter(t => t.is_nearby));
+    });
+
+    getOffers(10).then(setOffers).catch(err => {
+      console.warn("Offers fetch failed, using fallback:", err);
+      setOffers(seedOffers);
+    });
   }, []);
 
   // ── Memoized filter options ────────────────────────────────────────

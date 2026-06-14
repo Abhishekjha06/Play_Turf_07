@@ -115,6 +115,8 @@ getSupabase().then(supabase => {
       }
     });
   }
+}).catch(err => {
+  console.error("Failed to setup Supabase auth state listener:", err);
 });
 
 export function updateUserAvatar(avatarUrl: string) {

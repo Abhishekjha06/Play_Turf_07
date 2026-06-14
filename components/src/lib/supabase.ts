@@ -16,8 +16,13 @@ export async function getSupabase(): Promise<SupabaseClient | null> {
         return null;
     }
 
-    _client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    return _client;
+    try {
+        _client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        return _client;
+    } catch (err) {
+        console.error("Failed to initialize Supabase client:", err);
+        return null;
+    }
 }
 
 /** Check whether Supabase is configured (non-null client available). */
