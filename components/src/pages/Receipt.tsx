@@ -168,13 +168,65 @@ function MatchShowcase() {
 }
 
 function TeamLogo({ name, tone }: { name: string; tone: "green" | "blue" }) {
-  const green = tone === "green";
+  const isGreen = tone === "green";
+  const initials = name.split(" ").map((part) => part[0]).join("").toUpperCase();
+  const glowColor = isGreen ? "#39FF14" : "#00D9FF";
+  const secondaryColor = isGreen ? "#16a34a" : "#2563eb";
+
   return (
-    <div className="group min-w-0">
-      <div className={`mx-auto grid h-20 w-20 place-items-center rounded-full border bg-black/65 text-xl font-black transition group-hover:scale-105 ${green ? "border-[#39FF14]/40 shadow-[0_0_38px_rgba(57,255,20,.34)]" : "border-[#00D9FF]/40 shadow-[0_0_38px_rgba(0,217,255,.34)]"}`}>
-        <span className={green ? "text-[#39FF14]" : "text-[#00D9FF]"}>{name.split(" ").map((part) => part[0]).join("")}</span>
+    <div className="group flex flex-col items-center min-w-0">
+      <div className="relative h-20 w-20 transition duration-300 group-hover:scale-110">
+        {/* Glow Ring */}
+        <div 
+          className="absolute inset-0 rounded-full blur-md opacity-35 transition-opacity group-hover:opacity-60"
+          style={{ background: `radial-gradient(circle, ${glowColor} 0%, transparent 70%)` }}
+        />
+        {/* SVG Shield/Emblem */}
+        <svg viewBox="0 0 100 100" className="relative h-full w-full drop-shadow-[0_4px_10px_rgba(0,0,0,0.5)]">
+          <defs>
+            <linearGradient id={`grad-${tone}`} x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor={glowColor} />
+              <stop offset="100%" stopColor={secondaryColor} />
+            </linearGradient>
+            <radialGradient id={`glow-internal-${tone}`}>
+              <stop offset="0%" stopColor={glowColor} stopOpacity="0.15" />
+              <stop offset="100%" stopColor="#000000" stopOpacity="0.8" />
+            </radialGradient>
+          </defs>
+          {/* Main Shield Path */}
+          <path 
+            d="M 50 6 L 82 24 C 82 60, 50 88, 50 88 C 50 88, 18 60, 18 24 Z" 
+            fill={`url(#glow-internal-${tone})`}
+            stroke={`url(#grad-${tone})`} 
+            strokeWidth="3"
+            strokeLinejoin="round"
+          />
+          {/* Internal Accent Lines */}
+          <path 
+            d="M 50 12 L 77 28 C 77 56, 50 80, 50 80 C 50 80, 23 56, 23 28 Z" 
+            fill="none" 
+            stroke={glowColor} 
+            strokeWidth="1" 
+            strokeDasharray="2 2"
+            opacity="0.4"
+          />
+          {/* Team Initials */}
+          <text 
+            x="50" 
+            y="57" 
+            fill="#FFFFFF" 
+            fontSize="20" 
+            fontWeight="900" 
+            fontFamily="system-ui, -apple-system, sans-serif"
+            textAnchor="middle"
+            letterSpacing="0.5"
+            className="drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
+          >
+            {initials}
+          </text>
+        </svg>
       </div>
-      <p className="mt-2 truncate text-sm font-black">{name}</p>
+      <p className="mt-2.5 truncate text-xs font-black tracking-wide text-white/85 group-hover:text-white transition-colors">{name}</p>
     </div>
   );
 }
@@ -188,7 +240,7 @@ function DetailsCard({ copyTxn }: { copyTxn: () => void }) {
       </div>
       <div className="space-y-2">
         <ReceiptRow label="Booking ID" value={receipt.bookingId} />
-        <ReceiptRow label="Transaction ID" value={receipt.transactionId} action={<button onClick={copyTxn} className="text-[#00D9FF]"><Copy className="h-4 w-4" /></button>} />
+        <ReceiptRow label="Transaction ID" value={receipt.transactionId} action={<button onClick={copyTxn} className="text-[#00D9FF] hover:text-white transition-colors"><Copy className="h-4 w-4" /></button>} />
         <ReceiptRow label="Match Type" value={receipt.matchType} />
         <ReceiptRow label="Selected Team" value={receipt.selectedTeam} />
         <ReceiptRow label="Bet Amount" value={`Rs ${receipt.betAmount.toLocaleString("en-IN")}`} />
@@ -204,19 +256,47 @@ function DetailsCard({ copyTxn }: { copyTxn: () => void }) {
 
 function SecurityCard() {
   return (
-    <div className="rounded-[1.5rem] border border-[#39FF14]/20 bg-[#39FF14]/[0.06] p-4">
-      <p className="text-xs font-black uppercase tracking-[0.22em] text-lime-100/70">Verification</p>
-      <div className="mx-auto mt-3 grid h-32 w-32 grid-cols-5 gap-1 rounded-3xl bg-white p-3">
-        {Array.from({ length: 25 }).map((_, index) => (
-          <span key={index} className={`rounded-sm ${index % 2 === 0 || index % 7 === 0 ? "bg-black" : "bg-transparent"}`} />
-        ))}
-      </div>
-      <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-3">
-        <div className="inline-flex items-center gap-2 rounded-full border border-[#39FF14]/25 bg-[#39FF14]/10 px-3 py-1 text-xs font-bold text-lime-100">
-          <ShieldCheck className="h-4 w-4" /> Secure Payment
+    <div className="rounded-[1.5rem] border border-[#39FF14]/15 bg-[#39FF14]/[0.02] p-4 flex flex-col justify-between">
+      <div>
+        <p className="text-xs font-black uppercase tracking-[0.22em] text-lime-400/80">Digital Signature</p>
+        
+        {/* Futuristic Barcode with Scanning Line */}
+        <div className="relative mx-auto mt-4 flex h-20 w-44 flex-col items-center justify-center rounded-xl bg-white/5 p-3 backdrop-blur-md border border-white/5 overflow-hidden group">
+          {/* Scan line animation */}
+          <div className="absolute inset-x-0 h-[1.5px] bg-gradient-to-r from-transparent via-[#39FF14] to-transparent animate-[pulse_1.5s_infinite] shadow-[0_0_8px_#39FF14] z-10" />
+          
+          <svg viewBox="0 0 100 40" className="h-full w-full opacity-70 group-hover:opacity-90 transition-opacity">
+            <rect x="5" y="5" width="2" height="30" fill="#39FF14" />
+            <rect x="9" y="5" width="4" height="30" fill="#39FF14" />
+            <rect x="15" y="5" width="1" height="30" fill="#39FF14" />
+            <rect x="18" y="5" width="3" height="30" fill="#39FF14" />
+            <rect x="23" y="5" width="1" height="30" fill="#39FF14" />
+            <rect x="26" y="5" width="5" height="30" fill="#39FF14" />
+            <rect x="33" y="5" width="2" height="30" fill="#39FF14" />
+            <rect x="37" y="5" width="1" height="30" fill="#39FF14" />
+            <rect x="40" y="5" width="4" height="30" fill="#39FF14" />
+            <rect x="46" y="5" width="2" height="30" fill="#39FF14" />
+            <rect x="50" y="5" width="1" height="30" fill="#39FF14" />
+            <rect x="53" y="5" width="3" height="30" fill="#39FF14" />
+            <rect x="58" y="5" width="5" height="30" fill="#39FF14" />
+            <rect x="65" y="5" width="1" height="30" fill="#39FF14" />
+            <rect x="68" y="5" width="2" height="30" fill="#39FF14" />
+            <rect x="72" y="5" width="4" height="30" fill="#39FF14" />
+            <rect x="78" y="5" width="1" height="30" fill="#39FF14" />
+            <rect x="81" y="5" width="3" height="30" fill="#39FF14" />
+            <rect x="86" y="5" width="2" height="30" fill="#39FF14" />
+            <rect x="90" y="5" width="5" height="30" fill="#39FF14" />
+          </svg>
+          <span className="text-[8px] font-mono text-white/50 tracking-widest mt-1">VERIFIED SECURE</span>
         </div>
-        <p className="mt-3 text-sm text-white/70">Digitally Generated Receipt</p>
-        <p className="mt-1 text-xs text-white/45">Encrypted transaction verified by PLAY_TURF.</p>
+      </div>
+      
+      <div className="mt-4 rounded-2xl border border-white/5 bg-black/30 p-3">
+        <div className="inline-flex items-center gap-1.5 rounded-full border border-[#39FF14]/25 bg-[#39FF14]/10 px-2.5 py-0.5 text-[10px] font-bold text-lime-400">
+          <ShieldCheck className="h-3.5 w-3.5" /> SECURE CHECKOUT
+        </div>
+        <p className="mt-2 text-xs font-semibold text-white/70">Receipt Authenticated</p>
+        <p className="mt-0.5 text-[10px] text-white/40">Secured transaction token verified by PLAY_TURF.</p>
       </div>
     </div>
   );
