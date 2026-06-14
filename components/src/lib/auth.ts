@@ -40,29 +40,43 @@ export async function refreshUser() {
     }
   }
 
-  const supabase = await getSupabase();
-  if (supabase) {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", user.id)
-        .single();
+  try {
+    const supabase = await getSupabase();
+    if (supabase) {
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError) throw authError;
 
-      _user = {
-        user_id: user.id,
-        email: user.email || "",
-        name: user.user_metadata?.full_name || user.user_metadata?.name || "Player",
-        picture: user.user_metadata?.avatar_url || user.user_metadata?.picture || "",
-        is_admin: profile?.role === "super_admin" || profile?.role === "admin" || false,
-        role: profile?.role || "user",
-      };
-      _loading = false; emit();
-      return;
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", user.id)
+          .single();
+
+        const userRole = profile?.role || "user";
+
+        _user = {
+          user_id: user.id,
+          email: user.email || "",
+          name: user.user_metadata?.full_name || user.user_metadata?.name || "Player",
+          picture: user.user_metadata?.avatar_url || user.user_metadata?.picture || "",
+          is_admin: userRole === "super_admin" || userRole === "admin" || false,
+          role: userRole,
+        };
+        _loading = false; emit();
+        return;
+      }
     }
+  } catch (err) {
+    console.error("Supabase refreshUser error, falling back to mock api:", err);
   }
-  _user = await api.me();
+
+  try {
+    _user = await api.me();
+  } catch (err) {
+    console.error("API me query failed:", err);
+    _user = null;
+  }
   _loading = false; emit();
 }
 
@@ -70,28 +84,34 @@ export async function refreshUser() {
 getSupabase().then(supabase => {
   if (supabase) {
     supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        const user = session?.user;
-        if (user) {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("role")
-            .eq("id", user.id)
-            .single();
+      try {
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          const user = session?.user;
+          if (user) {
+            const { data: profile } = await supabase
+              .from("profiles")
+              .select("role")
+              .eq("id", user.id)
+              .single();
 
-          _user = {
-            user_id: user.id,
-            email: user.email || "",
-            name: user.user_metadata?.full_name || user.user_metadata?.name || "Player",
-            picture: user.user_metadata?.avatar_url || user.user_metadata?.picture || "",
-            is_admin: profile?.role === "super_admin" || profile?.role === "admin" || false,
-            role: profile?.role || "user",
-          };
+            const userRole = profile?.role || "user";
+
+            _user = {
+              user_id: user.id,
+              email: user.email || "",
+              name: user.user_metadata?.full_name || user.user_metadata?.name || "Player",
+              picture: user.user_metadata?.avatar_url || user.user_metadata?.picture || "",
+              is_admin: userRole === "super_admin" || userRole === "admin" || false,
+              role: userRole,
+            };
+            emit();
+          }
+        } else if (event === 'SIGNED_OUT') {
+          _user = null;
           emit();
         }
-      } else if (event === 'SIGNED_OUT') {
-        _user = null;
-        emit();
+      } catch (err) {
+        console.error("onAuthStateChange error:", err);
       }
     });
   }
