@@ -1,9 +1,13 @@
 from uuid import uuid4
+import logging
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 from sqlalchemy import select
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
@@ -11,6 +15,7 @@ from redis import asyncio as aioredis
 
 from app.core.config import get_settings
 from app.core.logging import setup_logging
+from app.core.rate_limit import limiter
 from app.core.security import get_password_hash
 from app.db.base import Base
 from app.db.models import Turf, User
@@ -26,12 +31,18 @@ settings = get_settings()
 setup_logging()
 
 app = FastAPI(title=settings.app_name, debug=settings.debug)
+
+# Rate limiting (slowapi). State + exception handler + middleware.
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "X-Request-Id"],
 )
 
 app.add_middleware(GZipMiddleware, minimum_size=1000)
@@ -70,36 +81,38 @@ async def startup() -> None:
             )
             db.commit()
 
-        # Seed admin user
-        admin_email = "admin@playturf.app"
-        existing_admin = db.scalar(select(User.id).where(User.email == admin_email))
-        if existing_admin is None:
-            admin = User(
-                phone="0000000000",
-                email=admin_email,
-                name="Admin",
-                role="admin",
-                is_active=True,
-                password_hash=get_password_hash("admin123"),
-            )
-            db.add(admin)
-            db.commit()
+        # Seed admin user (only when SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD are set).
+        # SECURITY: no default password is ever seeded. Operators must provide a
+        # strong bootstrap password via env, ideally for development only.
+        if settings.seed_admin_email and settings.seed_admin_password:
+            existing_admin = db.scalar(select(User.id).where(User.email == settings.seed_admin_email))
+            if existing_admin is None:
+                admin = User(
+                    phone="0000000000",
+                    email=settings.seed_admin_email,
+                    name="Admin",
+                    role="admin",
+                    is_active=True,
+                    password_hash=get_password_hash(settings.seed_admin_password),
+                )
+                db.add(admin)
+                db.commit()
 
-        # Seed demo client user
-        client_id = "demo_client"
-        existing_client = db.scalar(select(User.id).where(User.client_id == client_id))
-        if existing_client is None:
-            client = User(
-                phone="0000000001",
-                email="client@playturf.app",
-                name="Demo Client",
-                role="client",
-                is_active=True,
-                client_id=client_id,
-                password_hash=get_password_hash("demo123"),
-            )
-            db.add(client)
-            db.commit()
+        # Seed demo client user (only when SEED_CLIENT_ID / SEED_CLIENT_PASSWORD are set).
+        if settings.seed_client_id and settings.seed_client_password:
+            existing_client = db.scalar(select(User.id).where(User.client_id == settings.seed_client_id))
+            if existing_client is None:
+                client = User(
+                    phone="0000000001",
+                    email="client@playturf.app",
+                    name="Demo Client",
+                    role="client",
+                    is_active=True,
+                    client_id=settings.seed_client_id,
+                    password_hash=get_password_hash(settings.seed_client_password),
+                )
+                db.add(client)
+                db.commit()
     finally:
         db.close()
 
@@ -115,9 +128,20 @@ async def add_request_context(request: Request, call_next):
     return response
 
 
+logger = logging.getLogger("app.errors")
+
+
 @app.exception_handler(Exception)
-async def unhandled_exception_handler(_: Request, exc: Exception) -> JSONResponse:
-    return JSONResponse(status_code=500, content={"detail": "Internal server error", "error": str(exc)})
+async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    # SECURITY: log full detail server-side only; expose only a generic
+    # message + the request id so clients can correlate without learning
+    # anything about the internal error.
+    request_id = request.headers.get("x-request-id", "-")
+    logger.exception("Unhandled exception (request_id=%s): %s", request_id, exc)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error", "request_id": request_id},
+    )
 
 
 app.include_router(health_router, prefix=settings.api_prefix)

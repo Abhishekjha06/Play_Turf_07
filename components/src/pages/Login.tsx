@@ -33,14 +33,9 @@ const Login = () => {
 
   const onSubmit = async (data: LoginFormValues) => {
     setLoading(true);
-    const isMockCredentials = 
-      data.email.trim().toLowerCase() === "jabhishek0606@gmail.com" ||
-      data.email.trim().toLowerCase() === "mokomoms456@gmail.com" ||
-      data.email.trim().toLowerCase() === "admin@playturf.app" ||
-      data.email.trim().toLowerCase() === "client@playturf.app";
 
     const supabase = await getSupabase();
-    if (supabase && !isMockCredentials) {
+    if (supabase) {
       await handleSupabaseLogin(data);
     } else {
       await handleMockLogin(data);

@@ -17,8 +17,6 @@ export const LS_TOURNAMENTS = "playturf:tournaments";
 export const LS_FAVORITES = "playturf:favorites";
 export const LS_REVIEWS = "playturf:reviews";
 export const LS_ACCESS_TOKEN = "playturf:access_token";
-export const ADMIN_EMAIL = "admin@playturf.app";
-export const ADMIN_PASSWORD = "admin123";
 
 export function lsGet<T>(key: string, fallback: T): T {
   try {

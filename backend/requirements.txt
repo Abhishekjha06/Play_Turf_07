@@ -9,3 +9,4 @@ passlib[bcrypt]
 pydantic-settings
 python-multipart
 fastapi-cache2[redis]
+slowapi

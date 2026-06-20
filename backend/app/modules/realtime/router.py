@@ -163,11 +163,24 @@ async def websocket_client_endpoint(
 
 
 @router.websocket("/main")
-async def websocket_main_endpoint(websocket: WebSocket):
+async def websocket_main_endpoint(
+    websocket: WebSocket,
+    token: str,
+    db: Session = Depends(get_db),
+):
     """
     WebSocket endpoint for main panel connections.
     This is for admin/main panel to send updates.
+
+    SECURITY: unlike before, the connection is now authenticated. A valid
+    admin/owner access JWT must be supplied via the ``token`` query parameter;
+    non-admin tokens are rejected so arbitrary clients cannot broadcast.
     """
+    user = await get_current_user_ws(token, db)
+    if not user or user.role not in ("admin", "owner"):
+        await websocket.close(code=1008)
+        return
+
     client_id = f"main_{uuid4().hex[:8]}"
     await manager.connect(websocket, client_id)
     

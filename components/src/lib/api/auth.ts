@@ -1,7 +1,7 @@
 import {
   type User,
 } from "@/data/seed";
-import { USE_MOCK, lsGet, lsSet, LS_USER, delay, http, uid, setAccessToken, TokenOut, ADMIN_EMAIL, ADMIN_PASSWORD } from "./core";
+import { USE_MOCK, lsGet, lsSet, LS_USER, delay, http, uid, setAccessToken, TokenOut } from "./core";
 
 export function getMockUser(): User | null { return lsGet<User | null>(LS_USER, null); }
 export function setMockUser(u: User | null) { lsSet(LS_USER, u); }
@@ -126,24 +126,10 @@ export async function adminPasswordSignIn(email: string, password: string, meGet
     }
     return normalizeUser(response as Partial<User>);
   }
+  // SECURITY: Mock mode uses a single non-secret demo credential.
+  // Real authentication always happens server-side via /auth/admin-login.
   await delay(250);
-  const normalizedEmail = email.trim().toLowerCase();
-  if (
-    (normalizedEmail === "jabhishek0606@gmail.com" && password === "9765075127@Aj") ||
-    (normalizedEmail === ADMIN_EMAIL && password === ADMIN_PASSWORD)
-  ) {
-    const u: User = {
-      user_id: normalizedEmail === "jabhishek0606@gmail.com" ? "admin_abhishek" : "admin_001",
-      email: normalizedEmail,
-      name: normalizedEmail === "jabhishek0606@gmail.com" ? "Abhishek Jha" : "Admin",
-      picture: "",
-      is_admin: true,
-      role: "admin",
-    };
-    setMockUser(u);
-    return u;
-  }
-  throw new Error("Invalid admin ID or password");
+  throw new Error("Admin sign-in is disabled in mock mode. Configure VITE_BACKEND_URL to enable server authentication.");
 }
 
 export async function clientLogin(clientId: string, password: string, meGetter: () => Promise<User | null>): Promise<User> {
@@ -162,75 +148,10 @@ export async function clientLogin(clientId: string, password: string, meGetter: 
     }
     return normalizeUser(response as Partial<User>);
   }
+  // SECURITY: Mock mode no longer accepts hardcoded credentials.
+  // Client authentication must go through the backend.
   await delay(250);
-  const normalizedClient = clientId.trim().toLowerCase();
-  
-  if (normalizedClient === "mokomoms456@gmail.com") {
-    const u: User = {
-      user_id: "client_mokomoms",
-      email: "mokomoms456@gmail.com",
-      name: "Mokomoms Client",
-      picture: "",
-      is_admin: false,
-      role: "client",
-    };
-    setMockUser(u);
-    localStorage.setItem("client_token", "mock_client_token_mokomoms");
-    localStorage.setItem("client_id", "mokomoms456@gmail.com");
-    return u;
-  }
-  
-  if (normalizedClient === "abhishek1018@" || normalizedClient === "abhishek1018@example.com") {
-    if (password === "123456789") {
-      const u: User = {
-        user_id: "client_abhishek",
-        email: "abhishek1018@example.com",
-        name: "Abhishek",
-        picture: "",
-        is_admin: false,
-        role: "client",
-      };
-      setMockUser(u);
-      localStorage.setItem("client_token", "mock_client_token_abhishek");
-      localStorage.setItem("client_id", normalizedClient);
-      return u;
-    }
-  }
-  
-  if (normalizedClient === "jabhishek0606@" || normalizedClient === "jabhishek0606@example.com" || normalizedClient === "jabhishek0606@gmail.com") {
-    if (password === "9765075127@Aj") {
-      const u: User = {
-        user_id: "client_jabhishek",
-        email: "jabhishek0606@gmail.com",
-        name: "Abhishek Jha",
-        picture: "",
-        is_admin: false,
-        role: "client",
-      };
-      setMockUser(u);
-      localStorage.setItem("client_token", "mock_client_token_jabhishek");
-      localStorage.setItem("client_id", normalizedClient);
-      return u;
-    }
-  }
-  
-  if (normalizedClient === "demo_client" || normalizedClient === "client@playturf.app") {
-    if (password === "demo123") {
-      const u: User = {
-        user_id: "client_demo",
-        email: "client@playturf.app",
-        name: "Demo Client",
-        picture: "",
-        is_admin: false,
-        role: "client",
-      };
-      setMockUser(u);
-      localStorage.setItem("client_token", "mock_client_token");
-      localStorage.setItem("client_id", normalizedClient);
-      return u;
-    }
-  }
-  throw new Error("Invalid client ID or password");
+  throw new Error("Client sign-in is disabled in mock mode. Configure VITE_BACKEND_URL to enable server authentication.");
 }
 
 export async function logout(): Promise<void> {
