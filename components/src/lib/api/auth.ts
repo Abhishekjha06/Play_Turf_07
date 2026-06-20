@@ -2,6 +2,7 @@ import {
   type User,
 } from "@/data/seed";
 import { USE_MOCK, lsGet, lsSet, LS_USER, delay, http, uid, setAccessToken, TokenOut } from "./core";
+import { getSupabase } from "../supabase";
 
 export function getMockUser(): User | null { return lsGet<User | null>(LS_USER, null); }
 export function setMockUser(u: User | null) { lsSet(LS_USER, u); }
