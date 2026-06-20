@@ -3,6 +3,7 @@ import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { MobileShell } from "@/layout/MobileShell";
 import { BackButton } from "@/layout/BackButton";
 import { api } from "@/lib/api";
+import { useAuth } from "@/hooks/use-auth";
 import type { Turf } from "@/data/seed";
 import type { Review } from "@/data/seed";
 import type { OpenGame } from "@/types/openGames";
@@ -18,6 +19,7 @@ const TurfDetail = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const joinGameId = location.state?.joinGameId;
+  const { user } = useAuth();
 
   const [turf, setTurf] = useState<Turf | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -58,10 +60,19 @@ const TurfDetail = () => {
   }, [turf]);
 
   const handleJoinOpenGame = async (gameId: string) => {
+    if (!user) {
+      toast.error("Please sign in to join games.");
+      navigate("/login", { state: { from: location.pathname + location.search } });
+      return;
+    }
     setJoiningGame(true);
     try {
-      await api.joinOpenGame(gameId);
-      toast.success("Successfully joined the game!");
+      const updated = await api.joinOpenGame(gameId);
+      if (updated.is_private) {
+        toast.success("Request sent to host! Awaiting host approval.");
+      } else {
+        toast.success("Successfully joined the game!");
+      }
       setSelectedJoinGame(null);
       await fetchOpenGames();
     } catch (e) {
@@ -267,9 +278,20 @@ const TurfDetail = () => {
                         <h4 className="font-display font-black text-base text-foreground leading-tight">
                           {g.sport === "Football" ? "5-a-side football" : `${g.sport} Session`}
                         </h4>
-                        <span className="text-[9px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
-                          open
-                        </span>
+                        <div className="flex gap-1.5 items-center">
+                          <span className="text-[9px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
+                            open
+                          </span>
+                          {g.is_private ? (
+                            <span className="text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/30 text-amber-400">
+                              🔒 Private
+                            </span>
+                          ) : (
+                            <span className="text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-sky-500/10 border border-sky-500/30 text-sky-400">
+                              🌐 Public
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
 
@@ -309,7 +331,7 @@ const TurfDetail = () => {
                           : "bg-gradient-neon text-primary-foreground"
                       }`}
                     >
-                      {g.status === "full" ? "Game Full" : g.status === "cancelled" ? "Cancelled" : "Join game ↗"}
+                      {g.status === "full" ? "Game Full" : g.status === "cancelled" ? "Cancelled" : g.is_private ? "Request Invite ↗" : "Join game ↗"}
                     </button>
                   </div>
                 );
@@ -392,7 +414,7 @@ const TurfDetail = () => {
                   onClick={() => setSelectedJoinGame(game)}
                   className="bg-primary text-primary-foreground font-semibold rounded-full px-6 py-3.5 text-sm shadow-neon pressable min-h-[44px]"
                 >
-                  {game.status === "full" ? "Game Full" : game.status === "cancelled" ? "Cancelled" : "Join Game"}
+                  {game.status === "full" ? "Game Full" : game.status === "cancelled" ? "Cancelled" : game.is_private ? "Request Invite" : "Join Game"}
                 </button>
               </>
             );

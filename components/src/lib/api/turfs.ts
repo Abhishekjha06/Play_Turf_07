@@ -116,12 +116,15 @@ export async function getTurf(id: string): Promise<Turf> {
   return http<Turf>(`/turfs/${id}`);
 }
 
-export async function listFavorites(): Promise<string[]> {
+export async function listFavorites(userGetter: () => Promise<any>): Promise<string[]> {
+  const u = await userGetter();
+  if (!u) return [];
+
   const supabase = await getSupabase();
   if (supabase) {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      const userId = user ? user.id : 'mock_user';
+      const userId = user ? user.id : u.user_id;
       const { data, error } = await supabase
         .from("favorites")
         .select("turf_id")
@@ -136,12 +139,17 @@ export async function listFavorites(): Promise<string[]> {
   return http<string[]>("/favorites");
 }
 
-export async function toggleFavorite(turfId: string): Promise<string[]> {
+export async function toggleFavorite(turfId: string, userGetter: () => Promise<any>): Promise<string[]> {
+  const u = await userGetter();
+  if (!u) {
+    throw new Error("Authentication required to toggle favorites.");
+  }
+
   const supabase = await getSupabase();
   if (supabase) {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      const userId = user ? user.id : 'mock_user';
+      const userId = user ? user.id : u.user_id;
       
       // Check if it already exists
       const { data: existing, error: checkError } = await supabase
@@ -172,7 +180,7 @@ export async function toggleFavorite(turfId: string): Promise<string[]> {
       }
       
       // Return updated list
-      return listFavorites();
+      return listFavorites(userGetter);
     } catch (err) {
       console.warn("Failed to toggle favorite on Supabase:", err);
     }

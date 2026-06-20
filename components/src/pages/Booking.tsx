@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
     CheckCircle2,
@@ -73,6 +73,7 @@ const formatSlotTime = (timeStr: string) => {
 const BookingContent = () => {
     const { turfId } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
     const { user } = useAuth();
     const cricket = useCricketBooking();
     const dates = useMemo(dateLabels, []);
@@ -162,7 +163,7 @@ const BookingContent = () => {
     const proceed = async () => {
         if (!user) {
             toast.error("Please sign in first");
-            navigate("/login");
+            navigate("/login", { state: { from: location.pathname + location.search } });
             return;
         }
         if (!slot) {

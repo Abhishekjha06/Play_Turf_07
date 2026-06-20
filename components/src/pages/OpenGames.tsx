@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { MobileShell } from "@/layout/MobileShell";
 import { AppHeader } from "@/layout/AppHeader";
@@ -30,6 +30,7 @@ import { pageEnter, staggerContainer, fadeSlideUp } from "@/lib/motion";
 const OpenGames = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   // State
   const [games, setGames] = useState<OpenGame[]>([]);
@@ -52,6 +53,7 @@ const OpenGames = () => {
   const [hostTime, setHostTime] = useState("07:00 PM");
   const [hostSlots, setHostSlots] = useState(10);
   const [hostAmount, setHostAmount] = useState(1000);
+  const [hostIsPrivate, setHostIsPrivate] = useState(false);
   const [hosting, setHosting] = useState(false);
 
   // Fetch games list
@@ -95,17 +97,23 @@ const OpenGames = () => {
   const handleJoin = async (gameId: string) => {
     if (!user) {
       toast.error("Please sign in to join games.");
-      navigate("/login");
+      navigate("/login", { state: { from: location.pathname + location.search } });
       return;
     }
     setJoining(true);
     try {
       const updated = await api.joinOpenGame(gameId);
-      toast.success("Payment successful! Slot reserved.");
+      if (updated.is_private) {
+        toast.success("Request sent to host! Awaiting host approval.");
+      } else {
+        toast.success("Payment successful! Slot reserved.");
+      }
       // Trigger notification
-      await api.admin.inviteBetaUser(user.email, `You joined ${updated.sport} at ${updated.venue}. Game is on!`);
+      await api.admin.inviteBetaUser(user.email, updated.is_private ? `Your request to join ${updated.sport} at ${updated.venue} has been sent.` : `You joined ${updated.sport} at ${updated.venue}. Game is on!`);
       setActiveJoinGame(null);
-      setSuccessGame(updated);
+      if (!updated.is_private) {
+        setSuccessGame(updated);
+      }
       await fetchGames();
     } catch (e) {
       toast.error((e as Error).message);
@@ -131,7 +139,7 @@ const OpenGames = () => {
     e.preventDefault();
     if (!user) {
       toast.error("Please sign in to host a game.");
-      navigate("/login");
+      navigate("/login", { state: { from: location.pathname + location.search } });
       return;
     }
     setHosting(true);
@@ -144,9 +152,11 @@ const OpenGames = () => {
         slots_total: hostSlots,
         total_amount: hostAmount,
         cancellation_policy: "Refundable up to 2 hours before game start.",
+        is_private: hostIsPrivate,
       });
       toast.success("Game hosted successfully! You are joined as Host.");
       setHostModalOpen(false);
+      setHostIsPrivate(false);
       await fetchGames();
     } catch (e) {
       toast.error((e as Error).message);
@@ -292,9 +302,20 @@ const OpenGames = () => {
                         <Lock className="w-2.5 h-2.5" /> Full
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-2.5 py-0.5 rounded-full">
-                        <CheckCircle className="w-2.5 h-2.5" /> Open
-                      </span>
+                      <div className="flex flex-col items-end gap-1">
+                        <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-2.5 py-0.5 rounded-full">
+                          <CheckCircle className="w-2.5 h-2.5" /> Open
+                        </span>
+                        {g.is_private ? (
+                          <span className="inline-flex items-center gap-1 text-[8px] font-black uppercase bg-amber-500/10 border border-amber-500/30 text-amber-400 px-2.5 py-0.5 rounded-full mt-0.5">
+                            🔒 Private (Invite)
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-[8px] font-black uppercase bg-sky-500/10 border border-sky-500/30 text-sky-400 px-2.5 py-0.5 rounded-full mt-0.5">
+                            🌐 Public
+                          </span>
+                        )}
+                      </div>
                     )}
 
                     <span className="text-[10px] font-extrabold text-primary bg-primary/10 px-2 py-0.5 rounded">
@@ -363,7 +384,7 @@ const OpenGames = () => {
                           : "bg-gradient-neon text-primary-foreground"
                       }`}
                     >
-                      {isFull ? "Full" : isCancelled ? "Cancelled" : "Join Game"}
+                      {isFull ? "Full" : isCancelled ? "Cancelled" : g.is_private ? "Request Invite" : "Join Game"}
                     </button>
                   </div>
                 </div>
@@ -703,6 +724,20 @@ const OpenGames = () => {
                     <span className="text-sm font-black text-primary">
                       ₹{Math.round(hostAmount / Math.max(1, hostSlots))} / slot
                     </span>
+                  </div>
+
+                  {/* Game Type: Public or Private */}
+                  <div className="mt-3">
+                    <label htmlFor="host-privacy-select" className="text-xs font-semibold text-soft block mb-1">Game Type (Privacy)</label>
+                    <select
+                      id="host-privacy-select"
+                      value={hostIsPrivate ? "private" : "public"}
+                      onChange={(e) => setHostIsPrivate(e.target.value === "private")}
+                      className="w-full bg-panel-2 border border-white/5 rounded-xl px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
+                    >
+                      <option value="public">Public (Instant Join)</option>
+                      <option value="private">Private (Requires Host Approval)</option>
+                    </select>
                   </div>
                 </div>
 

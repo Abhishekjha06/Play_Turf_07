@@ -23,6 +23,7 @@ export interface OpenGame {
   players: GamePlayer[];
   cancellation_policy: string;
   chat_messages?: { sender: string; avatar: string; text: string; time: string }[];
+  is_private?: boolean;
 }
 
 export interface CreateGamePayload {
@@ -33,4 +34,5 @@ export interface CreateGamePayload {
   total_amount: number;
   slots_total: number;
   cancellation_policy?: string;
+  is_private?: boolean;
 }

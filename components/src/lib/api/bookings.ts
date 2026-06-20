@@ -226,11 +226,14 @@ export async function payMock(bookingId: string): Promise<Booking> {
 }
 
 export async function myBookings(userGetter: () => Promise<any>): Promise<Booking[]> {
+  const u = await userGetter();
+  if (!u) return [];
+
   const supabase = await getSupabase();
   if (supabase) {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      const userId = user ? user.id : 'mock_user';
+      const userId = user ? user.id : u.user_id;
       const { data, error } = await supabase
         .from("bookings")
         .select("*")
@@ -244,19 +247,20 @@ export async function myBookings(userGetter: () => Promise<any>): Promise<Bookin
   }
   if (USE_MOCK || supabase) {
     await delay(120);
-    const u = await userGetter();
-    if (!u) return [];
     return getMockBookings().filter((b) => b.user_id === u.user_id);
   }
   return http<Booking[]>("/bookings/me");
 }
 
 export async function upcomingBookings(userGetter: () => Promise<any>): Promise<Booking[]> {
+  const u = await userGetter();
+  if (!u) return [];
+
   const supabase = await getSupabase();
   if (supabase) {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      const userId = user ? user.id : 'mock_user';
+      const userId = user ? user.id : u.user_id;
       const today = new Date().toISOString().slice(0, 10);
       const { data, error } = await supabase
         .from("bookings")
@@ -273,8 +277,6 @@ export async function upcomingBookings(userGetter: () => Promise<any>): Promise<
   }
   if (USE_MOCK || supabase) {
     await delay(100);
-    const u = await userGetter();
-    if (!u) return [];
     const today = new Date().toISOString().slice(0, 10);
     return getMockBookings().filter(
       (b) => b.user_id === u.user_id && b.status === "CONFIRMED" && b.date >= today

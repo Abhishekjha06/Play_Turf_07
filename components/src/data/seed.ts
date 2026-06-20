@@ -383,7 +383,8 @@ export const openGames: OpenGame[] = [
       { sender: "Rohan", avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop", text: "Hey everyone! Make sure to reach 10 mins early.", time: "05:30 PM" },
       { sender: "Amit", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop", text: "Will do Rohan, is bats provided at the venue?", time: "05:32 PM" },
       { sender: "Rohan", avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop", text: "Yes, the venue provides bats and balls.", time: "05:33 PM" }
-    ]
+    ],
+    is_private: false
   },
   {
     id: "game_2",
@@ -405,7 +406,8 @@ export const openGames: OpenGame[] = [
       { name: "Aditya", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop" },
       { name: "Gaurav", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop" }
     ],
-    cancellation_policy: "Non-refundable once slots are booked."
+    cancellation_policy: "Non-refundable once slots are booked.",
+    is_private: false
   },
   {
     id: "game_3",
@@ -425,6 +427,7 @@ export const openGames: OpenGame[] = [
     players: [
       { name: "Vikram", avatar: "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=100&h=100&fit=crop" }
     ],
-    cancellation_policy: "Refundable up to 24 hours before start."
+    cancellation_policy: "Refundable up to 24 hours before start.",
+    is_private: true
   }
 ];

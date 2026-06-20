@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { getSupabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { MobileShell } from "@/layout/MobileShell";
@@ -7,6 +7,7 @@ import { BackButton } from "@/layout/BackButton";
 
 export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
@@ -18,27 +19,27 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
           // If Supabase is not configured, we might fallback to mock, but in this
           // plan we expect Supabase to be used strictly. So we block access.
           toast.error("Supabase not configured");
-          navigate("/login");
+          navigate("/login", { state: { from: location.pathname + location.search } });
           return;
         }
 
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error || !session) {
-          navigate("/login");
+          navigate("/login", { state: { from: location.pathname + location.search } });
         } else {
           setIsAuthenticated(true);
         }
       } catch (err) {
         console.error(err);
-        navigate("/login");
+        navigate("/login", { state: { from: location.pathname + location.search } });
       } finally {
         setLoading(false);
       }
     };
 
     checkAuth();
-  }, [navigate]);
+  }, [navigate, location.pathname, location.search]);
 
   if (loading) {
     return (

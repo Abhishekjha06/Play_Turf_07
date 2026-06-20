@@ -75,8 +75,9 @@ export async function joinOpenGame(gameId: string): Promise<OpenGame> {
       if (alreadyJoined) throw new Error("You have already joined this game.");
 
       // 2. Perform atomic slot join update
-      const newSlotsFilled = game.slots_filled + 1;
-      const newPlayers = [...playersList, { name: currentUser.name, avatar: currentUser.picture }];
+      const isPrivate = game.is_private;
+      const newSlotsFilled = isPrivate ? game.slots_filled : game.slots_filled + 1;
+      const newPlayers = isPrivate ? game.players : [...playersList, { name: currentUser.name, avatar: currentUser.picture }];
       const newStatus = newSlotsFilled >= game.slots_total ? "full" : "open";
 
       const { data: updatedGame, error: updateErr } = await supabase
@@ -107,14 +108,16 @@ export async function joinOpenGame(gameId: string): Promise<OpenGame> {
   const alreadyJoined = game.players.some(p => p.name === currentUser.name);
   if (alreadyJoined) throw new Error("You have already joined this game.");
 
-  game.slots_filled += 1;
-  game.players.push({
-    name: currentUser.name,
-    avatar: currentUser.picture
-  });
+  if (!game.is_private) {
+    game.slots_filled += 1;
+    game.players.push({
+      name: currentUser.name,
+      avatar: currentUser.picture
+    });
 
-  if (game.slots_filled >= game.slots_total) {
-    game.status = "full";
+    if (game.slots_filled >= game.slots_total) {
+      game.status = "full";
+    }
   }
 
   return { ...game };
@@ -260,7 +263,8 @@ export async function hostOpenGame(payload: CreateGamePayload): Promise<OpenGame
     players: [
       { name: currentUser.name, avatar: currentUser.picture }
     ],
-    cancellation_policy: payload.cancellation_policy || "Refundable up to 2 hours before start."
+    cancellation_policy: payload.cancellation_policy || "Refundable up to 2 hours before start.",
+    is_private: payload.is_private
   };
 
   if (supabase) {

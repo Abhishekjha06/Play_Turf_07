@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 import { MobileShell } from "@/layout/MobileShell";
 import { BackButton } from "@/layout/BackButton";
@@ -19,6 +19,8 @@ import { signInUser } from "@/lib/auth";
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const redirectUrl = location.state?.from || "/";
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -105,7 +107,7 @@ const Login = () => {
       if (role === "super_admin" || role === "admin") {
         navigate("/admin");
       } else {
-        navigate("/");
+        navigate(redirectUrl);
       }
     } catch (err: any) {
       if (err.message === "Invalid login credentials") {
@@ -120,6 +122,12 @@ const Login = () => {
     try {
       const supabase = await getSupabase();
       if (!supabase) throw new Error("Supabase is not configured");
+
+      if (location.state?.from) {
+        localStorage.setItem("play_turf_post_login_redirect", location.state.from);
+      } else {
+        localStorage.removeItem("play_turf_post_login_redirect");
+      }
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -140,7 +148,7 @@ const Login = () => {
       toast.success("Signed in successfully");
       identifyUser(user.id || user.email, { email: formData.email, role: user.role });
       trackEvent("Login", { method: "mock" });
-      navigate("/");
+      navigate(redirectUrl);
     } catch (e: any) {
       toast.error(e.message);
     }

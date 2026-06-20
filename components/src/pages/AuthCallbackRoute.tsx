@@ -7,6 +7,7 @@ export default function AuthCallbackRoute() {
 
   useEffect(() => {
     const processAuth = async () => {
+      let redirectUrl = "/";
       try {
         const supabase = await getSupabase();
         if (supabase) {
@@ -20,15 +21,20 @@ export default function AuthCallbackRoute() {
               .single();
 
             if (profile?.role === "super_admin") {
-              navigate("/admin", { replace: true });
-              return;
+              redirectUrl = "/admin";
+            } else {
+              const savedRedirect = localStorage.getItem("play_turf_post_login_redirect");
+              if (savedRedirect) {
+                redirectUrl = savedRedirect;
+                localStorage.removeItem("play_turf_post_login_redirect");
+              }
             }
           }
         }
       } catch (err) {
         console.error("Auth callback error:", err);
       }
-      navigate("/", { replace: true });
+      navigate(redirectUrl, { replace: true });
     };
     
     processAuth();

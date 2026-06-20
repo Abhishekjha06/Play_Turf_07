@@ -47,8 +47,8 @@ export const api = {
   distanceKm,
 
   // Favorites
-  listFavorites: () => turfsModule.listFavorites(),
-  toggleFavorite: (turfId: string) => turfsModule.toggleFavorite(turfId),
+  listFavorites: () => turfsModule.listFavorites(() => authModule.me()),
+  toggleFavorite: (turfId: string) => turfsModule.toggleFavorite(turfId, () => authModule.me()),
 
   // Reviews
   listReviews: (turfId: string) => turfsModule.listReviews(turfId),
