@@ -1,1 +1,44 @@
-node_modules
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Databases / local state
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+play_turf.db
+
+# Logs
+*.log
+logs/
+vite-dev.log
+vite-dev.err.log
+
+# Build / distribution output
+dist/
+build/
+*/dist/
+.next/
+.nuxt/
+.cache/
+*.tsbuildinfo
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Editor / OS
+.DS_Store
+Thumbs.db

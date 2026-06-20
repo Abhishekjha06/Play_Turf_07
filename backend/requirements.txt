@@ -1,12 +1,25 @@
-fastapi
-uvicorn[standard]
-sqlalchemy
-alembic
-psycopg[binary]
-redis
-python-jose[cryptography]
-passlib[bcrypt]
-pydantic-settings
-python-multipart
-fastapi-cache2[redis]
-slowapi
+# Web framework / ASGI
+fastapi==0.136.1
+uvicorn[standard]==0.46.0
+
+# Database / ORM / migrations
+SQLAlchemy==2.0.49
+alembic==1.18.4
+psycopg[binary]==3.3.4
+
+# Caching / rate limiting
+# NOTE: fastapi-cache2==0.2.2 pins redis<5, so redis is held at 4.6.0.
+redis==4.6.0
+fastapi-cache2[redis]==0.2.2
+slowapi==0.1.10
+
+# Auth / security
+python-jose[cryptography]==3.5.0
+passlib[bcrypt]==1.7.4
+
+# Config / parsing
+pydantic-settings==2.14.1
+python-multipart==0.0.27
+
+# Timezone handling (used by bookings for IST comparisons)
+pytz==2026.2
