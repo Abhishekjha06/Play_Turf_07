@@ -3,7 +3,7 @@ import { RotateCcw, Settings2, Sparkles, Check, Crown, Award, Zap, ShieldCheck }
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { useCricketBooking } from "../BookingContext";
-import { TeamAvatar } from "../components/TeamAvatar";
+import { TeamAvatar, getMascotForTeam } from "../components/TeamAvatar";
 import { TeamSearchSelect } from "../components/TeamSearchSelect";
 import { TeamManagerModal } from "../components/TeamManagerModal";
 import { VsBadge } from "../components/VsBadge";
@@ -168,16 +168,23 @@ export function PickMatch() {
         </div>
 
         {/* Live Match Vs Preview Banner */}
-        <div className="mt-6 rounded-2xl border border-border/45 bg-panel p-4 relative overflow-hidden transition-all duration-300"
-             style={{ backgroundColor: "var(--l-bg-secondary)", borderColor: "var(--l-divider)" }}>
-          {/* subtle gold accent layer */}
-          <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-neon" />
-          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 relative z-10">
+        <div className="mt-6 rounded-[28px] border border-emerald-500/20 bg-[#050B0F] p-4 md:p-6 lg:p-8 relative overflow-hidden transition-all duration-300 shadow-[0_0_35px_rgba(16,185,129,0.15)]">
+          {/* Subtle green neon spotlight beam */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-32 bg-emerald-500/15 rounded-full blur-[80px] pointer-events-none" />
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-10 items-center justify-items-center relative z-10">
             <TeamPreview side="A" />
-            <div className="text-center">
-              <p className="text-[9px] font-extrabold text-primary tracking-widest">LIVE MATCH</p>
-              <p className="text-2xl font-black font-display bg-clip-text text-transparent" style={{ backgroundImage: "var(--gradient-neon)" }}>VS</p>
+            
+            {/* VS Section */}
+            <div className="flex items-center justify-center py-4 md:py-0 self-center">
+              <div className="w-20 h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 bg-gradient-to-br from-emerald-500/30 to-black rounded-full border border-emerald-400/40 shadow-[0_0_40px_rgba(16,185,129,0.4)] flex items-center justify-center relative">
+                <div className="absolute inset-0 animate-pulse rounded-full bg-emerald-500/10 opacity-30" />
+                <span className="relative text-2xl md:text-3xl font-black font-display tracking-tight text-white">
+                  VS
+                </span>
+              </div>
             </div>
+
             <TeamPreview side="B" />
           </div>
         </div>
@@ -469,10 +476,44 @@ export function PickMatch() {
 
   function TeamPreview({ side }: { side: "A" | "B" }) {
     const team = side === "A" ? teamA : teamB;
+    const teamGlow = team?.colors?.[0] ? `${team.colors[0]}22` : "rgba(16,185,129,0.05)";
+
     return (
-      <div className="min-w-0 text-center flex flex-col items-center">
-        <TeamAvatar team={team} size="lg" className="mx-auto border border-border/40 shadow-sm" />
-        <p className="mt-3 truncate text-sm font-black text-foreground sm:text-base">{team?.name || `Pending Team ${side}`}</p>
+      <div 
+        className="w-full max-w-[280px] md:max-w-[340px] lg:max-w-[400px] h-auto flex flex-col items-center justify-center bg-[#0B0F14] border border-emerald-500/30 shadow-[0_0_30px_rgba(16,185,129,0.2)] rounded-3xl p-5 md:p-8 transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_50px_rgba(16,185,129,0.35)] relative overflow-hidden"
+        style={{ 
+          boxShadow: team?.colors?.[0] 
+            ? `0 0 30px ${teamGlow}, 0 0 30px rgba(16,185,129,0.2)`
+            : undefined
+        }}
+      >
+        {/* Subtle diagonal background mesh pattern */}
+        <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]" />
+        
+        {/* Team Glow spotlight background */}
+        <div 
+          className="absolute -top-12 -left-12 w-32 h-32 rounded-full blur-[40px] opacity-20 pointer-events-none"
+          style={{ background: team?.colors?.[0] ?? "#10b981" }}
+        />
+
+        {/* Logo Section */}
+        <div className="aspect-square flex items-center justify-center w-full mb-2">
+          <TeamAvatar variant="sports" size="card-redesign" team={team} />
+        </div>
+
+        {/* Team Name */}
+        <h3 
+          className="text-center font-bold max-w-[90%] mx-auto truncate px-2 leading-tight !text-white font-display mb-1"
+          style={{ fontSize: "clamp(12px, 2vw, 22px)" }}
+          title={team?.name || `Select Team ${side}`}
+        >
+          {team ? team.name : `Select Team ${side}`}
+        </h3>
+
+        {/* Team Initials */}
+        <p className="text-xs opacity-70 text-center font-semibold !text-white uppercase tracking-wider leading-none">
+          {team ? team.shortName : `T${side}`}
+        </p>
       </div>
     );
   }
