@@ -20,6 +20,7 @@ const Booking = lazy(() => import("@/pages/Booking"));
 const BookingDetail = lazy(() => import("@/pages/BookingDetail"));
 const Bookings = lazy(() => import("@/pages/Bookings"));
 const Tournaments = lazy(() => import("@/pages/Tournaments"));
+const OpenGames = lazy(() => import("@/pages/OpenGames"));
 const Offers = lazy(() => import("@/pages/Offers"));
 const Login = lazy(() => import("@/pages/Login"));
 const Signup = lazy(() => import("@/pages/Signup"));
@@ -108,6 +109,7 @@ export default function App() {
                       <Route path="/booking/:id" element={<BookingDetail />} />
                       <Route path="/bookings" element={<Bookings />} />
                       <Route path="/tournaments" element={<Tournaments />} />
+                      <Route path="/open-games" element={<OpenGames />} />
                       <Route path="/offers" element={<Offers />} />
                       <Route path="/login" element={<Login />} />
                       <Route path="/signup" element={<Signup />} />

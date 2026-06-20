@@ -1,4 +1,4 @@
-import { Home, CalendarCheck, Trophy, MoreHorizontal, Goal } from "lucide-react";
+import { Home, CalendarCheck, Trophy, MoreHorizontal, Goal, Users } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -8,7 +8,7 @@ import { ease } from "@/lib/motion";
 const items = [
   { to: "/", label: "Home", icon: Home, testid: "nav-home" },
   { to: "/bookings", label: "Bookings", icon: CalendarCheck, testid: "nav-bookings" },
-  { to: "/tournaments", label: "Tournaments", icon: Trophy, testid: "nav-tournaments" },
+  { to: "/open-games", label: "Open Games", icon: Users, testid: "nav-open-games" },
   { to: "/more", label: "More", icon: MoreHorizontal, testid: "nav-more" },
 ];
 

@@ -350,3 +350,81 @@ export const tournaments: Tournament[] = [
     description: "Round-robin futsal league across two Sundays.",
   },
 ];
+
+import type { OpenGame } from "@/types/openGames";
+
+export const openGames: OpenGame[] = [
+  {
+    id: "game_1",
+    sport: "Cricket",
+    venue: "BoxCric Cage, Indiranagar",
+    date: "2026-06-21",
+    time: "07:00 PM",
+    price_per_slot: 90,
+    total_amount: 900,
+    slots_total: 10,
+    slots_filled: 7,
+    status: "open",
+    distance: 1.2,
+    host_name: "Rohan Sharma",
+    host_avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop",
+    host_user_id: "host_1",
+    players: [
+      { name: "Rohan", avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop" },
+      { name: "Amit", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop" },
+      { name: "Vikram", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop" },
+      { name: "Suresh", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop" },
+      { name: "Kunal", avatar: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=100&h=100&fit=crop" },
+      { name: "Sameer", avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop" },
+      { name: "Rajat", avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop" }
+    ],
+    cancellation_policy: "Refundable up to 2 hours before start. Cancellations after that will not be refunded.",
+    chat_messages: [
+      { sender: "Rohan", avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop", text: "Hey everyone! Make sure to reach 10 mins early.", time: "05:30 PM" },
+      { sender: "Amit", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop", text: "Will do Rohan, is bats provided at the venue?", time: "05:32 PM" },
+      { sender: "Rohan", avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop", text: "Yes, the venue provides bats and balls.", time: "05:33 PM" }
+    ]
+  },
+  {
+    id: "game_2",
+    sport: "Football",
+    venue: "Greenfield Arena, Indiranagar",
+    date: "2026-06-22",
+    time: "08:00 PM",
+    price_per_slot: 100,
+    total_amount: 1200,
+    slots_total: 12,
+    slots_filled: 12,
+    status: "full",
+    distance: 2.8,
+    host_name: "Rahul Verma",
+    host_avatar: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&h=100&fit=crop",
+    host_user_id: "host_2",
+    players: [
+      { name: "Rahul", avatar: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&h=100&fit=crop" },
+      { name: "Aditya", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop" },
+      { name: "Gaurav", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop" }
+    ],
+    cancellation_policy: "Non-refundable once slots are booked."
+  },
+  {
+    id: "game_3",
+    sport: "Football",
+    venue: "Skyline Rooftop Turf, Indiranagar",
+    date: "2026-06-23",
+    time: "09:00 PM",
+    price_per_slot: 150,
+    total_amount: 1500,
+    slots_total: 10,
+    slots_filled: 4,
+    status: "open",
+    distance: 4.5,
+    host_name: "Vikram Malhotra",
+    host_avatar: "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=100&h=100&fit=crop",
+    host_user_id: "host_3",
+    players: [
+      { name: "Vikram", avatar: "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=100&h=100&fit=crop" }
+    ],
+    cancellation_policy: "Refundable up to 24 hours before start."
+  }
+];

@@ -17,6 +17,7 @@ import {
   Zap,
   RefreshCw,
   Palette,
+  Trophy,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
@@ -28,6 +29,7 @@ const More = () => {
 
   const menuItems = [
     { label: "App Appearance", icon: Palette, to: "/theme", toast: "", action: null },
+    { label: "Tournaments", icon: Trophy, to: "/tournaments", toast: "", action: null },
     {
       label: "Notifications",
       icon: Bell,

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { CalendarCheck, Tag, Trophy, MoreHorizontal } from "lucide-react";
+import { CalendarCheck, Tag, Trophy, MoreHorizontal, Users } from "lucide-react";
 import { motion } from "framer-motion";
 import { TossModal } from "./TossModal";
 import { LocationPill } from "./LocationFilter";
@@ -11,7 +11,7 @@ import type { Turf } from "@/data/seed";
 const cats = [
   { label: "My Bookings", icon: CalendarCheck, to: "/bookings" },
   { label: "Offers", icon: Tag, to: "/offers" },
-  { label: "Tournaments", icon: Trophy, to: "/tournaments" },
+  { label: "Open Games", icon: Users, to: "/open-games" },
   { label: "More", icon: MoreHorizontal, to: "/more" },
 ];
 

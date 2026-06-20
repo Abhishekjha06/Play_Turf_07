@@ -1,13 +1,14 @@
 import { useEffect, useState, useMemo } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { MobileShell } from "@/layout/MobileShell";
 import { BackButton } from "@/layout/BackButton";
 import { api } from "@/lib/api";
 import type { Turf } from "@/data/seed";
 import type { Review } from "@/data/seed";
+import type { OpenGame } from "@/types/openGames";
 import { trackEvent } from "@/lib/analytics";
-import { Star, MapPin, Clock, Heart, Share2 } from "lucide-react";
-import { motion } from "framer-motion";
+import { Star, MapPin, Clock, Heart, Share2, Users, Calendar, Lock, X, AlertCircle } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from "@/ui/carousel";
 import { MobileGallery } from "@/ui/MobileGallery";
@@ -15,6 +16,9 @@ import { MobileGallery } from "@/ui/MobileGallery";
 const TurfDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const joinGameId = location.state?.joinGameId;
+
   const [turf, setTurf] = useState<Turf | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [favorite, setFavorite] = useState(false);
@@ -24,6 +28,48 @@ const TurfDetail = () => {
   const [carouselApi, setCarouselApi] = useState<CarouselApi>();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [slideCount, setSlideCount] = useState(0);
+
+  const [openGames, setOpenGames] = useState<OpenGame[]>([]);
+  const [selectedJoinGame, setSelectedJoinGame] = useState<OpenGame | null>(null);
+  const [joiningGame, setJoiningGame] = useState(false);
+
+  const fetchOpenGames = async () => {
+    if (turf) {
+      try {
+        const allGames = await api.listOpenGames();
+        const filtered = allGames.filter(g => 
+          g.venue.toLowerCase().includes(turf.name.toLowerCase())
+        );
+        setOpenGames(filtered);
+        if (joinGameId) {
+          const matched = filtered.find(g => g.id === joinGameId);
+          if (matched && matched.status !== "full" && matched.status !== "cancelled") {
+            setSelectedJoinGame(matched);
+          }
+        }
+      } catch (e) {
+        console.warn("Failed to fetch open games for turf:", e);
+      }
+    }
+  };
+
+  useEffect(() => {
+    fetchOpenGames();
+  }, [turf]);
+
+  const handleJoinOpenGame = async (gameId: string) => {
+    setJoiningGame(true);
+    try {
+      await api.joinOpenGame(gameId);
+      toast.success("Successfully joined the game!");
+      setSelectedJoinGame(null);
+      await fetchOpenGames();
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setJoiningGame(false);
+    }
+  };
 
   const headerImages = useMemo(() => {
     if (!turf) return [];
@@ -201,6 +247,77 @@ const TurfDetail = () => {
           </div>
         </section>
 
+        {openGames.length > 0 && (
+          <section className="mt-6 text-left">
+            <h3 className="font-semibold text-sm mb-3 flex items-center gap-1.5 text-foreground">
+              <Users className="w-4 h-4 text-primary animate-pulse" /> Open Games at this Venue
+            </h3>
+            <div className="space-y-4">
+              {openGames.map((g) => {
+                const progress = (g.slots_filled / g.slots_total) * 100;
+                return (
+                  <div
+                    key={g.id}
+                    className="card-panel rounded-3xl p-4 flex flex-col gap-3.5 relative overflow-hidden"
+                    style={{ backgroundColor: "#1e1e1e", border: "1px solid rgba(255,255,255,0.06)" }}
+                  >
+                    <div>
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Find a game</p>
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-display font-black text-base text-foreground leading-tight">
+                          {g.sport === "Football" ? "5-a-side football" : `${g.sport} Session`}
+                        </h4>
+                        <span className="text-[9px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
+                          open
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5 text-xs text-muted-foreground font-semibold">
+                      <p className="inline-flex items-center gap-1.5">
+                        <MapPin className="h-3.5 w-3.5 text-muted-foreground" /> {turf.name}, {turf.city}
+                      </p>
+                      <p className="flex items-center gap-1.5">
+                        <Calendar className="h-3.5 w-3.5 text-muted-foreground" /> today, {g.time} • 90 min
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 h-3 rounded-full bg-zinc-850 overflow-hidden" style={{ backgroundColor: "#27272a" }}>
+                        <div
+                          className="h-full rounded-full transition-all duration-500 bg-gradient-neon shadow-neon"
+                          style={{
+                            width: `${progress}%`
+                          }}
+                        />
+                      </div>
+                      <span className="text-xs text-muted-foreground font-bold shrink-0">
+                        {g.slots_filled}/{g.slots_total} joined
+                      </span>
+                    </div>
+
+                    <button
+                      disabled={g.status === "full" || g.status === "cancelled"}
+                      onClick={() => {
+                        if (g.status !== "full" && g.status !== "cancelled") {
+                          setSelectedJoinGame(g);
+                        }
+                      }}
+                      className={`w-full py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-1.5 transition active:scale-[0.98] cursor-pointer border-none shadow-neon ${
+                        g.status === "full" || g.status === "cancelled"
+                          ? "bg-zinc-800 text-zinc-500 shadow-none cursor-not-allowed"
+                          : "bg-gradient-neon text-primary-foreground"
+                      }`}
+                    >
+                      {g.status === "full" ? "Game Full" : g.status === "cancelled" ? "Cancelled" : "Join game ↗"}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
         {turf.gallery.length > 1 && (
           <section className="mt-5 mb-2">
             <h3 className="font-semibold text-sm mb-3">Gallery</h3>
@@ -261,18 +378,134 @@ const TurfDetail = () => {
       <div className="fixed bottom-0 left-1/2 -translate-x-1/2 z-40 w-full max-w-[480px] glass-strong rounded-t-2xl px-4 pt-3 flex items-center justify-between"
         style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom, 0px))" }}
       >
-        <div>
-          <p className="text-[11px] text-muted2">Starting at</p>
-          <p className="font-bold text-lg neon-text">₹{turf.price_per_hour}<span className="text-muted2 text-xs">/hr</span></p>
-        </div>
-        <button
-          onClick={() => navigate(`/booking/new/${turf.id}`)}
-          className="bg-primary text-primary-foreground font-semibold rounded-full px-6 py-3.5 text-sm shadow-neon pressable min-h-[44px]"
-          data-testid="detail-book-now"
-        >
-          Book Now
-        </button>
+        {joinGameId && openGames.find(g => g.id === joinGameId && g.status !== "full" && g.status !== "cancelled") ? (
+          (() => {
+            const game = openGames.find(g => g.id === joinGameId && g.status !== "full" && g.status !== "cancelled")!;
+            return (
+              <>
+                <div>
+                  <p className="text-[11px] text-muted2">Price per slot</p>
+                  <p className="font-bold text-lg neon-text">₹{game.price_per_slot}<span className="text-muted2 text-xs">/slot</span></p>
+                </div>
+                <button
+                  disabled={game.status === "full" || game.status === "cancelled"}
+                  onClick={() => setSelectedJoinGame(game)}
+                  className="bg-primary text-primary-foreground font-semibold rounded-full px-6 py-3.5 text-sm shadow-neon pressable min-h-[44px]"
+                >
+                  {game.status === "full" ? "Game Full" : game.status === "cancelled" ? "Cancelled" : "Join Game"}
+                </button>
+              </>
+            );
+          })()
+        ) : (
+          <>
+            <div>
+              <p className="text-[11px] text-muted2">Starting at</p>
+              <p className="font-bold text-lg neon-text">₹{turf.price_per_hour}<span className="text-muted2 text-xs">/hr</span></p>
+            </div>
+            <button
+              onClick={() => navigate(`/booking/new/${turf.id}`)}
+              className="bg-primary text-primary-foreground font-semibold rounded-full px-6 py-3.5 text-sm shadow-neon pressable min-h-[44px]"
+              data-testid="detail-book-now"
+            >
+              Book Now
+            </button>
+          </>
+        )}
       </div>
+
+      <AnimatePresence>
+        {selectedJoinGame && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.5 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSelectedJoinGame(null)}
+              className="fixed inset-0 z-[45] bg-black/70 backdrop-blur-sm"
+              style={{ maxWidth: "480px", left: "50%", transform: "translateX(-50%)" }}
+            />
+            <motion.div
+              initial={{ y: "100%", x: "-50%" }}
+              animate={{ y: 0, x: "-50%" }}
+              exit={{ y: "100%", x: "-50%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="fixed bottom-0 left-1/2 z-50 w-full max-w-[480px] bg-panel rounded-t-[2.5rem] border-t border-white/10 p-6 space-y-5"
+              style={{
+                backgroundColor: "#1e1e1e",
+                paddingBottom: "calc(1.5rem + env(safe-area-inset-bottom, 0px))"
+              }}
+            >
+              <div className="flex items-center justify-between pb-1">
+                <div>
+                  <h3 className="font-display font-black text-lg text-foreground">Confirm your spot</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5 font-semibold">
+                    {selectedJoinGame.sport === "Football" ? "5-a-side football" : `${selectedJoinGame.sport} Session`} • today, {selectedJoinGame.time}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setSelectedJoinGame(null)}
+                  className="p-1 hover:bg-white/10 rounded-full cursor-pointer text-muted-foreground hover:text-foreground border-none bg-transparent"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div
+                className="p-4 rounded-2xl space-y-3.5 text-xs text-muted-foreground font-semibold"
+                style={{ backgroundColor: "#121212", border: "1px solid rgba(255,255,255,0.05)" }}
+              >
+                <div className="flex justify-between items-center">
+                  <span>total slot price</span>
+                  <span className="font-black text-foreground text-sm">₹{selectedJoinGame.total_amount}</span>
+                </div>
+                
+                <div className="flex justify-between items-start pt-1.5 border-t border-white/5">
+                  <span>split across</span>
+                  <div className="text-right">
+                    <span className="font-black text-foreground text-sm block leading-none">{selectedJoinGame.slots_total}</span>
+                    <span className="text-[10px] text-muted-foreground leading-none font-bold uppercase tracking-wider block mt-1">players</span>
+                  </div>
+                </div>
+
+                <div className="h-[1px] border-t border-white/5 my-2" />
+
+                <div className="flex justify-between items-center text-sm font-black text-foreground">
+                  <span className="text-base text-white">your share</span>
+                  <span className="text-xl text-white font-display">₹{selectedJoinGame.price_per_slot}</span>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+                  <Lock className="h-4.5 w-4.5 text-primary shrink-0" />
+                  <span>secure payment via UPI / card</span>
+                </div>
+
+                <button
+                  disabled={joiningGame}
+                  onClick={() => handleJoinOpenGame(selectedJoinGame.id)}
+                  className="w-full py-4 rounded-2xl text-sm font-black text-slate-900 flex items-center justify-center gap-1.5 transition active:scale-[0.98] cursor-pointer border-none"
+                  style={{
+                    background: "linear-gradient(90deg, #7da6df, #9dc4f8)",
+                    boxShadow: "0 4px 15px rgba(125,166,223,0.3)"
+                  }}
+                >
+                  {joiningGame ? (
+                    <div className="w-5 h-5 rounded-full border-2 border-t-transparent animate-spin border-slate-900" />
+                  ) : (
+                    `Pay ₹${selectedJoinGame.price_per_slot} and join ↗`
+                  )}
+                </button>
+
+                <p className="text-[11px] text-muted-foreground text-center font-bold">
+                  free cancellation up to 6 hours before
+                </p>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </MobileShell>
   );
 };
