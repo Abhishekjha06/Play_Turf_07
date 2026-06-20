@@ -56,6 +56,31 @@ export async function verifyOtp(payload: OtpVerifyPayload, meGetter: () => Promi
 }
 
 export async function me(): Promise<User | null> {
+  const supabase = await getSupabase();
+  if (supabase) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", user.id)
+          .single();
+        const userRole = profile?.role || "user";
+        return {
+          user_id: user.id,
+          email: user.email || "",
+          name: user.user_metadata?.full_name || user.user_metadata?.name || "Player",
+          picture: user.user_metadata?.avatar_url || user.user_metadata?.picture || "",
+          is_admin: userRole === "super_admin" || userRole === "admin",
+          role: userRole,
+        };
+      }
+    } catch (e) {
+      console.warn("Failed to get user from Supabase in me():", e);
+    }
+  }
+
   if (USE_MOCK) { await delay(80); return getMockUser(); }
   try {
     const response = await http<Partial<User> & { role?: string; user_id?: string | number }>("/auth/me");
