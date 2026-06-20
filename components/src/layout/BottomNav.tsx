@@ -21,7 +21,10 @@ export function BottomNav() {
   if (isPremium) {
     return (
       <>
-        <div className="h-28" aria-hidden />
+        <div
+          style={{ height: "calc(7rem + env(safe-area-inset-bottom, 0px))" }}
+          aria-hidden
+        />
         <nav
           className="fixed bottom-0 left-1/2 -translate-x-1/2 z-40 w-full max-w-[480px] flex items-center justify-between"
           style={{
@@ -79,7 +82,10 @@ export function BottomNav() {
   // Legacy dark theme nav
   return (
     <>
-      <div className="h-28" aria-hidden />
+      <div
+        style={{ height: "calc(7rem + env(safe-area-inset-bottom, 0px))" }}
+        aria-hidden
+      />
       <nav
         className="fixed bottom-3 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-1.5rem)] max-w-[456px] glass-strong rounded-full px-3 py-2 flex items-center justify-between"
         style={{ paddingBottom: "calc(0.5rem + env(safe-area-inset-bottom, 0px))" }}

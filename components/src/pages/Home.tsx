@@ -216,6 +216,16 @@ const Home = () => {
       <AppHeader />
       <SearchBar />
 
+      <CategoryPills
+        turfs={allTurfs}
+        city={selectedCity}
+        area={selectedArea}
+        locating={locating}
+        onCity={(city) => updateLocation(city, "")}
+        onArea={(area) => updateLocation(selectedCity, area)}
+        onNearMe={requestNearMe}
+      />
+
       <AnimatePresence mode="wait">
         {results ? (
           <motion.div
@@ -252,15 +262,6 @@ const Home = () => {
             exit="exit"
           >
             <HeroCarousel banners={banners} />
-            <CategoryPills
-              turfs={allTurfs}
-              city={selectedCity}
-              area={selectedArea}
-              locating={locating}
-              onCity={(city) => updateLocation(city, "")}
-              onArea={(area) => updateLocation(selectedCity, area)}
-              onNearMe={requestNearMe}
-            />
 
             {/* ── Popular Turfs ── */}
             <motion.section

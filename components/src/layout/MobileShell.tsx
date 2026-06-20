@@ -29,6 +29,8 @@ export function MobileShell({ children }: MobileShellProps) {
         style={{
           background: isPremium ? "#F1F5F9" : undefined,
           border: isPremium ? "none" : undefined,
+          paddingTop: "env(safe-area-inset-top, 0px)",
+          paddingBottom: "env(safe-area-inset-bottom, 0px)",
         }}
         data-testid="mobile-shell"
       >

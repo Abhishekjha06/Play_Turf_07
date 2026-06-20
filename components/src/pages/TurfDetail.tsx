@@ -126,7 +126,13 @@ const TurfDetail = () => {
             ))}
           </CarouselContent>
         </Carousel>
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-background pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-background pointer-events-none" />
+        <div
+          className="absolute top-0 left-0 right-0 h-28 pointer-events-none"
+          style={{
+            background: "linear-gradient(to bottom, rgba(0,0,0,0.60) 0%, rgba(0,0,0,0) 100%)",
+          }}
+        />
         <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-20">
           <BackButton />
           <div className="flex gap-2">

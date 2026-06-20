@@ -116,73 +116,103 @@ export function BookingDateSelect({
                     <Clock className="w-4 h-4 text-primary" />
                     Pick a time slot
                 </h2>
-                <div className="grid grid-cols-3 gap-2.5">
-                    {slots.map((s) => {
-                        const booked = bookedSlots.includes(s);
-                        const isSelected = slot === s;
-                        const formattedTime = formatSlotTime(s);
 
-                        const isExpired = (() => {
-                            const todayStr = new Date().toLocaleDateString('en-CA');
-                            if (date !== todayStr) return false;
-                            const [sh, sm] = s.split(":").map(Number);
-                            const currentHour = currentTime.getHours();
-                            const currentMin = currentTime.getMinutes();
-                            if (currentHour > sh) return true;
-                            if (currentHour === sh && currentMin > sm) return true;
-                            return false;
-                        })();
+                {(() => {
+                    const SEGMENTS = [
+                        { label: "Morning", icon: "🌅", range: [6, 12] },
+                        { label: "Afternoon", icon: "☀️", range: [12, 17] },
+                        { label: "Evening", icon: "🌃", range: [17, 24] },
+                    ] as const;
 
-                        const isDisabled = booked || isExpired;
+                    const getHour = (time: string) => parseInt(time.split(":")[0], 10);
 
-                        return (
-                            <button
-                                key={s}
-                                disabled={isDisabled}
-                                onClick={() => setSlot(s)}
-                                className="pressable relative rounded-2xl border p-3 flex flex-col items-center justify-center gap-1.5 transition-all duration-300 disabled:cursor-not-allowed"
-                                style={{
-                                    backgroundColor: isSelected
-                                        ? "var(--l-accent-soft)"
-                                        : isDisabled
-                                            ? "var(--bg-secondary)"
-                                            : "var(--card-bg)",
-                                    borderColor: isSelected
-                                        ? "var(--gold-primary)"
-                                        : isDisabled
-                                            ? "var(--border-primary)"
-                                            : "var(--border-primary)",
-                                    opacity: isDisabled ? 0.45 : 1,
-                                    boxShadow: isSelected ? "var(--l-shadow-glow)" : "none",
-                                }}
-                            >
-                                {isSelected && (
-                                    <div className="absolute -top-1.5 -right-1.5 w-4.5 h-4.5 rounded-full bg-primary flex items-center justify-center shadow-md">
-                                        <Check className="w-3.5 h-3.5 text-primary-foreground" strokeWidth={3.5} />
+                    const grouped = SEGMENTS.map((segment) => ({
+                        ...segment,
+                        slots: slots.filter((s) => {
+                            const hour = getHour(s);
+                            return hour >= segment.range[0] && hour < segment.range[1];
+                        }),
+                    })).filter((group) => group.slots.length > 0);
+
+                    return (
+                        <div className="space-y-4">
+                            {grouped.map((group) => (
+                                <div key={group.label} className="space-y-2">
+                                    <h3 className="text-[10px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-1.5 mt-2">
+                                        <span>{group.icon}</span> {group.label}
+                                    </h3>
+                                    <div className="grid grid-cols-3 gap-2.5">
+                                        {group.slots.map((s) => {
+                                            const booked = bookedSlots.includes(s);
+                                            const isSelected = slot === s;
+                                            const formattedTime = formatSlotTime(s);
+
+                                            const isExpired = (() => {
+                                                const todayStr = new Date().toLocaleDateString('en-CA');
+                                                if (date !== todayStr) return false;
+                                                const [sh, sm] = s.split(":").map(Number);
+                                                const currentHour = currentTime.getHours();
+                                                const currentMin = currentTime.getMinutes();
+                                                if (currentHour > sh) return true;
+                                                if (currentHour === sh && currentMin > sm) return true;
+                                                return false;
+                                            })();
+
+                                            const isDisabled = booked || isExpired;
+
+                                            return (
+                                                <button
+                                                    key={s}
+                                                    disabled={isDisabled}
+                                                    onClick={() => setSlot(s)}
+                                                    className="pressable relative rounded-2xl border p-3 flex flex-col items-center justify-center gap-1.5 transition-all duration-300 disabled:cursor-not-allowed"
+                                                    style={{
+                                                        backgroundColor: isSelected
+                                                            ? "var(--l-accent-soft)"
+                                                            : isDisabled
+                                                                ? "var(--bg-secondary)"
+                                                                : "var(--card-bg)",
+                                                        borderColor: isSelected
+                                                            ? "var(--gold-primary)"
+                                                            : isDisabled
+                                                                ? "var(--border-primary)"
+                                                                : "var(--border-primary)",
+                                                        opacity: isDisabled ? 0.45 : 1,
+                                                        boxShadow: isSelected ? "var(--l-shadow-glow)" : "none",
+                                                    }}
+                                                >
+                                                    {isSelected && (
+                                                        <div className="absolute -top-1.5 -right-1.5 w-4.5 h-4.5 rounded-full bg-primary flex items-center justify-center shadow-md">
+                                                            <Check className="w-3.5 h-3.5 text-primary-foreground" strokeWidth={3.5} />
+                                                        </div>
+                                                    )}
+
+                                                    <span className="text-xs font-black text-foreground font-display">
+                                                        {formattedTime}
+                                                    </span>
+
+                                                    {isExpired ? (
+                                                        <span className="flex items-center gap-1 text-[8px] text-red-500 uppercase font-extrabold tracking-wider">
+                                                            <Lock className="w-2.5 h-2.5 text-red-500" /> Lock
+                                                        </span>
+                                                    ) : booked ? (
+                                                        <span className="flex items-center gap-1 text-[8px] text-muted-foreground uppercase font-extrabold tracking-wider">
+                                                            <Lock className="w-2.5 h-2.5 text-muted-foreground" /> Booked
+                                                        </span>
+                                                    ) : (
+                                                        <span className="flex items-center gap-1 text-[8px] uppercase font-extrabold tracking-wider" style={{ color: isSelected ? "var(--gold-primary)" : "var(--emerald-primary)" }}>
+                                                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-sm animate-pulse" /> Available
+                                                        </span>
+                                                    )}
+                                                </button>
+                                            );
+                                        })}
                                     </div>
-                                )}
-
-                                <span className="text-xs font-black text-foreground font-display">
-                                    {formattedTime}
-                                </span>
-
-                                {isExpired ? (
-                                    <span className="flex items-center gap-1 text-[8px] text-red-500 uppercase font-extrabold tracking-wider">
-                                        <Lock className="w-2.5 h-2.5 text-red-500" /> Lock
-                                    </span>
-                                ) : booked ? (
-                                    <span className="flex items-center gap-1 text-[8px] text-muted-foreground uppercase font-extrabold tracking-wider">
-                                        <Lock className="w-2.5 h-2.5 text-muted-foreground" /> Booked
-                                    </span>
-                                ) : (
-                                    <span className="flex items-center gap-1 text-[8px] uppercase font-extrabold tracking-wider" style={{ color: isSelected ? "var(--gold-primary)" : "var(--emerald-primary)" }}>
-                                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-sm animate-pulse" /> Available
-                                    </span>
-                                )}
-                            </button>
-                        );
-                    })}
-                </div>
+                                </div>
+                            ))}
+                        </div>
+                    );
+                })()}
             </section>
 
             {/* DURATION SELECTOR */}

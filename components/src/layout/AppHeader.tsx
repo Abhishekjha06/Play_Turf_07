@@ -296,7 +296,7 @@ function CollapsingHeader({
           </motion.div>
         </div>
       </motion.header>
-      <div style={{ height: "300px" }} />
+      <motion.div style={{ height: headerHeight }} aria-hidden />
       <AvatarPicker
         open={isAvatarPickerOpen}
         onClose={() => setIsAvatarPickerOpen(false)}
