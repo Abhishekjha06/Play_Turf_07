@@ -134,6 +134,11 @@ CREATE UNIQUE INDEX IF NOT EXISTS unique_active_booking
 ON public.bookings (turf_id, date, start_time) 
 WHERE status != 'CANCELLED' AND is_split_booking = false;
 
+-- Table View: booking_availability (non-sensitive fields for timing checks)
+CREATE OR REPLACE VIEW public.booking_availability AS
+SELECT id, turf_id, date, start_time, end_time, hours, status, open_game_id, is_split_booking, created_at
+FROM public.bookings;
+
 -- Function to handle expired reservations (e.g. pending for > 15 mins)
 CREATE OR REPLACE FUNCTION public.expire_pending_bookings()
 RETURNS void
@@ -226,8 +231,8 @@ CREATE POLICY "Allow users to manage their own favorites" ON public.favorites
     WITH CHECK (auth.uid()::text = user_id OR user_id = 'mock_user');
 
 -- Bookings
-CREATE POLICY "Allow public read access on bookings" ON public.bookings
-    FOR SELECT USING (true);
+CREATE POLICY "Allow users to select their own bookings" ON public.bookings
+    FOR SELECT USING (auth.uid()::text = user_id OR user_id = 'mock_user');
 CREATE POLICY "Allow users to manage their own bookings" ON public.bookings
     FOR ALL USING (auth.uid()::text = user_id OR user_id = 'mock_user')
     WITH CHECK (auth.uid()::text = user_id OR user_id = 'mock_user');

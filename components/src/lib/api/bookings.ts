@@ -122,7 +122,7 @@ export async function bookedSlots(turfId: string, date: string): Promise<string[
   const supabase = await getSupabase();
   if (supabase) {
     const { data, error } = await supabase
-      .from("bookings")
+      .from("booking_availability")
       .select("start_time, hours")
       .eq("turf_id", turfId)
       .eq("date", date)
