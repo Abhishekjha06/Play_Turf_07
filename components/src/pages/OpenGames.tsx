@@ -445,7 +445,9 @@ const OpenGames = () => {
             >
               Host one yourself
             </button>
-                 games.map((g, i) => {
+          </motion.div>
+        ) : (
+          games.map((g, i) => {
             const progress = (g.slots_filled / g.slots_total) * 100;
             const isFull = g.status === "full";
             const isCancelled = g.status === "cancelled";
