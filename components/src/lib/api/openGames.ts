@@ -315,6 +315,34 @@ export async function hostOpenGame(payload: CreateGamePayload): Promise<{ game: 
   const [h, m] = time24.split(":").map(Number);
   const endHour = String((h + duration) % 24).padStart(2, "0");
   const endTime = `${endHour}:${String(m).padStart(2, "0")}`;
+
+  // Expiry check
+  const todayStr = new Date().toLocaleDateString('en-CA');
+  if (payload.date === todayStr) {
+    const now = new Date();
+    if (now.getHours() > h || (now.getHours() === h && now.getMinutes() > m)) {
+      throw new Error("This slot has already expired and cannot be booked.");
+    }
+  }
+
+  // Overlap check
+  const newStartMins = h * 60 + m;
+  const newEndMins = newStartMins + duration * 60;
+  
+  const isOverlap = getMockBookings().some((b) => {
+    if (b.turf_id !== turfId || b.date !== payload.date || b.status === "CANCELLED" || b.is_split_booking) {
+      return false;
+    }
+    const [bh, bm] = b.start_time.split(":").map(Number);
+    const bStartMins = bh * 60 + bm;
+    const bEndMins = bStartMins + b.hours * 60;
+    return (newStartMins < bEndMins && newEndMins > bStartMins);
+  });
+
+  if (isOverlap) {
+    throw new Error("One or more slots in this time range are already booked.");
+  }
+
   const bookingId = uid("bkg");
 
   const newGame: OpenGame = {
