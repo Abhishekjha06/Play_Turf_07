@@ -444,7 +444,7 @@ export async function cancelOpenGame(gameId: string): Promise<OpenGame> {
   return { ...game };
 }
 
-export async function hostOpenGame(payload: CreateGamePayload): Promise<OpenGame> {
+export async function hostOpenGame(payload: CreateGamePayload): Promise<{ game: OpenGame; booking: Booking }> {
   const supabase = await getSupabase();
   const currentUser = await me();
   if (!currentUser) {
@@ -487,6 +487,46 @@ export async function hostOpenGame(payload: CreateGamePayload): Promise<OpenGame
 
   if (supabase) {
     try {
+      // 1. Create confirmed booking for the Host in bookings table
+      const paymentId = `pay_${Math.random().toString(36).slice(2, 10)}`;
+      const bookingId = `bkg_${Math.random().toString(36).slice(2, 10)}`;
+
+      const { data: turfsData } = await supabase.from("turfs").select("*");
+      const matchedTurf = (turfsData || []).find((t: any) => 
+        newGame.venue.toLowerCase().includes(t.name.toLowerCase()) || 
+        t.name.toLowerCase().includes(newGame.venue.toLowerCase())
+      );
+      const turfId = matchedTurf ? matchedTurf.id : "turf_1";
+      const turfName = matchedTurf ? matchedTurf.name : newGame.venue;
+      const turfImage = matchedTurf ? matchedTurf.image : "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&q=80&w=1200";
+
+      const time24 = convertTimeTo24(newGame.time);
+      const [h, m] = time24.split(":").map(Number);
+      const endHour = String((h + 1) % 24).padStart(2, "0");
+      const endTime = `${endHour}:${String(m).padStart(2, "0")}`;
+
+      const newBooking: Booking = {
+        id: bookingId,
+        user_id: currentUser.user_id,
+        turf_id: turfId,
+        turf_name: turfName,
+        turf_image: turfImage,
+        date: newGame.date,
+        start_time: time24,
+        end_time: endTime,
+        hours: 1,
+        amount: newGame.price_per_slot,
+        status: "CONFIRMED",
+        payment_id: paymentId,
+        created_at: new Date().toISOString(),
+      };
+
+      const { error: insertBookingErr } = await supabase
+        .from("bookings")
+        .insert(newBooking);
+      if (insertBookingErr) throw insertBookingErr;
+
+      // 2. Insert open game row
       const { data, error } = await supabase
         .from("open_games")
         .insert({
@@ -512,7 +552,7 @@ export async function hostOpenGame(payload: CreateGamePayload): Promise<OpenGame
 
       if (error) throw error;
 
-      // Add Host participation entry
+      // 3. Add Host participation entry linked to the booking
       const playerRecord = {
         id: `gp_${Date.now()}`,
         open_game_id: newGame.id,
@@ -521,7 +561,7 @@ export async function hostOpenGame(payload: CreateGamePayload): Promise<OpenGame
         avatar: currentUser.picture,
         payment_status: "paid",
         payment_method: "Host",
-        booking_id: null,
+        booking_id: bookingId,
         joined_at: new Date().toISOString()
       };
 
@@ -531,7 +571,7 @@ export async function hostOpenGame(payload: CreateGamePayload): Promise<OpenGame
 
       if (playerErr) throw playerErr;
 
-      return {
+      const formattedGame = {
         ...data,
         players: [
           {
@@ -539,19 +579,57 @@ export async function hostOpenGame(payload: CreateGamePayload): Promise<OpenGame
             avatar: currentUser.picture,
             payment_status: "paid",
             payment_method: "Host",
-            booking_id: null,
+            booking_id: bookingId,
             joined_at: playerRecord.joined_at
           }
         ]
-      } as OpenGame;
+      };
+
+      return { game: formattedGame as OpenGame, booking: newBooking };
     } catch (e) {
       console.warn("Supabase hostOpenGame insert failed, falling back to local memory:", e);
     }
   }
 
+  // Create mock booking
+  const mockBookings = getMockBookings();
+  const matchedTurf = getMockTurfs().find((t) => 
+    newGame.venue.toLowerCase().includes(t.name.toLowerCase()) || 
+    t.name.toLowerCase().includes(newGame.venue.toLowerCase())
+  );
+  const turfId = matchedTurf ? matchedTurf.id : "turf_1";
+  const turfName = matchedTurf ? matchedTurf.name : newGame.venue;
+  const turfImage = matchedTurf ? matchedTurf.image : "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&q=80&w=1200";
+
+  const time24 = convertTimeTo24(newGame.time);
+  const [h, m] = time24.split(":").map(Number);
+  const endHour = String((h + 1) % 24).padStart(2, "0");
+  const endTime = `${endHour}:${String(m).padStart(2, "0")}`;
+
+  const bookingId = `bkg_${Math.random().toString(36).slice(2, 10)}`;
+  const paymentId = `pay_${Math.random().toString(36).slice(2, 10)}`;
+  const newBooking: Booking = {
+    id: bookingId,
+    user_id: currentUser.user_id,
+    turf_id: turfId,
+    turf_name: turfName,
+    turf_image: turfImage,
+    date: newGame.date,
+    start_time: time24,
+    end_time: endTime,
+    hours: 1,
+    amount: newGame.price_per_slot,
+    status: "CONFIRMED",
+    payment_id: paymentId,
+    created_at: new Date().toISOString(),
+  };
+
+  newGame.players[0].booking_id = bookingId;
+  setMockBookings([newBooking, ...mockBookings]);
+
   // Mock fallback
   await new Promise((resolve) => setTimeout(resolve, 600));
   localGames.unshift(newGame);
-  return newGame;
+  return { game: newGame, booking: newBooking };
 }
 

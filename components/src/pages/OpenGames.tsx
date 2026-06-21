@@ -153,7 +153,7 @@ const OpenGames = () => {
     }
     setHosting(true);
     try {
-      await api.hostOpenGame({
+      const { game: hosted, booking } = await api.hostOpenGame({
         sport: hostSport,
         venue: hostVenue,
         date: hostDate,
@@ -163,10 +163,14 @@ const OpenGames = () => {
         cancellation_policy: "Refundable up to 2 hours before game start.",
         is_private: hostIsPrivate,
       });
-      toast.success("Game hosted successfully! You are joined as Host.");
+      toast.success("Game hosted successfully! Redirecting to receipt...");
       setHostModalOpen(false);
       setHostIsPrivate(false);
-      await fetchGames();
+      if (booking) {
+        navigate(`/booking/${booking.id}`);
+      } else {
+        await fetchGames();
+      }
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
