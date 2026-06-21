@@ -11,7 +11,7 @@ import {
   type User,
   type Review,
 } from "@/data/seed";
-import { getSupabase } from "./supabase";
+import { getSupabase, withTimeout } from "./supabase";
 import {
   USE_MOCK,
   accessToken,
@@ -59,9 +59,15 @@ export const api = {
   async listOffers(): Promise<Offer[]> {
     const supabase = await getSupabase();
     if (supabase) {
-      const { data, error } = await supabase.from("offers").select("*").eq("is_active", true);
-      if (error) throw error;
-      return data as Offer[];
+      try {
+        const { data, error } = await withTimeout(supabase.from("offers").select("*").eq("is_active", true));
+        if (error) throw error;
+        if (data && data.length > 0) {
+          return data as Offer[];
+        }
+      } catch (err) {
+        console.warn("Failed to query offers from Supabase, falling back:", err);
+      }
     }
     await new Promise((r) => setTimeout(r, 120));
     return seedOffers;

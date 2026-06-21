@@ -2,7 +2,7 @@ import {
   tournaments as seedTournaments,
   type Tournament,
 } from "@/data/seed";
-import { getSupabase } from "../supabase";
+import { getSupabase, withTimeout } from "../supabase";
 import { USE_MOCK, lsGet, lsSet, LS_TOURNAMENTS, delay, http } from "./core";
 
 export function getMockTournaments(): Tournament[] { return lsGet<Tournament[]>(LS_TOURNAMENTS, seedTournaments); }
@@ -12,7 +12,7 @@ export async function listTournaments(): Promise<Tournament[]> {
   const supabase = await getSupabase();
   if (supabase) {
     try {
-      const { data, error } = await supabase.from("tournaments").select("*").order("date", { ascending: true });
+      const { data, error } = await withTimeout(supabase.from("tournaments").select("*").order("date", { ascending: true }));
       if (error) throw error;
       if (data && data.length > 0) {
         return data as Tournament[];
@@ -29,7 +29,7 @@ export async function getTournament(id: string): Promise<Tournament> {
   const supabase = await getSupabase();
   if (supabase) {
     try {
-      const { data, error } = await supabase.from("tournaments").select("*").eq("id", id).single();
+      const { data, error } = await withTimeout(supabase.from("tournaments").select("*").eq("id", id).single());
       if (error) throw error;
       if (data) {
         return data as Tournament;

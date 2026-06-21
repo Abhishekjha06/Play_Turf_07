@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { getSupabase } from "@/lib/supabase";
+import { getSupabase, withTimeout } from "@/lib/supabase";
 
 export default function AuthCallbackRoute() {
   const navigate = useNavigate();
@@ -11,14 +11,16 @@ export default function AuthCallbackRoute() {
       try {
         const supabase = await getSupabase();
         if (supabase) {
-          const { data, error } = await supabase.auth.getSession();
+          const { data, error } = await withTimeout(supabase.auth.getSession());
           if (data.session) {
             // Fetch profile and check role
-            const { data: profile } = await supabase
-              .from("profiles")
-              .select("role")
-              .eq("id", data.session.user.id)
-              .single();
+            const { data: profile } = await withTimeout(
+              supabase
+                .from("profiles")
+                .select("role")
+                .eq("id", data.session.user.id)
+                .single()
+            );
 
             if (profile?.role === "super_admin") {
               redirectUrl = "/admin";

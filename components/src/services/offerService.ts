@@ -9,7 +9,7 @@
  * 3. Replace the mock fallbacks with real Supabase queries (search for TODO)
  */
 
-import { getSupabase } from "@/lib/supabase";
+import { getSupabase, withTimeout } from "@/lib/supabase";
 import { offers as seedOffers, type Offer } from "@/data/seed";
 
 /**
@@ -21,12 +21,14 @@ export async function getOffers(limit = 10): Promise<Offer[]> {
     const supabase = await getSupabase();
     if (supabase) {
         try {
-            const { data, error } = await supabase
-              .from("offers")
-              .select("*")
-              .eq("is_active", true)
-              .order("created_at", { ascending: false })
-              .limit(limit);
+            const { data, error } = await withTimeout(
+                supabase
+                  .from("offers")
+                  .select("*")
+                  .eq("is_active", true)
+                  .order("created_at", { ascending: false })
+                  .limit(limit)
+            );
             if (error) throw error;
             if (data && data.length > 0) {
                 return data as Offer[];
@@ -48,11 +50,13 @@ export async function getOfferById(id: string): Promise<Offer | null> {
     const supabase = await getSupabase();
     if (supabase) {
         try {
-            const { data, error } = await supabase
-              .from("offers")
-              .select("*")
-              .eq("id", id)
-              .single();
+            const { data, error } = await withTimeout(
+                supabase
+                  .from("offers")
+                  .select("*")
+                  .eq("id", id)
+                  .single()
+            );
             if (error) throw error;
             if (data) {
                 return data as Offer;

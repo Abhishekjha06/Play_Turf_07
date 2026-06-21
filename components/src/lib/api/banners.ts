@@ -2,7 +2,7 @@ import {
   banners as seedBanners,
   type Banner,
 } from "@/data/seed";
-import { getSupabase } from "../supabase";
+import { getSupabase, withTimeout } from "../supabase";
 import { USE_MOCK, lsGet, lsSet, LS_BANNERS, delay, http } from "./core";
 
 export function getMockBanners(): Banner[] { return lsGet<Banner[]>(LS_BANNERS, seedBanners); }
@@ -12,7 +12,7 @@ export async function listBanners(): Promise<Banner[]> {
   const supabase = await getSupabase();
   if (supabase) {
     try {
-      const { data, error } = await supabase.from("banners").select("*").order("order", { ascending: true });
+      const { data, error } = await withTimeout(supabase.from("banners").select("*").order("order", { ascending: true }));
       if (error) throw error;
       if (data && data.length > 0) {
         return data as Banner[];

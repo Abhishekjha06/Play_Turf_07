@@ -10,7 +10,7 @@ import {
   resetLockout,
 } from "@/lib/admin-attempt-tracker";
 import { signInWithGoogle as authServiceGoogle } from "@/services/authService";
-import { getSupabase } from "@/lib/supabase";
+import { getSupabase, withTimeout } from "@/lib/supabase";
 
 // minimal store using plain event emitter pattern
 type Listener = () => void;
@@ -43,15 +43,17 @@ export async function refreshUser() {
   try {
     const supabase = await getSupabase();
     if (supabase) {
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      const { data: { user }, error: authError } = await withTimeout(supabase.auth.getUser());
       if (authError) throw authError;
 
       if (user) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", user.id)
-          .single();
+        const { data: profile } = await withTimeout(
+          supabase
+            .from("profiles")
+            .select("role")
+            .eq("id", user.id)
+            .single()
+        );
 
         const userRole = profile?.role || "user";
 

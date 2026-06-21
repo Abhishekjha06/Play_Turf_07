@@ -31,3 +31,25 @@ export async function isSupabaseConfigured(): Promise<boolean> {
     return client !== null;
 }
 
+/**
+ * Wraps a promise with a timeout. If the promise doesn't resolve in the given milliseconds,
+ * it rejects with a timeout error.
+ */
+export function withTimeout<T>(promise: Promise<T>, ms = 1500): Promise<T> {
+    return new Promise<T>((resolve, reject) => {
+        const timer = setTimeout(() => {
+            reject(new Error("Supabase query timed out"));
+        }, ms);
+
+        promise
+            .then((res) => {
+                clearTimeout(timer);
+                resolve(res);
+            })
+            .catch((err) => {
+                clearTimeout(timer);
+                reject(err);
+            });
+    });
+}
+

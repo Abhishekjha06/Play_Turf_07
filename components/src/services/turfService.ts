@@ -9,7 +9,7 @@
  * 3. Replace the mock fallbacks with real Supabase queries (search for TODO)
  */
 
-import { getSupabase } from "@/lib/supabase";
+import { getSupabase, withTimeout } from "@/lib/supabase";
 import { turfs as seedTurfs, type Turf } from "@/data/seed";
 
 /**
@@ -21,12 +21,14 @@ export async function getPopularTurfs(limit = 10): Promise<Turf[]> {
     const supabase = await getSupabase();
     if (supabase) {
         try {
-            const { data, error } = await supabase
-              .from("turfs")
-              .select("*")
-              .eq("is_popular", true)
-              .order("rating", { ascending: false })
-              .limit(limit);
+            const { data, error } = await withTimeout(
+                supabase
+                  .from("turfs")
+                  .select("*")
+                  .eq("is_popular", true)
+                  .order("rating", { ascending: false })
+                  .limit(limit)
+            );
             if (error) throw error;
             if (data && data.length > 0) {
                 return data as Turf[];
@@ -55,11 +57,13 @@ export async function getNearbyTurfs(
     const supabase = await getSupabase();
     if (supabase) {
         try {
-            const { data, error } = await supabase
-              .from("turfs")
-              .select("*")
-              .eq("is_nearby", true)
-              .limit(limit);
+            const { data, error } = await withTimeout(
+                supabase
+                  .from("turfs")
+                  .select("*")
+                  .eq("is_nearby", true)
+                  .limit(limit)
+            );
             if (error) throw error;
             if (data && data.length > 0) {
                 return data as Turf[];
@@ -91,7 +95,7 @@ export async function getAllTurfs(filters?: {
             if (filters?.sport) query = query.contains("sport_types", [filters.sport]);
             if (filters?.maxPrice) query = query.lte("price_per_hour", filters.maxPrice);
             if (filters?.minRating) query = query.gte("rating", filters.minRating);
-            const { data, error } = await query;
+            const { data, error } = await withTimeout(query);
             if (error) throw error;
             if (data && data.length > 0) {
                 return data as Turf[];

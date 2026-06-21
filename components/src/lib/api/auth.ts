@@ -2,7 +2,7 @@ import {
   type User,
 } from "@/data/seed";
 import { USE_MOCK, lsGet, lsSet, LS_USER, delay, http, uid, setAccessToken, TokenOut } from "./core";
-import { getSupabase } from "../supabase";
+import { getSupabase, withTimeout } from "../supabase";
 
 export function getMockUser(): User | null { return lsGet<User | null>(LS_USER, null); }
 export function setMockUser(u: User | null) { lsSet(LS_USER, u); }
@@ -60,13 +60,15 @@ export async function me(): Promise<User | null> {
   const supabase = await getSupabase();
   if (supabase) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user } } = await withTimeout(supabase.auth.getUser());
       if (user) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", user.id)
-          .single();
+        const { data: profile } = await withTimeout(
+          supabase
+            .from("profiles")
+            .select("role")
+            .eq("id", user.id)
+            .single()
+        );
         const userRole = profile?.role || "user";
         return {
           user_id: user.id,
