@@ -769,19 +769,25 @@ ALTER TABLE public.open_game_players ENABLE ROW LEVEL SECURITY;
 -- Policies for open_games
 DROP POLICY IF EXISTS "Allow public read access on open_games" ON public.open_games;
 DROP POLICY IF EXISTS "Allow users to host open games" ON public.open_games;
+DROP POLICY IF EXISTS "Allow users to update open_games" ON public.open_games;
 DROP POLICY IF EXISTS "Allow service_role full access on open_games" ON public.open_games;
 
 CREATE POLICY "Allow public read access on open_games" ON public.open_games FOR SELECT USING (true);
 CREATE POLICY "Allow users to host open games" ON public.open_games FOR INSERT WITH CHECK (auth.uid()::text = host_user_id OR host_user_id = 'mock_user');
+CREATE POLICY "Allow users to update open_games" ON public.open_games FOR UPDATE USING (auth.uid()::text = host_user_id OR host_user_id = 'mock_user' OR auth.role() = 'authenticated' OR auth.uid() IS NOT NULL);
 CREATE POLICY "Allow service_role full access on open_games" ON public.open_games FOR ALL USING (true);
 
 -- Policies for open_game_players
 DROP POLICY IF EXISTS "Allow public read access on open_game_players" ON public.open_game_players;
 DROP POLICY IF EXISTS "Allow users to join open games" ON public.open_game_players;
+DROP POLICY IF EXISTS "Allow users to update own player record" ON public.open_game_players;
+DROP POLICY IF EXISTS "Allow users to leave open games" ON public.open_game_players;
 DROP POLICY IF EXISTS "Allow service_role full access on open_game_players" ON public.open_game_players;
 
 CREATE POLICY "Allow public read access on open_game_players" ON public.open_game_players FOR SELECT USING (true);
 CREATE POLICY "Allow users to join open games" ON public.open_game_players FOR INSERT WITH CHECK (auth.uid()::text = user_id OR user_id = 'mock_user');
+CREATE POLICY "Allow users to update own player record" ON public.open_game_players FOR UPDATE USING (auth.uid()::text = user_id OR user_id = 'mock_user');
+CREATE POLICY "Allow users to leave open games" ON public.open_game_players FOR DELETE USING (auth.uid()::text = user_id OR user_id = 'mock_user');
 CREATE POLICY "Allow service_role full access on open_game_players" ON public.open_game_players FOR ALL USING (true);
 
 -- Enable Realtime replication for open games tables
