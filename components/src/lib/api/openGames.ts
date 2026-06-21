@@ -7,8 +7,30 @@ import { getMockTurfs } from "./turfs";
 import { distanceKm } from "./turfs";
 import { uid } from "./core";
 
-// In-memory fallback used ONLY in mock mode (no Supabase configured).
-const localGames: OpenGame[] = [...initialGames];
+// Local storage fallback for mock mode (allows sharing data across tabs/windows)
+export function getLocalGames(): OpenGame[] {
+  try {
+    const stored = localStorage.getItem("playturf:open_games");
+    if (stored) return JSON.parse(stored);
+  } catch (e) {
+    console.warn("Failed to parse local open games:", e);
+  }
+  // Initialize localStorage if it doesn't exist
+  try {
+    localStorage.setItem("playturf:open_games", JSON.stringify(initialGames));
+  } catch {}
+  return [...initialGames];
+}
+
+export function saveLocalGames(games: OpenGame[]) {
+  try {
+    localStorage.setItem("playturf:open_games", JSON.stringify(games));
+    // Dispatch custom event to notify listeners in the same window
+    window.dispatchEvent(new CustomEvent("playturf:open_games_updated"));
+  } catch (e) {
+    console.warn("Failed to save local open games:", e);
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -145,7 +167,7 @@ export async function listOpenGames(
 
   // Mock fallback
   await new Promise((resolve) => setTimeout(resolve, 300));
-  let result = [...localGames];
+  let result = getLocalGames();
   if (filters?.sport && filters.sport !== "All") {
     result = result.filter((g) => g.sport.toLowerCase() === filters.sport?.toLowerCase());
   }
@@ -179,7 +201,7 @@ export async function getOpenGame(gameId: string): Promise<OpenGame | null> {
     return normalizeGameRow(g, players);
   }
   await new Promise((resolve) => setTimeout(resolve, 120));
-  return localGames.find((g) => g.id === gameId) ?? null;
+  return getLocalGames().find((g) => g.id === gameId) ?? null;
 }
 
 // ---------------------------------------------------------------------------
@@ -350,7 +372,9 @@ export async function hostOpenGame(payload: CreateGamePayload): Promise<{ game: 
   };
 
   setMockBookings([newBooking, ...getMockBookings()]);
-  localGames.unshift(newGame);
+  const current = getLocalGames();
+  current.unshift(newGame);
+  saveLocalGames(current);
   return { game: newGame, booking: newBooking };
 }
 
@@ -407,7 +431,8 @@ export async function joinOpenGame(gameId: string, paymentMethod = "UPI"): Promi
 
   // ---- Mock fallback ----
   await new Promise((resolve) => setTimeout(resolve, 800));
-  const game = localGames.find((g) => g.id === gameId);
+  const currentGames = getLocalGames();
+  const game = currentGames.find((g) => g.id === gameId);
   if (!game) throw new Error("Game not found.");
   if (game.status === "cancelled") throw new Error("Cannot join a cancelled game.");
   if (game.is_private) throw new Error("This is a private game. Use the request flow.");
@@ -453,6 +478,7 @@ export async function joinOpenGame(gameId: string, paymentMethod = "UPI"): Promi
   });
   if (game.slots_filled >= game.slots_total) game.status = "full";
 
+  saveLocalGames(currentGames);
   setMockBookings([newBooking, ...getMockBookings()]);
   return { game: { ...game }, booking: newBooking };
 }
@@ -481,7 +507,8 @@ export async function requestJoinOpenGame(gameId: string): Promise<{ game: OpenG
 
   // Mock fallback
   await new Promise((resolve) => setTimeout(resolve, 500));
-  const game = localGames.find((g) => g.id === gameId);
+  const currentGames = getLocalGames();
+  const game = currentGames.find((g) => g.id === gameId);
   if (!game) throw new Error("Game not found.");
   if (game.players.some((p) => p.name === currentUser.name)) {
     throw new Error("You have already joined or requested.");
@@ -495,6 +522,7 @@ export async function requestJoinOpenGame(gameId: string): Promise<{ game: OpenG
     joined_at: new Date().toISOString(),
     is_host: false,
   });
+  saveLocalGames(currentGames);
   return { game: { ...game }, ok: true };
 }
 
@@ -524,7 +552,8 @@ export async function approveJoinRequest(
 
   // Mock fallback
   await new Promise((resolve) => setTimeout(resolve, 300));
-  const game = localGames.find((g) => g.id === gameId);
+  const currentGames = getLocalGames();
+  const game = currentGames.find((g) => g.id === gameId);
   if (!game) throw new Error("Game not found.");
   if (game.host_user_id !== currentUser.user_id) throw new Error("Only the host can approve requests.");
 
@@ -536,6 +565,7 @@ export async function approveJoinRequest(
   player.payment_status = "approved";
   if (game.slots_filled >= game.slots_total) game.status = "full";
 
+  saveLocalGames(currentGames);
   return { game: { ...game }, booking: null };
 }
 
@@ -558,7 +588,8 @@ export async function rejectJoinRequest(gameId: string, playerId: string): Promi
 
   // Mock fallback
   await new Promise((resolve) => setTimeout(resolve, 300));
-  const game = localGames.find((g) => g.id === gameId);
+  const currentGames = getLocalGames();
+  const game = currentGames.find((g) => g.id === gameId);
   if (!game) throw new Error("Game not found.");
   if (game.host_user_id !== currentUser.user_id) throw new Error("Only the host can reject requests.");
   
@@ -574,6 +605,7 @@ export async function rejectJoinRequest(gameId: string, playerId: string): Promi
   }
   
   game.players.splice(idx, 1);
+  saveLocalGames(currentGames);
   return { game: { ...game }, ok: true };
 }
 
@@ -599,7 +631,8 @@ export async function leaveOpenGame(gameId: string): Promise<OpenGame> {
 
   // Mock fallback
   await new Promise((resolve) => setTimeout(resolve, 400));
-  const game = localGames.find((g) => g.id === gameId);
+  const currentGames = getLocalGames();
+  const game = currentGames.find((g) => g.id === gameId);
   if (!game) throw new Error("Game not found.");
   const idx = game.players.findIndex((p) => p.name === currentUser.name);
   if (idx === -1) throw new Error("You are not part of this game.");
@@ -621,6 +654,7 @@ export async function leaveOpenGame(gameId: string): Promise<OpenGame> {
     game.slots_filled = Math.max(0, game.slots_filled - 1);
     if (game.status === "full" && game.slots_filled < game.slots_total) game.status = "open";
   }
+  saveLocalGames(currentGames);
   return { ...game };
 }
 
@@ -647,7 +681,8 @@ export async function cancelOpenGame(gameId: string): Promise<OpenGame> {
 
   // Mock fallback
   await new Promise((resolve) => setTimeout(resolve, 400));
-  const game = localGames.find((g) => g.id === gameId);
+  const currentGames = getLocalGames();
+  const game = currentGames.find((g) => g.id === gameId);
   if (!game) throw new Error("Game not found.");
   if (game.host_user_id !== currentUser.user_id && !currentUser.is_admin) {
     throw new Error("Only the host can cancel this game.");
@@ -664,6 +699,7 @@ export async function cancelOpenGame(gameId: string): Promise<OpenGame> {
     }
   }
   if (changed) setMockBookings(list);
+  saveLocalGames(currentGames);
   return { ...game };
 }
 
@@ -717,7 +753,8 @@ export async function payPrivateGameShare(gameId: string, paymentMethod = "UPI")
 
   // ---- Mock fallback ----
   await new Promise((resolve) => setTimeout(resolve, 600));
-  const game = localGames.find((g) => g.id === gameId);
+  const currentGames = getLocalGames();
+  const game = currentGames.find((g) => g.id === gameId);
   if (!game) throw new Error("Game not found.");
   const player = game.players.find((p) => p.user_id === currentUser.user_id);
   if (!player) throw new Error("Player request not found.");
@@ -753,6 +790,7 @@ export async function payPrivateGameShare(gameId: string, paymentMethod = "UPI")
   player.payment_method = paymentMethod;
   player.booking_id = bookingId;
 
+  saveLocalGames(currentGames);
   setMockBookings([newBooking, ...getMockBookings()]);
   return { game: { ...game }, booking: newBooking };
 }

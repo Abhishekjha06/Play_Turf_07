@@ -387,12 +387,28 @@ export function useRealtimeOpenGames(callback: () => void): void {
                 .subscribe();
         });
 
+        // Add local storage listener for mock mode
+        const handleStorage = (e: StorageEvent) => {
+            if (e.key === "playturf:open_games" || !e.key) {
+                savedCallback.current();
+            }
+        };
+        // Also listen to custom events in the same tab
+        const handleLocalUpdate = () => {
+            savedCallback.current();
+        };
+
+        window.addEventListener("storage", handleStorage);
+        window.addEventListener("playturf:open_games_updated", handleLocalUpdate);
+
         return () => {
             getSupabase().then((supabase) => {
                 if (!supabase) return;
                 if (channelOpenGames) supabase.removeChannel(channelOpenGames);
                 if (channelPlayers) supabase.removeChannel(channelPlayers);
             });
+            window.removeEventListener("storage", handleStorage);
+            window.removeEventListener("playturf:open_games_updated", handleLocalUpdate);
         };
     }, []);
 }
