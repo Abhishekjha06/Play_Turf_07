@@ -465,7 +465,8 @@ const OpenGames = () => {
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05 }}
-                className="bg-[#242424] border border-zinc-800 rounded-2xl p-4 flex flex-col gap-3 relative overflow-hidden"
+                onClick={() => setManageGame(g)}
+                className="bg-[#242424] border border-zinc-800 rounded-2xl p-4 flex flex-col gap-3 relative overflow-hidden cursor-pointer hover:border-zinc-700 hover:bg-[#2c2c2c] transition-all"
               >
                 {/* Top Row: Title & Status */}
                 <div className="flex items-center justify-between">
@@ -753,181 +754,251 @@ const OpenGames = () => {
 
       {/* ── Host / Player Management Modal ── */}
       <AnimatePresence>
-        {manageGame && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.5 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setManageGame(null)}
-              className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm"
-              style={{ maxWidth: "480px", left: "50%", transform: "translateX(-50%)" }}
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: "-40%", x: "-50%" }}
-              animate={{ opacity: 1, scale: 1, y: "-50%", x: "-50%" }}
-              exit={{ opacity: 0, scale: 0.9, y: "-40%", x: "-50%" }}
-              className="fixed left-1/2 top-1/2 z-50 w-[90%] max-w-[400px] bg-panel rounded-[2rem] border border-white/10 p-5 space-y-4 shadow-2xl max-h-[90dvh] overflow-y-auto"
-            >
-              <div className="flex items-center justify-between border-b border-white/5 pb-2">
-                <h3 className="font-display font-black text-base flex items-center gap-1.5">
-                  <Users className="h-5 w-5 text-primary" /> Game Management
-                </h3>
-                <button
-                  onClick={() => setManageGame(null)}
-                  className="p-1 hover:bg-white/10 rounded-full cursor-pointer text-muted-foreground hover:text-foreground border-none bg-transparent"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
+        {manageGame && (() => {
+          const myPlayerRecord = user
+            ? manageGame.players.find((p) => p.user_id === user.user_id || p.name === user.name)
+            : null;
+          const myStatus = myPlayerRecord?.payment_status || null;
+          const youAreHost = !!user && manageGame.host_user_id === user.user_id;
+          const youAreIn = youAreHost || myStatus === "paid";
+          const youArePending = myStatus === "requested";
+          const youAreApproved = myStatus === "approved";
+          const pendingRequests = manageGame.players.filter((p) => p.payment_status === "requested");
+          const isFull = manageGame.slots_filled >= manageGame.slots_total;
+          const isCancelled = manageGame.status === "cancelled";
 
-              <div className="bg-panel-2 border border-white/5 p-3 rounded-2xl flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-primary/10 grid place-items-center">
-                  <Users className="h-5 w-5 text-primary" />
+          return (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 0.5 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setManageGame(null)}
+                className="fixed inset-0 z-[49] bg-black/70 backdrop-blur-sm"
+                style={{ maxWidth: "480px", left: "50%", transform: "translateX(-50%)" }}
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: "-40%", x: "-50%" }}
+                animate={{ opacity: 1, scale: 1, y: "-50%", x: "-50%" }}
+                exit={{ opacity: 0, scale: 0.9, y: "-40%", x: "-50%" }}
+                className="fixed left-1/2 top-1/2 z-50 w-[90%] max-w-[400px] bg-panel rounded-[2rem] border border-white/10 p-5 space-y-4 shadow-2xl max-h-[90dvh] overflow-y-auto"
+              >
+                <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                  <h3 className="font-display font-black text-base flex items-center gap-1.5 text-white">
+                    <Users className="h-5 w-5 text-primary" /> {youAreHost ? "Manage Game" : "Game Details"}
+                  </h3>
+                  <button
+                    onClick={() => setManageGame(null)}
+                    className="p-1 hover:bg-white/10 rounded-full cursor-pointer text-muted-foreground hover:text-foreground border-none bg-transparent"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
                 </div>
-                <div>
-                  <h4 className="font-bold text-sm">{manageGame.sport} Match</h4>
-                  <p className="text-xs text-muted2 mt-0.5 truncate max-w-[240px]">{manageGame.venue}</p>
-                </div>
-              </div>
 
-              {/* Player list */}
-              <div className="space-y-2">
-                <span className="text-[10px] font-black uppercase text-muted-foreground tracking-wider block">
-                  Players ({manageGame.players.filter((p) => p.payment_status !== "requested").length} / {manageGame.slots_total})
-                </span>
-                <div className="flex flex-wrap gap-2.5 max-h-24 overflow-y-auto no-scrollbar">
-                  {manageGame.players
-                    .filter((p) => p.payment_status !== "requested")
-                    .map((p, idx) => (
-                      <div
-                        key={idx}
-                        className={`flex items-center gap-1.5 bg-panel-2 border px-2.5 py-1 rounded-full shrink-0 ${
-                          p.payment_status === "approved" ? "border-amber-500/30 bg-amber-500/5" : "border-white/5"
-                        }`}
-                      >
-                        <img src={p.avatar} alt={p.name} className="w-4 h-4 rounded-full" />
-                        <span className="text-[11px] font-bold text-foreground">{p.name.split(" ")[0]}</span>
-                        {p.is_host && <span className="text-[8px] text-primary font-black">HOST</span>}
-                        {p.payment_status === "approved" && (
-                          <>
-                            <span className="text-[8px] text-amber-400 font-black">UNPAID</span>
-                            {manageGame.host_user_id === user?.user_id && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  if (confirm(`Cancel invitation and remove player ${p.name}?`)) {
-                                    handleReject(manageGame.id, p.id!);
-                                  }
-                                }}
-                                className="p-0.5 hover:bg-white/10 rounded-full cursor-pointer text-red-400 hover:text-red-300 border-none bg-transparent flex items-center justify-center ml-1"
-                                title="Remove approval"
-                              >
-                                <X className="h-3 w-3" />
-                              </button>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    ))}
-                </div>
-              </div>
+                <div className="bg-panel-2 border border-white/5 p-4 rounded-2xl space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-primary/10 grid place-items-center shrink-0">
+                      <Users className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h4 className="font-bold text-sm text-white">{Math.round(manageGame.slots_total / 2)}-a-side {manageGame.sport.toLowerCase()}</h4>
+                      <p className="text-xs text-zinc-400 mt-0.5 truncate">{manageGame.venue}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-2 text-xs text-zinc-400 pt-2 border-t border-white/5">
+                    <div className="flex items-center gap-1.5">
+                      <Calendar className="h-3.5 w-3.5 text-zinc-505" />
+                      <span>{manageGame.date === new Date().toISOString().slice(0, 10) ? "Today" : manageGame.date}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Clock className="h-3.5 w-3.5 text-zinc-505" />
+                      <span>{manageGame.time} ({manageGame.duration_hours ? manageGame.duration_hours * 60 : 60} mins)</span>
+                    </div>
+                  </div>
 
-              {/* Pending requests — host can approve/reject */}
-              {manageGame.host_user_id === user?.user_id &&
-                manageGame.players.filter((p) => p.payment_status === "requested").length > 0 && (
+                  <div className="flex justify-between items-center text-xs text-zinc-400 pt-2 border-t border-white/5">
+                    <span>Slot price:</span>
+                    <span className="font-bold text-white text-sm">₹{manageGame.price_per_slot}</span>
+                  </div>
+                </div>
+
+                {/* Player list */}
+                <div className="space-y-2">
+                  <span className="text-[10px] font-black uppercase text-muted-foreground tracking-wider block">
+                    Players ({manageGame.players.filter((p) => p.payment_status !== "requested").length} / {manageGame.slots_total})
+                  </span>
+                  <div className="flex flex-wrap gap-2.5 max-h-24 overflow-y-auto no-scrollbar">
+                    {manageGame.players
+                      .filter((p) => p.payment_status !== "requested")
+                      .map((p, idx) => (
+                        <div
+                          key={idx}
+                          className={`flex items-center gap-1.5 bg-panel-2 border px-2.5 py-1 rounded-full shrink-0 ${
+                            p.payment_status === "approved" ? "border-amber-500/30 bg-amber-500/5" : "border-white/5"
+                          }`}
+                        >
+                          <img src={p.avatar} alt={p.name} className="w-4 h-4 rounded-full" />
+                          <span className="text-[11px] font-bold text-foreground">{p.name.split(" ")[0]}</span>
+                          {p.is_host && <span className="text-[8px] text-primary font-black">HOST</span>}
+                          {p.payment_status === "approved" && (
+                            <>
+                              <span className="text-[8px] text-amber-400 font-black">UNPAID</span>
+                              {youAreHost && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (confirm(`Cancel invitation and remove player ${p.name}?`)) {
+                                      handleReject(manageGame.id, p.id!);
+                                    }
+                                  }}
+                                  className="p-0.5 hover:bg-white/10 rounded-full cursor-pointer text-red-400 hover:text-red-300 border-none bg-transparent flex items-center justify-center ml-1"
+                                  title="Remove approval"
+                                >
+                                  <X className="h-3 w-3" />
+                                </button>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      ))}
+                  </div>
+                </div>
+
+                {/* Pending requests — host can approve/reject */}
+                {youAreHost && pendingRequests.length > 0 && (
                   <div className="border-t border-white/5 pt-3 space-y-2">
                     <span className="text-[10px] font-black uppercase text-amber-400 tracking-wider block">
                       Pending Requests
                     </span>
-                    {manageGame.players
-                      .filter((p) => p.payment_status === "requested")
-                      .map((p) => (
-                        <div
-                          key={p.id}
-                          className="flex items-center justify-between bg-amber-500/5 border border-amber-500/20 rounded-2xl px-3 py-2"
-                        >
-                          <div className="flex items-center gap-2">
-                            <img src={p.avatar} alt={p.name} className="w-6 h-6 rounded-full" />
-                            <span className="text-xs font-bold text-foreground">{p.name}</span>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <button
-                              onClick={() => handleApprove(manageGame.id, p.id!)}
-                              className="p-1.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-full cursor-pointer"
-                              title="Approve"
-                            >
-                              <UserCheck className="h-4 w-4" />
-                            </button>
-                            <button
-                              onClick={() => handleReject(manageGame.id, p.id!)}
-                              className="p-1.5 bg-red-500/10 border border-red-500/30 text-red-400 rounded-full cursor-pointer"
-                              title="Reject"
-                            >
-                              <X className="h-4 w-4" />
-                            </button>
-                          </div>
+                    {pendingRequests.map((p) => (
+                      <div
+                        key={p.id}
+                        className="flex items-center justify-between bg-amber-500/5 border border-amber-500/20 rounded-2xl px-3 py-2"
+                      >
+                        <div className="flex items-center gap-2">
+                          <img src={p.avatar} alt={p.name} className="w-6 h-6 rounded-full" />
+                          <span className="text-xs font-bold text-foreground">{p.name}</span>
                         </div>
-                      ))}
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => handleApprove(manageGame.id, p.id!)}
+                            className="p-1.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-full cursor-pointer"
+                            title="Approve"
+                          >
+                            <UserCheck className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => handleReject(manageGame.id, p.id!)}
+                            className="p-1.5 bg-red-500/10 border border-red-500/30 text-red-400 rounded-full cursor-pointer"
+                            title="Reject"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
 
-              {/* Chat placeholder */}
-              <div className="border-t border-white/5 pt-3 space-y-2">
-                <span className="text-[10px] font-black uppercase text-muted-foreground tracking-wider block">
-                  Group Chat & Host
-                </span>
-                <div className="bg-primary/5 border border-primary/20 p-3.5 rounded-2xl flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <Users className="h-5 w-5 text-primary" />
-                    <div>
-                      <h5 className="font-bold text-xs text-foreground">In-App Chat Thread</h5>
-                      <p className="text-[10px] text-muted-foreground mt-0.5 font-semibold">Discuss team colors & match rules</p>
+                {/* Chat placeholder ── only for joined players */}
+                {youAreIn && (
+                  <div className="border-t border-white/5 pt-3 space-y-2">
+                    <span className="text-[10px] font-black uppercase text-muted-foreground tracking-wider block">
+                      Group Chat & Host
+                    </span>
+                    <div className="bg-primary/5 border border-primary/20 p-3.5 rounded-2xl flex items-center justify-between">
+                      <div className="flex items-center gap-2.5">
+                        <Users className="h-5 w-5 text-primary" />
+                        <div>
+                          <h5 className="font-bold text-xs text-foreground">In-App Chat Thread</h5>
+                          <p className="text-[10px] text-muted-foreground mt-0.5 font-semibold">Discuss team colors & match rules</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => toast.success("Joined chat! Messaging is simulated in this sandbox.")}
+                        className="p-2 bg-primary rounded-full pressable cursor-pointer border-none"
+                      >
+                        <ChevronRight className="h-4.5 w-4.5 text-primary-foreground" />
+                      </button>
                     </div>
                   </div>
-                  <button
-                    onClick={() => toast.success("Joined chat! Messaging is simulated in this sandbox.")}
-                    className="p-2 bg-primary rounded-full pressable cursor-pointer border-none"
-                  >
-                    <ChevronRight className="h-4.5 w-4.5 text-primary-foreground" />
-                  </button>
-                </div>
-              </div>
+                )}
 
-              {/* Player: leave */}
-              {manageGame.host_user_id !== user?.user_id && isPlayerOf(manageGame) && (
-                <div className="border-t border-white/5 pt-3.5">
-                  <button
-                    onClick={() => {
-                      if (confirm("Leave this game? Your share will be refunded.")) {
-                        handleLeave(manageGame.id);
-                      }
-                    }}
-                    className="w-full py-2.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400 font-bold text-xs uppercase tracking-wider pressable cursor-pointer flex items-center justify-center gap-1.5"
-                  >
-                    <LogOut className="h-4 w-4" /> Leave Game
-                  </button>
-                </div>
-              )}
+                {/* Action button inside details modal for non-joined players */}
+                {!youAreIn && (
+                  <div className="border-t border-white/5 pt-3.5">
+                    {youAreApproved ? (
+                      <button
+                        onClick={() => {
+                          setManageGame(null);
+                          handleJoinClick(manageGame);
+                        }}
+                        className="w-full py-3 rounded-2xl bg-[#7ea7e9] hover:bg-[#7ea7e9]/95 text-zinc-950 font-bold text-xs uppercase tracking-wider transition border-none cursor-pointer flex items-center justify-center gap-1.5 animate-pulse"
+                      >
+                        Pay & Join ↗
+                      </button>
+                    ) : youArePending ? (
+                      <button
+                        disabled
+                        className="w-full py-3 rounded-2xl bg-zinc-800 text-zinc-500 font-bold text-xs uppercase tracking-wider border-none cursor-not-allowed flex items-center justify-center"
+                      >
+                        Pending Host Approval
+                      </button>
+                    ) : (
+                      <button
+                        disabled={isFull || isCancelled}
+                        onClick={() => {
+                          setManageGame(null);
+                          handleJoinClick(manageGame);
+                        }}
+                        className={`w-full py-3 rounded-2xl font-bold text-xs uppercase tracking-wider transition border-none cursor-pointer flex items-center justify-center gap-1 ${
+                          isFull || isCancelled
+                            ? "bg-zinc-800 text-zinc-500 cursor-not-allowed"
+                            : "bg-[#7ea7e9] hover:bg-[#7ea7e9]/95 text-zinc-950"
+                        }`}
+                      >
+                        {isFull ? "Game Full" : isCancelled ? "Cancelled" : manageGame.is_private ? "Request Invite ↗" : "Join Game ↗"}
+                      </button>
+                    )}
+                  </div>
+                )}
 
-              {/* Host: cancel game */}
-              {manageGame.host_user_id === user?.user_id && (
-                <div className="border-t border-white/5 pt-3.5">
-                  <button
-                    onClick={() => {
-                      if (confirm("Cancel this game? All players will be refunded.")) {
-                        handleCancelGame(manageGame.id);
-                      }
-                    }}
-                    className="w-full py-2.5 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-400 font-bold text-xs uppercase tracking-wider pressable cursor-pointer flex items-center justify-center gap-1.5"
-                  >
-                    <UserMinus className="h-4 w-4" /> Cancel Hosted Game
-                  </button>
-                </div>
-              )}
-            </motion.div>
-          </>
-        )}
+                {/* Player: leave */}
+                {!youAreHost && youAreIn && (
+                  <div className="border-t border-white/5 pt-3.5">
+                    <button
+                      onClick={() => {
+                        if (confirm("Leave this game? Your share will be refunded.")) {
+                          handleLeave(manageGame.id);
+                        }
+                      }}
+                      className="w-full py-2.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400 font-bold text-xs uppercase tracking-wider pressable cursor-pointer flex items-center justify-center gap-1.5"
+                    >
+                      <LogOut className="h-4 w-4" /> Leave Game
+                    </button>
+                  </div>
+                )}
+
+                {/* Host: cancel game */}
+                {youAreHost && (
+                  <div className="border-t border-white/5 pt-3.5">
+                    <button
+                      onClick={() => {
+                        if (confirm("Cancel this game? All players will be refunded.")) {
+                          handleCancelGame(manageGame.id);
+                        }
+                      }}
+                      className="w-full py-2.5 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-400 font-bold text-xs uppercase tracking-wider pressable cursor-pointer flex items-center justify-center gap-1.5"
+                    >
+                      <UserMinus className="h-4 w-4" /> Cancel Hosted Game
+                    </button>
+                  </div>
+                )}
+              </motion.div>
+            </>
+          );
+        })()}
       </AnimatePresence>
 
       {/* ── Host Game Dialog (3-tap Flow) ── */}
