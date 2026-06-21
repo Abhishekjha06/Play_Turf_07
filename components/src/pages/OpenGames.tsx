@@ -29,6 +29,7 @@ import {
 import { toast } from "sonner";
 import { trackEvent } from "@/lib/analytics";
 import { pageEnter, staggerContainer, fadeSlideUp } from "@/lib/motion";
+import { useRealtimeOpenGames } from "@/lib/realtime";
 
 const OpenGames = () => {
   const { user } = useAuth();
@@ -80,6 +81,9 @@ const OpenGames = () => {
     api.listTurfs().then(setTurfs).catch(console.error);
   }, []);
 
+  // Listen for database realtime changes on open games
+  useRealtimeOpenGames(fetchGames);
+
   useEffect(() => {
     fetchGames();
     // Simulate periodic polling update for real-time slots (refetch every 10 seconds)
@@ -108,14 +112,14 @@ const OpenGames = () => {
     try {
       const { game: updated, booking } = await api.joinOpenGame(gameId, selectedPaymentMethod);
       if (updated.is_private) {
-        toast.success("Request sent to host! Awaiting host approval.");
+        toast.success("Request sent to host! Redirecting to details...");
       } else {
         toast.success("Payment successful! Redirecting to receipt...");
       }
       // Trigger notification
       await api.admin.inviteBetaUser(user.email, updated.is_private ? `Your request to join ${updated.sport} at ${updated.venue} has been sent.` : `You joined ${updated.sport} at ${updated.venue}. Game is on!`);
       setActiveJoinGame(null);
-      if (!updated.is_private && booking) {
+      if (booking) {
         navigate(`/booking/${booking.id}`);
       } else {
         await fetchGames();

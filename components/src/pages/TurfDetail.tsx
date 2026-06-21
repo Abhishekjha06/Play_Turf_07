@@ -8,6 +8,7 @@ import type { Turf } from "@/data/seed";
 import type { Review } from "@/data/seed";
 import type { OpenGame } from "@/types/openGames";
 import { trackEvent } from "@/lib/analytics";
+import { useRealtimeOpenGames } from "@/lib/realtime";
 import { Star, MapPin, Clock, Heart, Share2, Users, Calendar, Lock, X, AlertCircle, CreditCard, Smartphone, Wallet } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -56,6 +57,9 @@ const TurfDetail = () => {
     }
   };
 
+  // Listen for database realtime changes on open games
+  useRealtimeOpenGames(fetchOpenGames);
+
   useEffect(() => {
     fetchOpenGames();
   }, [turf]);
@@ -70,12 +74,12 @@ const TurfDetail = () => {
     try {
       const { game: updated, booking } = await api.joinOpenGame(gameId, selectedPaymentMethod);
       if (updated.is_private) {
-        toast.success("Request sent to host! Awaiting host approval.");
+        toast.success("Request sent to host! Redirecting to details...");
       } else {
         toast.success("Payment successful! Redirecting to receipt...");
       }
       setSelectedJoinGame(null);
-      if (!updated.is_private && booking) {
+      if (booking) {
         navigate(`/booking/${booking.id}`);
       } else {
         await fetchOpenGames();

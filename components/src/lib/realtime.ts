@@ -346,3 +346,53 @@ export function useRealtimeNotifications(
         };
     }, [userId]);
 }
+
+/**
+ * Hook: Subscribe to real-time changes for open games and slots.
+ * Automatically triggers callback on insert, update, or delete.
+ */
+export function useRealtimeOpenGames(callback: () => void): void {
+    const savedCallback = useRef(callback);
+    savedCallback.current = callback;
+
+    useEffect(() => {
+        let channelOpenGames: RealtimeChannel | null = null;
+        let channelPlayers: RealtimeChannel | null = null;
+
+        getSupabase().then((supabase) => {
+            if (!supabase) return;
+
+            // Subscribe to open_games table updates
+            channelOpenGames = supabase
+                .channel("realtime-open-games")
+                .on(
+                    "postgres_changes",
+                    { event: "*", schema: "public", table: "open_games" },
+                    () => {
+                        savedCallback.current();
+                    }
+                )
+                .subscribe();
+
+            // Subscribe to open_game_players table updates
+            channelPlayers = supabase
+                .channel("realtime-open-game-players")
+                .on(
+                    "postgres_changes",
+                    { event: "*", schema: "public", table: "open_game_players" },
+                    () => {
+                        savedCallback.current();
+                    }
+                )
+                .subscribe();
+        });
+
+        return () => {
+            getSupabase().then((supabase) => {
+                if (!supabase) return;
+                if (channelOpenGames) supabase.removeChannel(channelOpenGames);
+                if (channelPlayers) supabase.removeChannel(channelPlayers);
+            });
+        };
+    }, []);
+}

@@ -160,8 +160,8 @@ export async function joinOpenGame(gameId: string, paymentMethod: string = "UPI"
         end_time: endTime,
         hours: 1,
         amount: game.price_per_slot,
-        status: "CONFIRMED",
-        payment_id: paymentId,
+        status: isPrivate ? "PENDING" : "CONFIRMED",
+        payment_id: isPrivate ? null : paymentId,
         created_at: new Date().toISOString(),
       };
 
@@ -251,12 +251,21 @@ export async function joinOpenGame(gameId: string, paymentMethod: string = "UPI"
     end_time: endTime,
     hours: 1,
     amount: game.price_per_slot,
-    status: "CONFIRMED",
-    payment_id: paymentId,
+    status: game.is_private ? "PENDING" : "CONFIRMED",
+    payment_id: game.is_private ? null : paymentId,
     created_at: new Date().toISOString(),
   };
 
-  if (!game.is_private) {
+  if (game.is_private) {
+    game.players.push({
+      name: currentUser.name,
+      avatar: currentUser.picture,
+      payment_status: "pending",
+      payment_method: paymentMethod,
+      booking_id: bookingId,
+      joined_at: new Date().toISOString()
+    });
+  } else {
     game.slots_filled += 1;
     game.players.push({
       name: currentUser.name,
@@ -458,7 +467,7 @@ export async function hostOpenGame(payload: CreateGamePayload): Promise<OpenGame
     slots_total,
     slots_filled: 1,
     status: "open",
-    distance: parseFloat((Math.random() * 5 + 0.5).toFixed(1)),
+    distance: parseFloat((Math.random() * 1.5 + 0.1).toFixed(1)),
     host_name: currentUser.name,
     host_avatar: currentUser.picture,
     host_user_id: currentUser.user_id,

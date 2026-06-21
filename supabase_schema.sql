@@ -784,3 +784,12 @@ CREATE POLICY "Allow public read access on open_game_players" ON public.open_gam
 CREATE POLICY "Allow users to join open games" ON public.open_game_players FOR INSERT WITH CHECK (auth.uid()::text = user_id OR user_id = 'mock_user');
 CREATE POLICY "Allow service_role full access on open_game_players" ON public.open_game_players FOR ALL USING (true);
 
+-- Enable Realtime replication for open games tables
+ALTER TABLE public.open_games REPLICA IDENTITY FULL;
+ALTER TABLE public.open_game_players REPLICA IDENTITY FULL;
+
+-- Add tables to realtime publication (safe to run even if already added)
+ALTER PUBLICATION supabase_realtime ADD TABLE ONLY public.open_games;
+ALTER PUBLICATION supabase_realtime ADD TABLE ONLY public.open_game_players;
+
+
