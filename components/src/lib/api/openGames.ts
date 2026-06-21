@@ -57,6 +57,7 @@ function normalizeGameRow(g: any, players: GamePlayer[] = []): OpenGame {
 function toPlayer(p: any): GamePlayer {
   return {
     id: p.id,
+    user_id: p.user_id,
     name: p.name,
     avatar: p.avatar ?? "",
     payment_status: p.payment_status,
@@ -314,6 +315,7 @@ export async function hostOpenGame(payload: CreateGamePayload): Promise<{ game: 
     players: [
       {
         id: uid("gp"),
+        user_id: currentUser.user_id,
         name: currentUser.name,
         avatar: currentUser.picture,
         payment_status: "paid",
@@ -440,6 +442,7 @@ export async function joinOpenGame(gameId: string, paymentMethod = "UPI"): Promi
   game.slots_filled += 1;
   game.players.push({
     id: uid("gp"),
+    user_id: currentUser.user_id,
     name: currentUser.name,
     avatar: currentUser.picture,
     payment_status: "paid",
@@ -485,6 +488,7 @@ export async function requestJoinOpenGame(gameId: string): Promise<{ game: OpenG
   }
   game.players.push({
     id: uid("gp"),
+    user_id: currentUser.user_id,
     name: currentUser.name,
     avatar: currentUser.picture,
     payment_status: "requested",
@@ -514,22 +518,8 @@ export async function approveJoinRequest(
     if (error) throw new Error(error.message);
     if (!result?.ok) throw new RpcError(result?.reason || "Failed to approve.");
 
-    const bookingId: string | null = result.booking_id ?? null;
     const game = await getOpenGame(gameId);
-
-    let booking: Booking | null = null;
-    if (bookingId) {
-      const { data: b } = await supabase.from("bookings").select("*").eq("id", bookingId).maybeSingle();
-      if (b) {
-        booking = {
-          id: b.id, user_id: b.user_id, turf_id: b.turf_id, turf_name: b.turf_name,
-          turf_image: b.turf_image, date: b.date, start_time: b.start_time, end_time: b.end_time,
-          hours: b.hours, amount: b.amount, status: b.status, payment_id: b.payment_id,
-          open_game_id: b.open_game_id, is_split_booking: b.is_split_booking, created_at: b.created_at,
-        };
-      }
-    }
-    return { game: game ?? ({} as OpenGame), booking };
+    return { game: game ?? ({} as OpenGame), booking: null };
   }
 
   // Mock fallback
@@ -543,8 +533,7 @@ export async function approveJoinRequest(
 
   if (game.slots_filled >= game.slots_total) throw new Error("Game is full — cannot approve.");
   game.slots_filled += 1;
-  player.payment_status = "paid";
-  player.booking_id = uid("bkg");
+  player.payment_status = "approved";
   if (game.slots_filled >= game.slots_total) game.status = "full";
 
   return { game: { ...game }, booking: null };
@@ -572,8 +561,18 @@ export async function rejectJoinRequest(gameId: string, playerId: string): Promi
   const game = localGames.find((g) => g.id === gameId);
   if (!game) throw new Error("Game not found.");
   if (game.host_user_id !== currentUser.user_id) throw new Error("Only the host can reject requests.");
-  const idx = game.players.findIndex((p) => p.id === playerId && p.payment_status === "requested");
-  if (idx === -1) throw new Error("No such pending request.");
+  
+  const idx = game.players.findIndex((p) => p.id === playerId && (p.payment_status === "requested" || p.payment_status === "approved"));
+  if (idx === -1) throw new Error("No such request.");
+  const player = game.players[idx];
+  
+  if (player.payment_status === "approved") {
+    game.slots_filled = Math.max(0, game.slots_filled - 1);
+    if (game.status === "full" && game.slots_filled < game.slots_total) {
+      game.status = "open";
+    }
+  }
+  
   game.players.splice(idx, 1);
   return { game: { ...game }, ok: true };
 }
@@ -666,4 +665,94 @@ export async function cancelOpenGame(gameId: string): Promise<OpenGame> {
   }
   if (changed) setMockBookings(list);
   return { ...game };
+}
+
+// ---------------------------------------------------------------------------
+// PAY PRIVATE GAME SHARE (private game)
+// ---------------------------------------------------------------------------
+
+export async function payPrivateGameShare(gameId: string, paymentMethod = "UPI"): Promise<{ game: OpenGame; booking: Booking | null }> {
+  const currentUser = await assertUser();
+  const supabase = await getSupabase();
+
+  if (supabase) {
+    const { data: result, error } = await supabase.rpc("pay_private_game_share", {
+      p_game_id: gameId,
+      p_user_id: currentUser.user_id,
+      p_payment_method: paymentMethod,
+    });
+
+    if (error) throw new Error(error.message);
+    if (!result?.ok) throw new RpcError(result?.reason || "Failed to pay for game share.");
+
+    const bookingId: string | null = result.booking_id ?? null;
+    const game = await getOpenGame(gameId);
+
+    let booking: Booking | null = null;
+    if (bookingId) {
+      const { data: b } = await supabase.from("bookings").select("*").eq("id", bookingId).maybeSingle();
+      if (b) {
+        booking = {
+          id: b.id,
+          user_id: b.user_id,
+          turf_id: b.turf_id,
+          turf_name: b.turf_name,
+          turf_image: b.turf_image,
+          date: b.date,
+          start_time: b.start_time,
+          end_time: b.end_time,
+          hours: b.hours,
+          amount: b.amount,
+          status: b.status,
+          payment_id: b.payment_id,
+          open_game_id: b.open_game_id,
+          is_split_booking: b.is_split_booking,
+          created_at: b.created_at,
+        };
+      }
+    }
+
+    return { game: game ?? ({} as OpenGame), booking };
+  }
+
+  // ---- Mock fallback ----
+  await new Promise((resolve) => setTimeout(resolve, 600));
+  const game = localGames.find((g) => g.id === gameId);
+  if (!game) throw new Error("Game not found.");
+  const player = game.players.find((p) => p.user_id === currentUser.user_id);
+  if (!player) throw new Error("Player request not found.");
+  if (player.payment_status === "paid") throw new Error("Already paid.");
+  if (player.payment_status !== "approved") throw new Error("Request is not approved by host yet.");
+
+  const bookingId = uid("bkg");
+  const [h, m] = game.time.split(":").map(Number);
+  const duration = game.duration_hours ?? 1;
+  const endHour = String((h + duration) % 24).padStart(2, "0");
+  const endTime = `${endHour}:${String(m).padStart(2, "0")}`;
+
+  const matchedTurf = getMockTurfs().find((t) => t.id === game.turf_id) || getMockTurfs()[0];
+  const newBooking: Booking = {
+    id: bookingId,
+    user_id: currentUser.user_id,
+    turf_id: game.turf_id || matchedTurf?.id || "turf_1",
+    turf_name: game.venue,
+    turf_image: matchedTurf?.image || "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&q=80&w=1200",
+    date: game.date,
+    start_time: game.time,
+    end_time: endTime,
+    hours: duration,
+    amount: game.price_per_slot,
+    status: "CONFIRMED",
+    payment_id: uid("pay"),
+    open_game_id: game.id,
+    is_split_booking: true,
+    created_at: new Date().toISOString(),
+  };
+
+  player.payment_status = "paid";
+  player.payment_method = paymentMethod;
+  player.booking_id = bookingId;
+
+  setMockBookings([newBooking, ...getMockBookings()]);
+  return { game: { ...game }, booking: newBooking };
 }

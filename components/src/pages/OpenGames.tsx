@@ -63,6 +63,14 @@ const OpenGames = () => {
   const [hostIsPrivate, setHostIsPrivate] = useState(false);
   const [hosting, setHosting] = useState(false);
 
+  // Find current active join game player status
+  const activePlayerRecord = useMemo(() => {
+    if (!user || !activeJoinGame) return null;
+    return activeJoinGame.players.find((p) => p.user_id === user.user_id || p.name === user.name);
+  }, [user, activeJoinGame]);
+  const activePlayerStatus = activePlayerRecord?.payment_status || null;
+  const isApprovedForPrivate = activePlayerStatus === "approved";
+
   // Fetch games list (real distance filtering happens in the API).
   const fetchGames = async () => {
     try {
@@ -184,6 +192,39 @@ const OpenGames = () => {
       });
       setActiveJoinGame(null);
       await fetchGames();
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setJoining(false);
+    }
+  };
+
+  // Handle Pay Share (private game after host approval)
+  const handlePayShare = async (gameId: string) => {
+    if (!user) {
+      toast.error("Please sign in to complete payment.");
+      navigate("/login", { state: { from: location.pathname + location.search } });
+      return;
+    }
+    setJoining(true);
+    try {
+      const { game: updated, booking } = await api.payPrivateGameShare(gameId, selectedPaymentMethod);
+      trackEvent("open_game_private_paid", { game_id: gameId });
+
+      addNotification({
+        type: "booking_confirmed",
+        title: "Payment successful! 💳",
+        body: `You are confirmed for ${updated.sport} at ${updated.venue}.`,
+        booking_id: booking?.id,
+        deepLink: booking ? `/booking/${booking.id}` : undefined,
+      });
+
+      setActiveJoinGame(null);
+      if (booking) {
+        navigate(`/booking/${booking.id}`);
+      } else {
+        await fetchGames();
+      }
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
@@ -410,8 +451,14 @@ const OpenGames = () => {
             const progress = (g.slots_filled / g.slots_total) * 100;
             const isFull = g.status === "full";
             const isCancelled = g.status === "cancelled";
-            const youAreIn = isPlayerOf(g);
+            const myPlayerRecord = user
+              ? g.players.find((p) => p.user_id === user.user_id || p.name === user.name)
+              : null;
+            const myStatus = myPlayerRecord?.payment_status || null;
             const youAreHost = !!user && g.host_user_id === user.user_id;
+            const youAreIn = youAreHost || myStatus === "paid";
+            const youArePending = myStatus === "requested";
+            const youAreApproved = myStatus === "approved";
             const pendingRequests = g.players.filter((p) => p.payment_status === "requested");
 
             return (
@@ -530,6 +577,23 @@ const OpenGames = () => {
                       >
                         {youAreHost ? "Manage" : "Joined"}
                       </button>
+                    ) : youAreApproved ? (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleJoinClick(g);
+                        }}
+                        className="px-4 py-2.5 rounded-full text-xs font-black uppercase tracking-wider transition shadow-neon cursor-pointer border-none bg-gradient-neon text-primary-foreground font-black animate-pulse"
+                      >
+                        Pay & Join
+                      </button>
+                    ) : youArePending ? (
+                      <button
+                        disabled
+                        className="px-4 py-2.5 rounded-full text-xs font-black uppercase tracking-wider transition border-none bg-zinc-800 text-zinc-500 cursor-not-allowed"
+                      >
+                        Pending Host
+                      </button>
                     ) : (
                       <button
                         disabled={isFull || isCancelled}
@@ -625,6 +689,18 @@ const OpenGames = () => {
                 </div>
               </div>
 
+              {isApprovedForPrivate && (
+                <div className="bg-emerald-500/10 border border-emerald-500/30 p-3 rounded-2xl flex items-start gap-2.5">
+                  <CheckCircle className="h-5 w-5 text-emerald-400 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-[10px] font-black uppercase text-emerald-400 tracking-wider">Invite Approved!</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5 leading-relaxed font-semibold">
+                      The host approved your request. Pay below to confirm your spot.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Cancellation Policy */}
               <div className="flex gap-2 bg-yellow-500/5 border border-yellow-500/20 p-3 rounded-2xl">
                 <AlertCircle className="h-4.5 w-4.5 text-yellow-500 shrink-0 mt-0.5" />
@@ -636,8 +712,8 @@ const OpenGames = () => {
                 </div>
               </div>
 
-              {/* Payment Methods — only for public games */}
-              {!activeJoinGame.is_private && (
+              {/* Payment Methods — only for public games or approved private requests */}
+              {(!activeJoinGame.is_private || isApprovedForPrivate) && (
                 <div className="space-y-2">
                   <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest block">
                     Select Payment Method
@@ -672,7 +748,7 @@ const OpenGames = () => {
 
               {/* Pay / Request button */}
               <div className="space-y-3">
-                {!activeJoinGame.is_private && (
+                {(!activeJoinGame.is_private || isApprovedForPrivate) && (
                   <div className="flex items-center justify-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wide text-primary">
                     <Lock className="h-3 w-3 text-primary animate-pulse" /> Secure 256-bit Encrypted Checkout
                   </div>
@@ -680,15 +756,21 @@ const OpenGames = () => {
 
                 <button
                   disabled={joining}
-                  onClick={() =>
-                    activeJoinGame.is_private
-                      ? handleRequestJoin(activeJoinGame.id)
-                      : handleJoin(activeJoinGame.id)
-                  }
+                  onClick={() => {
+                    if (isApprovedForPrivate) {
+                      handlePayShare(activeJoinGame.id);
+                    } else if (activeJoinGame.is_private) {
+                      handleRequestJoin(activeJoinGame.id);
+                    } else {
+                      handleJoin(activeJoinGame.id);
+                    }
+                  }}
                   className="w-full py-3.5 rounded-full bg-gradient-neon text-primary-foreground font-black text-xs uppercase tracking-widest shadow-neon pressable cursor-pointer border-none flex items-center justify-center min-h-[44px]"
                 >
                   {joining ? (
                     <div className="w-5 h-5 rounded-full border-2 border-t-transparent animate-spin border-primary-foreground" />
+                  ) : isApprovedForPrivate ? (
+                    `Pay ₹${activeJoinGame.price_per_slot} & Confirm Join`
                   ) : activeJoinGame.is_private ? (
                     "Send Join Request"
                   ) : (
@@ -752,11 +834,32 @@ const OpenGames = () => {
                     .map((p, idx) => (
                       <div
                         key={idx}
-                        className="flex items-center gap-1.5 bg-panel-2 border border-white/5 px-2.5 py-1 rounded-full shrink-0"
+                        className={`flex items-center gap-1.5 bg-panel-2 border px-2.5 py-1 rounded-full shrink-0 ${
+                          p.payment_status === "approved" ? "border-amber-500/30 bg-amber-500/5" : "border-white/5"
+                        }`}
                       >
                         <img src={p.avatar} alt={p.name} className="w-4 h-4 rounded-full" />
                         <span className="text-[11px] font-bold text-foreground">{p.name.split(" ")[0]}</span>
                         {p.is_host && <span className="text-[8px] text-primary font-black">HOST</span>}
+                        {p.payment_status === "approved" && (
+                          <>
+                            <span className="text-[8px] text-amber-400 font-black">UNPAID</span>
+                            {manageGame.host_user_id === user?.user_id && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (confirm(`Cancel invitation and remove player ${p.name}?`)) {
+                                    handleReject(manageGame.id, p.id!);
+                                  }
+                                }}
+                                className="p-0.5 hover:bg-white/10 rounded-full cursor-pointer text-red-400 hover:text-red-300 border-none bg-transparent flex items-center justify-center ml-1"
+                                title="Remove approval"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            )}
+                          </>
+                        )}
                       </div>
                     ))}
                 </div>

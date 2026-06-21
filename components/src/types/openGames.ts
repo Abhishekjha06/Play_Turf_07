@@ -1,5 +1,6 @@
 export interface GamePlayer {
   id?: string;
+  user_id?: string;
   name: string;
   avatar: string;
   payment_status?: string; // unpaid | requested | paid | refunded

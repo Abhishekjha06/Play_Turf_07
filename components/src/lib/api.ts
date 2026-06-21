@@ -37,6 +37,7 @@ export const api = {
   getOpenGame: (id: string) => openGamesModule.getOpenGame(id),
   joinOpenGame: (gameId: string, paymentMethod?: string) => openGamesModule.joinOpenGame(gameId, paymentMethod),
   requestJoinOpenGame: (gameId: string) => openGamesModule.requestJoinOpenGame(gameId),
+  payPrivateGameShare: (gameId: string, paymentMethod?: string) => openGamesModule.payPrivateGameShare(gameId, paymentMethod),
   approveJoinRequest: (gameId: string, playerId: string) => openGamesModule.approveJoinRequest(gameId, playerId),
   rejectJoinRequest: (gameId: string, playerId: string) => openGamesModule.rejectJoinRequest(gameId, playerId),
   leaveOpenGame: (gameId: string) => openGamesModule.leaveOpenGame(gameId),
