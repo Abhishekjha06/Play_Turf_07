@@ -86,14 +86,38 @@ const OpenGames = () => {
     }).catch(console.error);
   }, []);
 
-  // Listen for database realtime changes on open games.
-  // (Replaces the old 10s polling interval — realtime is enough.)
+  // Live feed: realtime subscription + a 15s polling safety-net so a newly
+  // hosted game reliably appears for EVERY viewer (including anonymous users
+  // and clients whose realtime connection dropped). We also refetch whenever
+  // the tab regains focus, so returning users always see fresh data.
   useRealtimeOpenGames(fetchGames);
 
   useEffect(() => {
     fetchGames();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSport, selectedDistance, selectedDate]);
+
+  // Polling safety-net (every 15s). Cheap read; compensates for any missed
+  // realtime events, especially for unauthenticated/anon viewers.
+  useEffect(() => {
+    const interval = setInterval(fetchGames, 15000);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedSport, selectedDistance, selectedDate]);
+
+  // Refetch when the tab becomes visible again (user returns to the app).
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible") fetchGames();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onVisible);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onVisible);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Match game venue to turf ID and navigate to detail page
   const handleCardClick = (g: OpenGame) => {
