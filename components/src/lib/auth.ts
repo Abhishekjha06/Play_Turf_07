@@ -67,6 +67,22 @@ export async function refreshUser() {
         };
         _loading = false; emit();
         return;
+      } else {
+        // Sign in anonymously to get a secure auth.uid() in Supabase
+        const { data: anonData, error: anonError } = await withTimeout(supabase.auth.signInAnonymously());
+        if (anonError) throw anonError;
+        if (anonData?.user) {
+          _user = {
+            user_id: anonData.user.id,
+            email: "",
+            name: "Guest Player",
+            picture: "",
+            is_admin: false,
+            role: "user",
+          };
+          _loading = false; emit();
+          return;
+        }
       }
     }
   } catch (err) {
