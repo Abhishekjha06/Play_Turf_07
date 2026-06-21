@@ -22,6 +22,9 @@ import {
   ChevronRight,
   User,
   Info,
+  CreditCard,
+  Smartphone,
+  Wallet,
 } from "lucide-react";
 import { toast } from "sonner";
 import { trackEvent } from "@/lib/analytics";
@@ -38,6 +41,7 @@ const OpenGames = () => {
   const [selectedSport, setSelectedSport] = useState("All");
   const [selectedDistance, setSelectedDistance] = useState(5); // max 5 km default
   const [selectedDate, setSelectedDate] = useState("");
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("UPI");
   const [turfs, setTurfs] = useState<Turf[]>([]);
   
   // Drawer & Modal States
@@ -102,19 +106,20 @@ const OpenGames = () => {
     }
     setJoining(true);
     try {
-      const updated = await api.joinOpenGame(gameId);
+      const { game: updated, booking } = await api.joinOpenGame(gameId, selectedPaymentMethod);
       if (updated.is_private) {
         toast.success("Request sent to host! Awaiting host approval.");
       } else {
-        toast.success("Payment successful! Slot reserved.");
+        toast.success("Payment successful! Redirecting to receipt...");
       }
       // Trigger notification
       await api.admin.inviteBetaUser(user.email, updated.is_private ? `Your request to join ${updated.sport} at ${updated.venue} has been sent.` : `You joined ${updated.sport} at ${updated.venue}. Game is on!`);
       setActiveJoinGame(null);
-      if (!updated.is_private) {
-        setSuccessGame(updated);
+      if (!updated.is_private && booking) {
+        navigate(`/booking/${booking.id}`);
+      } else {
+        await fetchGames();
       }
-      await fetchGames();
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
@@ -458,6 +463,38 @@ const OpenGames = () => {
                   <p className="text-[10px] text-muted-foreground mt-0.5 leading-relaxed font-semibold">
                     {activeJoinGame.cancellation_policy}
                   </p>
+                </div>
+              </div>
+
+              {/* Payment Methods */}
+              <div className="space-y-2">
+                <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest block">
+                  Select Payment Method
+                </span>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { value: "UPI", label: "Fake UPI", icon: Smartphone },
+                    { value: "Card", label: "Card", icon: CreditCard },
+                    { value: "Wallet", label: "Wallet", icon: Wallet },
+                  ].map((m) => {
+                    const Icon = m.icon;
+                    const isSelected = selectedPaymentMethod === m.value;
+                    return (
+                      <button
+                        key={m.value}
+                        type="button"
+                        onClick={() => setSelectedPaymentMethod(m.value)}
+                        className={`flex flex-col items-center justify-center p-3 rounded-2xl border transition-all cursor-pointer bg-transparent ${
+                          isSelected
+                            ? "border-primary text-primary bg-primary/5"
+                            : "border-white/5 text-muted2 hover:text-foreground"
+                        }`}
+                      >
+                        <Icon className="h-5 w-5 mb-1" />
+                        <span className="text-[10px] font-bold">{m.label}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 

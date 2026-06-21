@@ -34,7 +34,7 @@ import * as openGamesModule from "./api/openGames";
 export const api = {
   // Open Games
   listOpenGames: (filters?: Parameters<typeof openGamesModule.listOpenGames>[0]) => openGamesModule.listOpenGames(filters),
-  joinOpenGame: (gameId: string) => openGamesModule.joinOpenGame(gameId),
+  joinOpenGame: (gameId: string, paymentMethod?: string) => openGamesModule.joinOpenGame(gameId, paymentMethod),
   leaveOpenGame: (gameId: string) => openGamesModule.leaveOpenGame(gameId),
   cancelOpenGame: (gameId: string) => openGamesModule.cancelOpenGame(gameId),
   hostOpenGame: (payload: Parameters<typeof openGamesModule.hostOpenGame>[0]) => openGamesModule.hostOpenGame(payload),

@@ -716,10 +716,71 @@ INSERT INTO public.tournaments (id, name, sport, location, image, date, prize_po
     'Weekend League', 
     'Futsal', 
     'Mumbai', 
-    'https://images.unsplash.com/photo-1518063319789-7217e6706b04?auto=format&fit=crop&q=80&w=1200', 
-    '2026-05-30', 
-    '₹20,000', 
-    8, 
-    1200, 
     'Round-robin futsal league across two Sundays.'
 );
+
+-- ====================================================================
+-- OPEN GAMES & PARTICIPATION SCHEMA EXTENSION
+-- ====================================================================
+
+-- Table: open_games
+CREATE TABLE IF NOT EXISTS public.open_games (
+    id text PRIMARY KEY,
+    sport text NOT NULL,
+    venue text NOT NULL,
+    date text NOT NULL,
+    time text NOT NULL,
+    price_per_slot double precision NOT NULL,
+    total_amount double precision NOT NULL,
+    slots_total integer NOT NULL,
+    slots_filled integer NOT NULL DEFAULT 1,
+    status text NOT NULL DEFAULT 'open',
+    distance double precision NOT NULL,
+    host_name text NOT NULL,
+    host_avatar text,
+    host_user_id text NOT NULL,
+    cancellation_policy text,
+    is_private boolean NOT NULL DEFAULT false,
+    created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Table: open_game_players
+CREATE TABLE IF NOT EXISTS public.open_game_players (
+    id text PRIMARY KEY,
+    open_game_id text NOT NULL REFERENCES public.open_games(id) ON DELETE CASCADE,
+    user_id text NOT NULL,
+    name text NOT NULL,
+    avatar text,
+    payment_status text NOT NULL DEFAULT 'unpaid',
+    payment_method text,
+    booking_id text REFERENCES public.bookings(id) ON DELETE SET NULL,
+    joined_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    CONSTRAINT unique_user_open_game UNIQUE (open_game_id, user_id)
+);
+
+-- Indexes for performance
+CREATE INDEX IF NOT EXISTS idx_open_game_players_game ON public.open_game_players(open_game_id);
+CREATE INDEX IF NOT EXISTS idx_open_game_players_user ON public.open_game_players(user_id);
+
+-- Enable RLS
+ALTER TABLE public.open_games ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.open_game_players ENABLE ROW LEVEL SECURITY;
+
+-- Policies for open_games
+DROP POLICY IF EXISTS "Allow public read access on open_games" ON public.open_games;
+DROP POLICY IF EXISTS "Allow users to host open games" ON public.open_games;
+DROP POLICY IF EXISTS "Allow service_role full access on open_games" ON public.open_games;
+
+CREATE POLICY "Allow public read access on open_games" ON public.open_games FOR SELECT USING (true);
+CREATE POLICY "Allow users to host open games" ON public.open_games FOR INSERT WITH CHECK (auth.uid()::text = host_user_id OR host_user_id = 'mock_user');
+CREATE POLICY "Allow service_role full access on open_games" ON public.open_games FOR ALL USING (true);
+
+-- Policies for open_game_players
+DROP POLICY IF EXISTS "Allow public read access on open_game_players" ON public.open_game_players;
+DROP POLICY IF EXISTS "Allow users to join open games" ON public.open_game_players;
+DROP POLICY IF EXISTS "Allow service_role full access on open_game_players" ON public.open_game_players;
+
+CREATE POLICY "Allow public read access on open_game_players" ON public.open_game_players FOR SELECT USING (true);
+CREATE POLICY "Allow users to join open games" ON public.open_game_players FOR INSERT WITH CHECK (auth.uid()::text = user_id OR user_id = 'mock_user');
+CREATE POLICY "Allow service_role full access on open_game_players" ON public.open_game_players FOR ALL USING (true);
+

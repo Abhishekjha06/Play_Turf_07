@@ -8,7 +8,7 @@ import type { Turf } from "@/data/seed";
 import type { Review } from "@/data/seed";
 import type { OpenGame } from "@/types/openGames";
 import { trackEvent } from "@/lib/analytics";
-import { Star, MapPin, Clock, Heart, Share2, Users, Calendar, Lock, X, AlertCircle } from "lucide-react";
+import { Star, MapPin, Clock, Heart, Share2, Users, Calendar, Lock, X, AlertCircle, CreditCard, Smartphone, Wallet } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from "@/ui/carousel";
@@ -34,6 +34,7 @@ const TurfDetail = () => {
   const [openGames, setOpenGames] = useState<OpenGame[]>([]);
   const [selectedJoinGame, setSelectedJoinGame] = useState<OpenGame | null>(null);
   const [joiningGame, setJoiningGame] = useState(false);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("UPI");
 
   const fetchOpenGames = async () => {
     if (turf) {
@@ -67,14 +68,18 @@ const TurfDetail = () => {
     }
     setJoiningGame(true);
     try {
-      const updated = await api.joinOpenGame(gameId);
+      const { game: updated, booking } = await api.joinOpenGame(gameId, selectedPaymentMethod);
       if (updated.is_private) {
         toast.success("Request sent to host! Awaiting host approval.");
       } else {
-        toast.success("Successfully joined the game!");
+        toast.success("Payment successful! Redirecting to receipt...");
       }
       setSelectedJoinGame(null);
-      await fetchOpenGames();
+      if (!updated.is_private && booking) {
+        navigate(`/booking/${booking.id}`);
+      } else {
+        await fetchOpenGames();
+      }
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
@@ -498,8 +503,40 @@ const TurfDetail = () => {
                 </div>
               </div>
 
+              {/* Payment Methods */}
+              <div className="space-y-2 text-left">
+                <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest block">
+                  Select Payment Method
+                </span>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { value: "UPI", label: "Fake UPI", icon: Smartphone },
+                    { value: "Card", label: "Card", icon: CreditCard },
+                    { value: "Wallet", label: "Wallet", icon: Wallet },
+                  ].map((m) => {
+                    const Icon = m.icon;
+                    const isSelected = selectedPaymentMethod === m.value;
+                    return (
+                      <button
+                        key={m.value}
+                        type="button"
+                        onClick={() => setSelectedPaymentMethod(m.value)}
+                        className={`flex flex-col items-center justify-center p-3 rounded-2xl border transition-all cursor-pointer bg-transparent ${
+                          isSelected
+                            ? "border-primary text-primary bg-primary/5"
+                            : "border-white/5 text-muted2 hover:text-foreground"
+                        }`}
+                      >
+                        <Icon className="h-5 w-5 mb-1" />
+                        <span className="text-[10px] font-bold">{m.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               <div className="space-y-4">
-                <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground justify-center">
                   <Lock className="h-4.5 w-4.5 text-primary shrink-0" />
                   <span>secure payment via UPI / card</span>
                 </div>
