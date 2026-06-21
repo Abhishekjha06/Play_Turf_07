@@ -162,6 +162,8 @@ export async function joinOpenGame(gameId: string, paymentMethod: string = "UPI"
         amount: game.price_per_slot,
         status: isPrivate ? "PENDING" : "CONFIRMED",
         payment_id: isPrivate ? null : paymentId,
+        open_game_id: gameId,
+        is_split_booking: true,
         created_at: new Date().toISOString(),
       };
 
@@ -253,6 +255,8 @@ export async function joinOpenGame(gameId: string, paymentMethod: string = "UPI"
     amount: game.price_per_slot,
     status: game.is_private ? "PENDING" : "CONFIRMED",
     payment_id: game.is_private ? null : paymentId,
+    open_game_id: gameId,
+    is_split_booking: true,
     created_at: new Date().toISOString(),
   };
 
@@ -460,6 +464,7 @@ export async function hostOpenGame(payload: CreateGamePayload): Promise<{ game: 
     id: gameId,
     sport: payload.sport,
     venue: payload.venue,
+    turf_id: payload.turf_id,
     date: payload.date,
     time: payload.time,
     price_per_slot,
@@ -518,6 +523,8 @@ export async function hostOpenGame(payload: CreateGamePayload): Promise<{ game: 
         amount: newGame.price_per_slot,
         status: "CONFIRMED",
         payment_id: paymentId,
+        open_game_id: gameId,
+        is_split_booking: false,
         created_at: new Date().toISOString(),
       };
 
@@ -533,6 +540,7 @@ export async function hostOpenGame(payload: CreateGamePayload): Promise<{ game: 
           id: newGame.id,
           sport: newGame.sport,
           venue: newGame.venue,
+          turf_id: turfId,
           date: newGame.date,
           time: newGame.time,
           price_per_slot: newGame.price_per_slot,
@@ -621,6 +629,8 @@ export async function hostOpenGame(payload: CreateGamePayload): Promise<{ game: 
     amount: newGame.price_per_slot,
     status: "CONFIRMED",
     payment_id: paymentId,
+    open_game_id: gameId,
+    is_split_booking: false,
     created_at: new Date().toISOString(),
   };
 

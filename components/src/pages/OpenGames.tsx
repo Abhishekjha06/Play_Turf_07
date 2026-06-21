@@ -78,7 +78,12 @@ const OpenGames = () => {
   };
 
   useEffect(() => {
-    api.listTurfs().then(setTurfs).catch(console.error);
+    api.listTurfs().then((data) => {
+      setTurfs(data);
+      if (data.length > 0) {
+        setHostVenue(data[0].name);
+      }
+    }).catch(console.error);
   }, []);
 
   // Listen for database realtime changes on open games
@@ -94,6 +99,7 @@ const OpenGames = () => {
   // Match game venue to turf ID and navigate to detail page
   const handleCardClick = (g: OpenGame) => {
     const match = turfs.find(t => 
+      g.turf_id === t.id ||
       g.venue.toLowerCase().includes(t.name.toLowerCase()) || 
       t.name.toLowerCase().includes(g.venue.toLowerCase())
     );
@@ -152,10 +158,16 @@ const OpenGames = () => {
       return;
     }
     setHosting(true);
+    
+    const matchedTurf = turfs.find(t => t.name === hostVenue || hostVenue.includes(t.name) || t.name.includes(hostVenue)) || turfs[0];
+    const turfId = matchedTurf ? matchedTurf.id : "turf_1";
+    const turfName = matchedTurf ? matchedTurf.name : hostVenue;
+
     try {
       const { game: hosted, booking } = await api.hostOpenGame({
         sport: hostSport,
-        venue: hostVenue,
+        venue: turfName,
+        turf_id: turfId,
         date: hostDate,
         time: hostTime,
         slots_total: hostSlots,
@@ -693,9 +705,19 @@ const OpenGames = () => {
                       onChange={(e) => setHostVenue(e.target.value)}
                       className="w-full bg-panel-2 border border-white/5 rounded-xl px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
                     >
-                      <option value="BoxCric Cage, Indiranagar">BoxCric Cage, Indiranagar</option>
-                      <option value="Greenfield Arena, Indiranagar">Greenfield Arena, Indiranagar</option>
-                      <option value="Skyline Rooftop Turf, Indiranagar">Skyline Rooftop Turf, Indiranagar</option>
+                      {turfs.length > 0 ? (
+                        turfs.map((t) => (
+                          <option key={t.id} value={t.name}>
+                            {t.name} ({t.city})
+                          </option>
+                        ))
+                      ) : (
+                        <>
+                          <option value="BoxCric Cage, Indiranagar">BoxCric Cage, Indiranagar</option>
+                          <option value="Greenfield Arena, Indiranagar">Greenfield Arena, Indiranagar</option>
+                          <option value="Skyline Rooftop Turf, Indiranagar">Skyline Rooftop Turf, Indiranagar</option>
+                        </>
+                      )}
                     </select>
                   </div>
                 </div>

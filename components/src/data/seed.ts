@@ -90,6 +90,8 @@ export type Booking = {
   amount: number;
   status: BookingStatus;
   payment_id: string | null;
+  open_game_id?: string | null;
+  is_split_booking?: boolean;
   created_at: string;
 };
 

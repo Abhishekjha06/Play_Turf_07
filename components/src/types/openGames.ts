@@ -1,6 +1,10 @@
 export interface GamePlayer {
   name: string;
   avatar: string;
+  payment_status?: string;
+  payment_method?: string;
+  booking_id?: string | null;
+  joined_at?: string;
 }
 
 export type GameStatus = "open" | "full" | "cancelled";
@@ -9,6 +13,7 @@ export interface OpenGame {
   id: string;
   sport: string;
   venue: string;
+  turf_id?: string;
   date: string;
   time: string;
   price_per_slot: number; // calculated server-side
@@ -29,6 +34,7 @@ export interface OpenGame {
 export interface CreateGamePayload {
   sport: string;
   venue: string;
+  turf_id?: string;
   date: string;
   time: string;
   total_amount: number;

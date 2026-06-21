@@ -118,14 +118,21 @@ CREATE TABLE IF NOT EXISTS public.bookings (
     amount double precision NOT NULL,
     status text NOT NULL DEFAULT 'PENDING',
     payment_id text,
+    open_game_id text,
+    is_split_booking boolean NOT NULL DEFAULT false,
     created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
+-- Ensure columns exist if table was already created
+ALTER TABLE public.bookings ADD COLUMN IF NOT EXISTS open_game_id text;
+ALTER TABLE public.bookings ADD COLUMN IF NOT EXISTS is_split_booking boolean NOT NULL DEFAULT false;
+
 -- Prevent double bookings (race conditions) by enforcing uniqueness
--- on turf_id, date, and start_time, but ignore cancelled bookings.
+-- on turf_id, date, and start_time, but ignore cancelled bookings and split booking shares.
+DROP INDEX IF EXISTS public.unique_active_booking;
 CREATE UNIQUE INDEX IF NOT EXISTS unique_active_booking 
 ON public.bookings (turf_id, date, start_time) 
-WHERE status != 'CANCELLED';
+WHERE status != 'CANCELLED' AND is_split_booking = false;
 
 -- Function to handle expired reservations (e.g. pending for > 15 mins)
 CREATE OR REPLACE FUNCTION public.expire_pending_bookings()
@@ -728,6 +735,7 @@ CREATE TABLE IF NOT EXISTS public.open_games (
     id text PRIMARY KEY,
     sport text NOT NULL,
     venue text NOT NULL,
+    turf_id text REFERENCES public.turfs(id) ON DELETE SET NULL,
     date text NOT NULL,
     time text NOT NULL,
     price_per_slot double precision NOT NULL,
@@ -743,6 +751,9 @@ CREATE TABLE IF NOT EXISTS public.open_games (
     is_private boolean NOT NULL DEFAULT false,
     created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
+
+-- Ensure columns exist if table was already created
+ALTER TABLE public.open_games ADD COLUMN IF NOT EXISTS turf_id text REFERENCES public.turfs(id) ON DELETE SET NULL;
 
 -- Table: open_game_players
 CREATE TABLE IF NOT EXISTS public.open_game_players (
