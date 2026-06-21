@@ -211,7 +211,8 @@ export async function joinOpenGame(gameId: string, paymentMethod: string = "UPI"
 
       return { game: formattedGame as OpenGame, booking: newBooking };
     } catch (e) {
-      console.warn("Supabase joinOpenGame failed, falling back to local memory:", e);
+      console.error("Supabase joinOpenGame failed:", e);
+      throw new Error(`Failed to join game in database: ${(e as Error).message}`);
     }
   }
 
@@ -359,7 +360,8 @@ export async function leaveOpenGame(gameId: string): Promise<OpenGame> {
 
       return formattedGame as OpenGame;
     } catch (e) {
-      console.warn("Supabase leaveOpenGame failed, falling back to local memory:", e);
+      console.error("Supabase leaveOpenGame failed:", e);
+      throw new Error(`Failed to leave game in database: ${(e as Error).message}`);
     }
   }
 
@@ -431,7 +433,8 @@ export async function cancelOpenGame(gameId: string): Promise<OpenGame> {
 
       return formattedGame as OpenGame;
     } catch (e) {
-      console.warn("Supabase cancelOpenGame failed, falling back to local memory:", e);
+      console.error("Supabase cancelOpenGame failed:", e);
+      throw new Error(`Failed to cancel game in database: ${(e as Error).message}`);
     }
   }
 
@@ -492,10 +495,6 @@ export async function hostOpenGame(payload: CreateGamePayload): Promise<{ game: 
 
   if (supabase) {
     try {
-      // 1. Create confirmed booking for the Host in bookings table
-      const paymentId = `pay_${Math.random().toString(36).slice(2, 10)}`;
-      const bookingId = `bkg_${Math.random().toString(36).slice(2, 10)}`;
-
       const { data: turfsData } = await supabase.from("turfs").select("*");
       const matchedTurf = (turfsData || []).find((t: any) => 
         newGame.venue.toLowerCase().includes(t.name.toLowerCase()) || 
@@ -505,35 +504,7 @@ export async function hostOpenGame(payload: CreateGamePayload): Promise<{ game: 
       const turfName = matchedTurf ? matchedTurf.name : newGame.venue;
       const turfImage = matchedTurf ? matchedTurf.image : "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&q=80&w=1200";
 
-      const time24 = convertTimeTo24(newGame.time);
-      const [h, m] = time24.split(":").map(Number);
-      const endHour = String((h + 1) % 24).padStart(2, "0");
-      const endTime = `${endHour}:${String(m).padStart(2, "0")}`;
-
-      const newBooking: Booking = {
-        id: bookingId,
-        user_id: currentUser.user_id,
-        turf_id: turfId,
-        turf_name: turfName,
-        turf_image: turfImage,
-        date: newGame.date,
-        start_time: time24,
-        end_time: endTime,
-        hours: 1,
-        amount: newGame.price_per_slot,
-        status: "CONFIRMED",
-        payment_id: paymentId,
-        open_game_id: gameId,
-        is_split_booking: false,
-        created_at: new Date().toISOString(),
-      };
-
-      const { error: insertBookingErr } = await supabase
-        .from("bookings")
-        .insert(newBooking);
-      if (insertBookingErr) throw insertBookingErr;
-
-      // 2. Insert open game row
+      // 1. Insert open game row FIRST so its id exists before anything references it
       const { data, error } = await supabase
         .from("open_games")
         .insert({
@@ -559,6 +530,38 @@ export async function hostOpenGame(payload: CreateGamePayload): Promise<{ game: 
         .single();
 
       if (error) throw error;
+
+      // 2. Create confirmed booking for the Host in bookings table referencing open_games(id)
+      const paymentId = `pay_${Math.random().toString(36).slice(2, 10)}`;
+      const bookingId = `bkg_${Math.random().toString(36).slice(2, 10)}`;
+
+      const time24 = convertTimeTo24(newGame.time);
+      const [h, m] = time24.split(":").map(Number);
+      const endHour = String((h + 1) % 24).padStart(2, "0");
+      const endTime = `${endHour}:${String(m).padStart(2, "0")}`;
+
+      const newBooking: Booking = {
+        id: bookingId,
+        user_id: currentUser.user_id,
+        turf_id: turfId,
+        turf_name: turfName,
+        turf_image: turfImage,
+        date: newGame.date,
+        start_time: time24,
+        end_time: endTime,
+        hours: 1,
+        amount: newGame.price_per_slot,
+        status: "CONFIRMED",
+        payment_id: paymentId,
+        open_game_id: newGame.id,
+        is_split_booking: false,
+        created_at: new Date().toISOString(),
+      };
+
+      const { error: insertBookingErr } = await supabase
+        .from("bookings")
+        .insert(newBooking);
+      if (insertBookingErr) throw insertBookingErr;
 
       // 3. Add Host participation entry linked to the booking
       const playerRecord = {
@@ -595,7 +598,8 @@ export async function hostOpenGame(payload: CreateGamePayload): Promise<{ game: 
 
       return { game: formattedGame as OpenGame, booking: newBooking };
     } catch (e) {
-      console.warn("Supabase hostOpenGame insert failed, falling back to local memory:", e);
+      console.error("hostOpenGame Supabase write failed:", e);
+      throw new Error(`Failed to save game to database: ${(e as Error).message}. Nothing was persisted.`);
     }
   }
 

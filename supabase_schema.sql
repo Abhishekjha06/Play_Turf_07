@@ -185,6 +185,7 @@ DROP POLICY IF EXISTS "Allow users to add reviews" ON public.reviews;
 DROP POLICY IF EXISTS "Allow users to select their own favorites" ON public.favorites;
 DROP POLICY IF EXISTS "Allow users to manage their own favorites" ON public.favorites;
 
+DROP POLICY IF EXISTS "Allow public read access on bookings" ON public.bookings;
 DROP POLICY IF EXISTS "Allow users to select their own bookings" ON public.bookings;
 DROP POLICY IF EXISTS "Allow users to manage their own bookings" ON public.bookings;
 
@@ -225,8 +226,8 @@ CREATE POLICY "Allow users to manage their own favorites" ON public.favorites
     WITH CHECK (auth.uid()::text = user_id OR user_id = 'mock_user');
 
 -- Bookings
-CREATE POLICY "Allow users to select their own bookings" ON public.bookings
-    FOR SELECT USING (auth.uid()::text = user_id OR user_id = 'mock_user');
+CREATE POLICY "Allow public read access on bookings" ON public.bookings
+    FOR SELECT USING (true);
 CREATE POLICY "Allow users to manage their own bookings" ON public.bookings
     FOR ALL USING (auth.uid()::text = user_id OR user_id = 'mock_user')
     WITH CHECK (auth.uid()::text = user_id OR user_id = 'mock_user');
