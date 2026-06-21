@@ -72,17 +72,19 @@ const TurfDetail = () => {
     }
     setJoiningGame(true);
     try {
-      const { game: updated, booking } = await api.joinOpenGame(gameId, selectedPaymentMethod);
-      if (updated.is_private) {
-        toast.success("Request sent to host! Redirecting to details...");
+      const game = openGames.find((g) => g.id === gameId);
+      if (game?.is_private) {
+        // Private games: send a request, no payment yet.
+        await api.requestJoinOpenGame(gameId);
+        toast.success("Request sent to host! You'll be notified on approval.");
+        setSelectedJoinGame(null);
       } else {
+        const { game: updated, booking } = await api.joinOpenGame(gameId, selectedPaymentMethod);
         toast.success("Payment successful! Redirecting to receipt...");
-      }
-      setSelectedJoinGame(null);
-      if (booking) {
-        navigate(`/booking/${booking.id}`);
-      } else {
-        await fetchOpenGames();
+        setSelectedJoinGame(null);
+        if (booking) {
+          navigate(`/booking/${booking.id}`);
+        }
       }
     } catch (e) {
       toast.error((e as Error).message);
@@ -556,6 +558,8 @@ const TurfDetail = () => {
                 >
                   {joiningGame ? (
                     <div className="w-5 h-5 rounded-full border-2 border-t-transparent animate-spin border-slate-900" />
+                  ) : selectedJoinGame.is_private ? (
+                    "Send join request ↗"
                   ) : (
                     `Pay ₹${selectedJoinGame.price_per_slot} and join ↗`
                   )}

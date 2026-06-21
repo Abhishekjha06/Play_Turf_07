@@ -14,22 +14,23 @@ import {
   Calendar,
   Lock,
   X,
-  MessageSquare,
   AlertCircle,
   PlusCircle,
   CheckCircle,
   Clock,
   ChevronRight,
-  User,
-  Info,
   CreditCard,
   Smartphone,
   Wallet,
+  UserMinus,
+  LogOut,
+  UserCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 import { trackEvent } from "@/lib/analytics";
 import { pageEnter, staggerContainer, fadeSlideUp } from "@/lib/motion";
 import { useRealtimeOpenGames } from "@/lib/realtime";
+import { addNotification } from "@/lib/notifications";
 
 const OpenGames = () => {
   const { user } = useAuth();
@@ -44,24 +45,25 @@ const OpenGames = () => {
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("UPI");
   const [turfs, setTurfs] = useState<Turf[]>([]);
-  
+
   // Drawer & Modal States
   const [activeJoinGame, setActiveJoinGame] = useState<OpenGame | null>(null);
   const [joining, setJoining] = useState(false);
-  const [successGame, setSuccessGame] = useState<OpenGame | null>(null);
   const [hostModalOpen, setHostModalOpen] = useState(false);
+  const [manageGame, setManageGame] = useState<OpenGame | null>(null); // host management
 
   // Host Form State
   const [hostSport, setHostSport] = useState("Cricket");
-  const [hostVenue, setHostVenue] = useState("BoxCric Cage, Indiranagar");
+  const [hostVenue, setHostVenue] = useState("");
   const [hostDate, setHostDate] = useState(new Date().toISOString().slice(0, 10));
-  const [hostTime, setHostTime] = useState("07:00 PM");
+  const [hostTime, setHostTime] = useState("19:00");
+  const [hostDuration, setHostDuration] = useState(1);
   const [hostSlots, setHostSlots] = useState(10);
   const [hostAmount, setHostAmount] = useState(1000);
   const [hostIsPrivate, setHostIsPrivate] = useState(false);
   const [hosting, setHosting] = useState(false);
 
-  // Fetch games list
+  // Fetch games list (real distance filtering happens in the API).
   const fetchGames = async () => {
     try {
       const data = await api.listOpenGames({
@@ -80,34 +82,32 @@ const OpenGames = () => {
   useEffect(() => {
     api.listTurfs().then((data) => {
       setTurfs(data);
-      if (data.length > 0) {
-        setHostVenue(data[0].name);
-      }
+      if (data.length > 0 && !hostVenue) setHostVenue(data[0].id);
     }).catch(console.error);
   }, []);
 
-  // Listen for database realtime changes on open games
+  // Listen for database realtime changes on open games.
+  // (Replaces the old 10s polling interval — realtime is enough.)
   useRealtimeOpenGames(fetchGames);
 
   useEffect(() => {
     fetchGames();
-    // Simulate periodic polling update for real-time slots (refetch every 10 seconds)
-    const interval = setInterval(fetchGames, 10000);
-    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSport, selectedDistance, selectedDate]);
 
   // Match game venue to turf ID and navigate to detail page
   const handleCardClick = (g: OpenGame) => {
-    const match = turfs.find(t => 
-      g.turf_id === t.id ||
-      g.venue.toLowerCase().includes(t.name.toLowerCase()) || 
-      t.name.toLowerCase().includes(g.venue.toLowerCase())
-    );
-    const turfId = match ? match.id : "turf_1";
+    const turfId = g.turf_id || turfs.find((t) => t.id === g.turf_id)?.id || "turf_1";
     navigate(`/turf/${turfId}`, { state: { joinGameId: g.id } });
   };
 
-  // Handle Join game
+  // Open the Join drawer instead of navigating away. (Old bug: Join always
+  // navigated, so the payment drawer was unreachable from this page.)
+  const handleJoinClick = (g: OpenGame) => {
+    setActiveJoinGame(g);
+  };
+
+  // Handle Join (public game) — pays the share.
   const handleJoin = async (gameId: string) => {
     if (!user) {
       toast.error("Please sign in to join games.");
@@ -117,13 +117,17 @@ const OpenGames = () => {
     setJoining(true);
     try {
       const { game: updated, booking } = await api.joinOpenGame(gameId, selectedPaymentMethod);
-      if (updated.is_private) {
-        toast.success("Request sent to host! Redirecting to details...");
-      } else {
-        toast.success("Payment successful! Redirecting to receipt...");
-      }
-      // Trigger notification
-      await api.admin.inviteBetaUser(user.email, updated.is_private ? `Your request to join ${updated.sport} at ${updated.venue} has been sent.` : `You joined ${updated.sport} at ${updated.venue}. Game is on!`);
+      trackEvent("open_game_joined", { game_id: gameId, private: !!updated.is_private });
+
+      // REAL notification via the notifications module (not the beta-user hack).
+      addNotification({
+        type: "booking_confirmed",
+        title: "You're in! 🎉",
+        body: `You joined ${updated.sport} at ${updated.venue}. Game is on!`,
+        booking_id: booking?.id,
+        deepLink: booking ? `/booking/${booking.id}` : undefined,
+      });
+
       setActiveJoinGame(null);
       if (booking) {
         navigate(`/booking/${booking.id}`);
@@ -137,13 +141,85 @@ const OpenGames = () => {
     }
   };
 
-  // Handle Cancel game (host only)
+  // Handle Request (private game)
+  const handleRequestJoin = async (gameId: string) => {
+    if (!user) {
+      toast.error("Please sign in to request an invite.");
+      navigate("/login", { state: { from: location.pathname + location.search } });
+      return;
+    }
+    setJoining(true);
+    try {
+      await api.requestJoinOpenGame(gameId);
+      trackEvent("open_game_requested", { game_id: gameId });
+      addNotification({
+        type: "booking_confirmed",
+        title: "Request sent ✉️",
+        body: "Your request was sent to the host. You'll be notified when it's approved.",
+        deepLink: "/open-games",
+      });
+      setActiveJoinGame(null);
+      await fetchGames();
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setJoining(false);
+    }
+  };
+
+  // Leave a game (player self-service)
+  const handleLeave = async (gameId: string) => {
+    try {
+      await api.leaveOpenGame(gameId);
+      addNotification({
+        type: "booking_cancelled",
+        title: "Left game",
+        body: "You left the open game. Your share was refunded.",
+      });
+      setManageGame(null);
+      await fetchGames();
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  };
+
+  // Cancel a game (host only)
   const handleCancelGame = async (gameId: string) => {
     try {
       await api.cancelOpenGame(gameId);
       toast.success("Game cancelled. All players will be refunded.");
+      addNotification({
+        type: "booking_cancelled",
+        title: "Game cancelled",
+        body: "Your open game was cancelled and all players were refunded.",
+      });
+      setManageGame(null);
       await fetchGames();
-      setSuccessGame(null);
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  };
+
+  // Host: approve / reject a pending request
+  const handleApprove = async (gameId: string, playerId: string) => {
+    try {
+      await api.approveJoinRequest(gameId, playerId);
+      toast.success("Player approved.");
+      await fetchGames();
+      // refresh management modal
+      const fresh = await api.getOpenGame(gameId);
+      if (fresh) setManageGame(fresh);
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  };
+  const handleReject = async (gameId: string, playerId: string) => {
+    try {
+      await api.rejectJoinRequest(gameId, playerId);
+      toast.success("Request rejected.");
+      await fetchGames();
+      const fresh = await api.getOpenGame(gameId);
+      if (fresh) setManageGame(fresh);
     } catch (e) {
       toast.error((e as Error).message);
     }
@@ -158,27 +234,40 @@ const OpenGames = () => {
       return;
     }
     setHosting(true);
-    
-    const matchedTurf = turfs.find(t => t.name === hostVenue || hostVenue.includes(t.name) || t.name.includes(hostVenue)) || turfs[0];
-    const turfId = matchedTurf ? matchedTurf.id : "turf_1";
-    const turfName = matchedTurf ? matchedTurf.name : hostVenue;
+
+    const matchedTurf = turfs.find((t) => t.id === hostVenue) || turfs[0];
+    const turfId = matchedTurf?.id || "turf_1";
+    const turfName = matchedTurf?.name || hostVenue;
 
     try {
       const { game: hosted, booking } = await api.hostOpenGame({
         sport: hostSport,
         venue: turfName,
         turf_id: turfId,
+        turf_image: matchedTurf?.image,
         date: hostDate,
         time: hostTime,
+        duration_hours: hostDuration,
         slots_total: hostSlots,
         total_amount: hostAmount,
         cancellation_policy: "Refundable up to 2 hours before game start.",
         is_private: hostIsPrivate,
+        lat: matchedTurf?.lat,
+        lng: matchedTurf?.lng,
       });
+      trackEvent("open_game_hosted", { game_id: hosted.id, private: hostIsPrivate });
+      addNotification({
+        type: "booking_confirmed",
+        title: "Game published 🎉",
+        body: `Your ${hostSport} game at ${turfName} is live. Players can now join.`,
+        booking_id: booking?.id,
+        deepLink: booking?.id ? `/booking/${booking.id}` : "/open-games",
+      });
+
       toast.success("Game hosted successfully! Redirecting to receipt...");
       setHostModalOpen(false);
       setHostIsPrivate(false);
-      if (booking) {
+      if (booking?.id) {
         navigate(`/booking/${booking.id}`);
       } else {
         await fetchGames();
@@ -189,6 +278,10 @@ const OpenGames = () => {
       setHosting(false);
     }
   };
+
+  // Is the current user a participant of a given game?
+  const isPlayerOf = (g: OpenGame) =>
+    !!user && g.players.some((p) => p.name === user.name || g.host_user_id === user.user_id);
 
   return (
     <MobileShell>
@@ -275,7 +368,7 @@ const OpenGames = () => {
             <div>
               <h3 className="font-display font-bold text-base">No open games nearby</h3>
               <p className="text-xs text-muted2 mt-1 leading-relaxed">
-                Be the first to create one! Host a session at BoxCric Cage or Skyline Rooftop and invite other players.
+                Be the first to create one! Host a session and invite other players.
               </p>
             </div>
             <button
@@ -290,6 +383,9 @@ const OpenGames = () => {
             const progress = (g.slots_filled / g.slots_total) * 100;
             const isFull = g.status === "full";
             const isCancelled = g.status === "cancelled";
+            const youAreIn = isPlayerOf(g);
+            const youAreHost = !!user && g.host_user_id === user.user_id;
+            const pendingRequests = g.players.filter((p) => p.payment_status === "requested");
 
             return (
               <motion.article
@@ -297,15 +393,13 @@ const OpenGames = () => {
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05 }}
-                onClick={() => handleCardClick(g)}
-                className="card-panel rounded-3xl p-4 flex flex-col gap-3 relative overflow-hidden cursor-pointer hover:border-primary/40 transition-all duration-300"
+                className="card-panel rounded-3xl p-4 flex flex-col gap-3 relative overflow-hidden"
               >
-                {/* Visual Glow behind Open Games */}
                 {!isFull && !isCancelled && (
                   <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full blur-2xl pointer-events-none" />
                 )}
 
-                {/* Top Row: Sport, Status, Distance */}
+                {/* Top Row */}
                 <div className="flex items-start justify-between">
                   <div>
                     <h3 className="font-display font-black text-base text-foreground leading-tight">
@@ -317,7 +411,6 @@ const OpenGames = () => {
                   </div>
 
                   <div className="flex flex-col items-end gap-1.5">
-                    {/* Status Badge - Accessible color + text/icon */}
                     {isCancelled ? (
                       <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase bg-red-500/10 border border-red-500/30 text-red-400 px-2.5 py-0.5 rounded-full">
                         <AlertCircle className="w-2.5 h-2.5" /> Cancelled
@@ -343,23 +436,25 @@ const OpenGames = () => {
                       </div>
                     )}
 
-                    <span className="text-[10px] font-extrabold text-primary bg-primary/10 px-2 py-0.5 rounded">
-                      {g.distance} km away
-                    </span>
+                    {g.distance > 0 && (
+                      <span className="text-[10px] font-extrabold text-primary bg-primary/10 px-2 py-0.5 rounded">
+                        {g.distance} km away
+                      </span>
+                    )}
                   </div>
                 </div>
 
                 {/* Date & Time */}
                 <div className="flex items-center gap-3 text-xs text-soft">
                   <span className="inline-flex items-center gap-1 font-semibold">
-                    <Calendar className="w-3.5 h-3.5 text-muted-foreground" /> {g.date}
+                    <Calendar className="h-3.5 w-3.5 text-muted-foreground" /> {g.date}
                   </span>
                   <span className="inline-flex items-center gap-1 font-semibold">
-                    <Clock className="w-3.5 h-3.5 text-muted-foreground" /> {g.time}
+                    <Clock className="h-3.5 w-3.5 text-muted-foreground" /> {g.time}
                   </span>
                 </div>
 
-                {/* Progress Bar for slots filled */}
+                {/* Progress Bar */}
                 <div className="space-y-1">
                   <div className="flex justify-between items-center text-[10px] font-bold text-muted2 uppercase tracking-wide">
                     <span>Slots Filled</span>
@@ -378,7 +473,7 @@ const OpenGames = () => {
                 </div>
 
                 {/* Host Card Section */}
-                <div className="flex items-center justify-between border-t border-white/5 pt-3 mt-1" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center justify-between border-t border-white/5 pt-3 mt-1">
                   <div className="flex items-center gap-2">
                     <img
                       src={g.host_avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop"}
@@ -397,22 +492,52 @@ const OpenGames = () => {
                       <p className="text-base font-black text-foreground mt-0.5">₹{g.price_per_slot}</p>
                     </div>
 
-                    <button
-                      disabled={isFull || isCancelled}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleCardClick(g);
-                      }}
-                      className={`px-4 py-2.5 rounded-full text-xs font-black uppercase tracking-wider transition shadow-neon cursor-pointer border-none ${
-                        isFull || isCancelled
-                          ? "bg-zinc-800 text-zinc-500 shadow-none cursor-not-allowed"
-                          : "bg-gradient-neon text-primary-foreground"
-                      }`}
-                    >
-                      {isFull ? "Full" : isCancelled ? "Cancelled" : g.is_private ? "Request Invite" : "Join Game"}
-                    </button>
+                    {/* Primary action depends on the user's relationship to the game */}
+                    {youAreIn ? (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setManageGame(g);
+                        }}
+                        className="px-4 py-2.5 rounded-full text-xs font-black uppercase tracking-wider transition shadow-neon cursor-pointer border-none bg-panel-2 text-foreground"
+                      >
+                        {youAreHost ? "Manage" : "Joined"}
+                      </button>
+                    ) : (
+                      <button
+                        disabled={isFull || isCancelled}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleJoinClick(g);
+                        }}
+                        className={`px-4 py-2.5 rounded-full text-xs font-black uppercase tracking-wider transition shadow-neon cursor-pointer border-none ${
+                          isFull || isCancelled
+                            ? "bg-zinc-800 text-zinc-500 shadow-none cursor-not-allowed"
+                            : "bg-gradient-neon text-primary-foreground"
+                        }`}
+                      >
+                        {isFull ? "Full" : isCancelled ? "Cancelled" : g.is_private ? "Request Invite" : "Join Game"}
+                      </button>
+                    )}
                   </div>
                 </div>
+
+                {/* Pending requests banner for host */}
+                {youAreHost && pendingRequests.length > 0 && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setManageGame(g);
+                    }}
+                    className="text-left w-full bg-amber-500/10 border border-amber-500/30 rounded-2xl px-3 py-2 flex items-center gap-2"
+                  >
+                    <AlertCircle className="h-4 w-4 text-amber-400 shrink-0" />
+                    <span className="text-[11px] font-bold text-amber-300">
+                      {pendingRequests.length} join request{pendingRequests.length > 1 ? "s" : ""} awaiting your approval
+                    </span>
+                    <ChevronRight className="h-4 w-4 text-amber-400 ml-auto" />
+                  </button>
+                )}
               </motion.article>
             );
           })
@@ -425,7 +550,6 @@ const OpenGames = () => {
       <AnimatePresence>
         {activeJoinGame && (
           <>
-            {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 0.5 }}
@@ -434,20 +558,19 @@ const OpenGames = () => {
               className="fixed inset-0 z-[45] bg-black/70 backdrop-blur-sm"
               style={{ maxWidth: "480px", left: "50%", transform: "translateX(-50%)" }}
             />
-            {/* Drawer */}
             <motion.div
               initial={{ y: "100%", x: "-50%" }}
               animate={{ y: 0, x: "-50%" }}
               exit={{ y: "100%", x: "-50%" }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
               className="fixed bottom-0 left-1/2 z-50 w-full max-w-[480px] bg-panel rounded-t-[2rem] border-t border-white/10 p-5 space-y-4"
-              style={{
-                paddingBottom: "calc(1.25rem + env(safe-area-inset-bottom, 0px))"
-              }}
+              style={{ paddingBottom: "calc(1.25rem + env(safe-area-inset-bottom, 0px))" }}
             >
               <div className="flex items-center justify-between pb-2 border-b border-white/5">
                 <div>
-                  <h3 className="font-display font-black text-base">Split Payment & Join</h3>
+                  <h3 className="font-display font-black text-base">
+                    {activeJoinGame.is_private ? "Request Invite" : "Split Payment & Join"}
+                  </h3>
                   <p className="text-xs text-muted-foreground">{activeJoinGame.sport} Match • {activeJoinGame.venue}</p>
                 </div>
                 <button
@@ -458,7 +581,7 @@ const OpenGames = () => {
                 </button>
               </div>
 
-              {/* Secure calculation / Show the math */}
+              {/* Show the math */}
               <div className="bg-panel-2 border border-white/5 p-4 rounded-2xl space-y-2 text-sm font-semibold">
                 <div className="flex justify-between items-center text-xs text-muted-foreground uppercase tracking-wide">
                   <span>Court Booking Total:</span>
@@ -477,7 +600,7 @@ const OpenGames = () => {
 
               {/* Cancellation Policy */}
               <div className="flex gap-2 bg-yellow-500/5 border border-yellow-500/20 p-3 rounded-2xl">
-                <Info className="h-4.5 w-4.5 text-yellow-500 shrink-0 mt-0.5" />
+                <AlertCircle className="h-4.5 w-4.5 text-yellow-500 shrink-0 mt-0.5" />
                 <div>
                   <p className="text-[10px] font-black uppercase text-yellow-500 tracking-wider">Cancellation Policy</p>
                   <p className="text-[10px] text-muted-foreground mt-0.5 leading-relaxed font-semibold">
@@ -486,51 +609,61 @@ const OpenGames = () => {
                 </div>
               </div>
 
-              {/* Payment Methods */}
-              <div className="space-y-2">
-                <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest block">
-                  Select Payment Method
-                </span>
-                <div className="grid grid-cols-3 gap-2">
-                  {[
-                    { value: "UPI", label: "Fake UPI", icon: Smartphone },
-                    { value: "Card", label: "Card", icon: CreditCard },
-                    { value: "Wallet", label: "Wallet", icon: Wallet },
-                  ].map((m) => {
-                    const Icon = m.icon;
-                    const isSelected = selectedPaymentMethod === m.value;
-                    return (
-                      <button
-                        key={m.value}
-                        type="button"
-                        onClick={() => setSelectedPaymentMethod(m.value)}
-                        className={`flex flex-col items-center justify-center p-3 rounded-2xl border transition-all cursor-pointer bg-transparent ${
-                          isSelected
-                            ? "border-primary text-primary bg-primary/5"
-                            : "border-white/5 text-muted2 hover:text-foreground"
-                        }`}
-                      >
-                        <Icon className="h-5 w-5 mb-1" />
-                        <span className="text-[10px] font-bold">{m.label}</span>
-                      </button>
-                    );
-                  })}
+              {/* Payment Methods — only for public games */}
+              {!activeJoinGame.is_private && (
+                <div className="space-y-2">
+                  <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest block">
+                    Select Payment Method
+                  </span>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { value: "UPI", label: "Fake UPI", icon: Smartphone },
+                      { value: "Card", label: "Card", icon: CreditCard },
+                      { value: "Wallet", label: "Wallet", icon: Wallet },
+                    ].map((m) => {
+                      const Icon = m.icon;
+                      const isSelected = selectedPaymentMethod === m.value;
+                      return (
+                        <button
+                          key={m.value}
+                          type="button"
+                          onClick={() => setSelectedPaymentMethod(m.value)}
+                          className={`flex flex-col items-center justify-center p-3 rounded-2xl border transition-all cursor-pointer bg-transparent ${
+                            isSelected
+                              ? "border-primary text-primary bg-primary/5"
+                              : "border-white/5 text-muted2 hover:text-foreground"
+                          }`}
+                        >
+                          <Icon className="h-5 w-5 mb-1" />
+                          <span className="text-[10px] font-bold">{m.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
+              )}
 
-              {/* Lock microcopy & pay button */}
+              {/* Pay / Request button */}
               <div className="space-y-3">
-                <div className="flex items-center justify-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wide text-primary">
-                  <Lock className="h-3 w-3 text-primary animate-pulse" /> Secure 256-bit Encrypted Checkout
-                </div>
+                {!activeJoinGame.is_private && (
+                  <div className="flex items-center justify-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wide text-primary">
+                    <Lock className="h-3 w-3 text-primary animate-pulse" /> Secure 256-bit Encrypted Checkout
+                  </div>
+                )}
 
                 <button
                   disabled={joining}
-                  onClick={() => handleJoin(activeJoinGame.id)}
+                  onClick={() =>
+                    activeJoinGame.is_private
+                      ? handleRequestJoin(activeJoinGame.id)
+                      : handleJoin(activeJoinGame.id)
+                  }
                   className="w-full py-3.5 rounded-full bg-gradient-neon text-primary-foreground font-black text-xs uppercase tracking-widest shadow-neon pressable cursor-pointer border-none flex items-center justify-center min-h-[44px]"
                 >
                   {joining ? (
                     <div className="w-5 h-5 rounded-full border-2 border-t-transparent animate-spin border-primary-foreground" />
+                  ) : activeJoinGame.is_private ? (
+                    "Send Join Request"
                   ) : (
                     `Pay ₹${activeJoinGame.price_per_slot} & Confirm Join`
                   )}
@@ -541,82 +674,121 @@ const OpenGames = () => {
         )}
       </AnimatePresence>
 
-      {/* ── Post-Join Success View / Modal ── */}
+      {/* ── Host / Player Management Modal ── */}
       <AnimatePresence>
-        {successGame && (
+        {manageGame && (
           <>
-            {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 0.5 }}
               exit={{ opacity: 0 }}
-              onClick={() => setSuccessGame(null)}
+              onClick={() => setManageGame(null)}
               className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm"
               style={{ maxWidth: "480px", left: "50%", transform: "translateX(-50%)" }}
             />
-            {/* Modal */}
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: "-40%", x: "-50%" }}
               animate={{ opacity: 1, scale: 1, y: "-50%", x: "-50%" }}
               exit={{ opacity: 0, scale: 0.9, y: "-40%", x: "-50%" }}
-              className="fixed left-1/2 top-1/2 z-50 w-[90%] max-w-[400px] bg-panel rounded-[2rem] border border-white/10 p-5 space-y-4 shadow-2xl"
+              className="fixed left-1/2 top-1/2 z-50 w-[90%] max-w-[400px] bg-panel rounded-[2rem] border border-white/10 p-5 space-y-4 shadow-2xl max-h-[90dvh] overflow-y-auto"
             >
               <div className="flex items-center justify-between border-b border-white/5 pb-2">
-                <h3 className="font-display font-black text-base text-emerald-400 flex items-center gap-1.5">
-                  <CheckCircle className="h-5 w-5 text-emerald-400" /> You're in!
+                <h3 className="font-display font-black text-base flex items-center gap-1.5">
+                  <Users className="h-5 w-5 text-primary" /> Game Management
                 </h3>
                 <button
-                  onClick={() => setSuccessGame(null)}
+                  onClick={() => setManageGame(null)}
                   className="p-1 hover:bg-white/10 rounded-full cursor-pointer text-muted-foreground hover:text-foreground border-none bg-transparent"
                 >
                   <X className="h-5 w-5" />
                 </button>
               </div>
 
-              {/* Game Info */}
               <div className="bg-panel-2 border border-white/5 p-3 rounded-2xl flex items-center gap-3">
                 <div className="h-10 w-10 rounded-xl bg-primary/10 grid place-items-center">
                   <Users className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-sm">{successGame.sport} Match</h4>
-                  <p className="text-xs text-muted2 mt-0.5 truncate max-w-[240px]">{successGame.venue}</p>
+                  <h4 className="font-bold text-sm">{manageGame.sport} Match</h4>
+                  <p className="text-xs text-muted2 mt-0.5 truncate max-w-[240px]">{manageGame.venue}</p>
                 </div>
               </div>
 
-              {/* Player list (First name + Avatars, no phone numbers) */}
+              {/* Player list */}
               <div className="space-y-2">
                 <span className="text-[10px] font-black uppercase text-muted-foreground tracking-wider block">
-                  Players Joined ({successGame.players.length} / {successGame.slots_total})
+                  Players ({manageGame.players.filter((p) => p.payment_status !== "requested").length} / {manageGame.slots_total})
                 </span>
                 <div className="flex flex-wrap gap-2.5 max-h-24 overflow-y-auto no-scrollbar">
-                  {successGame.players.map((p, idx) => (
-                    <div key={idx} className="flex items-center gap-1.5 bg-panel-2 border border-white/5 px-2.5 py-1 rounded-full shrink-0">
-                      <img src={p.avatar} alt={p.name} className="w-4 h-4 rounded-full" />
-                      <span className="text-[11px] font-bold text-foreground">{p.name.split(" ")[0]}</span>
-                    </div>
-                  ))}
+                  {manageGame.players
+                    .filter((p) => p.payment_status !== "requested")
+                    .map((p, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-center gap-1.5 bg-panel-2 border border-white/5 px-2.5 py-1 rounded-full shrink-0"
+                      >
+                        <img src={p.avatar} alt={p.name} className="w-4 h-4 rounded-full" />
+                        <span className="text-[11px] font-bold text-foreground">{p.name.split(" ")[0]}</span>
+                        {p.is_host && <span className="text-[8px] text-primary font-black">HOST</span>}
+                      </div>
+                    ))}
                 </div>
               </div>
 
-              {/* Surface Chat Contact */}
+              {/* Pending requests — host can approve/reject */}
+              {manageGame.host_user_id === user?.user_id &&
+                manageGame.players.filter((p) => p.payment_status === "requested").length > 0 && (
+                  <div className="border-t border-white/5 pt-3 space-y-2">
+                    <span className="text-[10px] font-black uppercase text-amber-400 tracking-wider block">
+                      Pending Requests
+                    </span>
+                    {manageGame.players
+                      .filter((p) => p.payment_status === "requested")
+                      .map((p) => (
+                        <div
+                          key={p.id}
+                          className="flex items-center justify-between bg-amber-500/5 border border-amber-500/20 rounded-2xl px-3 py-2"
+                        >
+                          <div className="flex items-center gap-2">
+                            <img src={p.avatar} alt={p.name} className="w-6 h-6 rounded-full" />
+                            <span className="text-xs font-bold text-foreground">{p.name}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              onClick={() => handleApprove(manageGame.id, p.id!)}
+                              className="p-1.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-full cursor-pointer"
+                              title="Approve"
+                            >
+                              <UserCheck className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => handleReject(manageGame.id, p.id!)}
+                              className="p-1.5 bg-red-500/10 border border-red-500/30 text-red-400 rounded-full cursor-pointer"
+                              title="Reject"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                )}
+
+              {/* Chat placeholder */}
               <div className="border-t border-white/5 pt-3 space-y-2">
                 <span className="text-[10px] font-black uppercase text-muted-foreground tracking-wider block">
                   Group Chat & Host
                 </span>
                 <div className="bg-primary/5 border border-primary/20 p-3.5 rounded-2xl flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
-                    <MessageSquare className="h-5 w-5 text-primary" />
+                    <Users className="h-5 w-5 text-primary" />
                     <div>
                       <h5 className="font-bold text-xs text-foreground">In-App Chat Thread</h5>
                       <p className="text-[10px] text-muted-foreground mt-0.5 font-semibold">Discuss team colors & match rules</p>
                     </div>
                   </div>
                   <button
-                    onClick={() => {
-                      toast.success("Joined chat! Direct messaging is simulated inside mock sandbox.");
-                      setSuccessGame(null);
-                    }}
+                    onClick={() => toast.success("Joined chat! Messaging is simulated in this sandbox.")}
                     className="p-2 bg-primary rounded-full pressable cursor-pointer border-none"
                   >
                     <ChevronRight className="h-4.5 w-4.5 text-primary-foreground" />
@@ -624,18 +796,34 @@ const OpenGames = () => {
                 </div>
               </div>
 
-              {/* Host management view option */}
-              {user && (successGame.host_user_id === user.user_id || user.is_admin) && (
+              {/* Player: leave */}
+              {manageGame.host_user_id !== user?.user_id && isPlayerOf(manageGame) && (
                 <div className="border-t border-white/5 pt-3.5">
                   <button
                     onClick={() => {
-                      if (confirm("Are you sure you want to cancel hosting this game? This action will refund all players.")) {
-                        handleCancelGame(successGame.id);
+                      if (confirm("Leave this game? Your share will be refunded.")) {
+                        handleLeave(manageGame.id);
                       }
                     }}
-                    className="w-full py-2.5 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-400 font-bold text-xs uppercase tracking-wider pressable cursor-pointer"
+                    className="w-full py-2.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400 font-bold text-xs uppercase tracking-wider pressable cursor-pointer flex items-center justify-center gap-1.5"
                   >
-                    Cancel Hosted Game (Host Action)
+                    <LogOut className="h-4 w-4" /> Leave Game
+                  </button>
+                </div>
+              )}
+
+              {/* Host: cancel game */}
+              {manageGame.host_user_id === user?.user_id && (
+                <div className="border-t border-white/5 pt-3.5">
+                  <button
+                    onClick={() => {
+                      if (confirm("Cancel this game? All players will be refunded.")) {
+                        handleCancelGame(manageGame.id);
+                      }
+                    }}
+                    className="w-full py-2.5 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-400 font-bold text-xs uppercase tracking-wider pressable cursor-pointer flex items-center justify-center gap-1.5"
+                  >
+                    <UserMinus className="h-4 w-4" /> Cancel Hosted Game
                   </button>
                 </div>
               )}
@@ -648,7 +836,6 @@ const OpenGames = () => {
       <AnimatePresence>
         {hostModalOpen && (
           <>
-            {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 0.5 }}
@@ -657,7 +844,6 @@ const OpenGames = () => {
               className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm"
               style={{ maxWidth: "480px", left: "50%", transform: "translateX(-50%)" }}
             />
-            {/* Modal Container */}
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: "-40%", x: "-50%" }}
               animate={{ opacity: 1, scale: 1, y: "-50%", x: "-50%" }}
@@ -682,7 +868,7 @@ const OpenGames = () => {
                   <span className="text-[10px] font-black uppercase text-primary tracking-widest">
                     Step 1: Game Details
                   </span>
-                  
+
                   <div>
                     <label htmlFor="host-sport-select" className="text-xs font-semibold text-soft block mb-1">Select Sport</label>
                     <select
@@ -707,22 +893,18 @@ const OpenGames = () => {
                     >
                       {turfs.length > 0 ? (
                         turfs.map((t) => (
-                          <option key={t.id} value={t.name}>
+                          <option key={t.id} value={t.id}>
                             {t.name} ({t.city})
                           </option>
                         ))
                       ) : (
-                        <>
-                          <option value="BoxCric Cage, Indiranagar">BoxCric Cage, Indiranagar</option>
-                          <option value="Greenfield Arena, Indiranagar">Greenfield Arena, Indiranagar</option>
-                          <option value="Skyline Rooftop Turf, Indiranagar">Skyline Rooftop Turf, Indiranagar</option>
-                        </>
+                        <option value="">Loading venues…</option>
                       )}
                     </select>
                   </div>
                 </div>
 
-                {/* Step 2: Date and Time */}
+                {/* Step 2: Schedule */}
                 <div className="space-y-3 text-left border-t border-white/5 pt-3">
                   <span className="text-[10px] font-black uppercase text-primary tracking-widest">
                     Step 2: Schedule
@@ -740,16 +922,28 @@ const OpenGames = () => {
                       />
                     </div>
                     <div>
-                      <label htmlFor="host-time-input" className="text-xs font-semibold text-soft block mb-1">Time</label>
+                      <label htmlFor="host-time-input" className="text-xs font-semibold text-soft block mb-1">Time (24h)</label>
                       <input
                         id="host-time-input"
-                        type="text"
-                        placeholder="e.g. 07:00 PM"
+                        type="time"
                         value={hostTime}
                         onChange={(e) => setHostTime(e.target.value)}
                         className="w-full bg-panel-2 border border-white/5 rounded-xl px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
                       />
                     </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="host-duration-input" className="text-xs font-semibold text-soft block mb-1">Duration (hours)</label>
+                    <input
+                      id="host-duration-input"
+                      type="number"
+                      min="1"
+                      max="4"
+                      value={hostDuration}
+                      onChange={(e) => setHostDuration(Number(e.target.value))}
+                      className="w-full bg-panel-2 border border-white/5 rounded-xl px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
+                    />
                   </div>
                 </div>
 
