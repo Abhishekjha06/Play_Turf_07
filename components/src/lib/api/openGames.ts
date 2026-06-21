@@ -202,7 +202,7 @@ export async function hostOpenGame(payload: CreateGamePayload): Promise<{ game: 
     const turfName = turf?.name || payload.venue;
     const turfImage = turf?.image || payload.turf_image || "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&q=80&w=1200";
 
-    const { data: gameId, error } = await supabase.rpc("host_open_game", {
+    const { data: result, error } = await supabase.rpc("host_open_game", {
       p_sport: payload.sport,
       p_turf_id: turfId,
       p_turf_name: turfName,
@@ -222,30 +222,60 @@ export async function hostOpenGame(payload: CreateGamePayload): Promise<{ game: 
     });
 
     if (error) throw new Error(error.message);
-    if (!gameId) throw new Error("Failed to create game.");
+    if (!result?.ok) throw new Error(result?.reason || "Failed to create game.");
 
-    // Compute end time for the returned booking object (client-side only).
-    const [h, m] = time24.split(":").map(Number);
-    const endHour = String((h + duration) % 24).padStart(2, "0");
-    const endTime = `${endHour}:${String(m).padStart(2, "0")}`;
+    const gameId: string = result.game_id;
+    const realBookingId: string | null = result.booking_id ?? null;
 
-    const booking: Booking = {
-      id: `host_${gameId}`, // logical reference; real host booking is created by the RPC
-      user_id: currentUser.user_id,
-      turf_id: turfId,
-      turf_name: turfName,
-      turf_image: turfImage,
-      date: payload.date,
-      start_time: time24,
-      end_time: endTime,
-      hours: duration,
-      amount: pricePerSlot,
-      status: "CONFIRMED",
-      payment_id: `pay_${gameId}`,
-      open_game_id: gameId,
-      is_split_booking: false,
-      created_at: new Date().toISOString(),
-    };
+    // Fetch the REAL host booking that the RPC created (the old code
+    // fabricated a fake "host_<gameId>" id, which made /booking/:id 404).
+    let booking: Booking | null = null;
+    if (realBookingId) {
+      const { data: b } = await supabase.from("bookings").select("*").eq("id", realBookingId).maybeSingle();
+      if (b) {
+        booking = {
+          id: b.id,
+          user_id: b.user_id,
+          turf_id: b.turf_id,
+          turf_name: b.turf_name,
+          turf_image: b.turf_image,
+          date: b.date,
+          start_time: b.start_time,
+          end_time: b.end_time,
+          hours: b.hours,
+          amount: b.amount,
+          status: b.status,
+          payment_id: b.payment_id,
+          open_game_id: b.open_game_id,
+          is_split_booking: b.is_split_booking,
+          created_at: b.created_at,
+        };
+      }
+    }
+
+    // Fallback client-side booking object ONLY if the row couldn't be read back.
+    if (!booking) {
+      const [h, m] = time24.split(":").map(Number);
+      const endHour = String((h + duration) % 24).padStart(2, "0");
+      const endTime = `${endHour}:${String(m).padStart(2, "0")}`;
+      booking = {
+        id: realBookingId || `host_${gameId}`,
+        user_id: currentUser.user_id,
+        turf_id: turfId,
+        turf_name: turfName,
+        turf_image: turfImage,
+        date: payload.date,
+        start_time: time24,
+        end_time: endTime,
+        hours: duration,
+        amount: pricePerSlot,
+        status: "CONFIRMED",
+        payment_id: `pay_${gameId}`,
+        open_game_id: gameId,
+        is_split_booking: false,
+        created_at: new Date().toISOString(),
+      };
+    }
 
     const game = await getOpenGame(gameId);
     return { game: game ?? ({} as OpenGame), booking };

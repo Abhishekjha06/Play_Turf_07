@@ -255,7 +255,7 @@ const OpenGames = () => {
         lat: matchedTurf?.lat,
         lng: matchedTurf?.lng,
       });
-      trackEvent("open_game_hosted", { game_id: hosted.id, private: hostIsPrivate });
+      trackEvent("open_game_hosted", { game_id: hosted?.id ?? "unknown", private: hostIsPrivate });
       addNotification({
         type: "booking_confirmed",
         title: "Game published 🎉",
@@ -264,12 +264,15 @@ const OpenGames = () => {
         deepLink: booking?.id ? `/booking/${booking.id}` : "/open-games",
       });
 
-      toast.success("Game hosted successfully! Redirecting to receipt...");
       setHostModalOpen(false);
       setHostIsPrivate(false);
       if (booking?.id) {
+        toast.success("Game hosted successfully! Redirecting to receipt...");
         navigate(`/booking/${booking.id}`);
       } else {
+        // Booking couldn't be read back — keep the user on the page and
+        // refresh so they see their newly published game.
+        toast.success("Game published! Players can now join.");
         await fetchGames();
       }
     } catch (e) {
