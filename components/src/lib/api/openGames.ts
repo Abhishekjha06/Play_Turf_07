@@ -8,7 +8,7 @@ import { distanceKm } from "./turfs";
 import { uid } from "./core";
 
 // Bump this whenever the seed data changes so stale localStorage is refreshed.
-const OPEN_GAMES_SEED_VERSION = 2;
+const OPEN_GAMES_SEED_VERSION = 4;
 const SEED_VERSION_KEY = "playturf:open_games_seed_version";
 
 // Local storage fallback for mock mode (allows sharing data across tabs/windows)

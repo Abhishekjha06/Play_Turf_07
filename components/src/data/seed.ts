@@ -373,19 +373,19 @@ export const openGames: OpenGame[] = [
     host_avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop",
     host_user_id: "host_1",
     players: [
-      { name: "Rohan", avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop" },
-      { name: "Amit", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop" },
-      { name: "Vikram", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop" },
-      { name: "Suresh", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop" },
-      { name: "Kunal", avatar: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=100&h=100&fit=crop" },
-      { name: "Sameer", avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop" },
-      { name: "Rajat", avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop" }
+      { user_id: "host_1", name: "Rohan Sharma", avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop", is_host: true, payment_status: "paid" },
+      { user_id: "user_amit", name: "Amit", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop", is_host: false, payment_status: "paid" },
+      { user_id: "user_vikram", name: "Vikram", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop", is_host: false, payment_status: "paid" },
+      { user_id: "user_suresh", name: "Suresh", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop", is_host: false, payment_status: "paid" },
+      { user_id: "user_kunal", name: "Kunal", avatar: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=100&h=100&fit=crop", is_host: false, payment_status: "paid" },
+      { user_id: "user_sameer", name: "Sameer", avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop", is_host: false, payment_status: "paid" },
+      { user_id: "user_rajat", name: "Rajat", avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop", is_host: false, payment_status: "paid" }
     ],
     cancellation_policy: "Refundable up to 2 hours before start. Cancellations after that will not be refunded.",
     chat_messages: [
-      { sender: "Rohan", avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop", text: "Hey everyone! Make sure to reach 10 mins early.", time: "05:30 PM" },
+      { sender: "Rohan Sharma", avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop", text: "Hey everyone! Make sure to reach 10 mins early.", time: "05:30 PM" },
       { sender: "Amit", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop", text: "Will do Rohan, is bats provided at the venue?", time: "05:32 PM" },
-      { sender: "Rohan", avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop", text: "Yes, the venue provides bats and balls.", time: "05:33 PM" }
+      { sender: "Rohan Sharma", avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop", text: "Yes, the venue provides bats and balls.", time: "05:33 PM" }
     ],
     is_private: false
   },
@@ -406,9 +406,9 @@ export const openGames: OpenGame[] = [
     host_avatar: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&h=100&fit=crop",
     host_user_id: "host_2",
     players: [
-      { name: "Rahul", avatar: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&h=100&fit=crop" },
-      { name: "Aditya", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop" },
-      { name: "Gaurav", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop" }
+      { user_id: "host_2", name: "Rahul Verma", avatar: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&h=100&fit=crop", is_host: true, payment_status: "paid" },
+      { user_id: "user_aditya", name: "Aditya", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop", is_host: false, payment_status: "paid" },
+      { user_id: "user_gaurav", name: "Gaurav", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop", is_host: false, payment_status: "paid" }
     ],
     cancellation_policy: "Non-refundable once slots are booked.",
     is_private: false
@@ -430,7 +430,7 @@ export const openGames: OpenGame[] = [
     host_avatar: "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=100&h=100&fit=crop",
     host_user_id: "host_3",
     players: [
-      { name: "Vikram", avatar: "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=100&h=100&fit=crop" }
+      { user_id: "host_3", name: "Vikram Malhotra", avatar: "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=100&h=100&fit=crop", is_host: true, payment_status: "paid" }
     ],
     cancellation_policy: "Refundable up to 24 hours before start.",
     is_private: true
