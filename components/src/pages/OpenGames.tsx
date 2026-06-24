@@ -358,7 +358,7 @@ const OpenGames = () => {
       {/* Title & Floating Host Trigger */}
       <div className="px-4 mt-4 flex items-center justify-between">
         <div>
-          <h1 className="font-display font-extrabold text-2xl">Open Games</h1>
+          <h1 className="font-display font-extrabold text-2xl text-foreground">Open Games</h1>
           <p className="text-muted2 text-xs">Join open slots & split court costs</p>
         </div>
         <button
@@ -380,7 +380,7 @@ const OpenGames = () => {
                 className={`px-3 py-1.5 rounded-full text-xs font-bold transition border ${
                   selectedSport === sport
                     ? "bg-primary border-transparent text-primary-foreground"
-                    : "bg-panel-2 border-white/5 text-muted2 hover:text-foreground"
+                    : "bg-panel-2 border-border text-muted2 hover:text-foreground"
                 } cursor-pointer`}
               >
                 {sport}
@@ -415,7 +415,7 @@ const OpenGames = () => {
                 type="date"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="w-full bg-panel-2 text-xs border border-white/5 rounded-xl px-2 py-1.5 text-foreground outline-none focus:border-primary"
+                className="w-full bg-panel-2 text-xs border border-border rounded-xl px-2 py-1.5 text-foreground outline-none focus:border-primary"
               />
             </div>
           </div>
@@ -434,7 +434,7 @@ const OpenGames = () => {
           >
             <Users className="h-12 w-12 text-muted-foreground/30 animate-pulse" />
             <div>
-              <h3 className="font-display font-bold text-base">No open games nearby</h3>
+              <h3 className="font-display font-bold text-base text-foreground">No open games nearby</h3>
               <p className="text-xs text-muted2 mt-1 leading-relaxed">
                 Be the first to create one! Host a session and invite other players.
               </p>
@@ -461,6 +461,13 @@ const OpenGames = () => {
             const youAreApproved = myStatus === "approved";
             const pendingRequests = g.players.filter((p) => p.payment_status === "requested");
 
+            // Resolve cover image: try turf_id first, then fuzzy match by venue
+            // name, then fall back to a generic stadium photo.
+            const coverImage =
+              turfs.find((t) => t.id === g.turf_id)?.image ??
+              turfs.find((t) => g.venue.toLowerCase().includes(t.name.toLowerCase()) || t.name.toLowerCase().includes(g.venue.split(",")[0].toLowerCase()))?.image ??
+              "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&q=80&w=1200";
+
             return (
               <motion.article
                 key={g.id}
@@ -468,142 +475,174 @@ const OpenGames = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05 }}
                 onClick={() => setManageGame(g)}
-                className="bg-[#242424] border border-zinc-800 rounded-2xl p-4 flex flex-col gap-3 relative overflow-hidden cursor-pointer hover:border-zinc-700 hover:bg-[#2c2c2c] transition-all"
+                className="bg-card border border-border rounded-2xl overflow-hidden flex flex-col relative cursor-pointer hover:border-primary/40 transition-all"
               >
-                {/* Top Row: Title & Status */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-display font-bold text-[15px] text-white leading-tight">
-                      {Math.round(g.slots_total / 2)}-a-side {g.sport.toLowerCase()}
-                    </h3>
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                      isCancelled 
-                        ? "bg-red-950/50 text-red-400" 
-                        : isFull 
-                          ? "bg-zinc-800 text-zinc-400" 
-                          : "bg-emerald-950/80 text-emerald-400"
-                    }`}>
-                      {isCancelled ? "cancelled" : isFull ? "full" : "open"}
-                    </span>
-                  </div>
-                  
+                {/* Cover image with overlaid status badges */}
+                <div className="relative h-28 overflow-hidden shrink-0 bg-panel-3">
+                  <img
+                    src={coverImage}
+                    alt={g.venue}
+                    loading="lazy"
+                    decoding="async"
+                    onError={(e) => {
+                      const img = e.currentTarget;
+                      // Chain fallbacks: first seeded turf image, then a known-good CDN
+                      if (!img.dataset.fallback) {
+                        img.dataset.fallback = "1";
+                        img.src = turfs[0]?.image ?? "https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&q=80&w=1200";
+                      } else if (img.dataset.fallback === "1") {
+                        img.dataset.fallback = "2";
+                        img.src = "https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&q=80&w=1200";
+                      }
+                    }}
+                    className="absolute inset-0 h-full w-full object-cover"
+                  />
+                  {/* gradient scrim so badges & edge read clearly */}
+                  <div
+                    className="absolute inset-0"
+                    style={{
+                      background:
+                        "linear-gradient(180deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0) 35%, rgba(0,0,0,0.55) 100%)",
+                    }}
+                  />
+                  {/* Status badge — top left */}
+                  <span
+                    className={`absolute top-2.5 left-2.5 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider backdrop-blur-sm ${
+                      isCancelled
+                        ? "bg-red-950/70 text-red-300"
+                        : isFull
+                          ? "bg-black/60 text-zinc-200"
+                          : "bg-primary/90 text-primary-foreground"
+                    }`}
+                  >
+                    {isCancelled ? "cancelled" : isFull ? "full" : "open"}
+                  </span>
+                  {/* Private badge — top right */}
                   {g.is_private && (
-                    <span className="text-[10px] text-amber-400 font-semibold bg-amber-950/30 px-2 py-0.5 rounded">
-                      🔒 private
+                    <span className="absolute top-2.5 right-2.5 text-[10px] text-amber-300 font-bold bg-amber-950/70 px-2 py-0.5 rounded backdrop-blur-sm flex items-center gap-1">
+                      <Lock className="h-3 w-3" /> private
                     </span>
                   )}
                 </div>
 
-                {/* Details Section */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-zinc-400 text-xs">
-                    <MapPin className="h-4 w-4 text-zinc-500" />
-                    <span>{g.venue}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-zinc-400 text-xs">
-                    <Clock className="h-4 w-4 text-zinc-500" />
-                    <span>
-                      {g.date === new Date().toISOString().slice(0, 10) ? "today" : g.date}, {g.time.toLowerCase()} • {g.duration_hours ? g.duration_hours * 60 : 60} min
-                    </span>
-                  </div>
-                </div>
+                {/* Body */}
+                <div className="p-4 flex flex-col gap-3">
+                  {/* Title */}
+                  <h3 className="font-display font-bold text-[15px] text-foreground leading-tight">
+                    {Math.round(g.slots_total / 2)}-a-side {g.sport.toLowerCase()}
+                  </h3>
 
-                {/* Progress Section */}
-                <div className="flex items-center justify-between gap-4 mt-1">
-                  <div className="flex-1 h-1.5 rounded-full bg-zinc-800 overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-[#7ea7e9]"
-                      style={{ width: `${progress}%` }}
-                    />
-                  </div>
-                  <span className="text-zinc-400 text-xs shrink-0 font-semibold">
-                    {g.slots_filled}/{g.slots_total} joined
-                  </span>
-                </div>
-
-                {/* Host Info & cost */}
-                <div className="flex items-center justify-between border-t border-zinc-800 pt-3 mt-1">
-                  <div className="flex items-center gap-2">
-                    <img
-                      src={g.host_avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop"}
-                      alt="Host"
-                      className="w-7 h-7 rounded-full border border-zinc-700"
-                    />
-                    <div>
-                      <p className="text-[9px] text-zinc-500 leading-none">Hosted by</p>
-                      <p className="text-xs font-bold text-white mt-0.5">{g.host_name}</p>
+                  {/* Details */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-muted-foreground text-xs">
+                      <MapPin className="h-4 w-4 text-muted-foreground/70 shrink-0" />
+                      <span className="truncate">{g.venue}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-muted-foreground text-xs">
+                      <Clock className="h-4 w-4 text-muted-foreground/70 shrink-0" />
+                      <span>
+                        {g.date === new Date().toISOString().slice(0, 10) ? "today" : g.date}, {g.time.toLowerCase()} • {g.duration_hours ? g.duration_hours * 60 : 60} min
+                      </span>
                     </div>
                   </div>
 
-                  <div className="text-right">
-                    <p className="text-[9px] text-zinc-500 uppercase leading-none">Your share</p>
-                    <p className="text-sm font-extrabold text-white mt-0.5">₹{g.price_per_slot}</p>
+                  {/* Progress */}
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex-1 h-1.5 rounded-full bg-panel-3 overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-primary transition-all"
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
+                    <span className="text-muted-foreground text-xs shrink-0 font-semibold">
+                      {g.slots_filled}/{g.slots_total} joined
+                    </span>
                   </div>
-                </div>
 
-                {/* Action button */}
-                <div className="mt-1">
-                  {youAreIn ? (
+                  {/* Host info & cost */}
+                  <div className="flex items-center justify-between border-t border-border pt-3">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <img
+                        src={g.host_avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop"}
+                        alt="Host"
+                        className="w-7 h-7 rounded-full border border-border shrink-0"
+                      />
+                      <div className="min-w-0">
+                        <p className="text-[9px] text-muted-foreground leading-none uppercase tracking-wider">Hosted by</p>
+                        <p className="text-xs font-bold text-foreground mt-0.5 truncate">{g.host_name}</p>
+                      </div>
+                    </div>
+
+                    <div className="text-right shrink-0">
+                      <p className="text-[9px] text-muted-foreground uppercase leading-none tracking-wider">Your share</p>
+                      <p className="text-sm font-extrabold text-foreground mt-0.5">₹{g.price_per_slot}</p>
+                    </div>
+                  </div>
+
+                  {/* Action button */}
+                  <div>
+                    {youAreIn ? (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setManageGame(g);
+                        }}
+                        className="w-full py-2.5 rounded-xl bg-panel-2 hover:bg-panel-3 text-foreground font-bold text-xs uppercase tracking-wider transition border border-border cursor-pointer flex items-center justify-center gap-1"
+                      >
+                        {youAreHost ? "Manage" : "Joined"}
+                      </button>
+                    ) : youAreApproved ? (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleJoinClick(g);
+                        }}
+                        className="w-full py-2.5 rounded-xl bg-primary hover:bg-primary/95 text-primary-foreground font-bold text-xs uppercase tracking-wider transition border-none cursor-pointer flex items-center justify-center gap-1.5 animate-pulse-glow"
+                      >
+                        Pay & Join ↗
+                      </button>
+                    ) : youArePending ? (
+                      <button
+                        disabled
+                        className="w-full py-2.5 rounded-xl bg-panel-2 text-muted-foreground font-bold text-xs uppercase tracking-wider border border-border cursor-not-allowed flex items-center justify-center"
+                      >
+                        Pending Host
+                      </button>
+                    ) : (
+                      <button
+                        disabled={isFull || isCancelled}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleJoinClick(g);
+                        }}
+                        className={`w-full py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition border-none cursor-pointer flex items-center justify-center gap-1 ${
+                          isFull || isCancelled
+                            ? "bg-panel-2 text-muted-foreground cursor-not-allowed"
+                            : "bg-primary hover:bg-primary/95 text-primary-foreground"
+                        }`}
+                      >
+                        {isFull ? "Full" : isCancelled ? "Cancelled" : g.is_private ? "Request Invite ↗" : "Join game ↗"}
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Pending requests banner for host */}
+                  {youAreHost && pendingRequests.length > 0 && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         setManageGame(g);
                       }}
-                      className="w-full py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white font-bold text-xs uppercase tracking-wider transition border-none cursor-pointer flex items-center justify-center gap-1"
+                      className="text-left w-full bg-amber-500/10 border border-amber-500/30 rounded-2xl px-3 py-2 flex items-center gap-2"
                     >
-                      {youAreHost ? "Manage" : "Joined"}
-                    </button>
-                  ) : youAreApproved ? (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleJoinClick(g);
-                      }}
-                      className="w-full py-2.5 rounded-xl bg-[#7ea7e9] hover:bg-[#7ea7e9]/95 text-zinc-950 font-bold text-xs uppercase tracking-wider transition border-none cursor-pointer flex items-center justify-center gap-1.5 animate-pulse"
-                    >
-                      Pay & Join ↗
-                    </button>
-                  ) : youArePending ? (
-                    <button
-                      disabled
-                      className="w-full py-2.5 rounded-xl bg-zinc-800 text-zinc-500 font-bold text-xs uppercase tracking-wider border-none cursor-not-allowed flex items-center justify-center"
-                    >
-                      Pending Host
-                    </button>
-                  ) : (
-                    <button
-                      disabled={isFull || isCancelled}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleJoinClick(g);
-                      }}
-                      className={`w-full py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition border-none cursor-pointer flex items-center justify-center gap-1 ${
-                        isFull || isCancelled
-                          ? "bg-zinc-800 text-zinc-500 cursor-not-allowed"
-                          : "bg-[#7ea7e9] hover:bg-[#7ea7e9]/95 text-zinc-950"
-                      }`}
-                    >
-                      {isFull ? "Full" : isCancelled ? "Cancelled" : g.is_private ? "Request Invite ↗" : "Join game ↗"}
+                      <AlertCircle className="h-4 w-4 text-amber-400 shrink-0" />
+                      <span className="text-[11px] font-bold text-amber-300">
+                        {pendingRequests.length} join request{pendingRequests.length > 1 ? "s" : ""} awaiting your approval
+                      </span>
+                      <ChevronRight className="h-4 w-4 text-amber-400 ml-auto" />
                     </button>
                   )}
                 </div>
-
-                {/* Pending requests banner for host */}
-                {youAreHost && pendingRequests.length > 0 && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setManageGame(g);
-                    }}
-                    className="text-left w-full bg-amber-500/10 border border-amber-500/30 rounded-2xl px-3 py-2 flex items-center gap-2 mt-2"
-                  >
-                    <AlertCircle className="h-4 w-4 text-amber-400 shrink-0" />
-                    <span className="text-[11px] font-bold text-amber-300">
-                      {pendingRequests.length} join request{pendingRequests.length > 1 ? "s" : ""} awaiting your approval
-                    </span>
-                    <ChevronRight className="h-4 w-4 text-amber-400 ml-auto" />
-                  </button>
-                )}
               </motion.article>
             );
           })
@@ -629,40 +668,40 @@ const OpenGames = () => {
               animate={{ y: 0, x: "-50%" }}
               exit={{ y: "100%", x: "-50%" }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed bottom-0 left-1/2 z-50 w-full max-w-[480px] bg-panel rounded-t-[2rem] border-t border-white/10 p-5 space-y-4"
+              className="fixed bottom-0 left-1/2 z-50 w-full max-w-[480px] bg-card rounded-t-[2rem] border-t border-border p-5 space-y-4"
               style={{ paddingBottom: "calc(1.25rem + env(safe-area-inset-bottom, 0px))" }}
             >
-              <div className="flex items-center justify-between pb-2 border-b border-zinc-800">
+              <div className="flex items-center justify-between pb-2 border-b border-border">
                 <div>
-                  <h3 className="font-display font-bold text-white text-base">
+                  <h3 className="font-display font-bold text-foreground text-base">
                     Confirm your spot
                   </h3>
-                  <p className="text-xs text-zinc-400 mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     {Math.round(activeJoinGame.slots_total / 2)}-a-side {activeJoinGame.sport.toLowerCase()} • {activeJoinGame.date === new Date().toISOString().slice(0, 10) ? "today" : activeJoinGame.date}, {activeJoinGame.time.toLowerCase()}
                   </p>
                 </div>
                 <button
                   onClick={() => setActiveJoinGame(null)}
-                  className="p-1 hover:bg-white/10 rounded-full cursor-pointer text-muted-foreground hover:text-foreground border-none bg-transparent"
+                  className="p-1 hover:bg-muted rounded-full cursor-pointer text-muted-foreground hover:text-foreground border-none bg-transparent"
                 >
                   <X className="h-5 w-5" />
                 </button>
               </div>
 
               {/* Show the math */}
-              <div className="bg-[#1a1a1a] p-4 rounded-2xl space-y-3.5 text-sm">
-                <div className="flex justify-between items-center text-zinc-400">
+              <div className="bg-panel-2 p-4 rounded-2xl space-y-3.5 text-sm">
+                <div className="flex justify-between items-center text-muted-foreground">
                   <span>total slot price</span>
-                  <span className="font-semibold text-white">₹{activeJoinGame.total_amount}</span>
+                  <span className="font-semibold text-foreground">₹{activeJoinGame.total_amount}</span>
                 </div>
-                <div className="flex justify-between items-center text-zinc-400">
+                <div className="flex justify-between items-center text-muted-foreground">
                   <span>split across</span>
-                  <span className="font-semibold text-white">{activeJoinGame.slots_total} players</span>
+                  <span className="font-semibold text-foreground">{activeJoinGame.slots_total} players</span>
                 </div>
-                <div className="h-[1px] bg-zinc-800 my-1" />
+                <div className="h-[1px] bg-border my-1" />
                 <div className="flex justify-between items-center">
-                  <span className="text-white font-semibold">your share</span>
-                  <span className="text-xl font-bold text-white">₹{activeJoinGame.price_per_slot}</span>
+                  <span className="text-foreground font-semibold">your share</span>
+                  <span className="text-xl font-bold text-foreground">₹{activeJoinGame.price_per_slot}</span>
                 </div>
               </div>
 
@@ -681,7 +720,7 @@ const OpenGames = () => {
               {/* Payment Methods — only for public games or approved private requests */}
               {(!activeJoinGame.is_private || isApprovedForPrivate) && (
                 <div className="space-y-2">
-                  <span className="text-[10px] font-black uppercase text-zinc-500 tracking-widest block">
+                  <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest block">
                     Select Payment Method
                   </span>
                   <div className="grid grid-cols-3 gap-2">
@@ -700,7 +739,7 @@ const OpenGames = () => {
                           className={`flex flex-col items-center justify-center p-3 rounded-2xl border transition-all cursor-pointer bg-transparent ${
                             isSelected
                               ? "border-primary text-primary bg-primary/5"
-                              : "border-white/5 text-muted2 hover:text-foreground"
+                              : "border-border text-muted2 hover:text-foreground"
                           }`}
                         >
                           <Icon className="h-5 w-5 mb-1" />
@@ -715,8 +754,8 @@ const OpenGames = () => {
               {/* Pay / Request button */}
               <div>
                 {(!activeJoinGame.is_private || isApprovedForPrivate) && (
-                  <div className="flex items-center gap-2 text-zinc-400 text-xs my-3">
-                    <Lock className="h-4 w-4 text-zinc-500" />
+                  <div className="flex items-center gap-2 text-muted-foreground text-xs my-3">
+                    <Lock className="h-4 w-4 text-muted-foreground/70" />
                     <span>secure payment via UPI / card</span>
                   </div>
                 )}
@@ -732,10 +771,10 @@ const OpenGames = () => {
                       handleJoin(activeJoinGame.id);
                     }
                   }}
-                  className="w-full py-3.5 rounded-xl bg-[#7ea7e9] hover:bg-[#7ea7e9]/95 text-zinc-950 font-bold text-sm transition border-none cursor-pointer flex items-center justify-center gap-1.5 min-h-[44px]"
+                  className="w-full py-3.5 rounded-xl bg-primary hover:bg-primary/95 text-primary-foreground font-bold text-sm transition border-none cursor-pointer flex items-center justify-center gap-1.5 min-h-[44px]"
                 >
                   {joining ? (
-                    <div className="w-5 h-5 rounded-full border-2 border-t-transparent animate-spin border-zinc-950" />
+                    <div className="w-5 h-5 rounded-full border-2 border-t-transparent animate-spin border-primary-foreground" />
                   ) : isApprovedForPrivate ? (
                     `Pay ₹${activeJoinGame.price_per_slot} and join ↗`
                   ) : activeJoinGame.is_private ? (
@@ -745,7 +784,7 @@ const OpenGames = () => {
                   )}
                 </button>
 
-                <p className="text-zinc-500 text-[11px] text-center mt-3.5">
+                <p className="text-muted-foreground text-[11px] text-center mt-3.5">
                   free cancellation up to 6 hours before
                 </p>
               </div>
@@ -783,45 +822,45 @@ const OpenGames = () => {
                 initial={{ opacity: 0, scale: 0.9, y: "-40%", x: "-50%" }}
                 animate={{ opacity: 1, scale: 1, y: "-50%", x: "-50%" }}
                 exit={{ opacity: 0, scale: 0.9, y: "-40%", x: "-50%" }}
-                className="fixed left-1/2 top-1/2 z-50 w-[90%] max-w-[400px] bg-panel rounded-[2rem] border border-white/10 p-5 space-y-4 shadow-2xl max-h-[90dvh] overflow-y-auto"
+                className="fixed left-1/2 top-1/2 z-50 w-[90%] max-w-[400px] bg-card rounded-[2rem] border border-border p-5 space-y-4 shadow-2xl max-h-[90dvh] overflow-y-auto"
               >
-                <div className="flex items-center justify-between border-b border-white/5 pb-2">
-                  <h3 className="font-display font-black text-base flex items-center gap-1.5 text-white">
+                <div className="flex items-center justify-between border-b border-border pb-2">
+                  <h3 className="font-display font-black text-base flex items-center gap-1.5 text-foreground">
                     <Users className="h-5 w-5 text-primary" /> {youAreHost ? "Manage Game" : "Game Details"}
                   </h3>
                   <button
                     onClick={() => setManageGame(null)}
-                    className="p-1 hover:bg-white/10 rounded-full cursor-pointer text-muted-foreground hover:text-foreground border-none bg-transparent"
+                    className="p-1 hover:bg-muted rounded-full cursor-pointer text-muted-foreground hover:text-foreground border-none bg-transparent"
                   >
                     <X className="h-5 w-5" />
                   </button>
                 </div>
 
-                <div className="bg-panel-2 border border-white/5 p-4 rounded-2xl space-y-3">
+                <div className="bg-panel-2 border border-border p-4 rounded-2xl space-y-3">
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 rounded-xl bg-primary/10 grid place-items-center shrink-0">
                       <Users className="h-5 w-5 text-primary" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h4 className="font-bold text-sm text-white">{Math.round(manageGame.slots_total / 2)}-a-side {manageGame.sport.toLowerCase()}</h4>
-                      <p className="text-xs text-zinc-400 mt-0.5 truncate">{manageGame.venue}</p>
+                      <h4 className="font-bold text-sm text-foreground">{Math.round(manageGame.slots_total / 2)}-a-side {manageGame.sport.toLowerCase()}</h4>
+                      <p className="text-xs text-muted-foreground mt-0.5 truncate">{manageGame.venue}</p>
                     </div>
                   </div>
-                  
-                  <div className="grid grid-cols-2 gap-2 text-xs text-zinc-400 pt-2 border-t border-white/5">
+
+                  <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground pt-2 border-t border-border">
                     <div className="flex items-center gap-1.5">
-                      <Calendar className="h-3.5 w-3.5 text-zinc-505" />
+                      <Calendar className="h-3.5 w-3.5 text-muted-foreground/70" />
                       <span>{manageGame.date === new Date().toISOString().slice(0, 10) ? "Today" : manageGame.date}</span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <Clock className="h-3.5 w-3.5 text-zinc-505" />
+                      <Clock className="h-3.5 w-3.5 text-muted-foreground/70" />
                       <span>{manageGame.time} ({manageGame.duration_hours ? manageGame.duration_hours * 60 : 60} mins)</span>
                     </div>
                   </div>
 
-                  <div className="flex justify-between items-center text-xs text-zinc-400 pt-2 border-t border-white/5">
+                  <div className="flex justify-between items-center text-xs text-muted-foreground pt-2 border-t border-border">
                     <span>Slot price:</span>
-                    <span className="font-bold text-white text-sm">₹{manageGame.price_per_slot}</span>
+                    <span className="font-bold text-foreground text-sm">₹{manageGame.price_per_slot}</span>
                   </div>
                 </div>
 
@@ -837,7 +876,7 @@ const OpenGames = () => {
                         <div
                           key={idx}
                           className={`flex items-center gap-1.5 bg-panel-2 border px-2.5 py-1 rounded-full shrink-0 ${
-                            p.payment_status === "approved" ? "border-amber-500/30 bg-amber-500/5" : "border-white/5"
+                            p.payment_status === "approved" ? "border-amber-500/30 bg-amber-500/5" : "border-border"
                           }`}
                         >
                           <img src={p.avatar} alt={p.name} className="w-4 h-4 rounded-full" />
@@ -854,7 +893,7 @@ const OpenGames = () => {
                                       handleReject(manageGame.id, p.id!);
                                     }
                                   }}
-                                  className="p-0.5 hover:bg-white/10 rounded-full cursor-pointer text-red-400 hover:text-red-300 border-none bg-transparent flex items-center justify-center ml-1"
+                                  className="p-0.5 hover:bg-muted rounded-full cursor-pointer text-red-400 hover:text-red-300 border-none bg-transparent flex items-center justify-center ml-1"
                                   title="Remove approval"
                                 >
                                   <X className="h-3 w-3" />
@@ -869,7 +908,7 @@ const OpenGames = () => {
 
                 {/* Pending requests — host can approve/reject */}
                 {youAreHost && pendingRequests.length > 0 && (
-                  <div className="border-t border-white/5 pt-3 space-y-2">
+                  <div className="border-t border-border pt-3 space-y-2">
                     <span className="text-[10px] font-black uppercase text-amber-400 tracking-wider block">
                       Pending Requests
                     </span>
@@ -905,7 +944,7 @@ const OpenGames = () => {
 
                 {/* Chat placeholder ── only for joined players */}
                 {youAreIn && (
-                  <div className="border-t border-white/5 pt-3 space-y-2">
+                  <div className="border-t border-border pt-3 space-y-2">
                     <span className="text-[10px] font-black uppercase text-muted-foreground tracking-wider block">
                       Group Chat & Host
                     </span>
@@ -929,21 +968,21 @@ const OpenGames = () => {
 
                 {/* Action button inside details modal for non-joined players */}
                 {!youAreIn && (
-                  <div className="border-t border-white/5 pt-3.5">
+                  <div className="border-t border-border pt-3.5">
                     {youAreApproved ? (
                       <button
                         onClick={() => {
                           setManageGame(null);
                           handleJoinClick(manageGame);
                         }}
-                        className="w-full py-3 rounded-2xl bg-[#7ea7e9] hover:bg-[#7ea7e9]/95 text-zinc-950 font-bold text-xs uppercase tracking-wider transition border-none cursor-pointer flex items-center justify-center gap-1.5 animate-pulse"
+                        className="w-full py-3 rounded-2xl bg-primary hover:bg-primary/95 text-primary-foreground font-bold text-xs uppercase tracking-wider transition border-none cursor-pointer flex items-center justify-center gap-1.5 animate-pulse-glow"
                       >
                         Pay & Join ↗
                       </button>
                     ) : youArePending ? (
                       <button
                         disabled
-                        className="w-full py-3 rounded-2xl bg-zinc-800 text-zinc-500 font-bold text-xs uppercase tracking-wider border-none cursor-not-allowed flex items-center justify-center"
+                        className="w-full py-3 rounded-2xl bg-panel-2 text-muted-foreground font-bold text-xs uppercase tracking-wider border border-border cursor-not-allowed flex items-center justify-center"
                       >
                         Pending Host Approval
                       </button>
@@ -956,8 +995,8 @@ const OpenGames = () => {
                         }}
                         className={`w-full py-3 rounded-2xl font-bold text-xs uppercase tracking-wider transition border-none cursor-pointer flex items-center justify-center gap-1 ${
                           isFull || isCancelled
-                            ? "bg-zinc-800 text-zinc-500 cursor-not-allowed"
-                            : "bg-[#7ea7e9] hover:bg-[#7ea7e9]/95 text-zinc-950"
+                            ? "bg-panel-2 text-muted-foreground cursor-not-allowed"
+                            : "bg-primary hover:bg-primary/95 text-primary-foreground"
                         }`}
                       >
                         {isFull ? "Game Full" : isCancelled ? "Cancelled" : manageGame.is_private ? "Request Invite ↗" : "Join Game ↗"}
@@ -968,7 +1007,7 @@ const OpenGames = () => {
 
                 {/* Player: leave */}
                 {!youAreHost && youAreIn && (
-                  <div className="border-t border-white/5 pt-3.5">
+                  <div className="border-t border-border pt-3.5">
                     <button
                       onClick={() => {
                         if (confirm("Leave this game? Your share will be refunded.")) {
@@ -984,7 +1023,7 @@ const OpenGames = () => {
 
                 {/* Host: cancel game */}
                 {youAreHost && (
-                  <div className="border-t border-white/5 pt-3.5">
+                  <div className="border-t border-border pt-3.5">
                     <button
                       onClick={() => {
                         if (confirm("Cancel this game? All players will be refunded.")) {
@@ -1019,15 +1058,15 @@ const OpenGames = () => {
               initial={{ opacity: 0, scale: 0.9, y: "-40%", x: "-50%" }}
               animate={{ opacity: 1, scale: 1, y: "-50%", x: "-50%" }}
               exit={{ opacity: 0, scale: 0.9, y: "-40%", x: "-50%" }}
-              className="fixed left-1/2 top-1/2 z-50 w-[90%] max-w-[420px] bg-panel rounded-[2rem] border border-white/10 p-5 shadow-2xl overflow-y-auto max-h-[90dvh]"
+              className="fixed left-1/2 top-1/2 z-50 w-[90%] max-w-[420px] bg-card rounded-[2rem] border border-border p-5 shadow-2xl overflow-y-auto max-h-[90dvh]"
             >
-              <div className="flex items-center justify-between border-b border-white/5 pb-2">
-                <h3 className="font-display font-black text-base flex items-center gap-1.5">
+              <div className="flex items-center justify-between border-b border-border pb-2">
+                <h3 className="font-display font-black text-base flex items-center gap-1.5 text-foreground">
                   <PlusCircle className="h-5 w-5 text-primary" /> Host Open Game
                 </h3>
                 <button
                   onClick={() => setHostModalOpen(false)}
-                  className="p-1 hover:bg-white/10 rounded-full cursor-pointer text-muted-foreground hover:text-foreground border-none bg-transparent"
+                  className="p-1 hover:bg-muted rounded-full cursor-pointer text-muted-foreground hover:text-foreground border-none bg-transparent"
                 >
                   <X className="h-5 w-5" />
                 </button>
@@ -1046,7 +1085,7 @@ const OpenGames = () => {
                       id="host-sport-select"
                       value={hostSport}
                       onChange={(e) => setHostSport(e.target.value)}
-                      className="w-full bg-panel-2 border border-white/5 rounded-xl px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
+                      className="w-full bg-panel-2 border border-border rounded-xl px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
                     >
                       <option value="Cricket">Cricket</option>
                       <option value="Football">Football</option>
@@ -1060,7 +1099,7 @@ const OpenGames = () => {
                       id="host-venue-select"
                       value={hostVenue}
                       onChange={(e) => setHostVenue(e.target.value)}
-                      className="w-full bg-panel-2 border border-white/5 rounded-xl px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
+                      className="w-full bg-panel-2 border border-border rounded-xl px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
                     >
                       {turfs.length > 0 ? (
                         turfs.map((t) => (
@@ -1076,7 +1115,7 @@ const OpenGames = () => {
                 </div>
 
                 {/* Step 2: Schedule */}
-                <div className="space-y-3 text-left border-t border-white/5 pt-3">
+                <div className="space-y-3 text-left border-t border-border pt-3">
                   <span className="text-[10px] font-black uppercase text-primary tracking-widest">
                     Step 2: Schedule
                   </span>
@@ -1089,7 +1128,7 @@ const OpenGames = () => {
                         type="date"
                         value={hostDate}
                         onChange={(e) => setHostDate(e.target.value)}
-                        className="w-full bg-panel-2 border border-white/5 rounded-xl px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
+                        className="w-full bg-panel-2 border border-border rounded-xl px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
                       />
                     </div>
                     <div>
@@ -1099,7 +1138,7 @@ const OpenGames = () => {
                         type="time"
                         value={hostTime}
                         onChange={(e) => setHostTime(e.target.value)}
-                        className="w-full bg-panel-2 border border-white/5 rounded-xl px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
+                        className="w-full bg-panel-2 border border-border rounded-xl px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
                       />
                     </div>
                   </div>
@@ -1113,13 +1152,13 @@ const OpenGames = () => {
                       max="4"
                       value={hostDuration}
                       onChange={(e) => setHostDuration(Number(e.target.value))}
-                      className="w-full bg-panel-2 border border-white/5 rounded-xl px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
+                      className="w-full bg-panel-2 border border-border rounded-xl px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
                     />
                   </div>
                 </div>
 
                 {/* Step 3: Cost Splits & Max Slots */}
-                <div className="space-y-3 text-left border-t border-white/5 pt-3">
+                <div className="space-y-3 text-left border-t border-border pt-3">
                   <span className="text-[10px] font-black uppercase text-primary tracking-widest">
                     Step 3: Cost Division
                   </span>
@@ -1134,7 +1173,7 @@ const OpenGames = () => {
                         max="24"
                         value={hostSlots}
                         onChange={(e) => setHostSlots(Number(e.target.value))}
-                        className="w-full bg-panel-2 border border-white/5 rounded-xl px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
+                        className="w-full bg-panel-2 border border-border rounded-xl px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
                       />
                     </div>
                     <div>
@@ -1145,7 +1184,7 @@ const OpenGames = () => {
                         min="100"
                         value={hostAmount}
                         onChange={(e) => setHostAmount(Number(e.target.value))}
-                        className="w-full bg-panel-2 border border-white/5 rounded-xl px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
+                        className="w-full bg-panel-2 border border-border rounded-xl px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
                       />
                     </div>
                   </div>
@@ -1165,7 +1204,7 @@ const OpenGames = () => {
                       id="host-privacy-select"
                       value={hostIsPrivate ? "private" : "public"}
                       onChange={(e) => setHostIsPrivate(e.target.value === "private")}
-                      className="w-full bg-panel-2 border border-white/5 rounded-xl px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
+                      className="w-full bg-panel-2 border border-border rounded-xl px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
                     >
                       <option value="public">Public (Instant Join)</option>
                       <option value="private">Private (Requires Host Approval)</option>

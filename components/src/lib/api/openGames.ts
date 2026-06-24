@@ -7,17 +7,43 @@ import { getMockTurfs } from "./turfs";
 import { distanceKm } from "./turfs";
 import { uid } from "./core";
 
+// Bump this whenever the seed data changes so stale localStorage is refreshed.
+const OPEN_GAMES_SEED_VERSION = 2;
+const SEED_VERSION_KEY = "playturf:open_games_seed_version";
+
 // Local storage fallback for mock mode (allows sharing data across tabs/windows)
 export function getLocalGames(): OpenGame[] {
+  // If the seed version changed (or this is a first run), re-seed from the
+  // latest initialGames so schema fixes (e.g. newly added turf_id) propagate
+  // without requiring the user to clear their browser cache.
+  const storedVersion = Number(localStorage.getItem(SEED_VERSION_KEY) || 0);
+  const needsReseed = storedVersion !== OPEN_GAMES_SEED_VERSION;
+
   try {
     const stored = localStorage.getItem("playturf:open_games");
-    if (stored) return JSON.parse(stored);
+    if (stored && !needsReseed) {
+      // Fresh cache matching current seed version — use as-is.
+      return JSON.parse(stored);
+    }
+    if (stored && needsReseed) {
+      // Stale cache. Preserve any games the USER created (ids not in the seed)
+      // but overwrite the seeded ones with the latest definitions so schema
+      // updates (turf_id, etc.) take effect.
+      const cached: OpenGame[] = JSON.parse(stored);
+      const seedIds = new Set(initialGames.map((g) => g.id));
+      const userCreated = cached.filter((g) => !seedIds.has(g.id));
+      const merged = [...initialGames, ...userCreated];
+      localStorage.setItem("playturf:open_games", JSON.stringify(merged));
+      localStorage.setItem(SEED_VERSION_KEY, String(OPEN_GAMES_SEED_VERSION));
+      return merged;
+    }
   } catch (e) {
     console.warn("Failed to parse local open games:", e);
   }
   // Initialize localStorage if it doesn't exist
   try {
     localStorage.setItem("playturf:open_games", JSON.stringify(initialGames));
+    localStorage.setItem(SEED_VERSION_KEY, String(OPEN_GAMES_SEED_VERSION));
   } catch {}
   return [...initialGames];
 }

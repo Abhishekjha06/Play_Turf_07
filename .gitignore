@@ -42,3 +42,8 @@ venv/
 # Editor / OS
 .DS_Store
 Thumbs.db
+
+# AI Agent / IDE files
+brain/
+.gemini/
+
