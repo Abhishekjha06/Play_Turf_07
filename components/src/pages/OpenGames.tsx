@@ -382,31 +382,33 @@ const OpenGames = () => {
       <AppHeader />
 
       {/* Title & Floating Host Trigger */}
-      <div className="px-4 mt-4 flex items-center justify-between">
+      <div className="px-4 mt-6 flex items-center justify-between">
         <div>
-          <h1 className="font-display font-extrabold text-2xl text-foreground">Open Games</h1>
-          <p className="text-muted2 text-xs">Join open slots & split court costs</p>
+          <h1 className="font-display font-black text-3xl tracking-tight text-foreground bg-gradient-to-r from-white via-slate-200 to-primary bg-clip-text text-transparent">
+            Open Games
+          </h1>
+          <p className="text-textMuted text-xs mt-1 font-medium">Join open slots & split court costs instantly</p>
         </div>
         <button
           onClick={() => setHostModalOpen(true)}
-          className="bg-primary text-primary-foreground hover:bg-primary/95 text-xs font-black uppercase tracking-wider rounded-full px-4 py-2.5 shadow-neon flex items-center gap-1.5 pressable cursor-pointer border-none"
+          className="btn-primary shadow-neon gap-1.5 pressable cursor-pointer border-none text-xs"
         >
           <PlusCircle className="h-4.5 w-4.5" /> Host Game
         </button>
       </div>
 
       {/* ── Filter Bar ── */}
-      <section className="px-4 mt-4" aria-label="Filters">
-        <div className="card-panel rounded-3xl p-3 flex flex-col gap-2.5">
+      <section className="px-4 mt-6" aria-label="Filters">
+        <div className="glass rounded-3xl p-4 flex flex-col gap-3.5 shadow-card border-border/40">
           <div className="flex gap-2 overflow-x-auto no-scrollbar">
             {["All", "Cricket", "Football"].map((sport) => (
               <button
                 key={sport}
                 onClick={() => setSelectedSport(sport)}
-                className={`px-3 py-1.5 rounded-full text-xs font-bold transition border ${
+                className={`px-4 py-2 rounded-full text-xs font-bold transition-all border duration-200 ${
                   selectedSport === sport
-                    ? "bg-primary border-transparent text-primary-foreground"
-                    : "bg-panel-2 border-border text-muted2 hover:text-foreground"
+                    ? "bg-primary border-transparent text-primary-foreground shadow-neon"
+                    : "bg-surface/50 border-border/60 text-textMuted hover:text-foreground hover:border-primary/40"
                 } cursor-pointer`}
               >
                 {sport}
@@ -414,11 +416,11 @@ const OpenGames = () => {
             ))}
           </div>
 
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center justify-between gap-4 mt-1">
             {/* Distance Slider */}
             <div className="flex-1">
-              <label htmlFor="distance-slider" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block mb-1">
-                Distance: {selectedDistance} km radius
+              <label htmlFor="distance-slider" className="text-[10px] font-black uppercase tracking-widest text-textMuted block mb-1.5">
+                Distance: <span className="text-primary font-bold">{selectedDistance} km</span> radius
               </label>
               <input
                 id="distance-slider"
@@ -427,13 +429,13 @@ const OpenGames = () => {
                 max="10"
                 value={selectedDistance}
                 onChange={(e) => setSelectedDistance(Number(e.target.value))}
-                className="w-full accent-primary h-1 rounded-lg bg-panel-3 outline-none cursor-pointer"
+                className="w-full accent-primary h-1.5 rounded-lg bg-surface border border-border/20 outline-none cursor-pointer"
               />
             </div>
 
             {/* Date Input */}
             <div className="w-1/2">
-              <label htmlFor="date-filter" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block mb-1">
+              <label htmlFor="date-filter" className="text-[10px] font-black uppercase tracking-widest text-textMuted block mb-1.5">
                 Filter Date
               </label>
               <input
@@ -441,7 +443,7 @@ const OpenGames = () => {
                 type="date"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="w-full bg-panel-2 text-xs border border-border rounded-xl px-2 py-1.5 text-foreground outline-none focus:border-primary"
+                className="w-full app-input text-xs border border-border rounded-xl px-2 py-1.5 text-foreground outline-none focus:border-primary"
               />
             </div>
           </div>
@@ -449,25 +451,28 @@ const OpenGames = () => {
       </section>
 
       {/* ── Game Card Feed ── */}
-      <div className="px-4 mt-5 flex flex-col gap-3.5">
+      <div className="px-4 mt-6 flex flex-col gap-4">
         {loading ? (
-          <div className="text-center py-20 text-soft">Loading matches...</div>
+          <div className="text-center py-20 text-textMuted/70 text-sm font-semibold flex flex-col items-center gap-2">
+            <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin border-primary" />
+            Loading matches...
+          </div>
         ) : games.length === 0 ? (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="card-panel rounded-3xl p-8 text-center flex flex-col items-center gap-4 mt-2"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="glass rounded-3xl p-8 text-center flex flex-col items-center gap-4 mt-2 border-border/40"
           >
-            <Users className="h-12 w-12 text-muted-foreground/30 animate-pulse" />
+            <Users className="h-12 w-12 text-textMuted/30 animate-pulse" />
             <div>
               <h3 className="font-display font-bold text-base text-foreground">No open games nearby</h3>
-              <p className="text-xs text-muted2 mt-1 leading-relaxed">
+              <p className="text-xs text-textMuted mt-1 leading-relaxed max-w-[240px] mx-auto">
                 Be the first to create one! Host a session and invite other players.
               </p>
             </div>
             <button
               onClick={() => setHostModalOpen(true)}
-              className="bg-primary text-primary-foreground font-black text-xs uppercase tracking-wider rounded-full px-6 py-3.5 shadow-neon pressable cursor-pointer border-none"
+              className="btn-primary shadow-neon px-6 py-3 pressable cursor-pointer border-none text-xs"
             >
               Host one yourself
             </button>
@@ -497,14 +502,14 @@ const OpenGames = () => {
             return (
               <motion.article
                 key={g.id}
-                initial={{ opacity: 0, y: 12 }}
+                initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
+                transition={{ delay: i * 0.05, type: "spring", stiffness: 120, damping: 14 }}
                 onClick={() => setManageGame(g)}
-                className="bg-card border border-border rounded-2xl overflow-hidden flex flex-col relative cursor-pointer hover:border-primary/40 transition-all"
+                className="glass rounded-2xl overflow-hidden flex flex-col relative cursor-pointer border-border/40 hover:border-primary/50 transition-all shadow-card hover:shadow-neon/10"
               >
                 {/* Cover image with overlaid status badges */}
-                <div className="relative h-28 overflow-hidden shrink-0 bg-panel-3">
+                <div className="relative h-32 overflow-hidden shrink-0 bg-surface">
                   <img
                     src={coverImage}
                     alt={g.venue}
@@ -512,41 +517,37 @@ const OpenGames = () => {
                     decoding="async"
                     onError={(e) => {
                       const img = e.currentTarget;
-                      // Chain fallbacks: first seeded turf image, then a known-good CDN
                       if (!img.dataset.fallback) {
                         img.dataset.fallback = "1";
                         img.src = turfs[0]?.image ?? "https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&q=80&w=1200";
-                      } else if (img.dataset.fallback === "1") {
-                        img.dataset.fallback = "2";
-                        img.src = "https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&q=80&w=1200";
                       }
                     }}
-                    className="absolute inset-0 h-full w-full object-cover"
+                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 hover:scale-105"
                   />
                   {/* gradient scrim so badges & edge read clearly */}
                   <div
                     className="absolute inset-0"
                     style={{
                       background:
-                        "linear-gradient(180deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0) 35%, rgba(0,0,0,0.55) 100%)",
+                        "linear-gradient(180deg, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0) 40%, rgba(0,0,0,0.7) 100%)",
                     }}
                   />
-                  {/* Status badge — top left */}
+                  {/* Status badge ── top left */}
                   <span
-                    className={`absolute top-2.5 left-2.5 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider backdrop-blur-sm ${
+                    className={`absolute top-3 left-3 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider backdrop-blur-md ${
                       isCancelled
-                        ? "bg-red-950/70 text-red-300"
+                        ? "bg-red-950/80 text-red-300 border border-red-500/30"
                         : isFull
-                          ? "bg-black/60 text-zinc-200"
-                          : "bg-primary/90 text-primary-foreground"
+                          ? "bg-black/75 text-zinc-300 border border-zinc-500/30"
+                          : "bg-primary/95 text-primary-foreground shadow-neon"
                     }`}
                   >
                     {isCancelled ? "cancelled" : isFull ? "full" : "open"}
                   </span>
-                  {/* Private badge — top right */}
+                  {/* Private badge ── top right */}
                   {g.is_private && (
-                    <span className="absolute top-2.5 right-2.5 text-[10px] text-amber-300 font-bold bg-amber-950/70 px-2 py-0.5 rounded backdrop-blur-sm flex items-center gap-1">
-                      <Lock className="h-3 w-3" /> private
+                    <span className="absolute top-3 right-3 text-[9px] text-amber-300 font-bold bg-amber-950/80 border border-amber-500/30 px-2.5 py-0.5 rounded-full backdrop-blur-md flex items-center gap-1">
+                      <Lock className="h-2.5 w-2.5" /> private
                     </span>
                   )}
                 </div>
@@ -554,68 +555,73 @@ const OpenGames = () => {
                 {/* Body */}
                 <div className="p-4 flex flex-col gap-3">
                   {/* Title */}
-                  <h3 className="font-display font-bold text-[15px] text-foreground leading-tight">
-                    {Math.round(g.slots_total / 2)}-a-side {g.sport.toLowerCase()}
-                  </h3>
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="font-display font-bold text-base text-foreground leading-tight">
+                      {Math.round(g.slots_total / 2)}-a-side {g.sport}
+                    </h3>
+                  </div>
 
                   {/* Details */}
                   <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-muted-foreground text-xs">
-                      <MapPin className="h-4 w-4 text-muted-foreground/70 shrink-0" />
+                    <div className="flex items-center gap-2 text-textMuted text-xs">
+                      <MapPin className="h-4 w-4 text-primary shrink-0" />
                       <span className="truncate">{g.venue}</span>
                     </div>
-                    <div className="flex items-center gap-2 text-muted-foreground text-xs">
-                      <Clock className="h-4 w-4 text-muted-foreground/70 shrink-0" />
-                      <span>
-                        {g.date === new Date().toISOString().slice(0, 10) ? "today" : g.date}, {g.time.toLowerCase()} • {g.duration_hours ? g.duration_hours * 60 : 60} min
+                    <div className="flex items-center gap-2 text-textMuted text-xs">
+                      <Clock className="h-4 w-4 text-primary shrink-0" />
+                      <span className="font-semibold text-foreground/90">
+                        {g.date === getLocalDateString() ? "Today" : g.date}, {g.time.toLowerCase()} • {g.duration_hours ? g.duration_hours * 60 : 60} mins
                       </span>
                     </div>
                   </div>
 
-                  {/* Progress */}
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex-1 h-1.5 rounded-full bg-panel-3 overflow-hidden">
+                  {/* Progress Slider */}
+                  <div className="space-y-1.5 pt-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-textMuted font-medium">Court split progress</span>
+                      <span className="text-foreground font-bold">
+                        {g.slots_filled}/{g.slots_total} joined
+                      </span>
+                    </div>
+                    <div className="w-full h-1.5 rounded-full bg-surface border border-border/10 overflow-hidden">
                       <div
-                        className="h-full rounded-full bg-primary transition-all"
+                        className="h-full rounded-full bg-primary shadow-neon transition-all duration-300"
                         style={{ width: `${progress}%` }}
                       />
                     </div>
-                    <span className="text-muted-foreground text-xs shrink-0 font-semibold">
-                      {g.slots_filled}/{g.slots_total} joined
-                    </span>
                   </div>
 
                   {/* Host info & cost */}
-                  <div className="flex items-center justify-between border-t border-border pt-3">
+                  <div className="flex items-center justify-between border-t border-border/40 pt-3 mt-1">
                     <div className="flex items-center gap-2 min-w-0">
                       <img
                         src={g.host_avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop"}
                         alt="Host"
-                        className="w-7 h-7 rounded-full border border-border shrink-0"
+                        className="w-7 h-7 rounded-full border border-border/60 shrink-0"
                       />
                       <div className="min-w-0">
-                        <p className="text-[9px] text-muted-foreground leading-none uppercase tracking-wider">Hosted by</p>
+                        <p className="text-[8px] text-textMuted leading-none uppercase tracking-wider">Host</p>
                         <p className="text-xs font-bold text-foreground mt-0.5 truncate">{g.host_name}</p>
                       </div>
                     </div>
 
                     <div className="text-right shrink-0">
-                      <p className="text-[9px] text-muted-foreground uppercase leading-none tracking-wider">Your share</p>
-                      <p className="text-sm font-extrabold text-foreground mt-0.5">₹{g.price_per_slot}</p>
+                      <p className="text-[8px] text-textMuted uppercase leading-none tracking-wider">Your share</p>
+                      <p className="text-sm font-black text-primary mt-0.5">₹{g.price_per_slot}</p>
                     </div>
                   </div>
 
                   {/* Action button */}
-                  <div>
+                  <div className="pt-2">
                     {youAreIn ? (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           setManageGame(g);
                         }}
-                        className="w-full py-2.5 rounded-xl bg-panel-2 hover:bg-panel-3 text-foreground font-bold text-xs uppercase tracking-wider transition border border-border cursor-pointer flex items-center justify-center gap-1"
+                        className="btn-secondary w-full text-xs font-bold tracking-wider"
                       >
-                        {youAreHost ? "Manage" : "Joined"}
+                        {youAreHost ? "Manage Match" : "Joined ✔"}
                       </button>
                     ) : youAreApproved ? (
                       <button
@@ -623,14 +629,14 @@ const OpenGames = () => {
                           e.stopPropagation();
                           handleJoinClick(g);
                         }}
-                        className="w-full py-2.5 rounded-xl bg-primary hover:bg-primary/95 text-primary-foreground font-bold text-xs uppercase tracking-wider transition border-none cursor-pointer flex items-center justify-center gap-1.5 animate-pulse-glow"
+                        className="btn-primary w-full text-xs font-bold tracking-wider animate-pulse-glow"
                       >
                         Pay & Join ↗
                       </button>
                     ) : youArePending ? (
                       <button
                         disabled
-                        className="w-full py-2.5 rounded-xl bg-panel-2 text-muted-foreground font-bold text-xs uppercase tracking-wider border border-border cursor-not-allowed flex items-center justify-center"
+                        className="w-full py-2.5 rounded-full bg-surface text-textMuted/60 font-bold text-xs uppercase tracking-wider border border-border/40 cursor-not-allowed flex items-center justify-center"
                       >
                         Pending Host
                       </button>
@@ -641,10 +647,10 @@ const OpenGames = () => {
                           e.stopPropagation();
                           handleJoinClick(g);
                         }}
-                        className={`w-full py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition border-none cursor-pointer flex items-center justify-center gap-1 ${
+                        className={`w-full py-2.5 rounded-full font-bold text-xs uppercase tracking-wider transition duration-200 border-none cursor-pointer flex items-center justify-center gap-1 ${
                           isFull || isCancelled
-                            ? "bg-panel-2 text-muted-foreground cursor-not-allowed"
-                            : "bg-primary hover:bg-primary/95 text-primary-foreground"
+                            ? "bg-surface text-textMuted/40 cursor-not-allowed"
+                            : "bg-primary hover:bg-primary/90 text-primary-foreground shadow-neon"
                         }`}
                       >
                         {isFull ? "Full" : isCancelled ? "Cancelled" : g.is_private ? "Request Invite ↗" : "Join game ↗"}
@@ -659,13 +665,13 @@ const OpenGames = () => {
                         e.stopPropagation();
                         setManageGame(g);
                       }}
-                      className="text-left w-full bg-amber-500/10 border border-amber-500/30 rounded-2xl px-3 py-2 flex items-center gap-2"
+                      className="text-left w-full bg-warning/10 border border-warning/30 rounded-xl px-3 py-2 flex items-center gap-2 mt-1 transition hover:bg-warning/15"
                     >
-                      <AlertCircle className="h-4 w-4 text-amber-400 shrink-0" />
-                      <span className="text-[11px] font-bold text-amber-300">
+                      <AlertCircle className="h-4 w-4 text-warning shrink-0" />
+                      <span className="text-[11px] font-bold text-warning">
                         {pendingRequests.length} join request{pendingRequests.length > 1 ? "s" : ""} awaiting your approval
                       </span>
-                      <ChevronRight className="h-4 w-4 text-amber-400 ml-auto" />
+                      <ChevronRight className="h-4 w-4 text-warning ml-auto" />
                     </button>
                   )}
                 </div>
