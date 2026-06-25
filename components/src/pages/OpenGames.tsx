@@ -377,6 +377,42 @@ const OpenGames = () => {
   const isPlayerOf = (g: OpenGame) =>
     !!user && g.players.some((p) => p.name === user.name || g.host_user_id === user.user_id);
 
+  // Helper function to return custom SVG icons for each sport
+  const getSportIcon = (sport: string) => {
+    const s = sport.toLowerCase();
+    if (s.includes("basketball")) {
+      return (
+        <svg className="w-5 h-5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="10" />
+          <path d="M12 2a14.5 14.5 0 0 0 0 20" />
+          <path d="M12 2a14.5 14.5 0 0 1 0 20" />
+          <path d="M2 12a14.5 14.5 0 0 0 20 0" />
+          <path d="M2 12a14.5 14.5 0 0 1 20 0" />
+        </svg>
+      );
+    }
+    if (s.includes("cricket")) {
+      return (
+        <svg className="w-5 h-5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          {/* Bat */}
+          <path d="M17.5 2.5a2.121 2.121 0 0 1 3 3L8.5 17.5l-3 1.5 1.5-3z" />
+          {/* Handle lines */}
+          <path d="M16 4l2.5 2.5" />
+          {/* Ball */}
+          <circle cx="17" cy="17" r="2.5" fill="currentColor" className="fill-emerald-400" />
+        </svg>
+      );
+    }
+    // Default to Football/Soccer Ball SVG
+    return (
+      <svg className="w-5 h-5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10" />
+        <path d="M12 22a10 10 0 0 0 10-10H12V2a10 10 0 0 0-10 10h10v10z" />
+        <circle cx="12" cy="12" r="3" />
+      </svg>
+    );
+  };
+
   return (
     <MobileShell>
       <AppHeader />
@@ -401,7 +437,7 @@ const OpenGames = () => {
       <section className="px-4 mt-6" aria-label="Filters">
         <div className="glass rounded-3xl p-4 flex flex-col gap-3.5 shadow-card border-border/40">
           <div className="flex gap-2 overflow-x-auto no-scrollbar">
-            {["All", "Cricket", "Football"].map((sport) => (
+            {["All", "Cricket", "Football", "Basketball"].map((sport) => (
               <button
                 key={sport}
                 onClick={() => setSelectedSport(sport)}
@@ -451,7 +487,7 @@ const OpenGames = () => {
       </section>
 
       {/* ── Game Card Feed ── */}
-      <div className="px-4 mt-6 flex flex-col gap-4">
+      <div className="px-4 mt-6 flex flex-col gap-5">
         {loading ? (
           <div className="text-center py-20 text-textMuted/70 text-sm font-semibold flex flex-col items-center gap-2">
             <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin border-primary" />
@@ -492,8 +528,7 @@ const OpenGames = () => {
             const youAreApproved = myStatus === "approved";
             const pendingRequests = g.players.filter((p) => p.payment_status === "requested");
 
-            // Resolve cover image: try turf_id first, then fuzzy match by venue
-            // name, then fall back to a generic stadium photo.
+            // Resolve cover image
             const coverImage =
               turfs.find((t) => t.id === g.turf_id)?.image ??
               turfs.find((t) => g.venue.toLowerCase().includes(t.name.toLowerCase()) || t.name.toLowerCase().includes(g.venue.split(",")[0].toLowerCase()))?.image ??
@@ -502,126 +537,159 @@ const OpenGames = () => {
             return (
               <motion.article
                 key={g.id}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 25 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05, type: "spring", stiffness: 120, damping: 14 }}
                 onClick={() => setManageGame(g)}
-                className="glass rounded-2xl overflow-hidden flex flex-col relative cursor-pointer border-border/40 hover:border-primary/50 transition-all shadow-card hover:shadow-neon/10"
+                className="glass rounded-[2rem] overflow-visible flex flex-col relative cursor-pointer border border-border/40 hover:border-primary/50 transition-all shadow-card hover:shadow-neon/15"
               >
                 {/* Cover image with overlaid status badges */}
-                <div className="relative h-32 overflow-hidden shrink-0 bg-surface">
-                  <img
-                    src={coverImage}
-                    alt={g.venue}
-                    loading="lazy"
-                    decoding="async"
-                    onError={(e) => {
-                      const img = e.currentTarget;
-                      if (!img.dataset.fallback) {
-                        img.dataset.fallback = "1";
-                        img.src = turfs[0]?.image ?? "https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&q=80&w=1200";
-                      }
-                    }}
-                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 hover:scale-105"
-                  />
+                <div className="relative h-36 bg-surface rounded-t-[2rem]">
+                  <div className="absolute inset-0 overflow-hidden rounded-t-[2rem]">
+                    <img
+                      src={coverImage}
+                      alt={g.venue}
+                      loading="lazy"
+                      decoding="async"
+                      onError={(e) => {
+                        const img = e.currentTarget;
+                        if (!img.dataset.fallback) {
+                          img.dataset.fallback = "1";
+                          img.src = turfs[0]?.image ?? "https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&q=80&w=1200";
+                        }
+                      }}
+                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 hover:scale-105"
+                    />
+                  </div>
                   {/* gradient scrim so badges & edge read clearly */}
                   <div
-                    className="absolute inset-0"
+                    className="absolute inset-0 rounded-t-[2rem]"
                     style={{
                       background:
-                        "linear-gradient(180deg, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0) 40%, rgba(0,0,0,0.7) 100%)",
+                        "linear-gradient(180deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 45%, rgba(0,0,0,0.75) 100%)",
                     }}
                   />
                   {/* Status badge ── top left */}
                   <span
-                    className={`absolute top-3 left-3 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider backdrop-blur-md ${
+                    className={`absolute top-3.5 left-3.5 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider backdrop-blur-md flex items-center gap-1 ${
                       isCancelled
-                        ? "bg-red-950/80 text-red-300 border border-red-500/30"
+                        ? "bg-red-950/85 text-red-300 border border-red-500/30"
                         : isFull
                           ? "bg-black/75 text-zinc-300 border border-zinc-500/30"
-                          : "bg-primary/95 text-primary-foreground shadow-neon"
+                          : "bg-emerald-500 text-white font-bold"
                     }`}
                   >
+                    <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
                     {isCancelled ? "cancelled" : isFull ? "full" : "open"}
                   </span>
                   {/* Private badge ── top right */}
                   {g.is_private && (
-                    <span className="absolute top-3 right-3 text-[9px] text-amber-300 font-bold bg-amber-950/80 border border-amber-500/30 px-2.5 py-0.5 rounded-full backdrop-blur-md flex items-center gap-1">
-                      <Lock className="h-2.5 w-2.5" /> private
+                    <span className="absolute top-3.5 right-3.5 text-[9px] text-amber-300 font-bold bg-amber-950/80 border border-amber-500/30 px-2.5 py-1 rounded-full backdrop-blur-md flex items-center gap-1">
+                      <Lock className="h-2.5 w-2.5 text-amber-400" /> Private Match
                     </span>
                   )}
+
+                  {/* Floating Sport Icon overlapping image bottom-left */}
+                  <div className="absolute -bottom-5 left-5 z-10 w-11 h-11 rounded-full bg-slate-950 border border-border/60 flex items-center justify-center shadow-lg">
+                    {getSportIcon(g.sport)}
+                  </div>
                 </div>
 
                 {/* Body */}
-                <div className="p-4 flex flex-col gap-3">
+                <div className="p-4 pt-7 flex flex-col gap-3.5">
                   {/* Title */}
-                  <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-display font-bold text-base text-foreground leading-tight">
-                      {Math.round(g.slots_total / 2)}-a-side {g.sport}
-                    </h3>
+                  <h3 className="font-display font-black text-xl text-foreground leading-tight tracking-tight mt-1">
+                    {Math.round(g.slots_total / 2)}-a-side {g.sport}
+                  </h3>
+
+                  {/* Wickets/MapPin/Calendar details */}
+                  <div className="flex items-center flex-wrap gap-x-2 gap-y-1.5 text-textMuted text-[10px] uppercase tracking-wider font-bold">
+                    <span className="flex items-center gap-1">
+                      <MapPin className="h-3.5 w-3.5 text-primary shrink-0" />
+                      {g.venue.split(",")[0]}
+                    </span>
+                    <span className="text-border/60 font-normal">|</span>
+                    <span className="flex items-center gap-1">
+                      <Calendar className="h-3.5 w-3.5 text-primary shrink-0" />
+                      {g.date === getLocalDateString() ? "Today" : g.date}
+                    </span>
+                    <span className="text-border/60 font-normal">|</span>
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-3.5 w-3.5 text-primary shrink-0" />
+                      {g.time}
+                    </span>
+                    <span className="text-border/60 font-normal">|</span>
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-3.5 w-3.5 text-primary shrink-0" />
+                      {g.duration_hours ? g.duration_hours * 60 : 60} mins
+                    </span>
                   </div>
 
-                  {/* Details */}
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-textMuted text-xs">
-                      <MapPin className="h-4 w-4 text-primary shrink-0" />
-                      <span className="truncate">{g.venue}</span>
+                  {/* Progress section */}
+                  <div className="bg-surface/50 border border-border/20 rounded-2xl p-3.5 space-y-2">
+                    <div className="flex justify-between items-center text-xs font-semibold text-textMuted">
+                      <span>Court split progress</span>
                     </div>
-                    <div className="flex items-center gap-2 text-textMuted text-xs">
-                      <Clock className="h-4 w-4 text-primary shrink-0" />
-                      <span className="font-semibold text-foreground/90">
-                        {g.date === getLocalDateString() ? "Today" : g.date}, {g.time.toLowerCase()} • {g.duration_hours ? g.duration_hours * 60 : 60} mins
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Progress Slider */}
-                  <div className="space-y-1.5 pt-1">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-textMuted font-medium">Court split progress</span>
-                      <span className="text-foreground font-bold">
-                        {g.slots_filled}/{g.slots_total} joined
-                      </span>
-                    </div>
-                    <div className="w-full h-1.5 rounded-full bg-surface border border-border/10 overflow-hidden">
+                    <div className="w-full h-2 rounded-full bg-slate-900 border border-border/10 overflow-hidden">
                       <div
-                        className="h-full rounded-full bg-primary shadow-neon transition-all duration-300"
+                        className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-primary shadow-neon transition-all duration-300"
                         style={{ width: `${progress}%` }}
                       />
                     </div>
+                    <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-wider">
+                      <span className="text-emerald-400">{g.slots_filled}/{g.slots_total} joined</span>
+                      <span className="text-textMuted">{g.slots_total - g.slots_filled} spots left</span>
+                    </div>
                   </div>
 
-                  {/* Host info & cost */}
-                  <div className="flex items-center justify-between border-t border-border/40 pt-3 mt-1">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <img
-                        src={g.host_avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop"}
-                        alt="Host"
-                        className="w-7 h-7 rounded-full border border-border/60 shrink-0"
-                      />
+                  {/* Host Section */}
+                  <div className="flex items-center justify-between bg-surface/30 border border-border/20 rounded-2xl p-3">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-8 h-8 rounded-full bg-pink-500 text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-md">
+                        {g.host_name.charAt(0).toUpperCase()}
+                      </div>
                       <div className="min-w-0">
-                        <p className="text-[8px] text-textMuted leading-none uppercase tracking-wider">Host</p>
+                        <p className="text-[8px] text-textMuted uppercase leading-none tracking-wider font-bold">Host</p>
                         <p className="text-xs font-bold text-foreground mt-0.5 truncate">{g.host_name}</p>
+                        <p className="text-[8px] text-emerald-400 font-bold mt-0.5 flex items-center gap-0.5">✔ Verified Host</p>
                       </div>
                     </div>
-
                     <div className="text-right shrink-0">
-                      <p className="text-[8px] text-textMuted uppercase leading-none tracking-wider">Your share</p>
-                      <p className="text-sm font-black text-primary mt-0.5">₹{g.price_per_slot}</p>
+                      <p className="text-[8px] text-textMuted uppercase leading-none tracking-wider font-bold">Your share</p>
+                      <p className="text-base font-black text-emerald-400 mt-0.5">₹{g.price_per_slot}</p>
+                    </div>
+                  </div>
+
+                  {/* Features Bar */}
+                  <div className="grid grid-cols-3 gap-2 py-1 text-center text-[9px] border-t border-b border-border/20 my-1">
+                    <div className="flex flex-col items-center gap-1 py-1">
+                      <CheckCircle className="h-4 w-4 text-emerald-400" />
+                      <span className="font-bold text-foreground">Secure Payments</span>
+                      <span className="text-[7px] text-textMuted font-medium">100% Safe</span>
+                    </div>
+                    <div className="flex flex-col items-center gap-1 py-1 border-l border-r border-border/10">
+                      <Users className="h-4 w-4 text-emerald-400" />
+                      <span className="font-bold text-foreground">Fair Play</span>
+                      <span className="text-[7px] text-textMuted font-medium">Verified Squads</span>
+                    </div>
+                    <div className="flex flex-col items-center gap-1 py-1">
+                      <Calendar className="h-4 w-4 text-emerald-400" />
+                      <span className="font-bold text-foreground">Easy Cancel</span>
+                      <span className="text-[7px] text-textMuted font-medium">Flexible Refund</span>
                     </div>
                   </div>
 
                   {/* Action button */}
-                  <div className="pt-2">
+                  <div>
                     {youAreIn ? (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           setManageGame(g);
                         }}
-                        className="btn-secondary w-full text-xs font-bold tracking-wider"
+                        className="btn-secondary w-full text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1 shadow-md"
                       >
-                        {youAreHost ? "Manage Match" : "Joined ✔"}
+                        Manage Match <ChevronRight className="h-4.5 w-4.5" />
                       </button>
                     ) : youAreApproved ? (
                       <button
@@ -629,16 +697,16 @@ const OpenGames = () => {
                           e.stopPropagation();
                           handleJoinClick(g);
                         }}
-                        className="btn-primary w-full text-xs font-bold tracking-wider animate-pulse-glow"
+                        className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-lime-500 hover:brightness-105 text-slate-950 font-black text-xs uppercase tracking-wider transition duration-200 border-none cursor-pointer flex items-center justify-center gap-1.5 shadow-lg animate-pulse-glow"
                       >
-                        Pay & Join ↗
+                        Pay & Join Match <ChevronRight className="h-4.5 w-4.5" />
                       </button>
                     ) : youArePending ? (
                       <button
                         disabled
-                        className="w-full py-2.5 rounded-full bg-surface text-textMuted/60 font-bold text-xs uppercase tracking-wider border border-border/40 cursor-not-allowed flex items-center justify-center"
+                        className="w-full py-2.5 rounded-xl bg-surface text-textMuted/60 font-bold text-xs uppercase tracking-wider border border-border/40 cursor-not-allowed flex items-center justify-center"
                       >
-                        Pending Host
+                        Pending Host Approval
                       </button>
                     ) : (
                       <button
@@ -647,15 +715,42 @@ const OpenGames = () => {
                           e.stopPropagation();
                           handleJoinClick(g);
                         }}
-                        className={`w-full py-2.5 rounded-full font-bold text-xs uppercase tracking-wider transition duration-200 border-none cursor-pointer flex items-center justify-center gap-1 ${
+                        className={`w-full py-3 rounded-xl font-black text-xs uppercase tracking-wider transition duration-200 border-none cursor-pointer flex items-center justify-center gap-1.5 shadow-lg ${
                           isFull || isCancelled
                             ? "bg-surface text-textMuted/40 cursor-not-allowed"
-                            : "bg-primary hover:bg-primary/90 text-primary-foreground shadow-neon"
+                            : "bg-gradient-to-r from-emerald-500 to-lime-500 hover:brightness-105 text-slate-950"
                         }`}
                       >
-                        {isFull ? "Full" : isCancelled ? "Cancelled" : g.is_private ? "Request Invite ↗" : "Join game ↗"}
+                        {isFull ? "Game Full" : isCancelled ? "Cancelled" : g.is_private ? "Request Invite ↗" : "Join Game ↗"}
                       </button>
                     )}
+                  </div>
+
+                  {/* Sport metadata footer info bar */}
+                  <div className="grid grid-cols-3 gap-2 pt-2.5 border-t border-border/20 text-[9px] text-left">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1 rounded-lg bg-emerald-500/10 text-emerald-400 shrink-0">
+                        {getSportIcon(g.sport)}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[7px] text-textMuted uppercase leading-none">Sport</p>
+                        <p className="font-bold text-foreground mt-0.5 truncate">{g.sport}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 border-l border-r border-border/10 pl-2">
+                      <Users className="h-4 w-4 text-emerald-400 shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-[7px] text-textMuted uppercase leading-none">Format</p>
+                        <p className="font-bold text-foreground mt-0.5 truncate">{Math.round(g.slots_total / 2)}-a-side</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 pl-2">
+                      <MapPin className="h-4 w-4 text-emerald-400 shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-[7px] text-textMuted uppercase leading-none">Surface</p>
+                        <p className="font-bold text-foreground mt-0.5 truncate">Outdoor</p>
+                      </div>
+                    </div>
                   </div>
 
                   {/* Pending requests banner for host */}
