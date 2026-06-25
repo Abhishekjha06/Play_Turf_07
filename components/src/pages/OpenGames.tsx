@@ -45,6 +45,7 @@ const OpenGames = () => {
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("UPI");
   const [turfs, setTurfs] = useState<Turf[]>([]);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
 
   // Drawer & Modal States
   const [activeJoinGame, setActiveJoinGame] = useState<OpenGame | null>(null);
@@ -52,10 +53,19 @@ const OpenGames = () => {
   const [hostModalOpen, setHostModalOpen] = useState(false);
   const [manageGame, setManageGame] = useState<OpenGame | null>(null); // host management
 
+  // Helper to get local date string YYYY-MM-DD
+  const getLocalDateString = () => {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const date = String(d.getDate()).padStart(2, "0");
+    return `${year}-${month}-${date}`;
+  };
+
   // Host Form State
   const [hostSport, setHostSport] = useState("Cricket");
   const [hostVenue, setHostVenue] = useState("");
-  const [hostDate, setHostDate] = useState(new Date().toISOString().slice(0, 10));
+  const [hostDate, setHostDate] = useState(getLocalDateString());
   const [hostTime, setHostTime] = useState("19:00");
   const [hostDuration, setHostDuration] = useState(1);
   const [hostSlots, setHostSlots] = useState(10);
@@ -71,13 +81,32 @@ const OpenGames = () => {
   const activePlayerStatus = activePlayerRecord?.payment_status || null;
   const isApprovedForPrivate = activePlayerStatus === "approved";
 
+  // Request user location on mount for distance sorting/filtering
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          });
+        },
+        (error) => {
+          console.warn("Geolocation access denied or failed:", error);
+        },
+        { enableHighAccuracy: false, timeout: 5000, maximumAge: 300000 }
+      );
+    }
+  }, []);
+
   // Fetch games list (real distance filtering happens in the API).
-  const fetchGames = async () => {
+  const fetchGames = useCallback(async () => {
     try {
       const data = await api.listOpenGames({
         sport: selectedSport,
         maxDistance: selectedDistance,
         date: selectedDate || undefined,
+        userLocation: userLocation || undefined,
       });
       setGames(data);
     } catch (e) {
@@ -85,7 +114,7 @@ const OpenGames = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedSport, selectedDistance, selectedDate, userLocation]);
 
   useEffect(() => {
     api.listTurfs().then((data) => {
@@ -102,16 +131,14 @@ const OpenGames = () => {
 
   useEffect(() => {
     fetchGames();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedSport, selectedDistance, selectedDate]);
+  }, [fetchGames]);
 
   // Polling safety-net (every 15s). Cheap read; compensates for any missed
   // realtime events, especially for unauthenticated/anon viewers.
   useEffect(() => {
     const interval = setInterval(fetchGames, 15000);
     return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedSport, selectedDistance, selectedDate]);
+  }, [fetchGames]);
 
   // Refetch when the tab becomes visible again (user returns to the app).
   useEffect(() => {
@@ -124,8 +151,7 @@ const OpenGames = () => {
       document.removeEventListener("visibilitychange", onVisible);
       window.removeEventListener("focus", onVisible);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [fetchGames]);
 
   // Match game venue to turf ID and navigate to detail page
   const handleCardClick = (g: OpenGame) => {
