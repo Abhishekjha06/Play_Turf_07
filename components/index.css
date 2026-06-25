@@ -31,26 +31,42 @@
     --primary-foreground: 215 30% 10%;
     --primary-glow: 195 90% 50%;
 
-    --secondary: 215 15% 20%;
+    --secondary: 222 34% 16%; /* #1a2235 */
     --secondary-foreground: 210 20% 98%;
+    --surface: 217 28% 16%; /* #1e2735 */
 
     --muted: 215 15% 16%;
     --muted-foreground: 215 10% 60%;
 
-    --accent: 195 90% 50%;
+    --accent: 142 71% 45%; /* #22c55e */
     --accent-foreground: 215 30% 10%;
+    --text-muted: 220 9% 46%; /* #6b7280 */
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 20% 98%;
+    --danger: 0 84% 60%; /* #ef4444 */
 
     --success: 150 70% 45%;
-    --warning: 38 92% 55%;
+    --warning: 38 92% 50%; /* #f59e0b */
 
-    --border: 215 15% 22%;
-    --input: 215 15% 20%;
+    --border: 220 26% 22%; /* #2a3448 */
+    --input: 217 28% 16%; /* #1e2735 */
     --ring: 195 90% 50%;
 
     --radius: 1rem;
+    --radius-card: 0.75rem;
+    --radius-input: 0.5rem;
+    --radius-sm: 0.25rem;
+
+    /* Spacing scale */
+    --spacing-xs: 0.25rem;
+    --spacing-sm: 0.5rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
+    --spacing-2xl: 3rem;
+    --spacing-slide-padding: 1.5rem;
+    --spacing-element-gap: 1rem;
 
     /* Gradients */
     --gradient-bg: radial-gradient(1000px 500px at 50% -10%,
@@ -180,9 +196,10 @@
   }
 
   .card-panel {
-    background: var(--gradient-card);
+    background-color: hsl(var(--surface));
     border: 1px solid hsl(var(--border));
     box-shadow: var(--shadow-card);
+    border-radius: var(--radius-card);
   }
 
   .pressable {
@@ -195,6 +212,96 @@
       linear-gradient(90deg, rgba(168, 85, 247, 0.08) 1px, transparent 1px);
     background-size: 42px 42px;
     mask-image: linear-gradient(to bottom, transparent, black 18%, transparent 88%);
+  }
+
+  /* Design System Components */
+  .btn-primary {
+    @apply font-semibold;
+    padding: 0.75rem 1.5rem;
+    background-color: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    border-radius: 9999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.25s, transform 0.15s;
+  }
+  .btn-primary:hover {
+    background-color: hsl(var(--primary) / 0.9);
+  }
+
+  .btn-secondary {
+    background-color: transparent;
+    border: 1px solid #0db9f2;
+    color: #0db9f2;
+    border-radius: 9999px;
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.25s, opacity 0.2s;
+  }
+  .btn-secondary:hover {
+    background-color: rgba(13, 185, 242, 0.08);
+  }
+
+  .btn-ghost {
+    background-color: transparent;
+    border: none;
+    color: #f9fafb;
+    font-weight: 500;
+    padding: 0.75rem 1.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.25s;
+    border-radius: 9999px;
+  }
+  .btn-ghost:hover {
+    background-color: rgba(249, 250, 251, 0.08);
+  }
+
+  .app-card {
+    background-color: hsl(var(--surface));
+    border-radius: var(--radius-card);
+    border: 1px solid hsl(var(--border));
+  }
+
+  .badge-available {
+    background-color: hsl(var(--accent));
+    color: #131820;
+    border-radius: 9999px;
+    padding: 0.25rem 0.75rem;
+    font-size: 14px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .badge-booked {
+    background-color: hsl(var(--danger));
+    color: #f9fafb;
+    border-radius: 9999px;
+    padding: 0.25rem 0.75rem;
+    font-size: 14px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .app-input {
+    background-color: hsl(var(--surface));
+    border: 1px solid hsl(var(--border));
+    color: #f9fafb;
+    border-radius: var(--radius-input);
+    font-size: 14px;
+    padding: 0.5rem 0.75rem;
+    outline: none;
+    transition: border-color 0.25s;
+  }
+  .app-input:focus {
+    border-color: hsl(var(--primary));
   }
 }
 
