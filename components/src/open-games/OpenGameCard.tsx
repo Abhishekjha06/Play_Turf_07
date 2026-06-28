@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import type { OpenGame } from "@/types/openGames";
 import type { User } from "@/data/seed";
+import { useLuxuryTheme } from "@/luxury/LuxuryThemeProvider";
 
 /* ────────────────────────────────────────────────────────────── */
 
@@ -182,6 +183,8 @@ export function OpenGameCard({
   onManageClick,
 }: OpenGameCardProps) {
   const [pressed, setPressed] = useState(false);
+  const { themeId } = useLuxuryTheme();
+  const isPremium = themeId === "premium-teal";
 
   const sConfig = sportConfig(game.sport);
   const progress = (game.slots_filled / game.slots_total) * 100;
@@ -250,12 +253,12 @@ export function OpenGameCard({
               }
             }}
             className="absolute inset-0 h-full w-full object-cover"
-            style={{ opacity: 0.85 }}
+            style={{ opacity: isPremium ? 1.0 : 0.85 }}
           />
         </div>
 
-        {/* Dark overlay - no bright colors */}
-        <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.30) 0%, rgba(0,0,0,0.10) 50%, rgba(0,0,0,0.90) 100%)" }} />
+        {/* Theme-aware overlay - lighter on light theme, deep on amoled */}
+        <div className="absolute inset-0" style={{ background: isPremium ? "linear-gradient(180deg, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.2) 60%, rgba(0,0,0,0.45) 100%)" : "var(--gradient-overlay)" }} />
 
         {/* Status badge top-left - dim style */}
         <span
@@ -298,25 +301,20 @@ export function OpenGameCard({
             {remainingCount > 0 && <div className="ml-1 text-[10px] font-bold text-white/70">+{remainingCount}</div>}
           </div>
         )}
-
-        {/* Progress bar on bottom - dim */}
-        <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/50 z-20">
-          <div className="h-full transition-all duration-300" style={{ width: `${progress}%`, backgroundColor: sConfig.color, opacity: 0.7 }} />
-        </div>
       </div>
 
       {/* ═══════════════════════
           BOTTOM: DETAILS
          ═══════════════════════ */}
-      <div className="px-3 pb-3 pt-3 flex flex-col gap-2.5" style={{ backgroundColor: "#0a0a0a" }}>
+      <div className="px-3 pb-3 pt-3 flex flex-col gap-2.5 bg-card border-t border-border/40">
 
-        {/* Title row - plain white text, no gradient */}
+        {/* Title row */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 min-w-0">
             <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: sConfig.bg, border: `1px solid ${sConfig.border}` }}>
               <span style={{ color: sConfig.color, opacity: 0.8 }}>{getSportIcon(game.sport, "w-4 h-4")}</span>
             </div>
-            <h3 className="font-display font-bold text-[15px] text-white/90 leading-tight truncate">
+            <h3 className="font-display font-bold text-[15px] text-foreground leading-tight truncate">
               {Math.round(game.slots_total / 2)}-a-side {game.sport}
             </h3>
           </div>
@@ -325,21 +323,21 @@ export function OpenGameCard({
           </div>
         </div>
 
-        {/* Tags - dim muted */}
+        {/* Tags */}
         <div className="flex items-center gap-1.5 flex-wrap">
           <span className="px-2 py-0.5 rounded-full text-[9px] font-medium flex items-center gap-1" style={{ backgroundColor: sConfig.bg, color: sConfig.color, border: `1px solid ${sConfig.border}` }}>
             <Star className="h-2.5 w-2.5" /> {skillLabels[skillLevel]}
           </span>
-          <span className="px-2 py-0.5 rounded-full text-[9px] font-medium text-white/30 bg-white/3 border border-white/6">
+          <span className="px-2 py-0.5 rounded-full text-[9px] font-medium text-foreground-soft bg-foreground/5 border border-border/40">
             {turfSurface}
           </span>
-          <span className="px-2 py-0.5 rounded-full text-[9px] font-medium text-white/30 bg-white/3 border border-white/6">
+          <span className="px-2 py-0.5 rounded-full text-[9px] font-medium text-foreground-soft bg-foreground/5 border border-border/40">
             {Math.round(game.slots_total / 2)}-a-side
           </span>
         </div>
 
-        {/* Venue + metadata - dim icons */}
-        <div className="flex items-center flex-wrap gap-x-3 gap-y-1 text-white/30 text-[11px] font-medium">
+        {/* Venue + metadata */}
+        <div className="flex items-center flex-wrap gap-x-3 gap-y-1 text-foreground-soft/75 text-[11px] font-medium">
           <span className="flex items-center gap-1">
             <MapPin className="h-3 w-3 shrink-0" strokeWidth={1.5} />
             {game.venue.split(",")[0]}
@@ -357,73 +355,70 @@ export function OpenGameCard({
             {game.duration_hours ? game.duration_hours * 60 : 60}m
           </span>
           {!isCancelled && !isFull && (
-            <span className="flex items-center gap-1 font-medium text-white/40">
+            <span className="flex items-center gap-1 font-medium text-foreground-soft/80">
               <Clock className="h-3 w-3 shrink-0" strokeWidth={1.5} />
               Starts in {timeUntil}
             </span>
           )}
         </div>
 
-        {/* Progress section - dim */}
-        <div className="rounded-xl p-3 space-y-2" style={{ backgroundColor: "#111111" }}>
+        {/* Progress section */}
+        <div className="rounded-xl p-3 space-y-2 bg-panel border border-border/40">
           <div className="flex items-center justify-between text-xs font-medium">
-            <span className="text-white/40">Court split progress</span>
-            <span className="font-bold text-white/60">{game.slots_filled}/{game.slots_total}</span>
+            <span className="text-foreground-soft">Court split progress</span>
+            <span className="font-bold text-foreground">{game.slots_filled}/{game.slots_total}</span>
           </div>
-          <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "#1a1a1a" }}>
-            <div className="h-full rounded-full transition-all duration-300" style={{ width: `${progress}%`, backgroundColor: sConfig.color, opacity: 0.6 }} />
+          <div className="w-full h-1.5 rounded-full overflow-hidden bg-background border border-border/20">
+            <div className="h-full rounded-full transition-all duration-300" style={{ width: `${progress}%`, backgroundColor: sConfig.color, opacity: 0.7 }} />
           </div>
           <div className="flex items-center justify-between text-[11px] font-medium">
-            <span className="text-white/40">{game.slots_filled} joined</span>
-            <span className="text-white/20">{game.slots_total - game.slots_filled} spots left</span>
+            <span className="text-foreground-soft">{game.slots_filled} joined</span>
+            <span className="text-foreground-muted">{game.slots_total - game.slots_filled} spots left</span>
           </div>
         </div>
 
-        {/* Host + price - dim */}
-        <div className="flex items-center justify-between rounded-xl p-2.5" style={{ backgroundColor: "#111111" }}>
+        {/* Host + price */}
+        <div className="flex items-center justify-between rounded-xl p-2.5 bg-panel border border-border/40">
           <div className="flex items-center gap-2 min-w-0">
             {hostAvatar || (
-              <div className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm shrink-0 text-white" style={{ backgroundColor: "#7c3aed" }}>
+              <div className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm shrink-0 text-primary-foreground" style={{ backgroundColor: sConfig.color }}>
                 {game.host_name.charAt(0).toUpperCase()}
               </div>
             )}
             <div className="min-w-0">
-              <p className="text-[9px] text-white/30 uppercase leading-none tracking-wider font-bold">Host</p>
-              <p className="text-xs font-bold text-white/80 mt-0.5 truncate">{game.host_name}</p>
-              <p className="text-[10px] text-white/40 font-medium mt-0.5 flex items-center gap-0.5">
-                <CheckCircle className="h-3 w-3 text-emerald-500/60" /> Verified
+              <p className="text-[9px] text-foreground-muted uppercase leading-none tracking-wider font-bold">Host</p>
+              <p className="text-xs font-bold text-foreground mt-0.5 truncate">{game.host_name}</p>
+              <p className="text-[10px] text-foreground-soft font-medium mt-0.5 flex items-center gap-0.5">
+                <CheckCircle className="h-3 w-3 text-emerald-500/80" /> Verified
               </p>
             </div>
           </div>
           <div className="text-right shrink-0">
-            <p className="text-[9px] text-white/30 uppercase leading-none tracking-wider font-bold">Share</p>
-            <p className="text-lg font-black mt-0.5 text-white/70">₹{game.price_per_slot}</p>
+            <p className="text-[9px] text-foreground-muted uppercase leading-none tracking-wider font-bold">Share</p>
+            <p className="text-lg font-black mt-0.5 text-primary">₹{game.price_per_slot}</p>
           </div>
         </div>
 
-        {/* CTA Button - dim, no glow */}
+        {/* CTA Button */}
         <div>
           {youAreIn ? (
             <button
               onClick={(e) => { e.stopPropagation(); onManageClick(e, game); }}
-              className="w-full py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition duration-200 border cursor-pointer flex items-center justify-center gap-1"
-              style={{ backgroundColor: "transparent", borderColor: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.6)" }}
+              className="w-full py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition duration-200 border bg-panel hover:bg-panel-2 border-border/40 text-foreground-soft cursor-pointer flex items-center justify-center gap-1"
             >
               Manage Match <ChevronRight className="h-4 w-4" />
             </button>
           ) : youAreApproved ? (
             <button
               onClick={(e) => { e.stopPropagation(); onJoinClick(e, game); }}
-              className="w-full py-3 rounded-xl font-black text-xs uppercase tracking-wider transition duration-200 border-none cursor-pointer flex items-center justify-center gap-1.5"
-              style={{ backgroundColor: sConfig.color, color: "#0a0a0a", opacity: 0.85 }}
+              className="w-full py-3 rounded-xl font-black text-xs uppercase tracking-wider transition duration-200 border-none cursor-pointer flex items-center justify-center gap-1.5 bg-gradient-neon text-primary-foreground shadow-neon"
             >
               Pay & Join Match <ChevronRight className="h-4 w-4" />
             </button>
           ) : youArePending ? (
             <button
               disabled
-              className="w-full py-3 rounded-xl font-bold text-xs uppercase tracking-wider border cursor-not-allowed flex items-center justify-center"
-              style={{ backgroundColor: "#111111", color: "rgba(255,255,255,0.2)", borderColor: "rgba(255,255,255,0.06)" }}
+              className="w-full py-3 rounded-xl font-bold text-xs uppercase tracking-wider border border-border/20 bg-panel text-foreground-muted cursor-not-allowed flex items-center justify-center"
             >
               Pending Approval
             </button>
@@ -431,13 +426,11 @@ export function OpenGameCard({
             <button
               disabled={isFull || isCancelled}
               onClick={(e) => { e.stopPropagation(); onJoinClick(e, game); }}
-              className="w-full py-3 rounded-xl font-black text-xs uppercase tracking-wider transition duration-200 border-none cursor-pointer flex items-center justify-center gap-1.5"
-              style={{
-                backgroundColor: isFull || isCancelled ? "#111111" : sConfig.color,
-                color: isFull || isCancelled ? "rgba(255,255,255,0.2)" : "#0a0a0a",
-                cursor: isFull || isCancelled ? "not-allowed" : "pointer",
-                opacity: isFull || isCancelled ? 0.5 : 0.85,
-              }}
+              className={`w-full py-3 rounded-xl font-black text-xs uppercase tracking-wider transition duration-200 border-none cursor-pointer flex items-center justify-center gap-1.5 ${
+                isFull || isCancelled
+                  ? "bg-panel text-foreground-muted cursor-not-allowed"
+                  : "bg-gradient-neon text-primary-foreground shadow-neon"
+              }`}
             >
               {isFull ? "Game Full" : isCancelled ? "Cancelled" : game.is_private ? "Request Invite" : "Join Match"}
               {!isFull && !isCancelled && <ChevronRight className="h-4 w-4" />}

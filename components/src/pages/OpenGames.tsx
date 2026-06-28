@@ -324,6 +324,10 @@ const OpenGames = () => {
       navigate("/login", { state: { from: location.pathname + location.search } });
       return;
     }
+    if (hostSlots % 2 !== 0) {
+      toast.error("Slots total must be an even number to ensure equal teams.");
+      return;
+    }
     setHosting(true);
 
     const matchedTurf = turfs.find((t) => t.id === hostVenue) || turfs[0];
@@ -1047,6 +1051,7 @@ const OpenGames = () => {
                         type="number"
                         min="2"
                         max="24"
+                        step="2"
                         value={hostSlots}
                         onChange={(e) => setHostSlots(Number(e.target.value))}
                         className="w-full bg-panel-2 border border-border rounded-xl px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
