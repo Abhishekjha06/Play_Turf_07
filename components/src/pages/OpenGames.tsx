@@ -10,7 +10,6 @@ import type { OpenGame } from "@/types/openGames";
 import type { Turf } from "@/data/seed";
 import {
   Users,
-  MapPin,
   Calendar,
   Lock,
   X,
@@ -31,6 +30,7 @@ import { trackEvent } from "@/lib/analytics";
 import { pageEnter, staggerContainer, fadeSlideUp } from "@/lib/motion";
 import { useRealtimeOpenGames } from "@/lib/realtime";
 import { addNotification } from "@/lib/notifications";
+import { OpenGameCard, OpenGameCardSkeleton } from "@/open-games";
 
 const OpenGames = () => {
   const { user } = useAuth();
@@ -377,42 +377,6 @@ const OpenGames = () => {
   const isPlayerOf = (g: OpenGame) =>
     !!user && g.players.some((p) => p.name === user.name || g.host_user_id === user.user_id);
 
-  // Helper function to return custom SVG icons for each sport
-  const getSportIcon = (sport: string) => {
-    const s = sport.toLowerCase();
-    if (s.includes("basketball")) {
-      return (
-        <svg className="w-5 h-5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="10" />
-          <path d="M12 2a14.5 14.5 0 0 0 0 20" />
-          <path d="M12 2a14.5 14.5 0 0 1 0 20" />
-          <path d="M2 12a14.5 14.5 0 0 0 20 0" />
-          <path d="M2 12a14.5 14.5 0 0 1 20 0" />
-        </svg>
-      );
-    }
-    if (s.includes("cricket")) {
-      return (
-        <svg className="w-5 h-5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-          {/* Bat */}
-          <path d="M17.5 2.5a2.121 2.121 0 0 1 3 3L8.5 17.5l-3 1.5 1.5-3z" />
-          {/* Handle lines */}
-          <path d="M16 4l2.5 2.5" />
-          {/* Ball */}
-          <circle cx="17" cy="17" r="2.5" fill="currentColor" className="fill-emerald-400" />
-        </svg>
-      );
-    }
-    // Default to Football/Soccer Ball SVG
-    return (
-      <svg className="w-5 h-5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="10" />
-        <path d="M12 22a10 10 0 0 0 10-10H12V2a10 10 0 0 0-10 10h10v10z" />
-        <circle cx="12" cy="12" r="3" />
-      </svg>
-    );
-  };
-
   return (
     <MobileShell>
       <AppHeader />
@@ -487,12 +451,13 @@ const OpenGames = () => {
       </section>
 
       {/* ── Game Card Feed ── */}
-      <div className="px-4 mt-6 flex flex-col gap-5">
+      <div className="px-4 mt-6 flex flex-col gap-3">
         {loading ? (
-          <div className="text-center py-20 text-textMuted/70 text-sm font-semibold flex flex-col items-center gap-2">
-            <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin border-primary" />
-            Loading matches...
-          </div>
+          <>
+            <OpenGameCardSkeleton index={0} />
+            <OpenGameCardSkeleton index={1} />
+            <OpenGameCardSkeleton index={2} />
+          </>
         ) : games.length === 0 ? (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
@@ -534,243 +499,27 @@ const OpenGames = () => {
               turfs.find((t) => g.venue.toLowerCase().includes(t.name.toLowerCase()) || t.name.toLowerCase().includes(g.venue.split(",")[0].toLowerCase()))?.image ??
               "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&q=80&w=1200";
 
+            const matchedTurf = turfs.find((t) => t.id === g.turf_id);
+            const turfSurface = matchedTurf?.sport_types?.some((s) => s.toLowerCase().includes("indoor")) ? "Indoor" : "Outdoor";
+
             return (
-              <motion.article
+              <OpenGameCard
                 key={g.id}
-                initial={{ opacity: 0, y: 25 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05, type: "spring", stiffness: 120, damping: 14 }}
-                onClick={() => setManageGame(g)}
-                className="glass rounded-[2rem] overflow-visible flex flex-col relative cursor-pointer border border-border/40 hover:border-primary/50 transition-all shadow-card hover:shadow-neon/15"
-              >
-                {/* Cover image with overlaid status badges */}
-                <div className="relative h-36 bg-surface rounded-t-[2rem]">
-                  <div className="absolute inset-0 overflow-hidden rounded-t-[2rem]">
-                    <img
-                      src={coverImage}
-                      alt={g.venue}
-                      loading="lazy"
-                      decoding="async"
-                      onError={(e) => {
-                        const img = e.currentTarget;
-                        if (!img.dataset.fallback) {
-                          img.dataset.fallback = "1";
-                          img.src = turfs[0]?.image ?? "https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&q=80&w=1200";
-                        }
-                      }}
-                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 hover:scale-105"
-                    />
-                  </div>
-                  {/* gradient scrim so badges & edge read clearly */}
-                  <div
-                    className="absolute inset-0 rounded-t-[2rem]"
-                    style={{
-                      background:
-                        "linear-gradient(180deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 45%, rgba(0,0,0,0.75) 100%)",
-                    }}
-                  />
-                  {/* Status badge ── top left */}
-                  <span
-                    className={`absolute top-3.5 left-3.5 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider backdrop-blur-md flex items-center gap-1 ${
-                      isCancelled
-                        ? "bg-red-950/85 text-red-300 border border-red-500/30"
-                        : isFull
-                          ? "bg-black/75 text-zinc-300 border border-zinc-500/30"
-                          : "bg-emerald-500 text-white font-bold"
-                    }`}
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
-                    {isCancelled ? "cancelled" : isFull ? "full" : "open"}
-                  </span>
-                  {/* Private badge ── top right */}
-                  {g.is_private && (
-                    <span className="absolute top-3.5 right-3.5 text-[9px] text-amber-300 font-bold bg-amber-950/80 border border-amber-500/30 px-2.5 py-1 rounded-full backdrop-blur-md flex items-center gap-1">
-                      <Lock className="h-2.5 w-2.5 text-amber-400" /> Private Match
-                    </span>
-                  )}
-
-                  {/* Floating Sport Icon overlapping image bottom-left */}
-                  <div className="absolute -bottom-5 left-5 z-10 w-11 h-11 rounded-full bg-slate-950 border border-border/60 flex items-center justify-center shadow-lg">
-                    {getSportIcon(g.sport)}
-                  </div>
-                </div>
-
-                {/* Body */}
-                <div className="p-4 pt-7 flex flex-col gap-3.5">
-                  {/* Title */}
-                  <h3 className="font-display font-black text-xl text-foreground leading-tight tracking-tight mt-1">
-                    {Math.round(g.slots_total / 2)}-a-side {g.sport}
-                  </h3>
-
-                  {/* Wickets/MapPin/Calendar details */}
-                  <div className="flex items-center flex-wrap gap-x-2 gap-y-1.5 text-textMuted text-[10px] uppercase tracking-wider font-bold">
-                    <span className="flex items-center gap-1">
-                      <MapPin className="h-3.5 w-3.5 text-primary shrink-0" />
-                      {g.venue.split(",")[0]}
-                    </span>
-                    <span className="text-border/60 font-normal">|</span>
-                    <span className="flex items-center gap-1">
-                      <Calendar className="h-3.5 w-3.5 text-primary shrink-0" />
-                      {g.date === getLocalDateString() ? "Today" : g.date}
-                    </span>
-                    <span className="text-border/60 font-normal">|</span>
-                    <span className="flex items-center gap-1">
-                      <Clock className="h-3.5 w-3.5 text-primary shrink-0" />
-                      {g.time}
-                    </span>
-                    <span className="text-border/60 font-normal">|</span>
-                    <span className="flex items-center gap-1">
-                      <Clock className="h-3.5 w-3.5 text-primary shrink-0" />
-                      {g.duration_hours ? g.duration_hours * 60 : 60} mins
-                    </span>
-                  </div>
-
-                  {/* Progress section */}
-                  <div className="bg-surface/50 border border-border/20 rounded-2xl p-3.5 space-y-2">
-                    <div className="flex justify-between items-center text-xs font-semibold text-textMuted">
-                      <span>Court split progress</span>
-                    </div>
-                    <div className="w-full h-2 rounded-full bg-slate-900 border border-border/10 overflow-hidden">
-                      <div
-                        className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-primary shadow-neon transition-all duration-300"
-                        style={{ width: `${progress}%` }}
-                      />
-                    </div>
-                    <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-wider">
-                      <span className="text-emerald-400">{g.slots_filled}/{g.slots_total} joined</span>
-                      <span className="text-textMuted">{g.slots_total - g.slots_filled} spots left</span>
-                    </div>
-                  </div>
-
-                  {/* Host Section */}
-                  <div className="flex items-center justify-between bg-surface/30 border border-border/20 rounded-2xl p-3">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-8 h-8 rounded-full bg-pink-500 text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-md">
-                        {g.host_name.charAt(0).toUpperCase()}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-[8px] text-textMuted uppercase leading-none tracking-wider font-bold">Host</p>
-                        <p className="text-xs font-bold text-foreground mt-0.5 truncate">{g.host_name}</p>
-                        <p className="text-[8px] text-emerald-400 font-bold mt-0.5 flex items-center gap-0.5">✔ Verified Host</p>
-                      </div>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <p className="text-[8px] text-textMuted uppercase leading-none tracking-wider font-bold">Your share</p>
-                      <p className="text-base font-black text-emerald-400 mt-0.5">₹{g.price_per_slot}</p>
-                    </div>
-                  </div>
-
-                  {/* Features Bar */}
-                  <div className="grid grid-cols-3 gap-2 py-1 text-center text-[9px] border-t border-b border-border/20 my-1">
-                    <div className="flex flex-col items-center gap-1 py-1">
-                      <CheckCircle className="h-4 w-4 text-emerald-400" />
-                      <span className="font-bold text-foreground">Secure Payments</span>
-                      <span className="text-[7px] text-textMuted font-medium">100% Safe</span>
-                    </div>
-                    <div className="flex flex-col items-center gap-1 py-1 border-l border-r border-border/10">
-                      <Users className="h-4 w-4 text-emerald-400" />
-                      <span className="font-bold text-foreground">Fair Play</span>
-                      <span className="text-[7px] text-textMuted font-medium">Verified Squads</span>
-                    </div>
-                    <div className="flex flex-col items-center gap-1 py-1">
-                      <Calendar className="h-4 w-4 text-emerald-400" />
-                      <span className="font-bold text-foreground">Easy Cancel</span>
-                      <span className="text-[7px] text-textMuted font-medium">Flexible Refund</span>
-                    </div>
-                  </div>
-
-                  {/* Action button */}
-                  <div>
-                    {youAreIn ? (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setManageGame(g);
-                        }}
-                        className="btn-secondary w-full text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1 shadow-md"
-                      >
-                        Manage Match <ChevronRight className="h-4.5 w-4.5" />
-                      </button>
-                    ) : youAreApproved ? (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleJoinClick(g);
-                        }}
-                        className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-lime-500 hover:brightness-105 text-slate-950 font-black text-xs uppercase tracking-wider transition duration-200 border-none cursor-pointer flex items-center justify-center gap-1.5 shadow-lg animate-pulse-glow"
-                      >
-                        Pay & Join Match <ChevronRight className="h-4.5 w-4.5" />
-                      </button>
-                    ) : youArePending ? (
-                      <button
-                        disabled
-                        className="w-full py-2.5 rounded-xl bg-surface text-textMuted/60 font-bold text-xs uppercase tracking-wider border border-border/40 cursor-not-allowed flex items-center justify-center"
-                      >
-                        Pending Host Approval
-                      </button>
-                    ) : (
-                      <button
-                        disabled={isFull || isCancelled}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleJoinClick(g);
-                        }}
-                        className={`w-full py-3 rounded-xl font-black text-xs uppercase tracking-wider transition duration-200 border-none cursor-pointer flex items-center justify-center gap-1.5 shadow-lg ${
-                          isFull || isCancelled
-                            ? "bg-surface text-textMuted/40 cursor-not-allowed"
-                            : "bg-gradient-to-r from-emerald-500 to-lime-500 hover:brightness-105 text-slate-950"
-                        }`}
-                      >
-                        {isFull ? "Game Full" : isCancelled ? "Cancelled" : g.is_private ? "Request Invite ↗" : "Join Game ↗"}
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Sport metadata footer info bar */}
-                  <div className="grid grid-cols-3 gap-2 pt-2.5 border-t border-border/20 text-[9px] text-left">
-                    <div className="flex items-center gap-2">
-                      <div className="p-1 rounded-lg bg-emerald-500/10 text-emerald-400 shrink-0">
-                        {getSportIcon(g.sport)}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-[7px] text-textMuted uppercase leading-none">Sport</p>
-                        <p className="font-bold text-foreground mt-0.5 truncate">{g.sport}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 border-l border-r border-border/10 pl-2">
-                      <Users className="h-4 w-4 text-emerald-400 shrink-0" />
-                      <div className="min-w-0">
-                        <p className="text-[7px] text-textMuted uppercase leading-none">Format</p>
-                        <p className="font-bold text-foreground mt-0.5 truncate">{Math.round(g.slots_total / 2)}-a-side</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 pl-2">
-                      <MapPin className="h-4 w-4 text-emerald-400 shrink-0" />
-                      <div className="min-w-0">
-                        <p className="text-[7px] text-textMuted uppercase leading-none">Surface</p>
-                        <p className="font-bold text-foreground mt-0.5 truncate">Outdoor</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Pending requests banner for host */}
-                  {youAreHost && pendingRequests.length > 0 && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setManageGame(g);
-                      }}
-                      className="text-left w-full bg-warning/10 border border-warning/30 rounded-xl px-3 py-2 flex items-center gap-2 mt-1 transition hover:bg-warning/15"
-                    >
-                      <AlertCircle className="h-4 w-4 text-warning shrink-0" />
-                      <span className="text-[11px] font-bold text-warning">
-                        {pendingRequests.length} join request{pendingRequests.length > 1 ? "s" : ""} awaiting your approval
-                      </span>
-                      <ChevronRight className="h-4 w-4 text-warning ml-auto" />
-                    </button>
-                  )}
-                </div>
-              </motion.article>
+                game={g}
+                turfImage={coverImage}
+                turfSurface={turfSurface}
+                index={i}
+                user={user}
+                onCardClick={() => setManageGame(g)}
+                onJoinClick={(e) => {
+                  e.stopPropagation();
+                  handleJoinClick(g);
+                }}
+                onManageClick={(e) => {
+                  e.stopPropagation();
+                  setManageGame(g);
+                }}
+              />
             );
           })
         )}

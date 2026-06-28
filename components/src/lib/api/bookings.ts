@@ -15,14 +15,33 @@ export async function createBooking(payload: {
 }, getTurfById: (id: string) => Promise<any>, userGetter: () => Promise<any>): Promise<Booking> {
   const supabase = await getSupabase();
   
-  // Validation for both mock and real modes
+  // ── VALIDATION: hours must be 1-12
+  if (payload.hours < 1 || payload.hours > 12) {
+    throw new Error("Booking duration must be between 1 and 12 hours.");
+  }
+
+  // ── VALIDATION: past date check (all dates, not just today)
   const todayStr = new Date().toLocaleDateString('en-CA');
+  if (payload.date < todayStr) {
+    throw new Error("Booking is not available for past dates. Please select a valid date.");
+  }
+  
+  // ── VALIDATION: same-day expired slot
   if (payload.date === todayStr) {
     const [h, m] = payload.start_time.split(":").map(Number);
     const now = new Date();
     if (now.getHours() > h || (now.getHours() === h && now.getMinutes() > m)) {
       throw new Error("This slot has already expired and cannot be booked.");
     }
+  }
+  
+  // ── VALIDATION: game already ended (past date + time)
+  const [slotH, slotM] = payload.start_time.split(":").map(Number);
+  const slotDate = new Date(payload.date);
+  slotDate.setHours(slotH, slotM, 0, 0);
+  const slotEnd = new Date(slotDate.getTime() + payload.hours * 60 * 60 * 1000);
+  if (slotEnd < new Date()) {
+    throw new Error("This slot has already ended. Please select a future time.");
   }
 
   if (supabase) {
@@ -66,6 +85,31 @@ export async function createBooking(payload: {
     if (!user) throw new Error("Not signed in");
     const turf = getMockTurfs().find((t) => t.id === payload.turf_id);
     if (!turf) throw new Error("Turf missing");
+
+    // Mock mode: same date validations as Supabase path
+    const mockTodayStr = new Date().toLocaleDateString('en-CA');
+    if (payload.date < mockTodayStr) {
+      throw new Error("Booking is not available for past dates. Please select a valid date.");
+    }
+    const [slotH, slotM] = payload.start_time.split(":").map(Number);
+    const slotDate = new Date(payload.date);
+    slotDate.setHours(slotH, slotM, 0, 0);
+    const slotEnd = new Date(slotDate.getTime() + payload.hours * 60 * 60 * 1000);
+    if (slotEnd < new Date()) {
+      throw new Error("This slot has already ended. Please select a future time.");
+    }
+    
+    // Duplicate booking prevention (same user, same turf, same date, same time)
+    const hasDuplicate = getMockBookings().some((b) => {
+      return b.user_id === user.user_id
+        && b.turf_id === payload.turf_id
+        && b.date === payload.date
+        && b.start_time === payload.start_time
+        && b.status !== 'CANCELLED';
+    });
+    if (hasDuplicate) {
+      throw new Error("You already have a booking for this slot.");
+    }
 
     // Overlap validation for mock mode
     const [newH, newM] = payload.start_time.split(":").map(Number);

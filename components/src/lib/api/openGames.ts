@@ -6,10 +6,13 @@ import { getMockBookings, setMockBookings } from "./bookings";
 import { getMockTurfs } from "./turfs";
 import { distanceKm } from "./turfs";
 import { uid } from "./core";
+import { addNotification } from "../notifications";
 
 // Bump this whenever the seed data changes so stale localStorage is refreshed.
-const OPEN_GAMES_SEED_VERSION = 4;
+const OPEN_GAMES_SEED_VERSION = 5;
 const SEED_VERSION_KEY = "playturf:open_games_seed_version";
+
+// ... rest of the file
 
 // Local storage fallback for mock mode (allows sharing data across tabs/windows)
 export function getLocalGames(): OpenGame[] {
@@ -61,6 +64,49 @@ export function saveLocalGames(games: OpenGame[]) {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+
+/** Validate that a game date/time is not in the past. */
+function validateGameSlot(date: string, time: string, durationHours = 1): { ok: boolean; reason?: string } {
+  const now = new Date();
+  const todayStr = now.toLocaleDateString("en-CA");
+  
+  // Parse slot time
+  const [h, m] = time.split(":").map(Number);
+  const slotDate = new Date(date);
+  slotDate.setHours(h, m, 0, 0);
+  const slotEnd = new Date(slotDate.getTime() + durationHours * 60 * 60 * 1000);
+  
+  // Past date check
+  if (date < todayStr) {
+    return { ok: false, reason: "Booking is not available for past dates. Please select a valid date." };
+  }
+  
+  // Same-day expired slot check
+  if (date === todayStr) {
+    if (slotDate <= now) {
+      return { ok: false, reason: "This slot has already started. Please select a future time." };
+    }
+  }
+  
+  // Game already ended
+  if (slotEnd < now) {
+    return { ok: false, reason: "This game has already ended." };
+  }
+  
+  return { ok: true };
+}
+
+/** Check if a user has already joined or requested a game. */
+function checkDuplicateJoin(game: OpenGame, userId: string): boolean {
+  return game.players.some(
+    (p) => p.user_id === userId && ["paid", "requested", "approved"].includes(p.payment_status)
+  );
+}
+
+/** Check if user is the host. */
+function isHost(game: OpenGame, userId: string): boolean {
+  return game.host_user_id === userId;
+}
 
 /** Convert "07:00 PM" → "19:00". Leaves 24h strings unchanged. */
 export function convertTimeTo24(timeStr: string): string {
@@ -333,6 +379,10 @@ export async function hostOpenGame(payload: CreateGamePayload): Promise<{ game: 
   // ---- Mock fallback ----
   await new Promise((resolve) => setTimeout(resolve, 600));
 
+  // Date/Time validation (already computed: slotsTotal, totalAmount, duration, time24)
+  const slotCheck = validateGameSlot(payload.date, time24, duration);
+  if (!slotCheck.ok) throw new Error(slotCheck.reason!);
+
   const matchedTurf = getMockTurfs().find((t) => t.id === payload.turf_id) || getMockTurfs()[0];
   const turfId = matchedTurf?.id || "turf_1";
   const turfName = matchedTurf?.name || payload.venue;
@@ -491,7 +541,20 @@ export async function joinOpenGame(gameId: string, paymentMethod = "UPI"): Promi
   if (game.status === "cancelled") throw new Error("Cannot join a cancelled game.");
   if (game.is_private) throw new Error("This is a private game. Use the request flow.");
   if (game.slots_filled >= game.slots_total) throw new Error("This game is already full.");
-  if (game.players.some((p) => p.name === currentUser.name)) throw new Error("You have already joined this game.");
+  
+  // Validate date/time hasn't expired
+  const slotCheck = validateGameSlot(game.date, game.time, game.duration_hours);
+  if (!slotCheck.ok) throw new Error(slotCheck.reason!);
+  
+  // Check if user is host
+  if (isHost(game, currentUser.user_id)) {
+    throw new Error("You are the host of this game.");
+  }
+  
+  // Duplicate join check (by user_id, not just name)
+  if (checkDuplicateJoin(game, currentUser.user_id)) {
+    throw new Error("You have already joined or requested this game.");
+  }
 
   const bookingId = uid("bkg");
   const [h, m] = game.time.split(":").map(Number);
@@ -564,8 +627,20 @@ export async function requestJoinOpenGame(gameId: string): Promise<{ game: OpenG
   const currentGames = getLocalGames();
   const game = currentGames.find((g) => g.id === gameId);
   if (!game) throw new Error("Game not found.");
-  if (game.players.some((p) => p.name === currentUser.name)) {
-    throw new Error("You have already joined or requested.");
+  if (!game.is_private) throw new Error("This is a public game. Use direct join instead.");
+  if (game.slots_filled >= game.slots_total) throw new Error("This game is already full.");
+  
+  // Validate date/time
+  const slotCheck = validateGameSlot(game.date, game.time, game.duration_hours);
+  if (!slotCheck.ok) throw new Error(slotCheck.reason!);
+  
+  // Host cannot request own game
+  if (isHost(game, currentUser.user_id)) {
+    throw new Error("You are the host of this game.");
+  }
+  
+  if (checkDuplicateJoin(game, currentUser.user_id)) {
+    throw new Error("You have already joined or requested this game.");
   }
   game.players.push({
     id: uid("gp"),
