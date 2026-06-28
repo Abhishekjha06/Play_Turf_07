@@ -16,6 +16,7 @@ import {
 import type { OpenGame } from "@/types/openGames";
 import type { User } from "@/data/seed";
 import { useLuxuryTheme } from "@/luxury/LuxuryThemeProvider";
+import playTurfLogo from "../assets/play-turf-logo.png";
 
 /* ────────────────────────────────────────────────────────────── */
 
@@ -124,7 +125,7 @@ const getSportIcon = (sport: string, className?: string) => {
 
 /* Play Turf Logo */
 const PlayTurfLogo = ({ className = "w-7 h-7" }: { className?: string }) => (
-  <img src="/src/assets/play-turf-logo.png" alt="Play Turf" className={className} style={{ objectFit: "contain" }} />
+  <img src={playTurfLogo} alt="Play Turf" className={className} style={{ objectFit: "contain" }} />
 );
 
 /* ── Skeleton Shimmer Card ───────────────────────────────────── */

@@ -5,6 +5,8 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 import receiptAssets from "@/assets/play-turf-receipt-assets.webp";
 
+import playTurfLogo from "../assets/play-turf-logo.png";
+
 const receipt = {
   bookingId: "PT-2026-847392",
   transactionId: "TXN984738292",
@@ -133,11 +135,9 @@ function HeaderStatus() {
   return (
     <div className="relative overflow-hidden rounded-[1.5rem] border border-white/10 bg-white/[0.06] p-5 text-center lg:flex lg:flex-col lg:justify-between">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(57,255,20,.2),transparent_35%),linear-gradient(160deg,rgba(0,217,255,.12),transparent)]" />
-      <div className="relative">
-        <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl border border-[#39FF14]/30 bg-[#39FF14]/10 shadow-[0_0_34px_rgba(57,255,20,.35)]">
-          <Trophy className="h-7 w-7 text-[#39FF14]" />
-        </div>
-        <h1 className="mt-3 font-display text-3xl font-black tracking-tight">PLAY_TURF</h1>
+      <div className="relative flex flex-col items-center">
+        <img src={playTurfLogo} alt="Play Turf Logo" className="mx-auto h-16 w-16 object-contain mb-2" />
+        <h1 className="font-display text-3xl font-black tracking-tight">PLAY_TURF</h1>
         <p className="mt-1 text-xs font-semibold text-white/60">Your Match. Your Turf. Your Victory.</p>
       </div>
 

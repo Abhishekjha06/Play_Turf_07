@@ -6,6 +6,7 @@ import { VsBadge } from "@/cricket/components/VsBadge";
 import { TeamAvatar } from "@/cricket/components/TeamAvatar";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import playTurfLogo from "../assets/play-turf-logo.png";
 
 interface BookingConfirmPayProps {
     turf: any;
@@ -70,6 +71,15 @@ export function BookingConfirmPay({
 
     return (
         <div className="mt-4 px-4 pb-32">
+            {/* Logo header */}
+            <div className="flex items-center gap-2.5 mb-5 px-1">
+                <img src={playTurfLogo} alt="Play Turf Logo" className="w-8 h-8 object-contain" />
+                <div>
+                    <h2 className="font-display font-black text-base text-foreground tracking-tight leading-none">PLAY_TURF</h2>
+                    <p className="text-[9px] text-muted-foreground font-extrabold mt-1 uppercase tracking-widest">Billing & Checkout</p>
+                </div>
+            </div>
+
             <Card
                 className="relative p-5 transition-all duration-300"
                 bordered
