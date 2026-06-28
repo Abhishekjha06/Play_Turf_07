@@ -13,9 +13,7 @@ import { loginSchema, type LoginFormValues } from "@/lib/validations";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { trackEvent, identifyUser } from "@/lib/analytics";
 
-// Mock mode fallback logic is retained for when Supabase is not configured
-import { isMockMode } from "@/lib/api";
-import { signInUser } from "@/lib/auth";
+
 
 const Login = () => {
   const navigate = useNavigate();
@@ -35,13 +33,7 @@ const Login = () => {
 
   const onSubmit = async (data: LoginFormValues) => {
     setLoading(true);
-
-    const supabase = await getSupabase();
-    if (supabase) {
-      await handleSupabaseLogin(data);
-    } else {
-      await handleMockLogin(data);
-    }
+    await handleSupabaseLogin(data);
     setLoading(false);
   };
 
@@ -142,17 +134,7 @@ const Login = () => {
     }
   };
 
-  const handleMockLogin = async (formData: LoginFormValues) => {
-    try {
-      const user = await signInUser(formData.email, formData.password);
-      toast.success("Signed in successfully");
-      identifyUser(user.id || user.email, { email: formData.email, role: user.role });
-      trackEvent("Login", { method: "mock" });
-      navigate(redirectUrl);
-    } catch (e: any) {
-      toast.error(e.message);
-    }
-  };
+
 
   return (
     <MobileShell>

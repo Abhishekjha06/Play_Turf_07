@@ -140,8 +140,10 @@ const BookingContent = () => {
 
     // Sync cricket booking amount with turf total amount
     useEffect(() => {
-        cricket.setAmount(total);
-    }, [total, cricket]);
+        if (cricket.state.amount !== total) {
+            cricket.setAmount(total);
+        }
+    }, [total, cricket.state.amount, cricket]);
 
     const initiatePayment = () => {
         if (!turf || !slot) return;

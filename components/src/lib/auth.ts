@@ -24,22 +24,12 @@ export function isLoading() { return _loading; }
 
 export async function refreshUser() {
   _loading = true; emit();
-  
-  // Prefer the mock user session if it exists in localStorage
-  const lsUser = localStorage.getItem("playturf:user");
-  if (lsUser) {
-    try {
-      const parsed = JSON.parse(lsUser);
-      if (parsed && parsed.email) {
-        _user = parsed;
-        _loading = false; emit();
-        return;
-      }
-    } catch (e) {
-      // ignore
-    }
-  }
 
+  // Resolve the user purely from the real Supabase session. We intentionally
+  // do NOT read the localStorage mock user ("playturf:user") here — that was a
+  // fake identity with no real auth.uid(), which made every write RPC
+  // (host/join/leave) silently no-op or get blocked by RLS. A logged-out user
+  // is simply `null`; the UI's !user guards then redirect to /login.
   try {
     const supabase = await getSupabase();
     if (supabase) {
@@ -67,34 +57,13 @@ export async function refreshUser() {
         };
         _loading = false; emit();
         return;
-      } else {
-        // Sign in anonymously to get a secure auth.uid() in Supabase
-        const { data: anonData, error: anonError } = await withTimeout(supabase.auth.signInAnonymously());
-        if (anonError) throw anonError;
-        if (anonData?.user) {
-          _user = {
-            user_id: anonData.user.id,
-            email: "",
-            name: "Guest Player",
-            picture: "",
-            is_admin: false,
-            role: "user",
-          };
-          _loading = false; emit();
-          return;
-        }
       }
     }
   } catch (err) {
-    console.error("Supabase refreshUser error, falling back to mock api:", err);
+    console.error("Supabase refreshUser error:", err);
   }
 
-  try {
-    _user = await api.me();
-  } catch (err) {
-    console.error("API me query failed:", err);
-    _user = null;
-  }
+  _user = null;
   _loading = false; emit();
 }
 
@@ -144,11 +113,6 @@ export function updateUserAvatar(avatarUrl: string) {
     _user = { ..._user, picture: avatarUrl };
     emit();
   }
-}
-
-export async function signInMock(role: "user" | "admin" | "client" = "user") {
-  _user = await api.mockGoogleSignIn(role);
-  emit();
 }
 
 /**
@@ -209,10 +173,6 @@ export async function signInAdmin(email: string, password: string): Promise<User
 }
 
 export async function signOut() {
-  const supabase = await getSupabase();
-  if (supabase) {
-    await supabase.auth.signOut();
-  }
   await api.logout();
   _user = null;
   emit();

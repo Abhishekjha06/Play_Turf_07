@@ -1,24 +1,12 @@
 import {
-  banners as seedBanners,
-  turfs as seedTurfs,
-  offers as seedOffers,
-  tournaments as seedTournaments,
   type Banner,
   type Turf,
   type Offer,
   type Tournament,
   type Booking,
-  type User,
   type Review,
 } from "@/data/seed";
 import { getSupabase, withTimeout } from "./supabase";
-import {
-  USE_MOCK,
-  accessToken,
-  setAccessToken,
-  isOpenNow,
-  uid,
-} from "./api/core";
 
 import { distanceKm } from "./api/turfs";
 
@@ -63,19 +51,11 @@ export const api = {
   // Offers
   async listOffers(): Promise<Offer[]> {
     const supabase = await getSupabase();
-    if (supabase) {
-      try {
-        const { data, error } = await withTimeout(supabase.from("offers").select("*").eq("is_active", true));
-        if (error) throw error;
-        if (data && data.length > 0) {
-          return data as Offer[];
-        }
-      } catch (err) {
-        console.warn("Failed to query offers from Supabase, falling back:", err);
-      }
-    }
-    await new Promise((r) => setTimeout(r, 120));
-    return seedOffers;
+    const { data, error } = await withTimeout(
+      supabase.from("offers").select("*").eq("is_active", true)
+    );
+    if (error) throw error;
+    return (data || []) as Offer[];
   },
 
   // Tournaments
@@ -89,7 +69,6 @@ export const api = {
   me: () => authModule.me(),
   exchangeSession: (sessionId: string) =>
     authModule.exchangeSession(sessionId, () => authModule.me()),
-  mockGoogleSignIn: (role?: "user" | "admin" | "client") => authModule.mockGoogleSignIn(role),
   adminPasswordSignIn: (email: string, password: string) =>
     authModule.adminPasswordSignIn(email, password, () => authModule.me()),
   clientLogin: (clientId: string, password: string) =>
@@ -112,12 +91,12 @@ export const api = {
 
   // Admin
   admin: {
-    addTurf: (t: Partial<Turf>) => adminModule.addTurf(t, seedTurfs),
+    addTurf: (t: Partial<Turf>) => adminModule.addTurf(t),
     updateTurf: (id: string, patch: Partial<Turf>) => adminModule.updateTurf(id, patch),
     deleteTurf: (id: string) => adminModule.deleteTurf(id),
     addBanner: (b: Partial<Banner>) => adminModule.addBanner(b),
     deleteBanner: (id: string) => adminModule.deleteBanner(id),
-    addOffer: (o: Partial<Offer>) => adminModule.addOffer(o, seedOffers),
+    addOffer: (o: Partial<Offer>) => adminModule.addOffer(o),
     deleteOffer: (id: string) => adminModule.deleteOffer(id),
     addTournament: (t: Partial<Tournament>) => adminModule.addTournament(t),
     deleteTournament: (id: string) => adminModule.deleteTournament(id),
@@ -131,9 +110,9 @@ export const api = {
   },
 };
 
-export const isMockMode = USE_MOCK;
+export const isMockMode = false;
 export const session = {
-  getAccessToken: () => accessToken,
-  setAccessToken,
-  clear: () => setAccessToken(null),
+  getAccessToken: () => null,
+  setAccessToken: () => {},
+  clear: () => {},
 };

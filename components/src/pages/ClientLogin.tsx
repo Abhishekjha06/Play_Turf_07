@@ -4,8 +4,8 @@ import { MobileShell } from "@/layout/MobileShell";
 import { BackButton } from "@/layout/BackButton";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { signInWithGoogle } from "@/lib/auth";
 import { Briefcase, Lock, User } from "lucide-react";
+import { api } from "@/lib/api";
 
 const ClientLogin = () => {
     const navigate = useNavigate();
@@ -31,18 +31,7 @@ const ClientLogin = () => {
         }
     };
 
-    const handleMockLogin = async () => {
-        setLoading(true);
-        try {
-            const u = await api.clientLogin("demo_client", "demo123");
-            toast.success("Demo client login successful");
-            navigate("/client/dashboard");
-        } catch (error) {
-            toast.error((error as Error).message || "Failed to log in");
-        } finally {
-            setLoading(false);
-        }
-    };
+
 
     return (
         <MobileShell>
@@ -107,29 +96,7 @@ const ClientLogin = () => {
                             {loading ? "Signing in…" : "Sign In"}
                         </button>
 
-                        <div className="relative py-2">
-                            <div className="absolute inset-0 flex items-center">
-                                <span className="w-full border-t border-white/10" />
-                            </div>
-                            <div className="relative flex justify-center">
-                                <span className="px-3 bg-panel-2 text-[11px] text-muted2 uppercase tracking-wider">
-                                    or
-                                </span>
-                            </div>
-                        </div>
 
-                        <button
-                            onClick={handleMockLogin}
-                            className="w-full rounded-full border border-white/15 py-3 text-sm font-semibold text-soft pressable hover:bg-white/5 min-h-[44px]"
-                        >
-                            Try Demo Dashboard
-                        </button>
-
-                        <div className="rounded-2xl border border-white/5 bg-white/5 p-3 text-xs text-muted2 space-y-1">
-                            <p className="font-semibold text-soft">Demo Credentials:</p>
-                            <p>Client ID: <span className="text-primary">abhishek1018@</span></p>
-                            <p>Password: <span className="text-primary">123456789</span></p>
-                        </div>
                     </div>
 
                     <p className="mt-6 text-xs text-muted2 text-center">

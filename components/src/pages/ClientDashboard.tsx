@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { websocket, useWebSocket } from "@/lib/websocket";
 import { useAuth } from "@/hooks/use-auth";
-import { isMockMode } from "@/lib/api";
+
 
 import { DashboardHeader } from "./client-dashboard/DashboardHeader";
 import { DashboardStats } from "./client-dashboard/DashboardStats";
@@ -60,15 +60,7 @@ const ClientDashboard = () => {
     }, [navigate]);
 
     useEffect(() => {
-        if (isMockMode) {
-            const mockUpdates = [
-                { type: "booking", message: "New booking: Rahul Sharma", timestamp: "10:30 AM" },
-                { type: "slot", message: "Slot 14:00-16:00 now available", timestamp: "10:15 AM" },
-                { type: "booking", message: "Booking confirmed: Priya Patel", timestamp: "09:45 AM" },
-            ];
-            setRealTimeUpdates(mockUpdates);
-            return;
-        }
+
 
         const token = localStorage.getItem("client_token");
         if (!token) {
