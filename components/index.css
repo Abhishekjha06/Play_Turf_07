@@ -117,9 +117,37 @@
     color: hsl(var(--foreground));
     background: var(--gradient-bg);
     background-color: hsl(var(--background));
-    font-family: "Outfit", system-ui, sans-serif;
+    font-family: "Plus Jakarta Sans", system-ui, sans-serif;
     font-feature-settings: "ss01", "cv11";
     -webkit-text-size-adjust: 100%;
+  }
+
+  h1 {
+    font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 36px;
+    letter-spacing: -0.02em;
+  }
+  h2 {
+    font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 32px;
+    letter-spacing: -0.015em;
+  }
+  h3 {
+    font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 28px;
+    letter-spacing: -0.01em;
+  }
+  h4 {
+    font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 26px;
   }
 
   #root {

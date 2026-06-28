@@ -24,6 +24,7 @@ interface OpenGameCardProps {
   game: OpenGame;
   turfImage: string;
   turfSurface?: string;
+  turfAddress?: string;
   index?: number;
   user: User | null;
   onCardClick: (game: OpenGame) => void;
@@ -136,20 +137,19 @@ export function OpenGameCardSkeleton({ index = 0 }: { index?: number }) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.04, type: "spring", stiffness: 120, damping: 14 }}
-      className="rounded-xl overflow-hidden flex flex-col relative border border-white/5"
-      style={{ backgroundColor: "#0a0a0a" }}
+      className="rounded-xl overflow-hidden flex flex-col relative border border-border/40 bg-card"
     >
       <div className="relative h-32 bg-black overflow-hidden">
         <div className="absolute inset-0 shimmer-bg" />
       </div>
-      <div className="px-3 pb-3 pt-3 flex flex-col gap-2.5" style={{ backgroundColor: "#0a0a0a" }}>
+      <div className="px-3 pb-3 pt-3 flex flex-col gap-2.5 bg-card">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full shimmer-bg" />
           <div className="h-4 w-32 rounded shimmer-bg" />
           <div className="w-7 h-7 rounded-full shimmer-bg ml-auto" />
         </div>
         <div className="h-3 w-48 rounded shimmer-bg" />
-        <div className="rounded-xl p-3 space-y-2" style={{ backgroundColor: "#111111" }}>
+        <div className="rounded-xl p-3 space-y-2 bg-panel">
           <div className="h-3 w-full rounded shimmer-bg" />
           <div className="h-2 w-full rounded shimmer-bg" />
           <div className="flex justify-between">
@@ -157,7 +157,7 @@ export function OpenGameCardSkeleton({ index = 0 }: { index?: number }) {
             <div className="h-3 w-12 rounded shimmer-bg" />
           </div>
         </div>
-        <div className="rounded-xl p-2.5 flex items-center gap-2" style={{ backgroundColor: "#111111" }}>
+        <div className="rounded-xl p-2.5 flex items-center gap-2 bg-panel">
           <div className="w-9 h-9 rounded-full shimmer-bg" />
           <div className="flex-1 space-y-1.5">
             <div className="h-3 w-20 rounded shimmer-bg" />
@@ -177,6 +177,7 @@ export function OpenGameCard({
   game,
   turfImage,
   turfSurface = "Outdoor",
+  turfAddress,
   index = 0,
   user,
   onCardClick,
@@ -226,12 +227,11 @@ export function OpenGameCard({
       onClick={() => onCardClick(game)}
       onTouchStart={() => setPressed(true)}
       onTouchEnd={() => setPressed(false)}
-      className="rounded-xl overflow-hidden flex flex-col relative cursor-pointer transition-all duration-300"
+      className="rounded-xl overflow-hidden flex flex-col relative cursor-pointer transition-all duration-300 bg-card"
       style={{
-        backgroundColor: "#0a0a0a",
         border: pressed
           ? `1.5px solid ${sConfig.color}`
-          : "1.5px solid rgba(255,255,255,0.05)",
+          : "1.5px solid var(--border)",
         boxShadow: pressed ? sConfig.hoverShadow : sConfig.shadow,
         transform: pressed ? "scale(0.98)" : "scale(1)",
       }}
@@ -316,7 +316,7 @@ export function OpenGameCard({
               <span style={{ color: sConfig.color, opacity: 0.8 }}>{getSportIcon(game.sport, "w-4 h-4")}</span>
             </div>
             <h3 className="font-display font-bold text-[15px] text-foreground leading-tight truncate">
-              {Math.round(game.slots_total / 2)}-a-side {game.sport}
+              {game.venue}
             </h3>
           </div>
           <div className="shrink-0 opacity-60">
@@ -333,7 +333,7 @@ export function OpenGameCard({
             {turfSurface}
           </span>
           <span className="px-2 py-0.5 rounded-full text-[9px] font-medium text-foreground-soft bg-foreground/5 border border-border/40">
-            {Math.round(game.slots_total / 2)}-a-side
+            {Math.round(game.slots_total / 2)}-a-side {game.sport}
           </span>
         </div>
 
@@ -341,7 +341,7 @@ export function OpenGameCard({
         <div className="flex items-center flex-wrap gap-x-3 gap-y-1 text-foreground-soft/75 text-[11px] font-medium">
           <span className="flex items-center gap-1">
             <MapPin className="h-3 w-3 shrink-0" strokeWidth={1.5} />
-            {game.venue.split(",")[0]}
+            {turfAddress || game.venue}
           </span>
           <span className="flex items-center gap-1">
             <Calendar className="h-3 w-3 shrink-0" strokeWidth={1.5} />

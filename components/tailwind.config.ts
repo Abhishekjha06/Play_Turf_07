@@ -8,8 +8,8 @@ export default {
     container: { center: true, padding: "1rem", screens: { "2xl": "1400px" } },
     extend: {
       fontFamily: {
-        sans: ["Outfit", "system-ui", "sans-serif"],
-        display: ["Outfit", "system-ui", "sans-serif"],
+        sans: ["Plus Jakarta Sans", "system-ui", "sans-serif"],
+        display: ["Plus Jakarta Sans", "system-ui", "sans-serif"],
       },
       fontSize: {
         h1: ["48px", { lineHeight: "1.1", fontWeight: "700" }],
@@ -17,6 +17,16 @@ export default {
         h3: ["22px", { lineHeight: "1.3", fontWeight: "700" }],
         h4: ["18px", { lineHeight: "1.4", fontWeight: "700" }],
         bodySmall: ["14px", { lineHeight: "1.5", fontWeight: "400" }],
+        "hero-title": ["32px", { lineHeight: "40px" }],
+        "screen-title": ["28px", { lineHeight: "36px" }],
+        "section-title": ["24px", { lineHeight: "32px" }],
+        "card-title": ["20px", { lineHeight: "28px" }],
+        "subtitle": ["18px", { lineHeight: "26px" }],
+        "body-lg": ["16px", { lineHeight: "24px" }],
+        "secondary-text": ["14px", { lineHeight: "22px" }],
+        "small-label": ["12px", { lineHeight: "18px" }],
+        "button-text": ["16px", { lineHeight: "20px" }],
+        "nav-text": ["12px", { lineHeight: "16px" }],
       },
       spacing: {
         xs: "var(--spacing-xs, 0.25rem)",

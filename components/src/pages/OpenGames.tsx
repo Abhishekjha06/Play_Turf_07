@@ -388,10 +388,10 @@ const OpenGames = () => {
       {/* Title & Floating Host Trigger */}
       <div className="px-4 mt-6 flex items-center justify-between">
         <div>
-          <h1 className="font-display font-black text-3xl tracking-tight text-foreground bg-gradient-to-r from-white via-slate-200 to-primary bg-clip-text text-transparent">
+          <h1 className="font-display font-black text-3xl tracking-tight text-foreground">
             Open Games
           </h1>
-          <p className="text-textMuted text-xs mt-1 font-medium">Join open slots & split court costs instantly</p>
+          <p className="text-foreground-soft text-xs mt-1 font-medium">Join open slots & split court costs instantly</p>
         </div>
         <button
           onClick={() => setHostModalOpen(true)}
@@ -412,7 +412,7 @@ const OpenGames = () => {
                 className={`px-4 py-2 rounded-full text-xs font-bold transition-all border duration-200 ${
                   selectedSport === sport
                     ? "bg-primary border-transparent text-primary-foreground shadow-neon"
-                    : "bg-surface/50 border-border/60 text-textMuted hover:text-foreground hover:border-primary/40"
+                    : "bg-panel border-border/60 text-foreground-soft hover:text-foreground hover:border-primary/40"
                 } cursor-pointer`}
               >
                 {sport}
@@ -423,7 +423,7 @@ const OpenGames = () => {
           <div className="flex items-center justify-between gap-4 mt-1">
             {/* Distance Slider */}
             <div className="flex-1">
-              <label htmlFor="distance-slider" className="text-[10px] font-black uppercase tracking-widest text-textMuted block mb-1.5">
+              <label htmlFor="distance-slider" className="text-[10px] font-black uppercase tracking-widest text-foreground-soft block mb-1.5">
                 Distance: <span className="text-primary font-bold">{selectedDistance} km</span> radius
               </label>
               <input
@@ -433,13 +433,13 @@ const OpenGames = () => {
                 max="10"
                 value={selectedDistance}
                 onChange={(e) => setSelectedDistance(Number(e.target.value))}
-                className="w-full accent-primary h-1.5 rounded-lg bg-surface border border-border/20 outline-none cursor-pointer"
+                className="w-full accent-primary h-1.5 rounded-lg bg-panel-2 border border-border/20 outline-none cursor-pointer"
               />
             </div>
 
             {/* Date Input */}
             <div className="w-1/2">
-              <label htmlFor="date-filter" className="text-[10px] font-black uppercase tracking-widest text-textMuted block mb-1.5">
+              <label htmlFor="date-filter" className="text-[10px] font-black uppercase tracking-widest text-foreground-soft block mb-1.5">
                 Filter Date
               </label>
               <input
@@ -447,7 +447,7 @@ const OpenGames = () => {
                 type="date"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="w-full app-input text-xs border border-border rounded-xl px-2 py-1.5 text-foreground outline-none focus:border-primary"
+                className="w-full bg-panel text-xs border border-border rounded-xl px-2 py-1.5 text-foreground outline-none focus:border-primary"
               />
             </div>
           </div>
@@ -505,6 +505,7 @@ const OpenGames = () => {
 
             const matchedTurf = turfs.find((t) => t.id === g.turf_id);
             const turfSurface = matchedTurf?.sport_types?.some((s) => s.toLowerCase().includes("indoor")) ? "Indoor" : "Outdoor";
+            const turfAddress = matchedTurf?.address || g.venue;
 
             return (
               <OpenGameCard
@@ -512,6 +513,7 @@ const OpenGames = () => {
                 game={g}
                 turfImage={coverImage}
                 turfSurface={turfSurface}
+                turfAddress={turfAddress}
                 index={i}
                 user={user}
                 onCardClick={() => setManageGame(g)}
