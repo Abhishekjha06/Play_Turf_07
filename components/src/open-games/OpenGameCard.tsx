@@ -315,7 +315,7 @@ export function OpenGameCard({
             <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: sConfig.bg, border: `1px solid ${sConfig.border}` }}>
               <span style={{ color: sConfig.color, opacity: 0.8 }}>{getSportIcon(game.sport, "w-4 h-4")}</span>
             </div>
-            <h3 className="font-display font-bold text-[15px] text-foreground leading-tight truncate">
+            <h3 className="font-display font-bold text-[15px] text-foreground leading-tight line-clamp-2 break-words min-w-0">
               {game.venue}
             </h3>
           </div>
@@ -338,27 +338,27 @@ export function OpenGameCard({
         </div>
 
         {/* Venue + metadata */}
-        <div className="flex items-center flex-wrap gap-x-3 gap-y-1 text-foreground-soft/75 text-[11px] font-medium">
-          <span className="flex items-center gap-1">
-            <MapPin className="h-3 w-3 shrink-0" strokeWidth={1.5} />
-            {turfAddress || game.venue}
+        <div className="flex items-baseline flex-wrap gap-x-3 gap-y-1 text-foreground-soft/75 text-[11px] font-medium">
+          <span className="flex items-baseline gap-1 min-w-0">
+            <MapPin className="h-3 w-3 shrink-0 self-center" strokeWidth={1.5} />
+            <span className="break-words">{turfAddress || game.venue}</span>
           </span>
-          <span className="flex items-center gap-1">
-            <Calendar className="h-3 w-3 shrink-0" strokeWidth={1.5} />
-            {game.date === getLocalDateString() ? "Today" : game.date}
+          <span className="flex items-baseline gap-1 min-w-0">
+            <Calendar className="h-3 w-3 shrink-0 self-center" strokeWidth={1.5} />
+            <span className="break-words">{game.date === getLocalDateString() ? "Today" : game.date}</span>
           </span>
-          <span className="flex items-center gap-1">
-            <Clock className="h-3 w-3 shrink-0" strokeWidth={1.5} />
-            {game.time}
+          <span className="flex items-baseline gap-1 min-w-0">
+            <Clock className="h-3 w-3 shrink-0 self-center" strokeWidth={1.5} />
+            <span className="break-words">{game.time}</span>
           </span>
-          <span className="flex items-center gap-1">
-            <Timer className="h-3 w-3 shrink-0" strokeWidth={1.5} />
-            {game.duration_hours ? game.duration_hours * 60 : 60}m
+          <span className="flex items-baseline gap-1 min-w-0">
+            <Timer className="h-3 w-3 shrink-0 self-center" strokeWidth={1.5} />
+            <span className="break-words">{game.duration_hours ? game.duration_hours * 60 : 60}m</span>
           </span>
           {!isCancelled && !isFull && (
-            <span className="flex items-center gap-1 font-medium text-foreground-soft/80">
-              <Clock className="h-3 w-3 shrink-0" strokeWidth={1.5} />
-              Starts in {timeUntil}
+            <span className="flex items-baseline gap-1 font-medium text-foreground-soft/80 min-w-0">
+              <Clock className="h-3 w-3 shrink-0 self-center" strokeWidth={1.5} />
+              <span className="break-words">Starts in {timeUntil}</span>
             </span>
           )}
         </div>
@@ -380,21 +380,21 @@ export function OpenGameCard({
 
         {/* Host + price */}
         <div className="flex items-center justify-between rounded-xl p-2.5 bg-panel border border-border/40">
-          <div className="flex items-center gap-2 min-w-0">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
             {hostAvatar || (
               <div className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm shrink-0 text-primary-foreground" style={{ backgroundColor: sConfig.color }}>
                 {game.host_name.charAt(0).toUpperCase()}
               </div>
             )}
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <p className="text-[9px] text-foreground-muted uppercase leading-none tracking-wider font-bold">Host</p>
               <p className="text-xs font-bold text-foreground mt-0.5 truncate">{game.host_name}</p>
               <p className="text-[10px] text-foreground-soft font-medium mt-0.5 flex items-center gap-0.5">
-                <CheckCircle className="h-3 w-3 text-emerald-500/80" /> Verified
+                <CheckCircle className="h-3 w-3 text-emerald-500/80 shrink-0" /> Verified
               </p>
             </div>
           </div>
-          <div className="text-right shrink-0">
+          <div className="text-right shrink-0 ml-2">
             <p className="text-[9px] text-foreground-muted uppercase leading-none tracking-wider font-bold">Share</p>
             <p className="text-lg font-black mt-0.5 text-primary">₹{game.price_per_slot}</p>
           </div>
@@ -447,10 +447,10 @@ export function OpenGameCard({
             style={{ backgroundColor: "rgba(245, 158, 11, 0.05)", border: "1px solid rgba(245, 158, 11, 0.15)" }}
           >
             <AlertCircle className="h-4 w-4 text-amber-500/60 shrink-0" />
-            <span className="text-xs font-medium text-amber-400/70">
+            <span className="text-xs font-medium text-amber-400/70 truncate break-words flex-1 min-w-0">
               {pendingRequests.length} request{pendingRequests.length > 1 ? "s" : ""} awaiting approval
             </span>
-            <ChevronRight className="h-4 w-4 text-amber-500/50 ml-auto" />
+            <ChevronRight className="h-4 w-4 text-amber-500/50 ml-auto shrink-0" />
           </button>
         )}
       </div>

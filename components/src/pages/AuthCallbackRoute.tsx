@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getSupabase, withTimeout } from "@/lib/supabase";
+import { refreshUser } from "@/lib/auth";
 
 export default function AuthCallbackRoute() {
   const navigate = useNavigate();
@@ -11,6 +12,16 @@ export default function AuthCallbackRoute() {
       try {
         const supabase = await getSupabase();
         if (supabase) {
+          // 1. If Supabase returned an auth code in the URL, exchange it first.
+          const params = new URLSearchParams(window.location.search);
+          const code = params.get("code");
+          if (code) {
+            await supabase.auth.exchangeCodeForSession(code);
+          }
+
+          // 2. Refresh local auth store so every subscriber sees the user
+          await refreshUser();
+
           const { data, error } = await withTimeout(supabase.auth.getSession());
           if (data.session) {
             // Fetch profile and check role

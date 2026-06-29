@@ -761,12 +761,12 @@ const OpenGames = () => {
                             p.payment_status === "approved" ? "border-amber-500/30 bg-amber-500/5" : "border-border"
                           }`}
                         >
-                          <img src={p.avatar} alt={p.name} className="w-4 h-4 rounded-full" />
-                          <span className="text-[11px] font-bold text-foreground">{p.name.split(" ")[0]}</span>
-                          {p.is_host && <span className="text-[8px] text-primary font-black">HOST</span>}
+                          <img src={p.avatar} alt={p.name} className="w-4 h-4 rounded-full shrink-0" />
+                          <span className="text-[11px] font-bold text-foreground truncate max-w-[100px]">{p.name.split(" ")[0]}</span>
+                          {p.is_host && <span className="text-[8px] text-primary font-black shrink-0">HOST</span>}
                           {p.payment_status === "approved" && (
                             <>
-                              <span className="text-[8px] text-amber-400 font-black">UNPAID</span>
+                              <span className="text-[8px] text-amber-400 font-black shrink-0">UNPAID</span>
                               {youAreHost && (
                                 <button
                                   onClick={(e) => {
@@ -775,7 +775,7 @@ const OpenGames = () => {
                                       handleReject(manageGame.id, p.id!);
                                     }
                                   }}
-                                  className="p-0.5 hover:bg-muted rounded-full cursor-pointer text-red-400 hover:text-red-300 border-none bg-transparent flex items-center justify-center ml-1"
+                                  className="p-0.5 hover:bg-muted rounded-full cursor-pointer text-red-400 hover:text-red-300 border-none bg-transparent flex items-center justify-center ml-1 shrink-0"
                                   title="Remove approval"
                                 >
                                   <X className="h-3 w-3" />
@@ -799,9 +799,9 @@ const OpenGames = () => {
                         key={p.id}
                         className="flex items-center justify-between bg-amber-500/5 border border-amber-500/20 rounded-2xl px-3 py-2"
                       >
-                        <div className="flex items-center gap-2">
-                          <img src={p.avatar} alt={p.name} className="w-6 h-6 rounded-full" />
-                          <span className="text-xs font-bold text-foreground">{p.name}</span>
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          <img src={p.avatar} alt={p.name} className="w-6 h-6 rounded-full shrink-0" />
+                          <span className="text-xs font-bold text-foreground truncate max-w-[140px]">{p.name}</span>
                         </div>
                         <div className="flex items-center gap-1.5">
                           <button

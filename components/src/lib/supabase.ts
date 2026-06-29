@@ -15,7 +15,13 @@ export async function getSupabase(): Promise<SupabaseClient> {
     }
 
     try {
-        _client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        _client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            auth: {
+                autoRefreshToken: true,
+                persistSession: true,
+                detectSessionInUrl: true,
+            },
+        });
         return _client;
     } catch (err) {
         console.error("Failed to initialize Supabase client:", err);
@@ -43,7 +49,7 @@ export async function requireSupabase(): Promise<SupabaseClient> {
  * Wraps a promise with a timeout. If the promise doesn't resolve in the given milliseconds,
  * it rejects with a timeout error.
  */
-export function withTimeout<T>(promise: Promise<T>, ms = 1500): Promise<T> {
+export function withTimeout<T>(promise: Promise<T>, ms = 8000): Promise<T> {
     return new Promise<T>((resolve, reject) => {
         const timer = setTimeout(() => {
             reject(new Error("Supabase query timed out"));

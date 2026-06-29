@@ -373,6 +373,39 @@
   .text-balance {
     text-wrap: balance;
   }
+
+  /* ── Line-clamp fallback for mobile safety ──────────────────── */
+  .line-clamp-1 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+  }
+  .line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  /* ── Text-safe overflow for tiny labels on narrow screens ──── */
+  .text-safe {
+    overflow-wrap: break-word;
+    word-break: break-word;
+    hyphens: auto;
+  }
+
+  .min-w-0 {
+    min-width: 0;
+  }
+
+  .break-words {
+    overflow-wrap: break-word;
+  }
+
+  .shrink-0 {
+    flex-shrink: 0;
+  }
 }
 
 @keyframes confetti {

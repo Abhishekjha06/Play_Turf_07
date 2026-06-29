@@ -5,7 +5,33 @@ import { me } from "./auth";
 import { distanceKm } from "./turfs";
 
 async function assertUser() {
-  const currentUser = await me();
+  let currentUser = await me();
+  if (!currentUser) {
+    // Fallback: try getSession directly in case getUser() is slow
+    const supabase = await getSupabase();
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const u = session.user;
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role, full_name, phone")
+          .eq("id", u.id)
+          .maybeSingle();
+        const userRole = profile?.role || "user";
+        currentUser = {
+          user_id: u.id,
+          email: u.email || "",
+          name: profile?.full_name || u.user_metadata?.full_name || u.user_metadata?.name || "Player",
+          picture: u.user_metadata?.avatar_url || u.user_metadata?.picture || "",
+          is_admin: userRole === "super_admin" || userRole === "admin",
+          role: userRole,
+        };
+      }
+    } catch (e) {
+      console.warn("assertUser getSession fallback failed:", e);
+    }
+  }
   if (!currentUser) {
     throw new Error("Authentication required. Please sign in.");
   }
@@ -122,8 +148,20 @@ export async function hostOpenGame(payload: CreateGamePayload): Promise<{ game: 
     p_lng: payload.lng ?? turf?.lng ?? null,
   });
 
-  if (error) throw new Error(error.message);
-  if (!result?.ok) throw new Error(result?.reason || "Failed to create game.");
+  if (error) {
+    const msg = error.message || "";
+    if (msg.toLowerCase().includes("duplicate") || msg.toLowerCase().includes("unique_active_booking")) {
+      throw new Error("This slot has already been booked.");
+    }
+    throw new Error(msg);
+  }
+  if (!result?.ok) {
+    const reason = result?.reason || "Failed to create game.";
+    if (reason.toLowerCase().includes("duplicate") || reason.toLowerCase().includes("already booked")) {
+      throw new Error("This slot has already been booked.");
+    }
+    throw new Error(reason);
+  }
 
   const gameId: string = result.game_id;
   const realBookingId: string | null = result.booking_id ?? null;
@@ -195,8 +233,20 @@ export async function joinOpenGame(gameId: string, paymentMethod = "UPI"): Promi
     p_payment_method: paymentMethod,
   });
 
-  if (error) throw new Error(error.message);
-  if (!result?.ok) throw new RpcError(result?.reason || "Failed to join game.");
+  if (error) {
+    const msg = error.message || "";
+    if (msg.toLowerCase().includes("duplicate") || msg.toLowerCase().includes("unique_active_booking")) {
+      throw new Error("This slot has already been booked.");
+    }
+    throw new Error(msg);
+  }
+  if (!result?.ok) {
+    const reason = result?.reason || "Failed to join game.";
+    if (reason.toLowerCase().includes("duplicate") || reason.toLowerCase().includes("already booked")) {
+      throw new Error("This slot has already been booked.");
+    }
+    throw new RpcError(reason);
+  }
 
   const bookingId: string | null = result.booking_id ?? null;
   const game = await getOpenGame(gameId);

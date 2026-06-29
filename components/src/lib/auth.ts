@@ -25,15 +25,10 @@ export function isLoading() { return _loading; }
 export async function refreshUser() {
   _loading = true; emit();
 
-  // Resolve the user purely from the real Supabase session. We intentionally
-  // do NOT read the localStorage mock user ("playturf:user") here — that was a
-  // fake identity with no real auth.uid(), which made every write RPC
-  // (host/join/leave) silently no-op or get blocked by RLS. A logged-out user
-  // is simply `null`; the UI's !user guards then redirect to /login.
   try {
     const supabase = await getSupabase();
     if (supabase) {
-      const { data: { user }, error: authError } = await withTimeout(supabase.auth.getUser());
+      const { data: { user }, error: authError } = await withTimeout(supabase.auth.getUser(), 8000);
       if (authError) throw authError;
 
       if (user) {
@@ -42,7 +37,8 @@ export async function refreshUser() {
             .from("profiles")
             .select("role")
             .eq("id", user.id)
-            .single()
+            .single(),
+          8000
         );
 
         const userRole = profile?.role || "user";

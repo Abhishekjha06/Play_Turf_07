@@ -46,6 +46,26 @@ export async function createBooking(
   const userId = user ? user.id : (u?.user_id || 'mock_user');
   const turf = await getTurfById(payload.turf_id);
   
+  // ── VALIDATION: prevent duplicate active bookings for same slot
+  const [startHour] = payload.start_time.split(":").map(Number);
+  for (let i = 0; i < payload.hours; i++) {
+    const checkHour = String(startHour + i).padStart(2, "0");
+    const checkTime = `${checkHour}:${String(slotM).padStart(2, "0")}`;
+    const { data: existing, error: dupErr } = await supabase
+      .from("bookings")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("turf_id", turf.id)
+      .eq("date", payload.date)
+      .eq("start_time", checkTime)
+      .neq("status", "CANCELLED")
+      .maybeSingle();
+    if (dupErr) console.warn("Duplicate check query error:", dupErr);
+    if (existing) {
+      throw new Error("You already have an active booking for this slot.");
+    }
+  }
+  
   const bookingsToInsert: Booking[] = [];
   const mainBookingId = uid("bkg");
   const [h, m] = payload.start_time.split(":").map(Number);
@@ -73,7 +93,13 @@ export async function createBooking(
   }
   
   const { error } = await supabase.from("bookings").insert(bookingsToInsert);
-  if (error) throw error;
+  if (error) {
+    const msg = error.message || "";
+    if (msg.toLowerCase().includes("duplicate") || msg.toLowerCase().includes("unique_active_booking")) {
+      throw new Error("This slot has already been booked.");
+    }
+    throw error;
+  }
   return bookingsToInsert[0];
 }
 
