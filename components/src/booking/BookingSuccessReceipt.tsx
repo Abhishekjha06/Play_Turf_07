@@ -1,5 +1,5 @@
 import React, { ReactNode, useState, useEffect } from "react";
-import { Download, Share2, Check, Copy, Calendar, X, AlertCircle, RefreshCw, BadgeAlert } from "lucide-react";
+import { Download, Share2, Check, Copy, Calendar, X, AlertCircle, RefreshCw, BadgeAlert, Ticket } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { TeamAvatar } from "@/cricket/components/TeamAvatar";
 import { VsBadge } from "@/cricket/components/VsBadge";
@@ -8,6 +8,9 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { api } from "@/lib/api";
+import { useAuth } from "@/hooks/use-auth";
+import { BookingTicket } from "@/booking/BookingTicket";
+import { useBookingTicket } from "@/hooks/useBookingTicket";
 import playTurfLogo from "../assets/play-turf-logo.png";
 
 interface BookingSuccessReceiptProps {
@@ -135,6 +138,9 @@ export function BookingSuccessReceipt({
     const [currentVerifyStep, setCurrentVerifyStep] = useState(0);
     const [countdownSeconds, setCountdownSeconds] = useState(900); // 15 mins
     const [isCancelling, setIsCancelling] = useState(false);
+    const [showTicket, setShowTicket] = useState(false);
+    const { user } = useAuth();
+    const { ticketRef, downloadPDF, shareTicket, isGenerating } = useBookingTicket();
 
     // Compute duration & slot hours
     const durationHours = Math.max(1, Math.round(total / turf.price_per_hour));
@@ -441,8 +447,23 @@ export function BookingSuccessReceipt({
                                 </div>
 
                                 <div className="mt-6 flex flex-col sm:flex-row gap-3">
-                                    <ReceiptButton onClick={() => downloadReceipt(booking, cricket, turf, total)} label="Download Receipt" icon={Download} primary />
-                                    <ReceiptButton onClick={() => shareReceipt(booking, cricket, turf, total)} label="Share Booking" icon={Share2} />
+                                    <ReceiptButton onClick={() => setShowTicket(true)} label="View Premium Ticket" icon={Ticket} primary />
+                                    <ReceiptButton onClick={() => shareTicket({
+                                        bookingId: booking.id,
+                                        turfName: turf.name,
+                                        sport: turf.sport_types?.[0] || "Football",
+                                        date: booking.date,
+                                        startTime: booking.start_time,
+                                        endTime: end_time_str,
+                                        duration: durationHours,
+                                        amount: total,
+                                        status: booking.status,
+                                        paymentId: booking.payment_id,
+                                        playerName: user?.name || "Player",
+                                        address: turf.address,
+                                        paymentMethod: cricket.state?.paymentMethod || "UPI",
+                                        bookedAt: booking.created_at,
+                                    })} label="Share Booking" icon={Share2} />
                                     <a
                                         href={getGoogleCalendarUrl()}
                                         target="_blank"
@@ -528,12 +549,77 @@ export function BookingSuccessReceipt({
                     style={{ borderColor: "var(--border-primary)" }}
                 >
                     <div className="mx-auto grid grid-cols-4 gap-2.5">
-                        <button onClick={() => downloadReceipt(booking, cricket, turf, total)} className="pressable rounded-xl bg-gradient-neon text-primary-foreground font-black text-[9px] uppercase py-2.5 shadow-neon">Receipt</button>
-                        <button onClick={() => shareReceipt(booking, cricket, turf, total)} className="pressable rounded-xl border border-border bg-panel text-foreground font-black text-[9px] uppercase py-2.5" style={{ borderColor: "var(--border-primary)" }}>Share</button>
+                        <button onClick={() => setShowTicket(true)} className="pressable rounded-xl bg-gradient-neon text-primary-foreground font-black text-[9px] uppercase py-2.5 shadow-neon">Ticket</button>
+                        <button onClick={() => shareTicket({
+                            bookingId: booking.id,
+                            turfName: turf.name,
+                            sport: turf.sport_types?.[0] || "Football",
+                            date: booking.date,
+                            startTime: booking.start_time,
+                            endTime: end_time_str,
+                            duration: durationHours,
+                            amount: total,
+                            status: booking.status,
+                            paymentId: booking.payment_id,
+                            playerName: user?.name || "Player",
+                            address: turf.address,
+                            paymentMethod: cricket.state?.paymentMethod || "UPI",
+                            bookedAt: booking.created_at,
+                        })} className="pressable rounded-xl border border-border bg-panel text-foreground font-black text-[9px] uppercase py-2.5" style={{ borderColor: "var(--border-primary)" }}>Share</button>
                         <button onClick={() => navigate("/")} className="pressable rounded-xl border border-border bg-panel text-foreground font-black text-[9px] uppercase py-2.5" style={{ borderColor: "var(--border-primary)" }}>Home</button>
                         <button onClick={() => navigate(`/booking/new/${turf.id}`)} className="pressable rounded-xl bg-gradient-neon text-primary-foreground font-black text-[9px] uppercase py-2.5 shadow-neon">Book New</button>
                     </div>
                 </div>
+            )}
+            {showTicket && (
+                <AnimatePresence>
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md overflow-y-auto p-4"
+                    >
+                        <div className="max-w-lg mx-auto">
+                            <div className="flex items-center justify-between mb-4 sticky top-0 z-10 py-2">
+                                <h3 className="text-lg font-bold text-white">Your Booking Ticket</h3>
+                                <button
+                                    onClick={() => setShowTicket(false)}
+                                    className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition cursor-pointer border-none"
+                                >
+                                    <X className="w-5 h-5 text-white" />
+                                </button>
+                            </div>
+                            <BookingTicket
+                                ref={ticketRef}
+                                booking={booking}
+                                turf={turf}
+                                user={user ? { name: user.name, email: user.email } : undefined}
+                                onDownload={() => {
+                                    if (ticketRef.current) {
+                                        downloadPDF(ticketRef.current, `PlayTurf-Booking-${booking.id}`);
+                                    }
+                                }}
+                                onShare={() => shareTicket({
+                                    bookingId: booking.id,
+                                    turfName: turf.name,
+                                    sport: turf.sport_types?.[0] || "Football",
+                                    date: booking.date,
+                                    startTime: booking.start_time,
+                                    endTime: end_time_str,
+                                    duration: durationHours,
+                                    amount: total,
+                                    status: booking.status,
+                                    paymentId: booking.payment_id,
+                                    playerName: user?.name || "Player",
+                                    address: turf.address,
+                                    paymentMethod: cricket.state?.paymentMethod || "UPI",
+                                    bookedAt: booking.created_at,
+                                })}
+                                isGenerating={isGenerating}
+                            />
+                        </div>
+                    </motion.div>
+                </AnimatePresence>
             )}
         </motion.div>
     );

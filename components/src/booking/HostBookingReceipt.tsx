@@ -1,9 +1,12 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
-import { Check, Download, Share2, Copy, MapPin, Calendar, Clock, Timer, CreditCard, Shield, User } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Check, Download, Share2, Copy, MapPin, Calendar, Clock, Timer, CreditCard, Shield, User, Ticket, X } from "lucide-react";
 import { toast } from "sonner";
 import type { Booking } from "@/data/seed";
 import type { OpenGame } from "@/types/openGames";
+import { useAuth } from "@/hooks/use-auth";
+import { BookingTicket } from "@/booking/BookingTicket";
+import { useBookingTicket } from "@/hooks/useBookingTicket";
 
 /* ────────────────────────────────────────────────────────────── */
 
@@ -70,6 +73,9 @@ const receiptText = (booking: Booking, game: OpenGame) => {
 
 export function HostBookingReceipt({ booking, game, onClose }: HostBookingReceiptProps) {
   const [copied, setCopied] = useState(false);
+  const [showTicket, setShowTicket] = useState(false);
+  const { user } = useAuth();
+  const { ticketRef, downloadPDF, shareTicket, isGenerating } = useBookingTicket();
 
   const handleCopy = () => {
     navigator.clipboard.writeText(receiptText(booking, game));
@@ -221,14 +227,31 @@ export function HostBookingReceipt({ booking, game, onClose }: HostBookingReceip
         {/* Actions */}
         <div className="grid grid-cols-3 gap-2">
           <button
-            onClick={handleDownload}
+            onClick={() => setShowTicket(true)}
             className="py-2.5 rounded-lg font-bold text-[10px] uppercase tracking-wider flex items-center justify-center gap-1.5 transition"
-            style={{ backgroundColor: "#111111", color: "rgba(255,255,255,0.6)", border: "1px solid rgba(255,255,255,0.08)" }}
+            style={{ background: "linear-gradient(135deg, #14b8a6, #0d9488)", color: "#ffffff", border: "none" }}
           >
-            <Download className="h-3.5 w-3.5" /> Download
+            <Ticket className="h-3.5 w-3.5" /> Ticket
           </button>
           <button
-            onClick={handleShare}
+            onClick={() => shareTicket({
+              bookingId: booking.id,
+              turfName: booking.turf_name,
+              sport: game.sport,
+              date: booking.date,
+              startTime: booking.start_time,
+              endTime: booking.end_time,
+              duration: booking.hours,
+              amount: booking.amount,
+              status: booking.status,
+              paymentId: booking.payment_id,
+              playerName: user?.name || game.host_name,
+              hostName: game.host_name,
+              address: game.venue,
+              paymentMethod: "Host Booking",
+              slots: `${game.slots_total}`,
+              bookedAt: booking.created_at,
+            })}
             className="py-2.5 rounded-lg font-bold text-[10px] uppercase tracking-wider flex items-center justify-center gap-1.5 transition"
             style={{ backgroundColor: "#111111", color: "rgba(255,255,255,0.6)", border: "1px solid rgba(255,255,255,0.08)" }}
           >
@@ -255,6 +278,60 @@ export function HostBookingReceipt({ booking, game, onClose }: HostBookingReceip
           </div>
         </div>
       </div>
+
+      {/* Premium Ticket Modal */}
+      {showTicket && (
+        <AnimatePresence>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md overflow-y-auto p-4"
+          >
+            <div className="max-w-lg mx-auto">
+              <div className="flex items-center justify-between mb-4 sticky top-0 z-10 py-2">
+                <h3 className="text-lg font-bold text-white">Your Booking Ticket</h3>
+                <button
+                  onClick={() => setShowTicket(false)}
+                  className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition cursor-pointer border-none"
+                >
+                  <X className="w-5 h-5 text-white" />
+                </button>
+              </div>
+              <BookingTicket
+                ref={ticketRef}
+                booking={booking}
+                game={game}
+                user={user ? { name: user.name || game.host_name, email: user.email } : { name: game.host_name }}
+                onDownload={() => {
+                  if (ticketRef.current) {
+                    downloadPDF(ticketRef.current, `PlayTurf-Host-${booking.id}`);
+                  }
+                }}
+                onShare={() => shareTicket({
+                  bookingId: booking.id,
+                  turfName: booking.turf_name,
+                  sport: game.sport,
+                  date: booking.date,
+                  startTime: booking.start_time,
+                  endTime: booking.end_time,
+                  duration: booking.hours,
+                  amount: booking.amount,
+                  status: booking.status,
+                  paymentId: booking.payment_id,
+                  playerName: user?.name || game.host_name,
+                  hostName: game.host_name,
+                  address: game.venue,
+                  paymentMethod: "Host Booking",
+                  slots: `${game.slots_total}`,
+                  bookedAt: booking.created_at,
+                })}
+                isGenerating={isGenerating}
+              />
+            </div>
+          </motion.div>
+        </AnimatePresence>
+      )}
     </motion.div>
   );
 }
