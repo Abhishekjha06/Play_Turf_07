@@ -6,8 +6,12 @@ import {
 } from "lucide-react";
 import type { Booking } from "@/data/seed";
 import type { OpenGame } from "@/types/openGames";
-import playturfLogoFull from "@/assets/playturf-logo-full.jpg";
-import playturfLogoMark from "@/assets/playturf-logo-mark.png";
+
+/* Logo paths from public/ — referenced at runtime, not imported at build time.
+ * This prevents Vite build failures if the file is missing in the repo.
+ */
+const LOGO_FULL = "/playturf-logo.png";
+const LOGO_MARK = "/playturf-logo.png"; /* fallback to same logo if mark variant unavailable */
 
 export interface BookingTicketProps {
   booking: Booking;
@@ -173,8 +177,11 @@ export const BookingTicket = React.forwardRef<HTMLDivElement, BookingTicketProps
         {/* ═══════════════════════ TOP LOGO ═══════════════════════ */}
         <div className="text-center mb-5">
           <img
-            src={playturfLogoFull}
+            src={LOGO_FULL}
             alt="PlayTurf"
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = "none";
+            }}
             style={{ height: "60px", width: "auto", objectFit: "contain", margin: "0 auto" }}
             crossOrigin="anonymous"
           />
@@ -342,8 +349,11 @@ export const BookingTicket = React.forwardRef<HTMLDivElement, BookingTicketProps
           }}
         >
           <img
-            src={playturfLogoMark}
+            src={LOGO_MARK}
             alt="PlayTurf"
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = "none";
+            }}
             style={{ height: "40px", width: "auto", objectFit: "contain", margin: "0 auto 10px" }}
             crossOrigin="anonymous"
           />
