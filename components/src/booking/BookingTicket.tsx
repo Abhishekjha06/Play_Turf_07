@@ -7,11 +7,12 @@ import {
 import type { Booking } from "@/data/seed";
 import type { OpenGame } from "@/types/openGames";
 
-/* Logo paths from public/ — referenced at runtime, not imported at build time.
+/* Logo paths — referenced at runtime, not imported at build time.
  * This prevents Vite build failures if the file is missing in the repo.
  */
 const LOGO_FULL = "/playturf-logo.png";
-const LOGO_MARK = "/playturf-logo.png"; /* fallback to same logo if mark variant unavailable */
+/* Second logo (teal P mark) from external CDN with local fallback */
+const LOGO_MARK = "https://compulsory-red-bcsumray.edgeone.dev/image%20(1).png";
 
 export interface BookingTicketProps {
   booking: Booking;
@@ -92,15 +93,15 @@ function SectionCard({ title, icon: Icon, children, accent = "#14b8a6" }: {
         marginBottom: "12px",
       }}
     >
-      <div className="flex items-center gap-2 mb-3">
+      <div className="flex items-center gap-2.5 mb-3">
         <div
-          className="w-7 h-7 rounded-lg flex items-center justify-center"
+          className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
           style={{ backgroundColor: `${accent}15` }}
         >
           <Icon className="w-4 h-4" style={{ color: accent }} />
         </div>
         <p
-          className="text-[10px] font-black uppercase tracking-[0.2em]"
+          className="text-[10px] font-black uppercase tracking-[0.2em] leading-none"
           style={{ color: accent }}
         >
           {title}
@@ -121,13 +122,13 @@ function DetailRow({ icon: Icon, label, value, highlight = false, valueColor }: 
   valueColor?: string;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 py-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-      <div className="flex items-center gap-2">
-        <Icon className="w-3.5 h-3.5" style={{ color: "rgba(255,255,255,0.3)" }} />
-        <span className="text-xs font-medium" style={{ color: "rgba(255,255,255,0.5)" }}>{label}</span>
+    <div className="flex items-baseline justify-between gap-3 py-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+      <div className="flex items-baseline gap-2 min-w-0 flex-1">
+        <Icon className="w-3.5 h-3.5 self-center shrink-0" style={{ color: "rgba(255,255,255,0.3)" }} />
+        <span className="text-xs font-medium whitespace-nowrap" style={{ color: "rgba(255,255,255,0.5)" }}>{label}</span>
       </div>
       <span
-        className="text-xs font-bold text-right"
+        className="text-xs font-bold text-right break-words max-w-[55%]"
         style={{
           color: valueColor || (highlight ? "#14b8a6" : "rgba(255,255,255,0.85)"),
         }}
@@ -145,7 +146,7 @@ export const BookingTicket = React.forwardRef<HTMLDivElement, BookingTicketProps
     const status = statusConfig[booking.status] || statusConfig.PENDING;
     const StatusIcon = status.icon;
 
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(
       qrData || `PlayTurf|Verify|${booking.id}|${booking.turf_name}|${booking.date}|${booking.start_time}`
     )}`;
 
@@ -203,7 +204,7 @@ export const BookingTicket = React.forwardRef<HTMLDivElement, BookingTicketProps
             Your Ticket is Ready
           </h1>
 
-          <div className="flex items-center justify-center gap-4 flex-wrap">
+          <div className="flex items-center justify-center gap-3 flex-wrap">
             {/* Status Badge */}
             <div
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider"
@@ -215,23 +216,30 @@ export const BookingTicket = React.forwardRef<HTMLDivElement, BookingTicketProps
 
             {/* QR Code */}
             <div
-              className="w-16 h-16 rounded-lg overflow-hidden"
-              style={{ border: "1px solid rgba(255,255,255,0.08)" }}
+              className="w-20 h-20 rounded-xl overflow-hidden shrink-0"
+              style={{
+                border: "2px solid rgba(255,255,255,0.1)",
+                backgroundColor: "#ffffff",
+                padding: "4px",
+              }}
             >
               <img
                 src={qrUrl}
                 alt="QR Code"
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain"
                 crossOrigin="anonymous"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = "none";
+                }}
               />
             </div>
 
             {/* Booking ID */}
-            <div className="text-left">
-              <p className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.3)" }}>
+            <div className="text-left min-w-0">
+              <p className="text-[9px] font-bold uppercase tracking-wider mb-0.5" style={{ color: "rgba(255,255,255,0.3)" }}>
                 Booking ID
               </p>
-              <p className="text-xs font-mono font-bold" style={{ color: "rgba(255,255,255,0.7)" }}>
+              <p className="text-xs font-mono font-bold break-all" style={{ color: "rgba(255,255,255,0.7)", maxWidth: "140px" }}>
                 {booking.id}
               </p>
             </div>
@@ -352,7 +360,10 @@ export const BookingTicket = React.forwardRef<HTMLDivElement, BookingTicketProps
             src={LOGO_MARK}
             alt="PlayTurf"
             onError={(e) => {
-              (e.target as HTMLImageElement).style.display = "none";
+              /* Fallback to local logo if CDN fails */
+              const target = e.target as HTMLImageElement;
+              target.src = "/playturf-logo.png";
+              target.onerror = () => { target.style.display = "none"; };
             }}
             style={{ height: "40px", width: "auto", objectFit: "contain", margin: "0 auto 10px" }}
             crossOrigin="anonymous"

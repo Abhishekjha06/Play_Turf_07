@@ -29,7 +29,7 @@ export function useBookingTicket() {
 
   const captureElement = useCallback(async (element: HTMLElement): Promise<string> => {
     const canvas = await html2canvas(element, {
-      scale: 3,
+      scale: 1.5,          /* lower scale = much smaller PDF (was 3, now 1.5) */
       useCORS: true,
       allowTaint: true,
       backgroundColor: "#0a0a0a",
@@ -45,7 +45,8 @@ export function useBookingTicket() {
         }
       },
     });
-    return canvas.toDataURL("image/png", 1.0);
+    /* JPEG at 0.85 quality = ~5-10x smaller than PNG lossless */
+    return canvas.toDataURL("image/jpeg", 0.85);
   }, []);
 
   const downloadPDF = useCallback(async (element?: HTMLElement, filename?: string) => {
@@ -75,7 +76,7 @@ export function useBookingTicket() {
       const scaledHeight = imgHeight * scale;
 
       if (scaledHeight <= pageHeight - margin * 2) {
-        pdf.addImage(imgData, "PNG", margin, margin, availableWidth, scaledHeight);
+        pdf.addImage(imgData, "JPEG", margin, margin, availableWidth, scaledHeight);
       } else {
         let position = margin;
         let sourceY = 0;
@@ -96,10 +97,10 @@ export function useBookingTicket() {
               0, sourceY, imgWidth, sliceHeight,
               0, 0, imgWidth, sliceHeight
             );
-            const sliceData = canvasSlice.toDataURL("image/png");
+            const sliceData = canvasSlice.toDataURL("image/jpeg", 0.85);
             pdf.addImage(
               sliceData,
-              "PNG",
+              "JPEG",
               margin,
               position,
               availableWidth,
