@@ -191,18 +191,6 @@ BEGIN
         RETURN jsonb_build_object('ok', false, 'reason', 'This game is already full.');
     END IF;
 
-    -- Pre-check: duplicate active booking on this slot (non-split)
-    IF EXISTS (
-        SELECT 1 FROM public.bookings
-        WHERE turf_id = v_game.turf_id
-          AND date = v_game.date
-          AND start_time = v_game.time
-          AND status != 'CANCELLED'
-          AND is_split_booking = false
-    ) THEN
-        RETURN jsonb_build_object('ok', false, 'reason', 'This slot has already been booked.');
-    END IF;
-
     v_start_ts   := (v_game.date || ' ' || v_game.time)::timestamp;
     v_end_time   := to_char(v_start_ts + (v_game.duration_hours || ' hours')::interval, 'HH24:MI');
     v_booking_id := 'bkg_' || extract(epoch from now())::bigint::text || '_' || floor(random()*10000)::int::text;
@@ -230,7 +218,7 @@ BEGIN
 
     RETURN jsonb_build_object('ok', true, 'booking_id', v_booking_id);
 EXCEPTION WHEN OTHERS THEN
-    RETURN jsonb_build_object('ok', false, 'reason', 'This slot has already been booked or an error occurred.');
+    RETURN jsonb_build_object('ok', false, 'reason', COALESCE(SQLERRM, 'An unexpected error occurred. Please try again.'));
 END;
 $func$;
 
