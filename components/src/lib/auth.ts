@@ -28,18 +28,20 @@ export async function refreshUser() {
   try {
     const supabase = await getSupabase();
     if (supabase) {
-      const { data: { user }, error: authError } = await withTimeout(supabase.auth.getUser(), 8000);
-      if (authError) throw authError;
-
-      if (user) {
-        const { data: profile } = await withTimeout(
+      // 1. Try getSession() FIRST — reads from localStorage instantly, no network call.
+      //    This is the fastest way to recover a persisted session on page refresh.
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const user = session.user;
+        const { data: profile, error: profileErr } = await withTimeout(
           supabase
             .from("profiles")
             .select("role")
             .eq("id", user.id)
-            .single(),
+            .maybeSingle(),
           8000
         );
+        if (profileErr) console.warn("Profile fetch error (session fallback):", profileErr);
 
         const userRole = profile?.role || "user";
 
@@ -53,6 +55,39 @@ export async function refreshUser() {
         };
         _loading = false; emit();
         return;
+      }
+
+      // 2. No session in localStorage — validate with server via getUser()
+      try {
+        const { data: { user }, error: authError } = await withTimeout(supabase.auth.getUser(), 8000);
+        if (authError) throw authError;
+
+        if (user) {
+          const { data: profile, error: profileErr } = await withTimeout(
+            supabase
+              .from("profiles")
+              .select("role")
+              .eq("id", user.id)
+              .maybeSingle(),
+            8000
+          );
+          if (profileErr) console.warn("Profile fetch error (getUser):", profileErr);
+
+          const userRole = profile?.role || "user";
+
+          _user = {
+            user_id: user.id,
+            email: user.email || "",
+            name: user.user_metadata?.full_name || user.user_metadata?.name || "Player",
+            picture: user.user_metadata?.avatar_url || user.user_metadata?.picture || "",
+            is_admin: userRole === "super_admin" || userRole === "admin" || false,
+            role: userRole,
+          };
+          _loading = false; emit();
+          return;
+        }
+      } catch (e) {
+        console.warn("getUser() failed (no session persisted):", e);
       }
     }
   } catch (err) {
@@ -69,14 +104,15 @@ getSupabase().then(supabase => {
     supabase.auth.onAuthStateChange(async (event, session) => {
       _loading = true; emit();
       try {
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
           const user = session?.user;
           if (user) {
-            const { data: profile } = await supabase
+            const { data: profile, error: profileErr } = await supabase
               .from("profiles")
               .select("role")
               .eq("id", user.id)
-              .single();
+              .maybeSingle();
+            if (profileErr) console.warn("Profile fetch error (onAuthStateChange):", profileErr);
 
             const userRole = profile?.role || "user";
 
