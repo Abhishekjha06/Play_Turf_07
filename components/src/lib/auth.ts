@@ -25,76 +25,79 @@ export function isLoading() { return _loading; }
 export async function refreshUser() {
   _loading = true; emit();
 
+  let restoredUser: User | null = null;
+
   try {
     const supabase = await getSupabase();
-    if (supabase) {
-      // 1. Try getSession() FIRST — reads from localStorage instantly, no network call.
-      //    This is the fastest way to recover a persisted session on page refresh.
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        const user = session.user;
+    if (!supabase) {
+      _user = null; _loading = false; emit(); return;
+    }
+
+    // ── STEP 1: Fast restore from localStorage (UI only, NOT validated) ──
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      const user = session.user;
+      const { data: profile, error: profileErr } = await withTimeout(
+        supabase.from("profiles").select("role").eq("id", user.id).maybeSingle(),
+        8000
+      );
+      if (profileErr) console.warn("Profile fetch (session restore):", profileErr);
+
+      const userRole = profile?.role || "user";
+      restoredUser = {
+        user_id: user.id,
+        email: user.email || "",
+        name: user.user_metadata?.full_name || user.user_metadata?.name || "Player",
+        picture: user.user_metadata?.avatar_url || user.user_metadata?.picture || "",
+        is_admin: userRole === "super_admin" || userRole === "admin" || false,
+        role: userRole,
+      };
+      // Show user immediately so UI doesn't flicker
+      _user = restoredUser;
+      _loading = false; emit();
+    }
+
+    // ── STEP 2: Server validation — this is the REAL security check ──
+    try {
+      const { data: { user: validatedUser }, error: authError } = await withTimeout(
+        supabase.auth.getUser(), 8000
+      );
+      if (authError) throw authError;
+
+      if (validatedUser) {
+        // Token is valid on the server — user is legit
         const { data: profile, error: profileErr } = await withTimeout(
-          supabase
-            .from("profiles")
-            .select("role")
-            .eq("id", user.id)
-            .maybeSingle(),
+          supabase.from("profiles").select("role").eq("id", validatedUser.id).maybeSingle(),
           8000
         );
-        if (profileErr) console.warn("Profile fetch error (session fallback):", profileErr);
+        if (profileErr) console.warn("Profile fetch (getUser):", profileErr);
 
         const userRole = profile?.role || "user";
-
         _user = {
-          user_id: user.id,
-          email: user.email || "",
-          name: user.user_metadata?.full_name || user.user_metadata?.name || "Player",
-          picture: user.user_metadata?.avatar_url || user.user_metadata?.picture || "",
+          user_id: validatedUser.id,
+          email: validatedUser.email || "",
+          name: validatedUser.user_metadata?.full_name || validatedUser.user_metadata?.name || "Player",
+          picture: validatedUser.user_metadata?.avatar_url || validatedUser.user_metadata?.picture || "",
           is_admin: userRole === "super_admin" || userRole === "admin" || false,
           role: userRole,
         };
-        _loading = false; emit();
-        return;
+        sessionValid = true;
+      } else {
+        // getUser() returned no user — token is invalid/revoked
+        throw new Error("Token validation failed");
       }
-
-      // 2. No session in localStorage — validate with server via getUser()
-      try {
-        const { data: { user }, error: authError } = await withTimeout(supabase.auth.getUser(), 8000);
-        if (authError) throw authError;
-
-        if (user) {
-          const { data: profile, error: profileErr } = await withTimeout(
-            supabase
-              .from("profiles")
-              .select("role")
-              .eq("id", user.id)
-              .maybeSingle(),
-            8000
-          );
-          if (profileErr) console.warn("Profile fetch error (getUser):", profileErr);
-
-          const userRole = profile?.role || "user";
-
-          _user = {
-            user_id: user.id,
-            email: user.email || "",
-            name: user.user_metadata?.full_name || user.user_metadata?.name || "Player",
-            picture: user.user_metadata?.avatar_url || user.user_metadata?.picture || "",
-            is_admin: userRole === "super_admin" || userRole === "admin" || false,
-            role: userRole,
-          };
-          _loading = false; emit();
-          return;
-        }
-      } catch (e) {
-        console.warn("getUser() failed (no session persisted):", e);
-      }
+    } catch (validationErr) {
+      console.warn("getUser() validation failed — session may be revoked or expired:", validationErr);
+      // If we restored from getSession() but getUser() failed, the session is INVALID.
+      // Clear it so the user isn't falsely shown as authenticated.
+      await supabase.auth.signOut();
+      _user = null;
     }
   } catch (err) {
     console.error("Supabase refreshUser error:", err);
+    _user = null;
   }
 
-  _user = null;
   _loading = false; emit();
 }
 
@@ -104,7 +107,7 @@ getSupabase().then(supabase => {
     supabase.auth.onAuthStateChange(async (event, session) => {
       _loading = true; emit();
       try {
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
           const user = session?.user;
           if (user) {
             const { data: profile, error: profileErr } = await supabase
@@ -124,6 +127,39 @@ getSupabase().then(supabase => {
               is_admin: userRole === "super_admin" || userRole === "admin" || false,
               role: userRole,
             };
+          }
+        } else if (event === 'INITIAL_SESSION') {
+          // INITIAL_SESSION comes from localStorage (unvalidated).
+          // Show user immediately, then validate with getUser() in background.
+          const user = session?.user;
+          if (user) {
+            const { data: profile, error: profileErr } = await supabase
+              .from("profiles")
+              .select("role")
+              .eq("id", user.id)
+              .maybeSingle();
+            if (profileErr) console.warn("Profile fetch (INITIAL_SESSION):", profileErr);
+
+            const userRole = profile?.role || "user";
+
+            _user = {
+              user_id: user.id,
+              email: user.email || "",
+              name: user.user_metadata?.full_name || user.user_metadata?.name || "Player",
+              picture: user.user_metadata?.avatar_url || user.user_metadata?.picture || "",
+              is_admin: userRole === "super_admin" || userRole === "admin" || false,
+              role: userRole,
+            };
+
+            // Validate in background — if token is invalid, log out
+            supabase.auth.getUser().then(({ data: { user: validated }, error }) => {
+              if (error || !validated) {
+                console.warn("INITIAL_SESSION validation failed — logging out");
+                supabase.auth.signOut().then(() => {
+                  _user = null; emit();
+                });
+              }
+            });
           }
         } else if (event === 'SIGNED_OUT') {
           _user = null;
