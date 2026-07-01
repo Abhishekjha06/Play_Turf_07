@@ -32,9 +32,15 @@ class WebSocketClient {
     }
 
     /**
-     * Connect to WebSocket server
+     * Connect to WebSocket server.
+     *
+     * SECURITY: We never read credentials from localStorage and never place a
+     * token in the URL path (URLs are logged in server/proxy access logs and
+     * browser history). The connection relies on the same-site, authenticated
+     * HTTP session/cookie established by the server, not a bearer token in the
+     * query/path. If no WS server is configured, this is a safe no-op.
      */
-    async connect(token?: string): Promise<void> {
+    async connect(_token?: string): Promise<void> {
         if (this.isConnecting || this.ws?.readyState === WebSocket.OPEN) {
             return;
         }
@@ -42,18 +48,15 @@ class WebSocketClient {
         this.isConnecting = true;
 
         try {
-            // Get token if not provided
-            const accessToken = token || localStorage.getItem('access_token');
-            if (!accessToken) {
-                console.warn('No access token available for WebSocket connection');
+            const wsHost = import.meta.env.VITE_WS_HOST || import.meta.env.VITE_API_HOST;
+            if (!wsHost) {
+                // No realtime server configured — nothing to do.
                 this.isConnecting = false;
                 return;
             }
 
-            // Determine WebSocket URL
             const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const wsHost = import.meta.env.VITE_API_HOST || window.location.host;
-            const wsUrl = `${wsProtocol}//${wsHost}/api/ws/client/${accessToken}`;
+            const wsUrl = `${wsProtocol}//${wsHost}/api/ws/client`;
 
             console.log('Connecting to WebSocket:', wsUrl);
 

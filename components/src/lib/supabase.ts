@@ -17,9 +17,21 @@ export async function getSupabase(): Promise<SupabaseClient> {
     try {
         _client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
             auth: {
+                // PKCE (Proof Key for Code Exchange): the OAuth authorization code
+                // is exchanged for tokens server-side using a code_verifier, so the
+                // access/refresh tokens are never exposed in the browser URL/redirect.
+                flowType: "pkce",
+                // Rotate the access token automatically before it expires using the
+                // refresh token (Supabase enforces one-time-use refresh rotation).
                 autoRefreshToken: true,
+                // Persist the session so it survives reload/restart/ tabs. The token
+                // is always re-validated server-side via getUser() before it is
+                // trusted (see lib/auth.ts refreshUser).
                 persistSession: true,
+                // Complete OAuth/email-link flows from the redirect URL.
                 detectSessionInUrl: true,
+                // Single, explicit storage key (default is sb-<hash>-auth-token).
+                storageKey: "playturf.auth",
             },
         });
         return _client;

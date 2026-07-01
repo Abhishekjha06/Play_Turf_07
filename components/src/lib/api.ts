@@ -111,8 +111,3 @@ export const api = {
 };
 
 export const isMockMode = false;
-export const session = {
-  getAccessToken: () => null,
-  setAccessToken: () => {},
-  clear: () => {},
-};

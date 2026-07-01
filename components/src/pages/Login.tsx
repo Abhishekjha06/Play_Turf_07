@@ -4,6 +4,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { MobileShell } from "@/layout/MobileShell";
 import { BackButton } from "@/layout/BackButton";
 import { getSupabase } from "@/lib/supabase";
+import { refreshUser } from "@/lib/auth";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import heroNight from "@/assets/hero-night-turf.webp";
@@ -46,7 +47,6 @@ const Login = () => {
       }
 
       const supabase = await getSupabase();
-      if (!supabase) throw new Error("Supabase is not configured");
 
       const { data, error } = await supabase.auth.signInWithPassword({
         email: formData.email,
@@ -92,6 +92,11 @@ const Login = () => {
         }
       }
 
+      // Synchronise the auth store BEFORE navigating so that
+      // ProtectedRoute / AdminRoute / ClientRoute see a valid user
+      // immediately (no race with the async onAuthStateChange listener).
+      await refreshUser();
+
       toast.success("Signed in successfully");
       identifyUser(data.user.id, { email: formData.email });
       trackEvent("Login", { method: "supabase" });
@@ -113,7 +118,6 @@ const Login = () => {
   const handleGoogleLogin = async () => {
     try {
       const supabase = await getSupabase();
-      if (!supabase) throw new Error("Supabase is not configured");
 
       if (location.state?.from) {
         localStorage.setItem("play_turf_post_login_redirect", location.state.from);

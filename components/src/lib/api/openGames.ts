@@ -1,37 +1,14 @@
 import type { Booking } from "@/data/seed";
 import type { OpenGame, CreateGamePayload, GamePlayer } from "@/types/openGames";
-import { getSupabase, requireSupabase } from "../supabase";
+import { requireSupabase } from "../supabase";
 import { me } from "./auth";
 import { distanceKm } from "./turfs";
 
 async function assertUser() {
-  let currentUser = await me();
-  if (!currentUser) {
-    // Fallback: try getSession directly in case getUser() is slow
-    const supabase = await getSupabase();
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        const u = session.user;
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("role, full_name, phone")
-          .eq("id", u.id)
-          .maybeSingle();
-        const userRole = profile?.role || "user";
-        currentUser = {
-          user_id: u.id,
-          email: u.email || "",
-          name: profile?.full_name || u.user_metadata?.full_name || u.user_metadata?.name || "Player",
-          picture: u.user_metadata?.avatar_url || u.user_metadata?.picture || "",
-          is_admin: userRole === "super_admin" || userRole === "admin",
-          role: userRole,
-        };
-      }
-    } catch (e) {
-      console.warn("assertUser getSession fallback failed:", e);
-    }
-  }
+  // `me()` validates the JWT server-side via getUser(). We deliberately do NOT
+  // fall back to getSession() (localStorage) — a revoked/expired token must
+  // never be trusted just because it is still cached locally.
+  const currentUser = await me();
   if (!currentUser) {
     throw new Error("Authentication required. Please sign in.");
   }

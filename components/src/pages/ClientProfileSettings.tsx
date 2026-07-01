@@ -51,11 +51,8 @@ const ClientProfileSettings = () => {
     ];
 
     useEffect(() => {
-        const token = localStorage.getItem("client_token");
-        if (!token) {
-            navigate("/client/login");
-        }
-    }, [navigate]);
+        // Auth + role are enforced by <ClientRoute>; nothing to gate here.
+    }, []);
 
     const handleProfileUpdate = () => {
         const result = clientProfileUpdateSchema.safeParse(profile);
@@ -104,9 +101,9 @@ const ClientProfileSettings = () => {
         }, 800);
     };
 
-    const handleLogout = () => {
-        localStorage.removeItem("client_token");
-        localStorage.removeItem("client_id");
+    const handleLogout = async () => {
+        const { signOut } = await import("@/lib/auth");
+        await signOut();
         toast.success("Logged out successfully");
         navigate("/client/login");
     };

@@ -38,7 +38,6 @@ const Signup = () => {
       }
 
       const supabase = await getSupabase();
-      if (!supabase) throw new Error("Supabase is not configured.");
 
       const { data: authData, error } = await supabase.auth.signUp({
         email: data.email,

@@ -67,53 +67,33 @@ export async function verifyOtp(payload: OtpVerifyPayload, meGetter: () => Promi
 export async function me(): Promise<User | null> {
   const supabase = await getSupabase();
   try {
-    const { data: { user } } = await withTimeout(supabase.auth.getUser());
-    if (user) {
-      const { data: profile } = await withTimeout(
-        supabase
-          .from("profiles")
-          .select("role, full_name, phone")
-          .eq("id", user.id)
-          .single()
-      );
-      const userRole = profile?.role || "user";
-      return {
-        user_id: user.id,
-        email: user.email || "",
-        name: profile?.full_name || user.user_metadata?.full_name || user.user_metadata?.name || "Player",
-        picture: user.user_metadata?.avatar_url || user.user_metadata?.picture || "",
-        is_admin: userRole === "super_admin" || userRole === "admin",
-        role: userRole,
-      };
-    }
-  } catch (e) {
-    console.warn("Failed to get user from Supabase in me():", e);
-  }
+    // getUser() validates the JWT against Supabase Auth (signature + expiry).
+    // getSession() only reads localStorage and must NOT be used as a fallback
+    // here — it would trust a revoked/expired token. On any failure we return
+    // null so callers force a re-authentication.
+    const { data: { user }, error } = await withTimeout(supabase.auth.getUser());
+    if (error || !user) return null;
 
-  // Fallback: try getSession if getUser() timed out or failed
-  try {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.user) {
-      const user = session.user;
-      const { data: profile } = await supabase
+    const { data: profile } = await withTimeout(
+      supabase
         .from("profiles")
         .select("role, full_name, phone")
         .eq("id", user.id)
-        .maybeSingle();
-      const userRole = profile?.role || "user";
-      return {
-        user_id: user.id,
-        email: user.email || "",
-        name: profile?.full_name || user.user_metadata?.full_name || user.user_metadata?.name || "Player",
-        picture: user.user_metadata?.avatar_url || user.user_metadata?.picture || "",
-        is_admin: userRole === "super_admin" || userRole === "admin",
-        role: userRole,
-      };
-    }
-  } catch (e2) {
-    console.warn("getSession fallback also failed in me():", e2);
+        .maybeSingle()
+    );
+    const userRole = profile?.role || "user";
+    return {
+      user_id: user.id,
+      email: user.email || "",
+      name: profile?.full_name || user.user_metadata?.full_name || user.user_metadata?.name || "Player",
+      picture: user.user_metadata?.avatar_url || user.user_metadata?.picture || "",
+      is_admin: userRole === "super_admin" || userRole === "admin",
+      role: userRole,
+    };
+  } catch (e) {
+    console.warn("Failed to get user from Supabase in me():", e);
+    return null;
   }
-  return null;
 }
 
 export async function exchangeSession(sessionId: string, meGetter: () => Promise<User | null>): Promise<User> {

@@ -47,8 +47,6 @@ const ClientDashboard = () => {
     ];
 
     const handleLogout = async () => {
-        localStorage.removeItem("client_token");
-        localStorage.removeItem("client_id");
         const { signOut } = await import("@/lib/auth");
         await signOut();
         toast.success("Logged out successfully");
@@ -60,21 +58,15 @@ const ClientDashboard = () => {
     }, [navigate]);
 
     useEffect(() => {
-
-
-        const token = localStorage.getItem("client_token");
-        if (!token) {
-            navigate("/client/login");
-            return;
-        }
-
-        ws.connect(token);
+        // Authentication for this page is enforced by <ClientRoute> (which checks
+        // the validated user + role). There is no separate client token — Supabase
+        // session is the single source of truth.
+        ws.connect();
 
         const unsubscribeConnected = ws.on("connected", () => {
             setWsConnected(true);
             toast.success("Real-time updates connected");
-            const turfId = localStorage.getItem("client_turf_id") || "1";
-            ws.subscribeToTurf(turfId);
+            ws.subscribeToTurf("1");
         });
 
         const unsubscribeDisconnected = ws.on("disconnected", () => {
