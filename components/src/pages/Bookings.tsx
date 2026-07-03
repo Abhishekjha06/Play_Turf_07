@@ -114,13 +114,13 @@ const Bookings = () => {
 
   const filtered = useMemo(() => {
     if (tab === "upcoming") {
-      return sortedList.filter((b) => b.status !== "CANCELLED" && !isPast(b.date, b.end_time));
+      return sortedList.filter((b) => b.status !== "cancelled" && !isPast(b.date, b.end_time));
     }
     if (tab === "past") {
       return sortedList.filter((b) => b.status !== "CANCELLED" && isPast(b.date, b.end_time));
     }
     if (tab === "cancelled") {
-      return sortedList.filter((b) => b.status === "CANCELLED");
+      return sortedList.filter((b) => b.status === "cancelled");
     }
     return sortedList; // "all"
   }, [sortedList, tab, currentTime]);

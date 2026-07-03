@@ -3,6 +3,9 @@
 -- Run this AFTER supabase_schema_v1_0.sql succeeds
 -- ====================================================================
 
+-- Fix: old bookings table has "amount" NOT NULL that v1.0 didn't handle
+ALTER TABLE public.bookings ALTER COLUMN amount SET DEFAULT 0;
+
 -- 1. Add denormalized host_name so the webapp can show host names without joining profiles
 ALTER TABLE public.games ADD COLUMN IF NOT EXISTS host_name text;
 ALTER TABLE public.games ADD COLUMN IF NOT EXISTS host_avatar text;
@@ -10,6 +13,7 @@ ALTER TABLE public.games ADD COLUMN IF NOT EXISTS host_avatar text;
 -- 2. Allow authenticated users to read all profiles (needed for player names in games)
 --    Replace the old "own profile only" policy with an authenticated-read policy
 DROP POLICY IF EXISTS "Users view own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Authenticated users can read profiles" ON public.profiles;
 CREATE POLICY "Authenticated users can read profiles" ON public.profiles FOR SELECT TO authenticated USING (true);
 
 -- 3. Recreate host_public_game with host_name populated from profiles
@@ -73,11 +77,11 @@ BEGIN
 
     INSERT INTO public.bookings (
         user_id, turf_id, turf_name, turf_image, date, start_time, end_time,
-        hours, price_per_hour, total_amount, booking_type, status, payment_status
+        hours, amount, price_per_hour, total_amount, booking_type, status, payment_status
     ) VALUES (
         v_host_id::text, p_turf_id, v_turf.name, v_turf.image,
         p_date, p_start_time, v_end_time, p_hours,
-        v_turf.price_per_hour, v_total_amount, 'open_game', 'confirmed', 'pending'
+        v_total_amount, v_turf.price_per_hour, v_total_amount, 'open_game', 'confirmed', 'pending'
     )
     RETURNING id INTO v_booking_id;
 
@@ -174,11 +178,11 @@ BEGIN
 
     INSERT INTO public.bookings (
         user_id, turf_id, turf_name, turf_image, date, start_time, end_time,
-        hours, price_per_hour, total_amount, booking_type, status, payment_status
+        hours, amount, price_per_hour, total_amount, booking_type, status, payment_status
     ) VALUES (
         v_host_id::text, p_turf_id, v_turf.name, v_turf.image,
         p_date, p_start_time, v_end_time, p_hours,
-        v_turf.price_per_hour, v_total_amount, 'open_game', 'confirmed', 'pending'
+        v_total_amount, v_turf.price_per_hour, v_total_amount, 'open_game', 'confirmed', 'pending'
     )
     RETURNING id INTO v_booking_id;
 

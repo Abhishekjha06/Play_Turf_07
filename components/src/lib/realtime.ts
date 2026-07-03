@@ -1,23 +1,11 @@
 /**
- * Supabase Realtime service — Broadcast-based real-time updates.
+ * Supabase Realtime service — Table-change based real-time updates.
  *
- * Channel topics used in this app:
- *   turf:<turf_id>:slots          — live slot availability changes
- *   booking:<booking_id>:status   — booking status transitions
- *   user:<user_id>:notifications  — general notifications per user
+ * Supabase Realtime automatically broadcasts table changes via the
+ * `supabase_realtime` publication when REPLICA IDENTITY FULL is set.
  *
- * Usage:
- *   import { useRealtimeSlots, useRealtimeBookingStatus } from "@/lib/realtime";
- *
- *   // In Booking.tsx — receive slot changes live
- *   useRealtimeSlots(turfId, (slotEvent) => {
- *     // slotEvent has { turf_id, date, start_time, status, ... }
- *   });
- *
- *   // In BookingDetail.tsx — receive status changes live
- *   useRealtimeBookingStatus(bookingId, (statusEvent) => {
- *     // statusEvent has { old_status, new_status, ... }
- *   });
+ * The webapp subscribes using `postgres_changes` on the relevant tables
+ * (bookings, games, game_players) with filters.
  */
 import { useEffect, useRef } from "react";
 import { getSupabase } from "@/lib/supabase";
@@ -27,7 +15,7 @@ import type { RealtimeChannel } from "@supabase/supabase-js";
 // Types
 // ---------------------------------------------------------------------------
 
-/** Payload sent by the DB trigger (broadcast_booking_change) on slot events */
+/** Payload for turf slot availability changes (from bookings table) */
 export type SlotBroadcastEvent = {
     id: string | number;
     turf_id: string | number;
@@ -50,7 +38,7 @@ export type BookingStatusEvent = {
     start_time: string;
 };
 
-/** Payload for user notification broadcasts */
+/** Payload for user notification broadcasts (client-to-client only) */
 export type UserNotificationEvent = {
     type: "booking_confirmed" | "booking_cancelled" | "booking_reminder";
     title: string;
@@ -69,7 +57,8 @@ type CleanupFn = () => void;
 type MaybeChannel = RealtimeChannel | null;
 
 /**
- * Subscribe to the turf slot broadcast channel.
+ * Subscribe to booking changes for a specific turf.
+ * Uses postgres_changes on the bookings table with a turf_id filter.
  * Returns an unsubscribe function.
  */
 export async function subscribeTurfSlots(
@@ -82,60 +71,49 @@ export async function subscribeTurfSlots(
         return () => { };
     }
 
-    const topic = `turf:${turfId}:slots`;
-    const channel: RealtimeChannel = supabase.channel(topic, {
-        config: { private: true },
-    });
+    const channel: RealtimeChannel = supabase.channel(`turf-${turfId}-slots`);
 
     channel.on(
-        "broadcast",
-        { event: "insert" },
-        (payload: { payload: SlotBroadcastEvent }) => {
-            onSlotEvent({ ...payload.payload, status: "PENDING" });
+        "postgres_changes",
+        {
+            event: "*",
+            schema: "public",
+            table: "bookings",
+            filter: `turf_id=eq.${turfId}`,
         },
-    );
-
-    channel.on(
-        "broadcast",
-        { event: "update" },
-        (payload: { payload: SlotBroadcastEvent }) => {
-            onSlotEvent(payload.payload);
-        },
-    );
-
-    channel.on(
-        "broadcast",
-        { event: "delete" },
-        (payload: { payload: SlotBroadcastEvent }) => {
-            onSlotEvent({ ...payload.payload, status: "DELETED" });
-        },
-    );
-
-    channel.on(
-        "broadcast",
-        { event: "booking_status_changed" },
-        (payload: { payload: SlotBroadcastEvent }) => {
-            onSlotEvent(payload.payload);
+        (payload: any) => {
+            const new_ = payload.new || {};
+            const old_ = payload.old || {};
+            onSlotEvent({
+                id: new_.id || old_.id,
+                turf_id: new_.turf_id || old_.turf_id,
+                date: new_.date || old_.date,
+                start_time: new_.start_time || old_.start_time,
+                hours: new_.hours,
+                status: new_.status || old_.status || "DELETED",
+                turf_name: new_.turf_name,
+            });
         },
     );
 
     await channel.subscribe((status, err) => {
         if (status === "SUBSCRIBED") {
-            console.debug(`[realtime] Subscribed to turf slots: ${topic}`);
+            console.debug(`[realtime] Subscribed to turf slots: turf-${turfId}-slots`);
         }
         if (err) {
-            console.error(`[realtime] Subscription error for ${topic}:`, err);
+            console.error(`[realtime] Subscription error for turf-${turfId}-slots:`, err);
         }
     });
 
     return () => {
         supabase.removeChannel(channel);
-        console.debug(`[realtime] Unsubscribed from turf slots: ${topic}`);
+        console.debug(`[realtime] Unsubscribed from turf slots: turf-${turfId}-slots`);
     };
 }
 
 /**
- * Subscribe to a booking status channel.
+ * Subscribe to a specific booking's status changes.
+ * Uses postgres_changes on the bookings table with an id filter.
  * Returns an unsubscribe function.
  */
 export async function subscribeBookingStatus(
@@ -148,36 +126,50 @@ export async function subscribeBookingStatus(
         return () => { };
     }
 
-    const topic = `booking:${bookingId}:status`;
-    const channel: RealtimeChannel = supabase.channel(topic, {
-        config: { private: true },
-    });
+    const channel: RealtimeChannel = supabase.channel(`booking-${bookingId}-status`);
 
     channel.on(
-        "broadcast",
-        { event: "booking_status_changed" },
-        (payload: { payload: BookingStatusEvent }) => {
-            onStatusChange(payload.payload);
+        "postgres_changes",
+        {
+            event: "UPDATE",
+            schema: "public",
+            table: "bookings",
+            filter: `id=eq.${bookingId}`,
+        },
+        (payload: any) => {
+            const new_ = payload.new || {};
+            const old_ = payload.old || {};
+            onStatusChange({
+                id: new_.id,
+                old_status: old_.status,
+                new_status: new_.status,
+                turf_id: new_.turf_id,
+                turf_name: new_.turf_name,
+                date: new_.date,
+                start_time: new_.start_time,
+            });
         },
     );
 
     await channel.subscribe((status, err) => {
         if (status === "SUBSCRIBED") {
-            console.debug(`[realtime] Subscribed to booking status: ${topic}`);
+            console.debug(`[realtime] Subscribed to booking status: booking-${bookingId}-status`);
         }
         if (err) {
-            console.error(`[realtime] Subscription error for ${topic}:`, err);
+            console.error(`[realtime] Subscription error for booking-${bookingId}-status:`, err);
         }
     });
 
     return () => {
         supabase.removeChannel(channel);
-        console.debug(`[realtime] Unsubscribed from booking status: ${topic}`);
+        console.debug(`[realtime] Unsubscribed from booking status: booking-${bookingId}-status`);
     };
 }
 
 /**
- * Subscribe to a user's notification channel.
+ * Subscribe to a user's notification channel (client-to-client broadcast).
+ * NOTE: This is a broadcast channel; DB events do not push here automatically.
+ * The backend or another client must send broadcasts to this channel.
  * Returns an unsubscribe function.
  */
 export async function subscribeUserNotifications(
@@ -224,7 +216,7 @@ export async function subscribeUserNotifications(
 
 /**
  * Send a broadcast on a turf slot channel.
- * Useful if the client needs to send an event that isn't covered by the DB trigger.
+ * Useful if the client needs to send an event that isn't covered by DB table changes.
  */
 export async function sendTurfSlotBroadcast(
     turfId: string | number,
@@ -259,7 +251,7 @@ export async function sendTurfSlotBroadcast(
  * Hook: subscribe to real-time slot changes for a turf.
  *
  * @param turfId  — the turf ID to watch
- * @param onEvent — callback invoked with each slot broadcast event
+ * @param onEvent — callback invoked with each booking change for this turf
  *
  * Automatically cleans up subscription on unmount or turfId change.
  */
@@ -318,7 +310,7 @@ export function useRealtimeBookingStatus(
 }
 
 /**
- * Hook: subscribe to real-time user notifications.
+ * Hook: subscribe to real-time user notifications (client-to-client broadcast).
  *
  * @param userId   — the user ID to watch
  * @param onEvent  — callback invoked when a notification arrives
@@ -348,7 +340,7 @@ export function useRealtimeNotifications(
 }
 
 /**
- * Hook: Subscribe to real-time changes for open games and slots.
+ * Hook: Subscribe to real-time changes for games and game_players tables.
  * Automatically triggers callback on insert, update, or delete.
  */
 export function useRealtimeOpenGames(callback: () => void): void {
@@ -356,12 +348,12 @@ export function useRealtimeOpenGames(callback: () => void): void {
     savedCallback.current = callback;
 
     useEffect(() => {
-        let channelOpenGames: RealtimeChannel | null = null;
+        let channelGames: RealtimeChannel | null = null;
         let channelPlayers: RealtimeChannel | null = null;
 
         getSupabase().then((supabase) => {
             // Subscribe to games table updates
-            channelOpenGames = supabase
+            channelGames = supabase
                 .channel("realtime-games")
                 .on(
                     "postgres_changes",
@@ -387,9 +379,9 @@ export function useRealtimeOpenGames(callback: () => void): void {
 
         return () => {
             getSupabase().then((supabase) => {
-                if (channelOpenGames) supabase.removeChannel(channelOpenGames);
+                if (channelGames) supabase.removeChannel(channelGames);
                 if (channelPlayers) supabase.removeChannel(channelPlayers);
             });
         };
     }, []);
-}
+}

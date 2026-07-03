@@ -34,7 +34,7 @@ export function BookingRow({
   let statusColor = "#22C55E"; // Green
   let statusBg = "rgba(34, 197, 94, 0.12)";
 
-  if (booking.status === "CANCELLED") {
+  if (booking.status === "cancelled") {
     statusText = "Cancelled";
     statusColor = "#EF4444"; // Red
     statusBg = "rgba(239, 68, 68, 0.12)";

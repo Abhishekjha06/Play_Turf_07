@@ -58,7 +58,7 @@ export async function createBooking(
       .eq("turf_id", turf.id)
       .eq("date", payload.date)
       .eq("start_time", checkTime)
-      .neq("status", "CANCELLED")
+      .neq("status", "cancelled")
       .maybeSingle();
     if (dupErr) console.warn("Duplicate check query error:", dupErr);
     if (existing) {
@@ -86,7 +86,7 @@ export async function createBooking(
       end_time: `${endHour}:${String(m).padStart(2, "0")}`,
       hours: 1,
       amount: i === 0 ? turf.price_per_hour * payload.hours : 0,
-      status: "PENDING",
+      status: "pending",
       payment_id: i === 0 ? null : `parent_${mainBookingId}`,
       created_at: new Date().toISOString(),
     });
@@ -105,18 +105,32 @@ export async function createBooking(
 
 export async function bookedSlots(turfId: string, date: string): Promise<string[]> {
   const supabase = await getSupabase();
+  // Schema stores status in LOWERCASE ('pending', 'confirmed', 'cancelled', 'completed').
+  // Exclude cancelled/completed so released slots show as available.
+  // Also drop abandoned pending bookings (>15 min old) so they don't block the UI.
   const { data, error } = await supabase
     .from("booking_availability")
-    .select("start_time, hours")
+    .select("start_time, hours, status, created_at")
     .eq("turf_id", turfId)
     .eq("date", date)
-    .neq("status", "CANCELLED");
+    .neq("status", "cancelled")
+    .neq("status", "completed");
   if (error) throw error;
-  
+
+  const staleAfter = Date.now() - 15 * 60 * 1000;
   const covered: string[] = [];
   (data || []).forEach((b: any) => {
+    // Skip abandoned pending bookings so the UI doesn't grey them out
+    if (
+      b.status === "pending" &&
+      b.created_at &&
+      new Date(b.created_at).getTime() < staleAfter
+    ) {
+      return;
+    }
     const [h, m] = b.start_time.split(":").map(Number);
-    for (let i = 0; i < b.hours; i++) {
+    const slotHours = Number(b.hours) || 1;
+    for (let i = 0; i < slotHours; i++) {
       const slotHour = (h + i).toString().padStart(2, "0");
       covered.push(`${slotHour}:${String(m).padStart(2, "0")}`);
     }
@@ -134,14 +148,14 @@ export async function payMock(bookingId: string): Promise<Booking> {
     .single();
     
   if (fetchError) throw fetchError;
-  if (currentBooking.status === "CONFIRMED") {
+  if (currentBooking.status === "confirmed") {
     throw new Error("This booking has already been paid for.");
   }
 
   const paymentId = uid("pay");
   const { data, error } = await supabase
     .from("bookings")
-    .update({ status: "CONFIRMED", payment_id: paymentId })
+    .update({ status: "confirmed", payment_id: paymentId })
     .eq("id", bookingId)
     .select()
     .single();
@@ -150,7 +164,7 @@ export async function payMock(bookingId: string): Promise<Booking> {
   // Update secondary bookings
   await supabase
     .from("bookings")
-    .update({ status: "CONFIRMED", payment_id: paymentId })
+    .update({ status: "confirmed", payment_id: paymentId })
     .eq("payment_id", `parent_${bookingId}`);
 
   addNotification({
@@ -191,7 +205,7 @@ export async function upcomingBookings(userGetter: () => Promise<any>): Promise<
     .from("bookings")
     .select("*")
     .eq("user_id", userId)
-    .eq("status", "CONFIRMED")
+    .eq("status", "confirmed")
     .gte("date", today)
     .order("date", { ascending: true });
   if (error) throw error;
@@ -220,7 +234,7 @@ export async function cancelBooking(id: string): Promise<Booking> {
     .single();
     
   if (fetchErr) throw fetchErr;
-  if (booking.status === "CONFIRMED" && booking.payment_id) {
+  if (booking.status === "confirmed" && booking.payment_id) {
     const createdAtTime = new Date(booking.created_at).getTime();
     if (Date.now() - createdAtTime > 15 * 60 * 1000) {
       throw new Error("This booking has been confirmed and can no longer be cancelled.");
@@ -229,7 +243,7 @@ export async function cancelBooking(id: string): Promise<Booking> {
 
   const { data, error } = await supabase
     .from("bookings")
-    .update({ status: "CANCELLED" })
+    .update({ status: "cancelled" })
     .eq("id", id)
     .select()
     .single();
@@ -238,13 +252,13 @@ export async function cancelBooking(id: string): Promise<Booking> {
   if (data.payment_id) {
     await supabase
       .from("bookings")
-      .update({ status: "CANCELLED" })
+      .update({ status: "cancelled" })
       .eq("payment_id", data.payment_id);
   }
   
   await supabase
     .from("bookings")
-    .update({ status: "CANCELLED" })
+    .update({ status: "cancelled" })
     .eq("payment_id", `parent_${id}`);
 
   addNotification({

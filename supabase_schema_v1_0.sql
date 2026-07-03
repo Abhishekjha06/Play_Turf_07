@@ -31,6 +31,29 @@ drop trigger if exists trg_check_booking_overlap_and_expiry on public.bookings;
 -- Drop old functions that will be recreated
 drop function if exists public.check_booking_overlap_and_expiry();
 
+-- ── Remove legacy realtime broadcast objects ──
+-- Older schemas created a trigger that called realtime.broadcast_changes(),
+-- an API removed from modern Supabase. Leftover triggers cause
+-- "function realtime.broadcast_changes(name, text, text, jsonb) does not exist"
+-- on every booking insert/update. v1.0 uses publication-based realtime (Section 7).
+do $$
+declare
+    t record;
+begin
+    for t in
+        select tgname
+        from pg_trigger
+        where tgrelid = 'public.bookings'::regclass
+          and not tgisinternal
+          and (pg_get_triggerdef(oid) ILIKE '%broadcast_changes%'
+               or pg_get_triggerdef(oid) ILIKE '%broadcast_booking_change%')
+    loop
+        execute format('drop trigger if exists %I on public.bookings;', t.tgname);
+    end loop;
+end
+$$;
+drop function if exists public.broadcast_booking_change();
+
 -- drop realtime publication additions for old tables (safe re-run)
 do $$
 declare
@@ -164,6 +187,9 @@ ALTER TABLE public.bookings ADD COLUMN IF NOT EXISTS booking_type text NOT NULL 
 ALTER TABLE public.bookings ADD COLUMN IF NOT EXISTS payment_status text NOT NULL DEFAULT 'pending';
 ALTER TABLE public.bookings ADD COLUMN IF NOT EXISTS receipt_url text;
 ALTER TABLE public.bookings ADD COLUMN IF NOT EXISTS updated_at timestamp with time zone DEFAULT timezone('utc'::text, now());
+
+-- Old schema had "amount" NOT NULL but v1.0 uses "total_amount" — set default so inserts without it don't fail
+ALTER TABLE public.bookings ALTER COLUMN amount SET DEFAULT 0;
 
 -- Remove old columns that violated separation of concerns
 ALTER TABLE public.bookings DROP COLUMN IF EXISTS open_game_id;
@@ -529,12 +555,21 @@ BEGIN
     new_start := NEW.start_time::time;
     new_end := NEW.end_time::time;
 
+    -- A booking is "blocking" only if it is active AND not an abandoned pending
+    -- booking. Pending bookings older than 15 minutes are treated as expired
+    -- (they are swept up by expire_pending_bookings()) so they do not lock a
+    -- slot forever when a user abandons checkout.
     SELECT COUNT(*) INTO existing_count
     FROM public.bookings
     WHERE turf_id = NEW.turf_id
       AND date = NEW.date
       AND status NOT IN ('cancelled', 'completed')
       AND id IS DISTINCT FROM NEW.id
+      AND NOT (
+          status = 'pending'
+          AND payment_status = 'pending'
+          AND created_at < timezone('utc'::text, now()) - interval '15 minutes'
+      )
       AND (
         new_start < end_time::time AND
         new_end > start_time::time
@@ -553,6 +588,12 @@ CREATE TRIGGER trg_check_booking_overlap
     BEFORE INSERT OR UPDATE ON public.bookings
     FOR EACH ROW
     EXECUTE FUNCTION public.check_booking_overlap();
+
+-- 8.1b Auto-expire abandoned pending bookings so they never lock a slot forever.
+-- The overlap trigger above already ignores stale pending rows, so this is a
+-- belt-and-suspenders cleanup. Schedule it with pg_cron if available:
+--   SELECT cron.schedule('expire-pending', '* * * * *', 'SELECT public.expire_pending_bookings()');
+-- or call it from an edge function / client on a timer.
 
 -- 8.2 Auto-sync game joined_players from game_players table
 CREATE OR REPLACE FUNCTION public.sync_game_player_counts()
@@ -627,188 +668,18 @@ BEGIN
 END;
 $$;
 
--- 8.4 Broadcast booking changes to Realtime
-CREATE OR REPLACE FUNCTION public.broadcast_booking_change()
-RETURNS trigger
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = 'public', 'realtime'
-AS $$
-DECLARE
-    payload jsonb;
-    turf_channel text;
-BEGIN
-    IF TG_OP IN ('INSERT', 'UPDATE') THEN
-        turf_channel := 'turf:' || NEW.turf_id || ':slots';
-        payload := jsonb_build_object(
-            'id', NEW.id,
-            'turf_id', NEW.turf_id,
-            'date', NEW.date,
-            'start_time', NEW.start_time,
-            'end_time', NEW.end_time,
-            'hours', NEW.hours,
-            'total_amount', NEW.total_amount,
-            'booking_type', NEW.booking_type,
-            'status', NEW.status,
-            'payment_status', NEW.payment_status,
-            'turf_name', NEW.turf_name
-        );
-    ELSE
-        turf_channel := 'turf:' || OLD.turf_id || ':slots';
-        payload := jsonb_build_object(
-            'id', OLD.id,
-            'turf_id', OLD.turf_id,
-            'status', 'deleted'
-        );
-    END IF;
-
-    PERFORM realtime.broadcast_changes(TG_TABLE_NAME, turf_channel, lower(TG_OP), payload);
-
-    -- Status change notification to booking channel
-    IF TG_OP = 'UPDATE' AND OLD.status IS DISTINCT FROM NEW.status THEN
-        PERFORM realtime.broadcast_changes(
-            TG_TABLE_NAME,
-            'booking:' || NEW.id || ':status',
-            'booking_status_changed',
-            jsonb_build_object(
-                'id', NEW.id,
-                'old_status', OLD.status,
-                'new_status', NEW.status,
-                'turf_id', NEW.turf_id,
-                'turf_name', NEW.turf_name,
-                'date', NEW.date,
-                'start_time', NEW.start_time
-            )
-        );
-    END IF;
-
-    RETURN COALESCE(NEW, OLD);
-END;
-$$;
-
-DROP TRIGGER IF EXISTS on_booking_change ON public.bookings;
-CREATE TRIGGER on_booking_change
-    AFTER INSERT OR UPDATE OR DELETE ON public.bookings
-    FOR EACH ROW
-    EXECUTE FUNCTION public.broadcast_booking_change();
-
--- 8.5 Broadcast game changes to Realtime
-CREATE OR REPLACE FUNCTION public.broadcast_game_change()
-RETURNS trigger
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = 'public', 'realtime'
-AS $$
-DECLARE
-    payload jsonb;
-    game_channel text;
-BEGIN
-    IF TG_OP IN ('INSERT', 'UPDATE') THEN
-        game_channel := 'game:' || NEW.id;
-        payload := jsonb_build_object(
-            'id', NEW.id,
-            'booking_id', NEW.booking_id,
-            'turf_id', NEW.turf_id,
-            'sport', NEW.sport,
-            'visibility', NEW.visibility,
-            'title', NEW.title,
-            'status', NEW.status,
-            'joined_players', NEW.joined_players,
-            'waiting_players', NEW.waiting_players,
-            'max_players', NEW.max_players,
-            'price_per_player', NEW.price_per_player,
-            'game_code', NEW.game_code,
-            'date', NEW.date,
-            'start_time', NEW.start_time,
-            'end_time', NEW.end_time
-        );
-    ELSE
-        game_channel := 'game:' || OLD.id;
-        payload := jsonb_build_object('id', OLD.id, 'status', 'deleted');
-    END IF;
-
-    PERFORM realtime.broadcast_changes(TG_TABLE_NAME, game_channel, lower(TG_OP), payload);
-
-    -- Also broadcast to the turf channel so turf subscribers see game changes
-    IF TG_OP IN ('INSERT', 'UPDATE') THEN
-        PERFORM realtime.broadcast_changes(
-            TG_TABLE_NAME,
-            'turf:' || NEW.turf_id || ':slots',
-            'game_' || lower(TG_OP),
-            payload
-        );
-    ELSE
-        PERFORM realtime.broadcast_changes(
-            TG_TABLE_NAME,
-            'turf:' || OLD.turf_id || ':slots',
-            'game_deleted',
-            payload
-        );
-    END IF;
-
-    RETURN COALESCE(NEW, OLD);
-END;
-$$;
-
-DROP TRIGGER IF EXISTS on_game_change ON public.games;
-CREATE TRIGGER on_game_change
-    AFTER INSERT OR UPDATE OR DELETE ON public.games
-    FOR EACH ROW
-    EXECUTE FUNCTION public.broadcast_game_change();
-
--- 8.6 Broadcast game player changes
-CREATE OR REPLACE FUNCTION public.broadcast_game_player_change()
-RETURNS trigger
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = 'public', 'realtime'
-AS $$
-DECLARE
-    payload jsonb;
-    game_id uuid;
-    turf_id text;
-BEGIN
-    game_id := COALESCE(NEW.game_id, OLD.game_id);
-
-    SELECT g.turf_id INTO turf_id
-    FROM public.games g
-    WHERE g.id = game_id;
-
-    payload := jsonb_build_object(
-        'player_id', COALESCE(NEW.id, OLD.id),
-        'game_id', game_id,
-        'user_id', COALESCE(NEW.user_id, OLD.user_id),
-        'status', COALESCE(NEW.status, OLD.status),
-        'payment_status', COALESCE(NEW.payment_status, OLD.payment_status),
-        'operation', lower(TG_OP)
-    );
-
-    PERFORM realtime.broadcast_changes(
-        TG_TABLE_NAME,
-        'game:' || game_id || ':players',
-        lower(TG_OP) || '_player',
-        payload
-    );
-
-    -- Also broadcast to turf channel
-    IF turf_id IS NOT NULL THEN
-        PERFORM realtime.broadcast_changes(
-            TG_TABLE_NAME,
-            'turf:' || turf_id || ':slots',
-            'player_' || lower(TG_OP),
-            payload
-        );
-    END IF;
-
-    RETURN COALESCE(NEW, OLD);
-END;
-$$;
-
-DROP TRIGGER IF EXISTS on_game_player_change ON public.game_players;
-CREATE TRIGGER on_game_player_change
-    AFTER INSERT OR UPDATE OR DELETE ON public.game_players
-    FOR EACH ROW
-    EXECUTE FUNCTION public.broadcast_game_player_change();
+-- ====================================================================
+-- 8.4-8.6 Realtime via Supabase Publication
+-- ====================================================================
+-- Supabase Realtime automatically broadcasts table changes when tables
+-- are added to the supabase_realtime publication (done in Section 7 above)
+-- and REPLICA IDENTITY FULL is set on those tables.
+--
+-- The webapp subscribes via:
+--   supabase.channel('...').on('postgres_changes', { table: 'bookings' }, callback)
+--
+-- No custom DB broadcast triggers are needed.
+-- ====================================================================
 
 -- ====================================================================
 -- 9. HELPER RPC FUNCTIONS (called from Edge / Client)
@@ -876,11 +747,11 @@ BEGIN
     -- Create booking
     INSERT INTO public.bookings (
         user_id, turf_id, turf_name, turf_image, date, start_time, end_time,
-        hours, price_per_hour, total_amount, booking_type, status, payment_status
+        hours, amount, price_per_hour, total_amount, booking_type, status, payment_status
     ) VALUES (
         v_host_id::text, p_turf_id, v_turf.name, v_turf.image,
         p_date, p_start_time, v_end_time, p_hours,
-        v_turf.price_per_hour, v_total_amount, 'open_game', 'confirmed', 'pending'
+        v_total_amount, v_turf.price_per_hour, v_total_amount, 'open_game', 'confirmed', 'pending'
     )
     RETURNING id INTO v_booking_id;
 
@@ -974,11 +845,11 @@ BEGIN
 
     INSERT INTO public.bookings (
         user_id, turf_id, turf_name, turf_image, date, start_time, end_time,
-        hours, price_per_hour, total_amount, booking_type, status, payment_status
+        hours, amount, price_per_hour, total_amount, booking_type, status, payment_status
     ) VALUES (
         v_host_id::text, p_turf_id, v_turf.name, v_turf.image,
         p_date, p_start_time, v_end_time, p_hours,
-        v_turf.price_per_hour, v_total_amount, 'open_game', 'confirmed', 'pending'
+        v_total_amount, v_turf.price_per_hour, v_total_amount, 'open_game', 'confirmed', 'pending'
     )
     RETURNING id INTO v_booking_id;
 

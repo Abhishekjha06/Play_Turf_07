@@ -75,7 +75,7 @@ export type Tournament = {
   description: string;
 };
 
-export type BookingStatus = "PENDING" | "CONFIRMED" | "CANCELLED" | "COMPLETED";
+export type BookingStatus = "pending" | "confirmed" | "cancelled" | "completed";
 
 export type Booking = {
   id: string;

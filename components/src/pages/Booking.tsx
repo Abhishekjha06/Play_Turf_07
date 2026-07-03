@@ -122,11 +122,11 @@ const BookingContent = () => {
             api.bookedSlots(turfId!, date).then((booked) => {
                 setBookedSlots(booked);
                 if (slot && booked.includes(slot)) setSlot(null);
-                if (event.status === "CONFIRMED" || event.status === "PENDING") {
+                if (event.status === "confirmed" || event.status === "pending") {
                     toast.info("Slot availability updated", {
                         description: `A slot at ${event.start_time} was just booked`,
                     });
-                } else if (event.status === "CANCELLED" || event.status === "DELETED") {
+                } else if (event.status === "cancelled" || event.status === "DELETED") {
                     toast.success("A slot just opened up!", {
                         description: `The ${event.start_time} slot is now available`,
                     });

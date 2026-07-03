@@ -661,7 +661,7 @@ function TurfEditor({ turf, onDone }: { turf: Turf; onDone: () => void }) {
 }
 
 function Dashboard({ turfs, bookings, offers, tournaments }: { turfs: Turf[]; bookings: Booking[]; offers: Offer[]; tournaments: Tournament[] }) {
-  const confirmed = bookings.filter((booking) => booking.status === "CONFIRMED");
+  const confirmed = bookings.filter((booking) => booking.status === "confirmed");
   const revenue = confirmed.reduce((sum, booking) => sum + booking.amount, 0);
   const today = new Date().toISOString().slice(0, 10);
   const todayBookings = bookings.filter((booking) => booking.date === today).length;

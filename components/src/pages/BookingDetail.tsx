@@ -29,10 +29,10 @@ import { BookingTicket } from "@/booking/BookingTicket";
 import { useBookingTicket } from "@/hooks/useBookingTicket";
 
 const statusConfig: Record<string, { icon: typeof CheckCircle2; color: string; bg: string; label: string }> = {
-    CONFIRMED: { icon: CheckCircle2, color: "text-[#4ade80]", bg: "bg-[#0d2e1a] border-[#0d2e1a]", label: "Booked" },
-    PENDING: { icon: AlertCircle, color: "text-[#f5b942]", bg: "bg-[#2d1e00] border-[#2d1e00]", label: "Pending Payment" },
-    CANCELLED: { icon: XCircle, color: "text-[#f87171]", bg: "bg-[#3d1a1a] border-[#3d1a1a]", label: "Cancelled" },
-    COMPLETED: { icon: CheckCircle2, color: "text-soft", bg: "bg-white/10 border-white/15", label: "Completed" },
+    confirmed: { icon: CheckCircle2, color: "text-[#4ade80]", bg: "bg-[#0d2e1a] border-[#0d2e1a]", label: "Booked" },
+    pending: { icon: AlertCircle, color: "text-[#f5b942]", bg: "bg-[#2d1e00] border-[#2d1e00]", label: "Pending Payment" },
+    cancelled: { icon: XCircle, color: "text-[#f87171]", bg: "bg-[#3d1a1a] border-[#3d1a1a]", label: "Cancelled" },
+    completed: { icon: CheckCircle2, color: "text-soft", bg: "bg-white/10 border-white/15", label: "Completed" },
 };
 
 const BookingDetail = () => {
@@ -73,7 +73,7 @@ const BookingDetail = () => {
 
     // Track 15-minute cancellation window
     useEffect(() => {
-        if (!booking || booking.status !== "CONFIRMED") {
+        if (!booking || booking.status !== "confirmed") {
             setTimeLeftStr(null);
             setCancellationExpired(true);
             return;
@@ -112,22 +112,22 @@ const BookingDetail = () => {
         setBooking(updated);
 
         // Show a prominent toast notification based on the new status
-        if (event.new_status === "CONFIRMED") {
+        if (event.new_status === "confirmed") {
             toast.success("Booking Confirmed!", {
                 description: `Your booking at ${event.turf_name} on ${event.date} at ${event.start_time} has been confirmed.`,
                 duration: 6_000,
             });
-        } else if (event.new_status === "CANCELLED") {
+        } else if (event.new_status === "cancelled") {
             toast.error("Booking Cancelled", {
                 description: `Your booking at ${event.turf_name} on ${event.date} at ${event.start_time} has been cancelled.`,
                 duration: 6_000,
             });
-        } else if (event.new_status === "COMPLETED") {
+        } else if (event.new_status === "completed") {
             toast.success("Session Completed", {
                 description: `Your session at ${event.turf_name} has been marked as completed.`,
                 duration: 5_000,
             });
-        } else if (event.new_status === "PENDING" && event.old_status !== "PENDING") {
+        } else if (event.new_status === "pending" && event.old_status !== "pending") {
             toast.info("Payment Required", {
                 description: `Your booking at ${event.turf_name} is awaiting payment.`,
                 duration: 5_000,
@@ -211,10 +211,10 @@ const BookingDetail = () => {
         );
     }
 
-    const cfg = statusConfig[booking.status] || statusConfig.PENDING;
+    const cfg = statusConfig[booking.status] || statusConfig.pending;
     const StatusIcon = cfg.icon;
-    const canCancel = booking.status === "PENDING" || (booking.status === "CONFIRMED" && !cancellationExpired);
-    const canPay = booking.status === "PENDING";
+    const canCancel = booking.status === "pending" || (booking.status === "confirmed" && !cancellationExpired);
+    const canPay = booking.status === "pending";
 
     return (
         <MobileShell>
@@ -241,14 +241,14 @@ const BookingDetail = () => {
                         <div>
                             <p className={`font-bold text-lg ${cfg.color}`}>{cfg.label}</p>
                             <p className="text-xs text-muted2 mt-0.5">
-                                {booking.status === "CONFIRMED" && (
+                                {booking.status === "confirmed" && (
                                     cancellationExpired
                                     ? "This booking has been confirmed and can no longer be cancelled."
                                     : `Free cancellation available for: ${timeLeftStr || "15:00"}`
                                 )}
-                                {booking.status === "PENDING" && "Complete payment to confirm your booking."}
-                                {booking.status === "CANCELLED" && "This booking has been cancelled."}
-                                {booking.status === "COMPLETED" && "This session has been completed."}
+                                {booking.status === "pending" && "Complete payment to confirm your booking."}
+                                {booking.status === "cancelled" && "This booking has been cancelled."}
+                                {booking.status === "completed" && "This session has been completed."}
                             </p>
                         </div>
                     </motion.div>
@@ -422,7 +422,7 @@ const BookingDetail = () => {
                             </>
                         )}
 
-                        {booking.status === "CANCELLED" && (
+                        {booking.status === "cancelled" && (
                             <Link
                                 to={`/turf/${booking.turf_id}`}
                                 className="w-full rounded-2xl border border-primary/40 bg-primary/10 py-3 text-sm font-semibold text-primary pressable flex items-center justify-center gap-2"
