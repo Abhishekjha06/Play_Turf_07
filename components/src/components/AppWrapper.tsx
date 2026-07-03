@@ -3,6 +3,7 @@ import SplashScreen from './SplashScreen';
 import App from '../../App';
 import { OfflineIndicator } from '@/ui/OfflineIndicator';
 import { FeedbackModal } from '@/ui/FeedbackModal';
+import { ServiceWorkerUpdateBanner } from './ServiceWorkerUpdateBanner';
 import { MessageSquarePlus } from 'lucide-react';
 
 const AppWrapper: React.FC = () => {
@@ -20,6 +21,7 @@ const AppWrapper: React.FC = () => {
 
     return (
         <>
+            <ServiceWorkerUpdateBanner />
             <OfflineIndicator />
             {showSplash && <SplashScreen onComplete={() => setShowSplash(false)} />}
             {!showSplash && <App />}

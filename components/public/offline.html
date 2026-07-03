@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#050505">
+  <title>Offline — PlayTurf</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      background: #0b0f19;
+      color: #e2e8f0;
+      min-height: 100dvh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 2rem;
+    }
+    .container { max-width: 420px; }
+    .icon {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 1.5rem;
+      background: linear-gradient(135deg, #14b8a6, #0ea5e9);
+      border-radius: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+    }
+    h1 { font-size: 1.75rem; font-weight: 700; margin-bottom: 0.75rem; letter-spacing: -0.02em; }
+    p { color: #94a3b8; line-height: 1.6; margin-bottom: 1.5rem; font-size: 0.95rem; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      background: linear-gradient(135deg, #14b8a6, #0ea5e9);
+      color: #fff;
+      font-weight: 600;
+      font-size: 0.95rem;
+      border: none;
+      border-radius: 9999px;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.15s;
+      text-decoration: none;
+    }
+    .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn:active { transform: scale(0.97); }
+    .tips { margin-top: 2rem; text-align: left; }
+    .tips h3 { font-size: 0.875rem; font-weight: 600; color: #cbd5e1; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .tips ul { list-style: none; }
+    .tips li { display: flex; align-items: flex-start; gap: 0.5rem; color: #64748b; font-size: 0.875rem; margin-bottom: 0.5rem; }
+    .tips li::before { content: "•"; color: #14b8a6; font-weight: 700; }
+    @media (prefers-color-scheme: light) {
+      body { background: #f1f5f9; color: #0f172a; }
+      p { color: #475569; }
+      .tips h3 { color: #334155; }
+      .tips li { color: #64748b; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">📡</div>
+    <h1>You're Offline</h1>
+    <p>It looks like your internet connection is down. Don't worry — your upcoming bookings are saved locally and will sync once you're back online.</p>
+    <button class="btn" onclick="window.location.reload()">
+      <span>↻</span> Try Again
+    </button>
+    <div class="tips">
+      <h3>Troubleshooting Tips</h3>
+      <ul>
+        <li>Check your Wi-Fi or mobile data connection</li>
+        <li>Turn airplane mode off and on</li>
+        <li>Move closer to your router</li>
+        <li>Some features work offline — check your saved bookings</li>
+      </ul>
+    </div>
+  </div>
+  <script>
+    // Auto-reload when back online
+    window.addEventListener('online', () => {
+      window.location.reload();
+    });
+    // Check periodically
+    setInterval(() => {
+      if (navigator.onLine) window.location.reload();
+    }, 5000);
+  </script>
+</body>
+</html>

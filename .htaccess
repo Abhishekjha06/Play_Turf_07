@@ -1,0 +1,163 @@
+# ============================================================
+# PlayTurf — Apache .htaccess Optimization
+# Features: Compression, Cache Control, Security Headers,
+# HTTP/2 Push, mod_expires, mod_headers
+# ============================================================
+
+# ── Enable Rewrite Engine ──────────────────────────────────
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # Redirect HTTP to HTTPS
+    RewriteCond %{HTTPS} off
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
+
+    # SPA Fallback
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.html [L]
+</IfModule>
+
+# ── ETag Configuration ─────────────────────────────────────
+<IfModule mod_headers.c>
+    Header unset ETag
+    FileETag None
+</IfModule>
+
+# ── Compression (mod_deflate / mod_brotli) ─────────────────
+<IfModule mod_brotli.c>
+    BrotliCompressionQuality 6
+    BrotliFilterNote Input instream
+    BrotliFilterNote Output outstream
+    BrotliFilterNote Ratio ratio
+
+    AddOutputFilterByType BROTLI_COMPRESS text/html text/plain text/xml text/css
+    AddOutputFilterByType BROTLI_COMPRESS text/javascript application/javascript application/json
+    AddOutputFilterByType BROTLI_COMPRESS application/xml+rss application/atom+xml image/svg+xml
+    AddOutputFilterByType BROTLI_COMPRESS font/woff font/woff2
+</IfModule>
+
+<IfModule mod_deflate.c>
+    DeflateCompressionLevel 6
+
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css
+    AddOutputFilterByType DEFLATE text/javascript application/javascript application/json
+    AddOutputFilterByType DEFLATE application/xml+rss application/atom+xml image/svg+xml
+    AddOutputFilterByType DEFLATE font/woff font/woff2
+
+    # Never compress already-compressed assets
+    SetEnvIfNoCase Request_URI \
+        \.(?:gif|jpe?g|png|webp|avif|ico|woff|woff2)$ no-gzip dont-vary
+    SetEnvIfNoCase Request_URI \
+        \.(?:exe|t?gz|zip|bz2|sit|rar)$ no-gzip dont-vary
+    SetEnvIfNoCase Request_URI \
+        \.(?:pdf|doc|avi|mov|mp3|mp4)$ no-gzip dont-vary
+</IfModule>
+
+# ── Cache Control (mod_expires + mod_headers) ──────────────
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresDefault "access plus 1 month"
+
+    # HTML — no cache
+    ExpiresByType text/html "access plus 0 seconds"
+
+    # Data — short cache
+    ExpiresByType application/json "access plus 1 hour"
+    ExpiresByType application/xml "access plus 1 hour"
+    ExpiresByType text/xml "access plus 1 hour"
+
+    # Assets — immutable
+    ExpiresByType text/css "access plus 1 year"
+    ExpiresByType text/javascript "access plus 1 year"
+    ExpiresByType application/javascript "access plus 1 year"
+
+    # Fonts — immutable
+    ExpiresByType font/woff "access plus 1 year"
+    ExpiresByType font/woff2 "access plus 1 year"
+    ExpiresByType font/ttf "access plus 1 year"
+    ExpiresByType font/otf "access plus 1 year"
+    ExpiresByType application/vnd.ms-fontobject "access plus 1 year"
+
+    # Images — immutable
+    ExpiresByType image/webp "access plus 1 year"
+    ExpiresByType image/avif "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/jpg "access plus 1 year"
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/gif "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 year"
+    ExpiresByType image/x-icon "access plus 1 year"
+    ExpiresByType image/vnd.microsoft.icon "access plus 1 year"
+</IfModule>
+
+<IfModule mod_headers.c>
+    # HTML — no cache
+    <FilesMatch "\.(html|htm)$">
+        Header set Cache-Control "public, max-age=0, must-revalidate"
+    </FilesMatch>
+
+    # JS/CSS — immutable
+    <FilesMatch "\.(js|mjs|jsx|ts|tsx|css|scss|sass|less)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+        Header unset ETag
+    </FilesMatch>
+
+    # Fonts — immutable
+    <FilesMatch "\.(woff|woff2|ttf|otf|eot)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+        Header set Access-Control-Allow-Origin "*"
+        Header unset ETag
+    </FilesMatch>
+
+    # Images — immutable
+    <FilesMatch "\.(webp|png|jpg|jpeg|gif|svg|avif|ico)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+        Header unset ETag
+    </FilesMatch>
+
+    # Service Worker — no cache
+    <FilesMatch "^sw\.js$">
+        Header set Cache-Control "public, max-age=0, must-revalidate"
+        Header set Service-Worker-Allowed "/"
+    </FilesMatch>
+
+    # Manifest — short cache
+    <FilesMatch "^manifest\.webmanifest$">
+        Header set Cache-Control "public, max-age=3600, must-revalidate"
+        Header set Content-Type "application/manifest+json"
+    </FilesMatch>
+</IfModule>
+
+# ── Security Headers ───────────────────────────────────────
+<IfModule mod_headers.c>
+    Header always set Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "DENY"
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "accelerometer=(), autoplay=(self), camera=(), encrypted-media=(), fullscreen=(self), geolocation=(self), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(self), speaker=(), sync-xhr=(), usb=(), vr=()"
+    Header always set Cross-Origin-Embedder-Policy "credentialless"
+    Header always set Cross-Origin-Opener-Policy "same-origin"
+    Header always set Cross-Origin-Resource-Policy "cross-origin"
+
+    # Content Security Policy
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.googleapis.com https://*.gstatic.com https://*.google.com https://*.googletagmanager.com https://*.posthog.com https://*.sentry.io; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https://*.supabase.co https://*.storage.googleapis.com https://*.googleusercontent.com https://*.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.googleapis.com https://*.posthog.com https://*.sentry.io; frame-src 'self' https://*.google.com; manifest-src 'self'; media-src 'self' https://*.supabase.co; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;"
+</IfModule>
+
+# ── MIME Types ─────────────────────────────────────────────
+<IfModule mod_mime.c>
+    AddType application/javascript .js .mjs
+    AddType application/manifest+json .webmanifest
+    AddType font/woff2 .woff2
+    AddType font/woff .woff
+    AddType image/avif .avif
+    AddType image/webp .webp
+</IfModule>
+
+# ── UTF-8 Encoding ─────────────────────────────────────────
+AddDefaultCharset utf-8
+
+# ── Disable Server Signature ───────────────────────────────
+ServerSignature Off

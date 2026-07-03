@@ -1,0 +1,26 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /client/login
+Disallow: /client/dashboard
+Disallow: /client/slots
+Disallow: /client/bookings
+Disallow: /client/settings
+Disallow: /client/photos
+Disallow: /client/pricing
+Disallow: /client/turf/edit
+Disallow: /client/rules
+Disallow: /auth/callback
+Disallow: /receipt
+Disallow: /booking/new/
+Disallow: /theme
+Disallow: /luxury/theme
+
+# Crawl-delay for respectful bots
+Crawl-delay: 1
+
+# Sitemap
+Sitemap: https://playturf.app/sitemap.xml
+
+# Host
+Host: https://playturf.app
