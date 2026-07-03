@@ -36,6 +36,14 @@ export function useBookingTicket() {
       logging: false,
       imageTimeout: 15000,
       onclone: (clonedDoc) => {
+        const clonedEl = clonedDoc.body.querySelector("[data-ticket-capture], [data-billing-capture]");
+        if (clonedEl) {
+          (clonedEl as HTMLElement).style.display = "block";
+          (clonedEl as HTMLElement).style.position = "relative";
+          (clonedEl as HTMLElement).style.width = "600px";
+          (clonedEl as HTMLElement).style.margin = "0";
+        }
+      },
         const clonedEl = clonedDoc.body.querySelector("[data-ticket-capture]");
         if (clonedEl) {
           (clonedEl as HTMLElement).style.display = "block";

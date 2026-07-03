@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, Download, Share2, Copy, MapPin, Calendar, Clock, Timer, CreditCard, Shield, User, Users, Ticket, X } from "lucide-react";
 import { toast } from "sonner";
@@ -6,6 +6,7 @@ import type { Booking } from "@/data/seed";
 import type { OpenGame } from "@/types/openGames";
 import { useAuth } from "@/hooks/use-auth";
 import { BookingTicket } from "@/booking/BookingTicket";
+import { BillingReceipt } from "@/booking/BillingReceipt";
 import { useBookingTicket } from "@/hooks/useBookingTicket";
 
 /* ────────────────────────────────────────────────────────────── */
@@ -82,6 +83,7 @@ export function JoinGameReceipt({ booking, game, playerName, onClose }: JoinGame
   const [showTicket, setShowTicket] = useState(false);
   const { user } = useAuth();
   const { ticketRef, downloadPDF, shareTicket, isGenerating } = useBookingTicket();
+  const billingRef = useRef<HTMLDivElement>(null);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(receiptText(booking, game, playerName));
@@ -90,7 +92,7 @@ export function JoinGameReceipt({ booking, game, playerName, onClose }: JoinGame
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleDownload = () => {
+  const handleDownloadTxt = () => {
     const blob = new Blob([receiptText(booking, game, playerName)], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -99,6 +101,12 @@ export function JoinGameReceipt({ booking, game, playerName, onClose }: JoinGame
     a.click();
     URL.revokeObjectURL(url);
     toast.success("Receipt downloaded");
+  };
+
+  const handleDownloadPDF = async () => {
+    if (billingRef.current) {
+      await downloadPDF(billingRef.current, `PlayTurf-Join-Billing-${booking.id}`);
+    }
   };
 
   const handleShare = async () => {
@@ -256,13 +264,21 @@ export function JoinGameReceipt({ booking, game, playerName, onClose }: JoinGame
         </div>
 
         {/* Actions */}
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-4 gap-2">
           <button
             onClick={() => setShowTicket(true)}
             className="py-2.5 rounded-lg font-bold text-[10px] uppercase tracking-wider flex items-center justify-center gap-1.5 transition"
             style={{ background: "linear-gradient(135deg, #14b8a6, #0d9488)", color: "#ffffff", border: "none" }}
           >
             <Ticket className="h-3.5 w-3.5" /> Ticket
+          </button>
+          <button
+            onClick={handleDownloadPDF}
+            disabled={isGenerating}
+            className="py-2.5 rounded-lg font-bold text-[10px] uppercase tracking-wider flex items-center justify-center gap-1.5 transition"
+            style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)", color: "#ffffff", border: "none", opacity: isGenerating ? 0.6 : 1 }}
+          >
+            <Download className="h-3.5 w-3.5" /> {isGenerating ? "…" : "PDF"}
           </button>
           <button
             onClick={() => shareTicket({
@@ -308,6 +324,18 @@ export function JoinGameReceipt({ booking, game, playerName, onClose }: JoinGame
             <span className="text-[8px] text-white/15">Support</span>
           </div>
         </div>
+      </div>
+
+      {/* Hidden Billing Receipt for PDF capture */}
+      <div style={{ position: "absolute", left: "-9999px", top: 0, visibility: "hidden" }}>
+        <BillingReceipt
+          ref={billingRef}
+          booking={booking}
+          game={game}
+          user={user ? { name: playerName || user.name, email: user.email } : { name: playerName }}
+          isHost={false}
+          playerName={playerName}
+        />
       </div>
 
       {/* Premium Ticket Modal */}

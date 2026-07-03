@@ -1,4 +1,4 @@
-import React, { ReactNode, useState, useEffect } from "react";
+import React, { ReactNode, useState, useEffect, useRef } from "react";
 import { Download, Share2, Check, Copy, Calendar, X, AlertCircle, RefreshCw, BadgeAlert, Ticket } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { TeamAvatar } from "@/cricket/components/TeamAvatar";
@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { api } from "@/lib/api";
 import { useAuth } from "@/hooks/use-auth";
 import { BookingTicket } from "@/booking/BookingTicket";
+import { BillingReceipt } from "@/booking/BillingReceipt";
 import { useBookingTicket } from "@/hooks/useBookingTicket";
 import playTurfLogo from "../assets/play-turf-logo.png";
 
@@ -141,6 +142,13 @@ export function BookingSuccessReceipt({
     const [showTicket, setShowTicket] = useState(false);
     const { user } = useAuth();
     const { ticketRef, downloadPDF, shareTicket, isGenerating } = useBookingTicket();
+    const billingRef = useRef<HTMLDivElement>(null);
+
+    const handleDownloadBillingPDF = async () => {
+        if (billingRef.current) {
+            await downloadPDF(billingRef.current, `PlayTurf-Billing-${booking.id}`);
+        }
+    };
 
     // Compute duration & slot hours
     const durationHours = Math.max(1, Math.round(total / turf.price_per_hour));
@@ -448,6 +456,7 @@ export function BookingSuccessReceipt({
 
                                 <div className="mt-6 flex flex-col sm:flex-row gap-3">
                                     <ReceiptButton onClick={() => setShowTicket(true)} label="View Premium Ticket" icon={Ticket} primary />
+                                    <ReceiptButton onClick={handleDownloadBillingPDF} label="Download PDF" icon={Download} />
                                     <ReceiptButton onClick={() => shareTicket({
                                         bookingId: booking.id,
                                         turfName: turf.name,
@@ -571,6 +580,18 @@ export function BookingSuccessReceipt({
                     </div>
                 </div>
             )}
+            {/* Hidden Billing Receipt for PDF capture */}
+            <div style={{ position: "absolute", left: "-9999px", top: 0, visibility: "hidden" }}>
+                <BillingReceipt
+                    ref={billingRef}
+                    booking={booking}
+                    turf={turf}
+                    user={user ? { name: user.name, email: user.email } : undefined}
+                    teamA={cricket.teamA}
+                    teamB={cricket.teamB}
+                />
+            </div>
+
             {showTicket && (
                 <AnimatePresence>
                     <motion.div
