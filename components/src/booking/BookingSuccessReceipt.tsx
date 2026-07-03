@@ -615,11 +615,7 @@ export function BookingSuccessReceipt({
                                 booking={booking}
                                 turf={turf}
                                 user={user ? { name: user.name, email: user.email } : undefined}
-                                onDownload={() => {
-                                    if (ticketRef.current) {
-                                        downloadPDF(ticketRef.current, `PlayTurf-Booking-${booking.id}`);
-                                    }
-                                }}
+                                onDownload={handleDownloadBillingPDF}
                                 onShare={() => shareTicket({
                                     bookingId: booking.id,
                                     turfName: turf.name,

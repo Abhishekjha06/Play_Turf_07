@@ -1,9 +1,12 @@
 import { CheckCircle2, Copy, Download, Home, RotateCcw, Share2, ShieldCheck, Trophy } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
+import { useRef } from "react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import receiptAssets from "@/assets/play-turf-receipt-assets.webp";
+import { BillingReceipt } from "@/booking/BillingReceipt";
+import { useBookingTicket } from "@/hooks/useBookingTicket";
 
 import playTurfLogo from "../assets/play-turf-logo.png";
 
@@ -43,7 +46,16 @@ export default function Receipt() {
     toast.success("Transaction ID copied");
   };
 
-  const download = () => {
+  const { downloadPDF } = useBookingTicket();
+  const billingRef = useRef<HTMLDivElement>(null);
+
+  const handleDownloadPDF = async () => {
+    if (billingRef.current) {
+      await downloadPDF(billingRef.current, `PlayTurf-Billing-${receipt.bookingId}`);
+    }
+  };
+
+  const downloadTxt = () => {
     const blob = new Blob([receiptText], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
@@ -102,7 +114,7 @@ export default function Receipt() {
             </div>
 
             <div className="hidden grid-cols-4 gap-2 lg:grid">
-              <ActionButton label="Download Receipt" icon={Download} onClick={download} primary />
+              <ActionButton label="Download Receipt" icon={Download} onClick={handleDownloadPDF} primary />
               <ActionButton label="Share Receipt" icon={Share2} onClick={share} />
               <ActionButton label="Book Another Match" icon={RotateCcw} onClick={() => toast.success("Ready for another match")} primary />
               <ActionButton label="Back to Home" icon={Home} onClick={() => (window.location.href = "/")} />
@@ -122,10 +134,30 @@ export default function Receipt() {
       </motion.section>
 
       <div className="fixed inset-x-0 bottom-0 z-50 grid grid-cols-4 gap-2 border-t border-white/10 bg-[#0B1020]/92 p-3 backdrop-blur-xl lg:hidden">
-        <ActionButton label="Download" icon={Download} onClick={download} primary compact />
+        <ActionButton label="Download" icon={Download} onClick={handleDownloadPDF} primary compact />
         <ActionButton label="Share" icon={Share2} onClick={share} compact />
         <ActionButton label="Book Again" icon={RotateCcw} onClick={() => toast.success("Ready for another match")} primary compact />
         <ActionButton label="Home" icon={Home} onClick={() => (window.location.href = "/")} compact />
+      </div>
+
+      {/* Hidden Billing Receipt for PDF capture */}
+      <div style={{ position: "absolute", left: "-9999px", top: 0, visibility: "hidden" }}>
+        <BillingReceipt
+          ref={billingRef}
+          booking={{
+            id: receipt.bookingId,
+            turf_name: receipt.teamA + " vs " + receipt.teamB,
+            date: receipt.dateTime.split(" - ")[0],
+            start_time: "08:00",
+            end_time: "09:00",
+            hours: 1,
+            amount: receipt.betAmount,
+            status: receipt.status,
+            payment_id: receipt.transactionId,
+            created_at: new Date().toISOString(),
+          }}
+          user={{ name: receipt.selectedTeam, email: "" }}
+        />
       </div>
     </main>
   );

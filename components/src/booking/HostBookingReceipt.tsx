@@ -330,11 +330,7 @@ export function HostBookingReceipt({ booking, game, onClose }: HostBookingReceip
                 booking={booking}
                 game={game}
                 user={user ? { name: user.name || game.host_name, email: user.email } : { name: game.host_name }}
-                onDownload={() => {
-                  if (ticketRef.current) {
-                    downloadPDF(ticketRef.current, `PlayTurf-Host-${booking.id}`);
-                  }
-                }}
+                onDownload={handleDownloadPDF}
                 onShare={() => shareTicket({
                   bookingId: booking.id,
                   turfName: booking.turf_name,

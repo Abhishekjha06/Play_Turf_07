@@ -362,11 +362,7 @@ export function JoinGameReceipt({ booking, game, playerName, onClose }: JoinGame
                 booking={booking}
                 game={game}
                 user={user ? { name: playerName || user.name, email: user.email } : { name: playerName }}
-                onDownload={() => {
-                  if (ticketRef.current) {
-                    downloadPDF(ticketRef.current, `PlayTurf-Join-${booking.id}`);
-                  }
-                }}
+                onDownload={handleDownloadPDF}
                 onShare={() => shareTicket({
                   bookingId: booking.id,
                   turfName: booking.turf_name,
