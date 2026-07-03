@@ -6,8 +6,8 @@ import type { Booking } from "@/data/seed";
 import type { OpenGame } from "@/types/openGames";
 import { useAuth } from "@/hooks/use-auth";
 import { BookingTicket } from "@/booking/BookingTicket";
-import { PaymentSlip, type PaymentSlipData } from "@/components/PaymentSlip";
-import { downloadPaymentSlip } from "@/utils/downloadPaymentSlip";
+import { InvoiceViewer } from "@/components/Invoice";
+import type { InvoiceData } from "@/components/Invoice";
 import { useBookingTicket } from "@/hooks/useBookingTicket";
 
 /* ────────────────────────────────────────────────────────────── */
@@ -84,9 +84,8 @@ export function JoinGameReceipt({ booking, game, playerName, onClose }: JoinGame
   const [showTicket, setShowTicket] = useState(false);
   const { user } = useAuth();
   const { ticketRef, downloadPDF, shareTicket, isGenerating } = useBookingTicket();
-  const paymentSlipRef = useRef<HTMLDivElement>(null);
 
-  const paymentSlipData: PaymentSlipData = {
+  const invoiceData: InvoiceData = {
     bookingId: booking.id,
     invoiceNumber: `INV-${booking.id.slice(-6).toUpperCase()}`,
     transactionId: booking.payment_id || `TXN-${booking.id.slice(-6).toUpperCase()}`,
@@ -112,6 +111,7 @@ export function JoinGameReceipt({ booking, game, playerName, onClose }: JoinGame
     bookingStatus: booking.status === "confirmed" ? "confirmed" : "pending",
     paymentStatus: booking.status === "confirmed" ? "PAID" : "PENDING",
     qrCodeValue: `PlayTurf|${booking.id}|${playerName || user?.name || "Guest"}|${booking.amount + 20 + Math.round(booking.amount * 0.18)}|INV-${booking.id.slice(-6).toUpperCase()}|www.playturf.in`,
+    gstRate: 18,
     createdAt: booking.created_at,
   };
 
@@ -131,16 +131,6 @@ export function JoinGameReceipt({ booking, game, playerName, onClose }: JoinGame
     a.click();
     URL.revokeObjectURL(url);
     toast.success("Receipt downloaded");
-  };
-
-  const handleDownloadPDF = async () => {
-    if (paymentSlipRef.current) {
-      await downloadPaymentSlip(paymentSlipRef.current, {
-        filename: `PlayTurf-Join-Invoice-${booking.id}`,
-        scale: 2.5,
-        quality: 0.92,
-      });
-    }
   };
 
   const handleShare = async () => {
@@ -298,45 +288,13 @@ export function JoinGameReceipt({ booking, game, playerName, onClose }: JoinGame
         </div>
 
         {/* Actions */}
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-2 gap-2">
           <button
             onClick={() => setShowTicket(true)}
             className="py-2.5 rounded-lg font-bold text-[10px] uppercase tracking-wider flex items-center justify-center gap-1.5 transition"
             style={{ background: "linear-gradient(135deg, #14b8a6, #0d9488)", color: "#ffffff", border: "none" }}
           >
             <Ticket className="h-3.5 w-3.5" /> Ticket
-          </button>
-          <button
-            onClick={handleDownloadPDF}
-            disabled={isGenerating}
-            className="py-2.5 rounded-lg font-bold text-[10px] uppercase tracking-wider flex items-center justify-center gap-1.5 transition"
-            style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)", color: "#ffffff", border: "none", opacity: isGenerating ? 0.6 : 1 }}
-          >
-            <Download className="h-3.5 w-3.5" /> {isGenerating ? "…" : "PDF"}
-          </button>
-          <button
-            onClick={() => shareTicket({
-              bookingId: booking.id,
-              turfName: booking.turf_name,
-              sport: game.sport,
-              date: booking.date,
-              startTime: booking.start_time,
-              endTime: booking.end_time,
-              duration: booking.hours,
-              amount: booking.amount,
-              status: booking.status,
-              paymentId: booking.payment_id,
-              playerName: playerName || user?.name || "Player",
-              hostName: game.host_name,
-              address: game.venue,
-              paymentMethod: game.players?.find((p) => p.name === playerName)?.payment_method || "UPI",
-              slots: `${game.slots_filled}/${game.slots_total}`,
-              bookedAt: booking.created_at,
-            })}
-            className="py-2.5 rounded-lg font-bold text-[10px] uppercase tracking-wider flex items-center justify-center gap-1.5 transition"
-            style={{ backgroundColor: "#111111", color: "rgba(255,255,255,0.6)", border: "1px solid rgba(255,255,255,0.08)" }}
-          >
-            <Share2 className="h-3.5 w-3.5" /> Share
           </button>
           {onClose && (
             <button
@@ -360,13 +318,8 @@ export function JoinGameReceipt({ booking, game, playerName, onClose }: JoinGame
         </div>
       </div>
 
-      {/* Hidden Payment Slip for PDF capture */}
-      <div style={{ position: "absolute", left: "-9999px", top: 0, visibility: "hidden" }}>
-        <PaymentSlip
-          ref={paymentSlipRef}
-          data={paymentSlipData}
-          hideActions
-        />
+      <div className="mt-2">
+        <InvoiceViewer data={invoiceData} />
       </div>
 
       {/* Premium Ticket Modal */}
@@ -393,7 +346,7 @@ export function JoinGameReceipt({ booking, game, playerName, onClose }: JoinGame
                 booking={booking}
                 game={game}
                 user={user ? { name: playerName || user.name, email: user.email } : { name: playerName }}
-                onDownload={handleDownloadPDF}
+                onDownload={() => {}}
                 onShare={() => shareTicket({
                   bookingId: booking.id,
                   turfName: booking.turf_name,

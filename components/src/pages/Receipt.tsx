@@ -5,8 +5,8 @@ import { useRef } from "react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import receiptAssets from "@/assets/play-turf-receipt-assets.webp";
-import { PaymentSlip, type PaymentSlipData } from "@/components/PaymentSlip";
-import { downloadPaymentSlip } from "@/utils/downloadPaymentSlip";
+import { InvoiceViewer } from "@/components/Invoice";
+import type { InvoiceData } from "@/components/Invoice";
 import { useBookingTicket } from "@/hooks/useBookingTicket";
 
 import playTurfLogo from "../assets/play-turf-logo.png";
@@ -48,9 +48,8 @@ export default function Receipt() {
   };
 
   const { downloadPDF } = useBookingTicket();
-  const paymentSlipRef = useRef<HTMLDivElement>(null);
 
-  const paymentSlipData: PaymentSlipData = {
+  const invoiceData: InvoiceData = {
     bookingId: receipt.bookingId,
     invoiceNumber: `INV-${receipt.bookingId.slice(-6).toUpperCase()}`,
     transactionId: receipt.transactionId,
@@ -76,17 +75,8 @@ export default function Receipt() {
     bookingStatus: "confirmed",
     paymentStatus: receipt.status === "SUCCESS" ? "PAID" : "PENDING",
     qrCodeValue: `PlayTurf|${receipt.bookingId}|${receipt.selectedTeam}|${totalPaid}|INV-${receipt.bookingId.slice(-6).toUpperCase()}|www.playturf.in`,
+    gstRate: 18,
     createdAt: new Date().toISOString(),
-  };
-
-  const handleDownloadPDF = async () => {
-    if (paymentSlipRef.current) {
-      await downloadPaymentSlip(paymentSlipRef.current, {
-        filename: `PlayTurf-Invoice-${receipt.bookingId}`,
-        scale: 2.5,
-        quality: 0.92,
-      });
-    }
   };
 
   const downloadTxt = () => {
@@ -148,7 +138,7 @@ export default function Receipt() {
             </div>
 
             <div className="hidden grid-cols-4 gap-2 lg:grid">
-              <ActionButton label="Download Receipt" icon={Download} onClick={handleDownloadPDF} primary />
+              <ActionButton label="Download Receipt" icon={Download} onClick={() => {}} primary />
               <ActionButton label="Share Receipt" icon={Share2} onClick={share} />
               <ActionButton label="Book Another Match" icon={RotateCcw} onClick={() => toast.success("Ready for another match")} primary />
               <ActionButton label="Back to Home" icon={Home} onClick={() => (window.location.href = "/")} />
@@ -168,19 +158,14 @@ export default function Receipt() {
       </motion.section>
 
       <div className="fixed inset-x-0 bottom-0 z-50 grid grid-cols-4 gap-2 border-t border-white/10 bg-[#0B1020]/92 p-3 backdrop-blur-xl lg:hidden">
-        <ActionButton label="Download" icon={Download} onClick={handleDownloadPDF} primary compact />
+        <ActionButton label="Download" icon={Download} onClick={() => {}} primary compact />
         <ActionButton label="Share" icon={Share2} onClick={share} compact />
         <ActionButton label="Book Again" icon={RotateCcw} onClick={() => toast.success("Ready for another match")} primary compact />
         <ActionButton label="Home" icon={Home} onClick={() => (window.location.href = "/")} compact />
       </div>
 
-      {/* Hidden Payment Slip for PDF capture */}
-      <div style={{ position: "absolute", left: "-9999px", top: 0, visibility: "hidden" }}>
-        <PaymentSlip
-          ref={paymentSlipRef}
-          data={paymentSlipData}
-          hideActions
-        />
+      <div className="fixed bottom-20 left-0 right-0 z-40 flex justify-center px-4">
+        <InvoiceViewer data={invoiceData} />
       </div>
     </main>
   );

@@ -10,8 +10,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { api } from "@/lib/api";
 import { useAuth } from "@/hooks/use-auth";
 import { BookingTicket } from "@/booking/BookingTicket";
-import { PaymentSlip, type PaymentSlipData } from "@/components/PaymentSlip";
-import { downloadPaymentSlip } from "@/utils/downloadPaymentSlip";
+import { InvoiceViewer } from "@/components/Invoice";
+import type { InvoiceData } from "@/components/Invoice";
 import { useBookingTicket } from "@/hooks/useBookingTicket";
 import playTurfLogo from "../assets/play-turf-logo.png";
 
@@ -143,17 +143,6 @@ export function BookingSuccessReceipt({
     const [showTicket, setShowTicket] = useState(false);
     const { user } = useAuth();
     const { ticketRef, downloadPDF, shareTicket, isGenerating } = useBookingTicket();
-    const paymentSlipRef = useRef<HTMLDivElement>(null);
-
-    const handleDownloadBillingPDF = async () => {
-        if (paymentSlipRef.current) {
-            await downloadPaymentSlip(paymentSlipRef.current, {
-                filename: `PlayTurf-Invoice-${booking.id}`,
-                scale: 2.5,
-                quality: 0.92,
-            });
-        }
-    };
 
     // Compute duration & slot hours
     const durationHours = Math.max(1, Math.round(total / turf.price_per_hour));
@@ -161,7 +150,7 @@ export function BookingSuccessReceipt({
     const eh = sh + durationHours;
     const end_time_str = `${eh.toString().padStart(2, "0")}:${sm.toString().padStart(2, "0")}`;
 
-    const paymentSlipData: PaymentSlipData = {
+    const invoiceData: InvoiceData = {
         bookingId: booking.id,
         invoiceNumber: `INV-${booking.id.slice(-6).toUpperCase()}`,
         transactionId: booking.payment_id || `TXN-${booking.id.slice(-6).toUpperCase()}`,
@@ -187,6 +176,7 @@ export function BookingSuccessReceipt({
         bookingStatus: booking.status === "confirmed" ? "confirmed" : "pending",
         paymentStatus: booking.status === "confirmed" ? "PAID" : "PENDING",
         qrCodeValue: `PlayTurf|${booking.id}|${user?.name || "Guest"}|${total + 20 + Math.round(total * 0.18)}|INV-${booking.id.slice(-6).toUpperCase()}|www.playturf.in`,
+        gstRate: 18,
         createdAt: booking.created_at,
     };
 
@@ -490,23 +480,6 @@ export function BookingSuccessReceipt({
 
                                 <div className="mt-6 flex flex-col sm:flex-row gap-3">
                                     <ReceiptButton onClick={() => setShowTicket(true)} label="View Premium Ticket" icon={Ticket} primary />
-                                    <ReceiptButton onClick={handleDownloadBillingPDF} label="Download PDF" icon={Download} />
-                                    <ReceiptButton onClick={() => shareTicket({
-                                        bookingId: booking.id,
-                                        turfName: turf.name,
-                                        sport: turf.sport_types?.[0] || "Football",
-                                        date: booking.date,
-                                        startTime: booking.start_time,
-                                        endTime: end_time_str,
-                                        duration: durationHours,
-                                        amount: total,
-                                        status: booking.status,
-                                        paymentId: booking.payment_id,
-                                        playerName: user?.name || "Player",
-                                        address: turf.address,
-                                        paymentMethod: cricket.state?.paymentMethod || "UPI",
-                                        bookedAt: booking.created_at,
-                                    })} label="Share Booking" icon={Share2} />
                                     <a
                                         href={getGoogleCalendarUrl()}
                                         target="_blank"
@@ -517,6 +490,10 @@ export function BookingSuccessReceipt({
                                         <Calendar className="h-4 w-4 text-primary" />
                                         Add to Calendar
                                     </a>
+                                </div>
+
+                                <div className="mt-4">
+                                    <InvoiceViewer data={invoiceData} />
                                 </div>
 
                                 <footer className="mt-7 border-t border-[var(--border-primary)] pt-4 text-center">
@@ -614,14 +591,6 @@ export function BookingSuccessReceipt({
                     </div>
                 </div>
             )}
-            {/* Hidden Payment Slip for PDF capture */}
-            <div style={{ position: "absolute", left: "-9999px", top: 0, visibility: "hidden" }}>
-                <PaymentSlip
-                    ref={paymentSlipRef}
-                    data={paymentSlipData}
-                    hideActions
-                />
-            </div>
 
             {showTicket && (
                 <AnimatePresence>
@@ -646,7 +615,7 @@ export function BookingSuccessReceipt({
                                 booking={booking}
                                 turf={turf}
                                 user={user ? { name: user.name, email: user.email } : undefined}
-                                onDownload={handleDownloadBillingPDF}
+                                onDownload={() => {}}
                                 onShare={() => shareTicket({
                                     bookingId: booking.id,
                                     turfName: turf.name,

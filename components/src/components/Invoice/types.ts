@@ -1,12 +1,12 @@
 /**
- * PaymentSlip — Types
- * Enterprise-level type definitions for the PlayTurf invoice system.
+ * Invoice — Types
+ * Data model for the native PDF invoice system.
  */
 
 export type PaymentStatus = "PAID" | "PENDING" | "FAILED" | "REFUNDED";
 export type BookingStatus = "confirmed" | "pending" | "cancelled" | "completed";
 
-export interface PaymentSlipData {
+export interface InvoiceData {
   /** Unique booking identifier */
   bookingId: string;
   /** Invoice number (e.g. INV000245) */
@@ -47,74 +47,36 @@ export interface PaymentSlipData {
   platformFee: number;
   /** Convenience fee (payment processing) */
   convenienceFee?: number;
-  /** Discount applied (negative or positive value) */
+  /** Discount applied */
   discount: number;
   /** GST amount */
   gst: number;
+  /** GST percentage (e.g. 18) */
+  gstRate?: number;
   /** Final total paid */
   total: number;
   /** Booking status */
   bookingStatus: BookingStatus;
   /** Payment status */
   paymentStatus: PaymentStatus;
-  /** Data encoded in the QR code */
-  qrCodeValue: string;
   /** When the booking was created (ISO string) */
   createdAt?: string;
   /** Currency symbol (default: ₹) */
   currency?: string;
-  /** Optional notes / terms text */
-  notes?: string;
+  /** Company / brand name */
+  companyName?: string;
+  /** Company support email */
+  supportEmail?: string;
+  /** Company website */
+  website?: string;
+  /** Pre-generated QR code base64 data URL */
+  qrCodeDataUrl?: string;
 }
 
-export interface PaymentSlipProps {
-  data: PaymentSlipData;
-  /** Ref forwarded for PDF/print capture */
-  ref?: React.Ref<HTMLDivElement>;
-  /** Optional className */
-  className?: string;
-  /** Called when download completes */
+export interface InvoiceViewerProps {
+  data: InvoiceData;
+  fileName?: string;
   onDownload?: () => void;
-  /** Called when share completes */
-  onShare?: () => void;
-  /** Called when print is triggered */
   onPrint?: () => void;
-  /** Hide action buttons (for embedded use) */
-  hideActions?: boolean;
-}
-
-export interface QRSectionProps {
-  value: string;
-  size?: number;
-  label?: string;
-  bookingId: string;
-  customerName: string;
-  amount: number;
-  invoiceNumber: string;
-}
-
-export interface InvoiceTableProps {
-  items: InvoiceItem[];
-  total: number;
-  currency?: string;
-}
-
-export interface InvoiceItem {
-  label: string;
-  value: number;
-  type?: "charge" | "fee" | "discount" | "tax" | "total";
-  description?: string;
-}
-
-export interface DetailRowProps {
-  label: string;
-  value: string;
-  icon?: React.ReactNode;
-  highlight?: boolean;
-  accent?: string;
-}
-
-export interface StatusBadgeProps {
-  status: PaymentStatus;
-  size?: "sm" | "md" | "lg";
+  onShare?: () => void;
 }
