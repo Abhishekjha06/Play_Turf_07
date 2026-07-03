@@ -44,14 +44,6 @@ export function useBookingTicket() {
           (clonedEl as HTMLElement).style.margin = "0";
         }
       },
-        const clonedEl = clonedDoc.body.querySelector("[data-ticket-capture]");
-        if (clonedEl) {
-          (clonedEl as HTMLElement).style.display = "block";
-          (clonedEl as HTMLElement).style.position = "relative";
-          (clonedEl as HTMLElement).style.width = "600px";
-          (clonedEl as HTMLElement).style.margin = "0";
-        }
-      },
     });
     /* JPEG at 0.85 quality = ~5-10x smaller than PNG lossless */
     return canvas.toDataURL("image/jpeg", 0.85);
