@@ -39,13 +39,25 @@ export function BookingSection({ data }: { data: InvoiceData }) {
         <Text style={styles.infoValue}>{formatDate(data.bookingDate)}</Text>
       </View>
       <View style={styles.infoRow}>
-        <Text style={styles.infoLabel}>Time Slot</Text>
+        <Text style={styles.infoLabel}>Time</Text>
         <Text style={styles.infoValue}>{timeSlot}</Text>
       </View>
       <View style={styles.infoRow}>
         <Text style={styles.infoLabel}>Duration</Text>
         <Text style={styles.infoValue}>{data.duration} Hour(s)</Text>
       </View>
+      {data.gameMode && (
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>Format</Text>
+          <Text style={styles.infoValue}>{data.gameMode}</Text>
+        </View>
+      )}
+      {data.slotsTotal !== undefined && data.slotsFilled !== undefined && (
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>Players</Text>
+          <Text style={styles.infoValue}>{data.slotsFilled} / {data.slotsTotal}</Text>
+        </View>
+      )}
       <View style={styles.infoRow}>
         <Text style={styles.infoLabel}>Address</Text>
         <Text style={styles.infoValue}>{data.address}</Text>

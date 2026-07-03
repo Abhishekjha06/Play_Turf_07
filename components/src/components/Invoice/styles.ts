@@ -1,10 +1,5 @@
 import { StyleSheet } from "@react-pdf/renderer";
 
-/**
- * Invoice — Shared PDF Styles
- * Compact, professional A4 invoice styling.
- */
-
 export const COLORS = {
   primary: "#00C2A8",
   dark: "#1F2937",
@@ -16,16 +11,15 @@ export const COLORS = {
   green: "#22C55E",
   amber: "#F59E0B",
   red: "#EF4444",
-  blue: "#3B82F6",
 };
 
 export const styles = StyleSheet.create({
   page: {
-    padding: 32,
+    padding: 24,
     fontFamily: "Helvetica",
-    fontSize: 10,
+    fontSize: 8,
     color: COLORS.dark,
-    lineHeight: 1.4,
+    lineHeight: 1.3,
   },
 
   /* ── Header ── */
@@ -33,85 +27,85 @@ export const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    marginBottom: 16,
-    paddingBottom: 12,
-    borderBottomWidth: 2,
+    marginBottom: 10,
+    paddingBottom: 8,
+    borderBottomWidth: 1.5,
     borderBottomColor: COLORS.primary,
   },
   headerLeft: {
     flexDirection: "column",
   },
   headerBrand: {
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: "bold",
     color: COLORS.dark,
-    letterSpacing: 1.5,
-    marginBottom: 2,
+    letterSpacing: 1,
+    marginBottom: 1,
   },
   headerSubtitle: {
-    fontSize: 11,
+    fontSize: 9,
     color: COLORS.gray,
     textTransform: "uppercase",
-    letterSpacing: 2,
+    letterSpacing: 1.5,
   },
   headerRight: {
     alignItems: "flex-end",
   },
   statusBadge: {
-    paddingHorizontal: 14,
-    paddingVertical: 4,
-    borderRadius: 4,
-    marginBottom: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 2,
+    borderRadius: 3,
+    marginBottom: 4,
   },
   statusText: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: "bold",
-    letterSpacing: 1,
+    letterSpacing: 0.5,
   },
   metaRow: {
     flexDirection: "row",
-    marginBottom: 2,
+    marginBottom: 1,
   },
   metaLabel: {
-    fontSize: 8,
+    fontSize: 7,
     color: COLORS.grayLight,
-    width: 80,
+    width: 70,
     textAlign: "right",
-    marginRight: 6,
+    marginRight: 4,
     textTransform: "uppercase",
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
   },
   metaValue: {
-    fontSize: 9,
+    fontSize: 8,
     color: COLORS.dark,
     fontWeight: "bold",
-    width: 100,
+    width: 90,
     textAlign: "right",
   },
 
   /* ── Section Titles ── */
   sectionTitle: {
-    fontSize: 11,
+    fontSize: 9,
     fontWeight: "bold",
     color: COLORS.primary,
     textTransform: "uppercase",
-    letterSpacing: 1,
-    marginBottom: 6,
-    marginTop: 12,
+    letterSpacing: 0.8,
+    marginBottom: 4,
+    marginTop: 8,
   },
   sectionTitleFirst: {
-    fontSize: 11,
+    fontSize: 9,
     fontWeight: "bold",
     color: COLORS.primary,
     textTransform: "uppercase",
-    letterSpacing: 1,
-    marginBottom: 6,
+    letterSpacing: 0.8,
+    marginBottom: 4,
   },
 
   /* ── Two Column Layout ── */
   row: {
     flexDirection: "row",
-    gap: 24,
+    gap: 16,
   },
   col: {
     flex: 1,
@@ -123,43 +117,66 @@ export const styles = StyleSheet.create({
   /* ── Info Rows ── */
   infoRow: {
     flexDirection: "row",
-    marginBottom: 3,
+    marginBottom: 1,
   },
   infoLabel: {
-    fontSize: 8,
+    fontSize: 7,
     color: COLORS.grayLight,
-    width: 90,
+    width: 80,
     textTransform: "uppercase",
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
   },
   infoValue: {
-    fontSize: 9,
+    fontSize: 8,
     color: COLORS.dark,
     fontWeight: "bold",
     flex: 1,
   },
+  infoValueAccent: {
+    color: COLORS.primary,
+  },
+  infoValueGreen: {
+    color: COLORS.green,
+  },
+
+  /* ── Host / Join Badge ── */
+  hostBadge: {
+    backgroundColor: COLORS.primary + "18",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 3,
+    marginBottom: 2,
+    alignSelf: "flex-start",
+  },
+  hostBadgeText: {
+    fontSize: 7,
+    fontWeight: "bold",
+    color: COLORS.primary,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
 
   /* ── Table ── */
   table: {
-    marginTop: 12,
-    marginBottom: 8,
+    marginTop: 8,
+    marginBottom: 4,
   },
   tableHeader: {
     flexDirection: "row",
     backgroundColor: COLORS.grayBg,
-    paddingVertical: 5,
-    paddingHorizontal: 8,
-    borderTopWidth: 1,
+    paddingVertical: 3,
+    paddingHorizontal: 6,
+    borderTopWidth: 0.5,
     borderTopColor: COLORS.border,
-    borderBottomWidth: 1,
+    borderBottomWidth: 0.5,
     borderBottomColor: COLORS.border,
   },
   tableHeaderCell: {
-    fontSize: 8,
+    fontSize: 7,
     fontWeight: "bold",
     color: COLORS.gray,
     textTransform: "uppercase",
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
   },
   tableHeaderLeft: {
     flex: 3,
@@ -170,13 +187,13 @@ export const styles = StyleSheet.create({
   },
   tableRow: {
     flexDirection: "row",
-    paddingVertical: 4,
-    paddingHorizontal: 8,
+    paddingVertical: 2,
+    paddingHorizontal: 6,
     borderBottomWidth: 0.5,
     borderBottomColor: COLORS.border,
   },
   tableCell: {
-    fontSize: 9,
+    fontSize: 8,
     color: COLORS.dark,
   },
   tableCellLeft: {
@@ -192,25 +209,25 @@ export const styles = StyleSheet.create({
   },
   totalRow: {
     flexDirection: "row",
-    paddingVertical: 6,
-    paddingHorizontal: 8,
-    backgroundColor: COLORS.primary + "15",
-    borderTopWidth: 1.5,
+    paddingVertical: 4,
+    paddingHorizontal: 6,
+    backgroundColor: COLORS.primary + "12",
+    borderTopWidth: 1,
     borderTopColor: COLORS.primary,
-    marginTop: 2,
+    marginTop: 1,
   },
   totalLabel: {
     flex: 3,
-    fontSize: 11,
+    fontSize: 9,
     fontWeight: "bold",
     color: COLORS.primary,
     textTransform: "uppercase",
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
   },
   totalValue: {
     flex: 1,
     textAlign: "right",
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: "bold",
     color: COLORS.primary,
   },
@@ -219,31 +236,31 @@ export const styles = StyleSheet.create({
   qrWrap: {
     alignItems: "center",
     justifyContent: "center",
-    padding: 8,
-    borderWidth: 1,
+    padding: 4,
+    borderWidth: 0.5,
     borderColor: COLORS.border,
-    borderRadius: 4,
-    width: 100,
-    height: 100,
+    borderRadius: 3,
+    width: 72,
+    height: 72,
   },
   qrImage: {
-    width: 84,
-    height: 84,
+    width: 64,
+    height: 64,
   },
   qrLabel: {
-    fontSize: 7,
+    fontSize: 6,
     color: COLORS.grayLight,
     textAlign: "center",
-    marginTop: 4,
+    marginTop: 2,
     textTransform: "uppercase",
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
   },
 
   /* ── Footer ── */
   footer: {
-    marginTop: "auto",
-    paddingTop: 12,
-    borderTopWidth: 1,
+    marginTop: 8,
+    paddingTop: 6,
+    borderTopWidth: 0.5,
     borderTopColor: COLORS.border,
     flexDirection: "row",
     justifyContent: "space-between",
@@ -253,28 +270,28 @@ export const styles = StyleSheet.create({
     flex: 2,
   },
   footerCompany: {
-    fontSize: 9,
+    fontSize: 8,
     fontWeight: "bold",
     color: COLORS.dark,
-    marginBottom: 2,
-  },
-  footerLine: {
-    fontSize: 8,
-    color: COLORS.gray,
     marginBottom: 1,
   },
-  footerDisclaimer: {
+  footerLine: {
     fontSize: 7,
+    color: COLORS.gray,
+    marginBottom: 0.5,
+  },
+  footerDisclaimer: {
+    fontSize: 6,
     color: COLORS.grayLight,
-    marginTop: 4,
+    marginTop: 2,
     fontStyle: "italic",
   },
   footerRight: {
     alignItems: "flex-end",
   },
   footerLink: {
-    fontSize: 8,
+    fontSize: 7,
     color: COLORS.primary,
-    marginBottom: 1,
+    marginBottom: 0.5,
   },
 });

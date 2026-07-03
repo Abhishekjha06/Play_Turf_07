@@ -18,6 +18,16 @@ export function CustomerSection({ data }: { data: InvoiceData }) {
         <Text style={styles.infoLabel}>Email</Text>
         <Text style={styles.infoValue}>{data.customerEmail}</Text>
       </View>
+      {data.hostName && (
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>
+            {data.bookingType === "host" ? "Host" : "Hosted By"}
+          </Text>
+          <Text style={[styles.infoValue, styles.infoValueAccent]}>
+            {data.hostName}
+          </Text>
+        </View>
+      )}
     </View>
   );
 }

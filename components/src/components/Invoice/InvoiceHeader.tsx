@@ -14,13 +14,6 @@ function formatDate(dateStr: string) {
   return d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 }
 
-function formatTime(timeStr: string) {
-  const [h, m] = timeStr.split(":").map(Number);
-  const ampm = h >= 12 ? "PM" : "AM";
-  const hour12 = h % 12 || 12;
-  return `${hour12}:${String(m).padStart(2, "0")} ${ampm}`;
-}
-
 export function InvoiceHeader({ data }: { data: InvoiceData }) {
   const cfg = STATUS_STYLES[data.paymentStatus] || STATUS_STYLES.PENDING;
 
@@ -29,6 +22,16 @@ export function InvoiceHeader({ data }: { data: InvoiceData }) {
       <View style={styles.headerLeft}>
         <Text style={styles.headerBrand}>PLAYTURF</Text>
         <Text style={styles.headerSubtitle}>Payment Receipt</Text>
+        {data.bookingType === "host" && (
+          <View style={styles.hostBadge}>
+            <Text style={styles.hostBadgeText}>Host Booking</Text>
+          </View>
+        )}
+        {data.bookingType === "join" && (
+          <View style={styles.hostBadge}>
+            <Text style={styles.hostBadgeText}>You Joined</Text>
+          </View>
+        )}
       </View>
 
       <View style={styles.headerRight}>

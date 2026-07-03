@@ -110,9 +110,13 @@ export function JoinGameReceipt({ booking, game, playerName, onClose }: JoinGame
     total: booking.amount + 20 + Math.round(booking.amount * 0.18),
     bookingStatus: booking.status === "confirmed" ? "confirmed" : "pending",
     paymentStatus: booking.status === "confirmed" ? "PAID" : "PENDING",
-    qrCodeValue: `PlayTurf|${booking.id}|${playerName || user?.name || "Guest"}|${booking.amount + 20 + Math.round(booking.amount * 0.18)}|INV-${booking.id.slice(-6).toUpperCase()}|www.playturf.in`,
     gstRate: 18,
     createdAt: booking.created_at,
+    bookingType: "join",
+    hostName: game.host_name,
+    slotsTotal: game.slots_total,
+    slotsFilled: game.slots_filled,
+    gameMode: `${Math.round(game.slots_total / 2)}-a-side`,
   };
 
   const handleCopy = () => {

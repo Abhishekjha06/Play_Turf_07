@@ -104,9 +104,13 @@ export function HostBookingReceipt({ booking, game, onClose }: HostBookingReceip
     total: booking.amount + 20 + Math.round(booking.amount * 0.18),
     bookingStatus: booking.status === "confirmed" ? "confirmed" : "pending",
     paymentStatus: booking.status === "confirmed" ? "PAID" : "PENDING",
-    qrCodeValue: `PlayTurf|${booking.id}|${user?.name || game.host_name || "Host"}|${booking.amount + 20 + Math.round(booking.amount * 0.18)}|INV-${booking.id.slice(-6).toUpperCase()}|www.playturf.in`,
     gstRate: 18,
     createdAt: booking.created_at,
+    bookingType: "host",
+    hostName: game.host_name,
+    slotsTotal: game.slots_total,
+    slotsFilled: game.slots_filled,
+    gameMode: `${Math.round(game.slots_total / 2)}-a-side`,
   };
 
   const handleCopy = () => {

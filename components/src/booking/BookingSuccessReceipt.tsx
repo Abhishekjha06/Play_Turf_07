@@ -175,9 +175,9 @@ export function BookingSuccessReceipt({
         total: total + 20 + Math.round(total * 0.18),
         bookingStatus: booking.status === "confirmed" ? "confirmed" : "pending",
         paymentStatus: booking.status === "confirmed" ? "PAID" : "PENDING",
-        qrCodeValue: `PlayTurf|${booking.id}|${user?.name || "Guest"}|${total + 20 + Math.round(total * 0.18)}|INV-${booking.id.slice(-6).toUpperCase()}|www.playturf.in`,
         gstRate: 18,
         createdAt: booking.created_at,
+        bookingType: "standard",
     };
 
     const releasedSlots = [];

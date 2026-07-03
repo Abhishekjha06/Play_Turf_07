@@ -74,9 +74,9 @@ export default function Receipt() {
     total: totalPaid,
     bookingStatus: "confirmed",
     paymentStatus: receipt.status === "SUCCESS" ? "PAID" : "PENDING",
-    qrCodeValue: `PlayTurf|${receipt.bookingId}|${receipt.selectedTeam}|${totalPaid}|INV-${receipt.bookingId.slice(-6).toUpperCase()}|www.playturf.in`,
     gstRate: 18,
     createdAt: new Date().toISOString(),
+    bookingType: "standard",
   };
 
   const downloadTxt = () => {
