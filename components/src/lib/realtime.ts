@@ -360,24 +360,24 @@ export function useRealtimeOpenGames(callback: () => void): void {
         let channelPlayers: RealtimeChannel | null = null;
 
         getSupabase().then((supabase) => {
-            // Subscribe to open_games table updates
+            // Subscribe to games table updates
             channelOpenGames = supabase
-                .channel("realtime-open-games")
+                .channel("realtime-games")
                 .on(
                     "postgres_changes",
-                    { event: "*", schema: "public", table: "open_games" },
+                    { event: "*", schema: "public", table: "games" },
                     () => {
                         savedCallback.current();
                     }
                 )
                 .subscribe();
 
-            // Subscribe to open_game_players table updates
+            // Subscribe to game_players table updates
             channelPlayers = supabase
-                .channel("realtime-open-game-players")
+                .channel("realtime-game-players")
                 .on(
                     "postgres_changes",
-                    { event: "*", schema: "public", table: "open_game_players" },
+                    { event: "*", schema: "public", table: "game_players" },
                     () => {
                         savedCallback.current();
                     }

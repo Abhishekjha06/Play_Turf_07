@@ -23,6 +23,7 @@ export const api = {
   // Open Games
   listOpenGames: (filters?: Parameters<typeof openGamesModule.listOpenGames>[0]) => openGamesModule.listOpenGames(filters),
   getOpenGame: (id: string) => openGamesModule.getOpenGame(id),
+  getGameByBookingId: (id: string) => openGamesModule.getGameByBookingId(id),
   joinOpenGame: (gameId: string, paymentMethod?: string) => openGamesModule.joinOpenGame(gameId, paymentMethod),
   requestJoinOpenGame: (gameId: string) => openGamesModule.requestJoinOpenGame(gameId),
   payPrivateGameShare: (gameId: string, paymentMethod?: string) => openGamesModule.payPrivateGameShare(gameId, paymentMethod),

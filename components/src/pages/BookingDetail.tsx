@@ -62,12 +62,10 @@ const BookingDetail = () => {
                     const turfData = await api.getTurf(b.turf_id);
                     setTurf(turfData);
                 } catch {}
-                if (b.open_game_id) {
-                    try {
-                        const gameData = await api.getOpenGame(b.open_game_id);
-                        setGame(gameData);
-                    } catch {}
-                }
+                try {
+                    const gameData = await api.getGameByBookingId(b.id);
+                    setGame(gameData);
+                } catch {}
             })
             .catch((err) => setError(err.message || "Booking not found"))
             .finally(() => setLoading(false));
