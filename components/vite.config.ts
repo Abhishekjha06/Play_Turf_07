@@ -29,6 +29,12 @@ export default defineConfig(({ mode }) => ({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
+      workbox: {
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MB
+      },
+      manifest: {
+      registerType: 'autoUpdate',
+      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
         name: 'Play Turf',
         short_name: 'PlayTurf',
