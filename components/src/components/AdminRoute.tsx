@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
 
 interface AdminRouteProps {
@@ -8,6 +8,7 @@ interface AdminRouteProps {
 
 export function AdminRoute({ children }: AdminRouteProps) {
     const { user, loading } = useAuth();
+    const location = useLocation();
 
     if (loading) {
         return (
@@ -18,8 +19,7 @@ export function AdminRoute({ children }: AdminRouteProps) {
     }
 
     if (!user) {
-        // User not authenticated, redirect to login
-        return <Navigate to="/more" replace />;
+        return <Navigate to={`/login?returnTo=${encodeURIComponent(location.pathname)}`} replace />;
     }
 
     if (user.role !== "admin" && user.role !== "super_admin") {

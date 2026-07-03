@@ -102,17 +102,22 @@ const BookingContent = () => {
         });
     }, [turfId, date, slot]);
 
-    // Auto-refresh slots and update current time every 30 seconds
+    // Clock tick only — no API calls
     useEffect(() => {
-        const timer = setInterval(() => {
-            setCurrentTime(new Date());
-            if (turfId && date) {
-                api.bookedSlots(turfId, date).then((booked) => {
-                    setBookedSlots(booked);
-                    if (slot && booked.includes(slot)) setSlot(null);
-                });
-            }
-        }, 30000);
+        const timer = setInterval(() => setCurrentTime(new Date()), 30000);
+        return () => clearInterval(timer);
+    }, []);
+
+    // Poll slot availability every 30 seconds
+    useEffect(() => {
+        if (!turfId || !date) return;
+        const poll = () => {
+            api.bookedSlots(turfId, date).then((booked) => {
+                setBookedSlots(booked);
+                if (slot && booked.includes(slot)) setSlot(null);
+            });
+        };
+        const timer = setInterval(poll, 30000);
         return () => clearInterval(timer);
     }, [turfId, date, slot]);
 

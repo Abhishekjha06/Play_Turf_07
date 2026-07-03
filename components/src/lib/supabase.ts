@@ -149,27 +149,28 @@ export function withTimeout<T>(promise: Promise<T>, ms = 8000): Promise<T> {
 }
 
 /**
- * Batch multiple Supabase RPC calls into a single transaction when possible.
- * Falls back to individual calls if batching fails.
+ * Run multiple async calls with a concurrency limit.
+ * Note: this does NOT batch them into a single DB request — it only limits
+ * how many run in parallel. For true batching use an edge function or
+ * a single RPC call.
  */
-export async function batchSupabaseCalls<T>(
-  calls: (() => Promise<T>)[]
+export async function runWithConcurrencyLimit<T>(
+  calls: (() => Promise<T>)[],
+  concurrency = 3
 ): Promise<T[]> {
   if (calls.length === 0) return [];
   if (calls.length === 1) return [await calls[0]()];
 
-  // Execute calls with concurrency limiting
-  const CONCURRENCY = 3;
   const results: T[] = [];
 
-  for (let i = 0; i < calls.length; i += CONCURRENCY) {
-    const batch = calls.slice(i, i + CONCURRENCY);
+  for (let i = 0; i < calls.length; i += concurrency) {
+    const batch = calls.slice(i, i + concurrency);
     const batchResults = await Promise.allSettled(batch.map((call) => call()));
     batchResults.forEach((result, idx) => {
       if (result.status === "fulfilled") {
         results[i + idx] = result.value;
       } else {
-        console.error(`Batch call ${i + idx} failed:`, result.reason);
+        console.error(`Concurrent call ${i + idx} failed:`, result.reason);
         throw result.reason;
       }
     });
@@ -180,12 +181,13 @@ export async function batchSupabaseCalls<T>(
 
 /**
  * Create a cached Supabase query wrapper using TanStack Query-compatible caching.
- * Uses in-memory cache with TTL.
+ * Uses an in-memory LRU cache with TTL and a bounded max size to prevent leaks.
  */
 const queryCache = new Map<
   string,
   { data: unknown; timestamp: number; ttl: number }
 >();
+const MAX_CACHE_SIZE = 200;
 
 export async function cachedSupabaseQuery<T>(
   key: string,
@@ -196,10 +198,20 @@ export async function cachedSupabaseQuery<T>(
   const now = Date.now();
 
   if (cached && now - cached.timestamp < cached.ttl) {
+    // LRU: delete and re-insert to mark as recently used
+    queryCache.delete(key);
+    queryCache.set(key, cached);
     return cached.data as T;
   }
 
   const data = await queryFn();
+
+  // Evict oldest if over limit
+  if (queryCache.size >= MAX_CACHE_SIZE) {
+    const firstKey = queryCache.keys().next().value;
+    if (firstKey !== undefined) queryCache.delete(firstKey);
+  }
+
   queryCache.set(key, { data, timestamp: now, ttl: ttlMs });
   return data;
 }

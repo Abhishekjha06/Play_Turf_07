@@ -43,6 +43,3 @@ export type SignupFormValues = z.infer<typeof signupSchema>;
 export type BookingFormValues = z.infer<typeof bookingSchema>;
 export type ProfileUpdateFormValues = z.infer<typeof profileUpdateSchema>;
 export type ClientProfileUpdateFormValues = z.infer<typeof clientProfileUpdateSchema>;
-export type SignupFormValues = z.infer<typeof signupSchema>;
-export type BookingFormValues = z.infer<typeof bookingSchema>;
-export type ProfileUpdateFormValues = z.infer<typeof profileUpdateSchema>;

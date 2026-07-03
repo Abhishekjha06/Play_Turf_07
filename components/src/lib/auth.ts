@@ -10,7 +10,7 @@ import {
   resetLockout,
 } from "@/lib/admin-attempt-tracker";
 import { signInWithGoogle as authServiceGoogle } from "@/services/authService";
-import { getSupabase, withTimeout } from "@/lib/supabase";
+import { getSupabase, withTimeout, clearSupabaseCache } from "@/lib/supabase";
 import type { SupabaseClient, User as SupabaseUser } from "@supabase/supabase-js";
 
 // minimal store using plain event emitter pattern
@@ -218,6 +218,7 @@ function clearStaleAuthArtifacts() {
 export async function signOut() {
   await api.logout();
   clearStaleAuthArtifacts();
+  clearSupabaseCache();
   _user = null;
   emit();
 }

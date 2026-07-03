@@ -2,7 +2,9 @@ import posthog from "posthog-js";
 import * as Sentry from "@sentry/react";
 
 export const trackEvent = (eventName: string, properties?: Record<string, any>) => {
-  posthog.capture(eventName, properties);
+  if (typeof posthog !== "undefined" && (posthog as any).__loaded) {
+    posthog.capture(eventName, properties);
+  }
 };
 
 export const identifyUser = (userId: string, properties?: Record<string, any>) => {
