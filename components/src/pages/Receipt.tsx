@@ -5,7 +5,8 @@ import { useRef } from "react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import receiptAssets from "@/assets/play-turf-receipt-assets.webp";
-import { BillingReceipt } from "@/booking/BillingReceipt";
+import { PaymentSlip, type PaymentSlipData } from "@/components/PaymentSlip";
+import { downloadPaymentSlip } from "@/utils/downloadPaymentSlip";
 import { useBookingTicket } from "@/hooks/useBookingTicket";
 
 import playTurfLogo from "../assets/play-turf-logo.png";
@@ -47,11 +48,44 @@ export default function Receipt() {
   };
 
   const { downloadPDF } = useBookingTicket();
-  const billingRef = useRef<HTMLDivElement>(null);
+  const paymentSlipRef = useRef<HTMLDivElement>(null);
+
+  const paymentSlipData: PaymentSlipData = {
+    bookingId: receipt.bookingId,
+    invoiceNumber: `INV-${receipt.bookingId.slice(-6).toUpperCase()}`,
+    transactionId: receipt.transactionId,
+    bookingDate: receipt.dateTime.split(" - ")[0],
+    bookingTime: "08:00",
+    endTime: "09:00",
+    sport: "Cricket",
+    turfName: `${receipt.teamA} vs ${receipt.teamB}`,
+    groundName: "PlayTurf Arena",
+    duration: 1,
+    address: "PlayTurf Arena, Bangalore",
+    customerName: receipt.selectedTeam,
+    customerEmail: "",
+    customerPhone: "",
+    paymentMethod: receipt.paymentMethod,
+    paymentGateway: "Razorpay",
+    upiReference: receipt.transactionId,
+    subtotal: receipt.betAmount,
+    platformFee: receipt.platformFee,
+    discount: 0,
+    gst: receipt.gst,
+    total: totalPaid,
+    bookingStatus: "confirmed",
+    paymentStatus: receipt.status === "SUCCESS" ? "PAID" : "PENDING",
+    qrCodeValue: `PlayTurf|${receipt.bookingId}|${receipt.selectedTeam}|${totalPaid}|INV-${receipt.bookingId.slice(-6).toUpperCase()}|www.playturf.in`,
+    createdAt: new Date().toISOString(),
+  };
 
   const handleDownloadPDF = async () => {
-    if (billingRef.current) {
-      await downloadPDF(billingRef.current, `PlayTurf-Billing-${receipt.bookingId}`);
+    if (paymentSlipRef.current) {
+      await downloadPaymentSlip(paymentSlipRef.current, {
+        filename: `PlayTurf-Invoice-${receipt.bookingId}`,
+        scale: 2.5,
+        quality: 0.92,
+      });
     }
   };
 
@@ -140,23 +174,12 @@ export default function Receipt() {
         <ActionButton label="Home" icon={Home} onClick={() => (window.location.href = "/")} compact />
       </div>
 
-      {/* Hidden Billing Receipt for PDF capture */}
+      {/* Hidden Payment Slip for PDF capture */}
       <div style={{ position: "absolute", left: "-9999px", top: 0, visibility: "hidden" }}>
-        <BillingReceipt
-          ref={billingRef}
-          booking={{
-            id: receipt.bookingId,
-            turf_name: receipt.teamA + " vs " + receipt.teamB,
-            date: receipt.dateTime.split(" - ")[0],
-            start_time: "08:00",
-            end_time: "09:00",
-            hours: 1,
-            amount: receipt.betAmount,
-            status: receipt.status,
-            payment_id: receipt.transactionId,
-            created_at: new Date().toISOString(),
-          }}
-          user={{ name: receipt.selectedTeam, email: "" }}
+        <PaymentSlip
+          ref={paymentSlipRef}
+          data={paymentSlipData}
+          hideActions
         />
       </div>
     </main>

@@ -6,7 +6,8 @@ import type { Booking } from "@/data/seed";
 import type { OpenGame } from "@/types/openGames";
 import { useAuth } from "@/hooks/use-auth";
 import { BookingTicket } from "@/booking/BookingTicket";
-import { BillingReceipt } from "@/booking/BillingReceipt";
+import { PaymentSlip, type PaymentSlipData } from "@/components/PaymentSlip";
+import { downloadPaymentSlip } from "@/utils/downloadPaymentSlip";
 import { useBookingTicket } from "@/hooks/useBookingTicket";
 
 /* ────────────────────────────────────────────────────────────── */
@@ -83,7 +84,36 @@ export function JoinGameReceipt({ booking, game, playerName, onClose }: JoinGame
   const [showTicket, setShowTicket] = useState(false);
   const { user } = useAuth();
   const { ticketRef, downloadPDF, shareTicket, isGenerating } = useBookingTicket();
-  const billingRef = useRef<HTMLDivElement>(null);
+  const paymentSlipRef = useRef<HTMLDivElement>(null);
+
+  const paymentSlipData: PaymentSlipData = {
+    bookingId: booking.id,
+    invoiceNumber: `INV-${booking.id.slice(-6).toUpperCase()}`,
+    transactionId: booking.payment_id || `TXN-${booking.id.slice(-6).toUpperCase()}`,
+    bookingDate: booking.date,
+    bookingTime: booking.start_time,
+    endTime: booking.end_time,
+    sport: game.sport,
+    turfName: booking.turf_name,
+    groundName: game.venue,
+    duration: booking.hours,
+    address: game.venue,
+    customerName: playerName || user?.name || "Guest",
+    customerEmail: user?.email || "—",
+    customerPhone: user?.phone || "—",
+    paymentMethod: game.players?.find((p) => p.name === playerName)?.payment_method || "UPI",
+    paymentGateway: "Razorpay",
+    upiReference: booking.payment_id || undefined,
+    subtotal: booking.amount,
+    platformFee: 20,
+    discount: 0,
+    gst: Math.round(booking.amount * 0.18),
+    total: booking.amount + 20 + Math.round(booking.amount * 0.18),
+    bookingStatus: booking.status === "confirmed" ? "confirmed" : "pending",
+    paymentStatus: booking.status === "confirmed" ? "PAID" : "PENDING",
+    qrCodeValue: `PlayTurf|${booking.id}|${playerName || user?.name || "Guest"}|${booking.amount + 20 + Math.round(booking.amount * 0.18)}|INV-${booking.id.slice(-6).toUpperCase()}|www.playturf.in`,
+    createdAt: booking.created_at,
+  };
 
   const handleCopy = () => {
     navigator.clipboard.writeText(receiptText(booking, game, playerName));
@@ -104,8 +134,12 @@ export function JoinGameReceipt({ booking, game, playerName, onClose }: JoinGame
   };
 
   const handleDownloadPDF = async () => {
-    if (billingRef.current) {
-      await downloadPDF(billingRef.current, `PlayTurf-Join-Billing-${booking.id}`);
+    if (paymentSlipRef.current) {
+      await downloadPaymentSlip(paymentSlipRef.current, {
+        filename: `PlayTurf-Join-Invoice-${booking.id}`,
+        scale: 2.5,
+        quality: 0.92,
+      });
     }
   };
 
@@ -326,15 +360,12 @@ export function JoinGameReceipt({ booking, game, playerName, onClose }: JoinGame
         </div>
       </div>
 
-      {/* Hidden Billing Receipt for PDF capture */}
+      {/* Hidden Payment Slip for PDF capture */}
       <div style={{ position: "absolute", left: "-9999px", top: 0, visibility: "hidden" }}>
-        <BillingReceipt
-          ref={billingRef}
-          booking={booking}
-          game={game}
-          user={user ? { name: playerName || user.name, email: user.email } : { name: playerName }}
-          isHost={false}
-          playerName={playerName}
+        <PaymentSlip
+          ref={paymentSlipRef}
+          data={paymentSlipData}
+          hideActions
         />
       </div>
 

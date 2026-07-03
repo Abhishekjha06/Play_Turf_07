@@ -6,7 +6,8 @@ import type { Booking } from "@/data/seed";
 import type { OpenGame } from "@/types/openGames";
 import { useAuth } from "@/hooks/use-auth";
 import { BookingTicket } from "@/booking/BookingTicket";
-import { BillingReceipt } from "@/booking/BillingReceipt";
+import { PaymentSlip, type PaymentSlipData } from "@/components/PaymentSlip";
+import { downloadPaymentSlip } from "@/utils/downloadPaymentSlip";
 import { useBookingTicket } from "@/hooks/useBookingTicket";
 
 /* ────────────────────────────────────────────────────────────── */
@@ -77,7 +78,36 @@ export function HostBookingReceipt({ booking, game, onClose }: HostBookingReceip
   const [showTicket, setShowTicket] = useState(false);
   const { user } = useAuth();
   const { ticketRef, downloadPDF, shareTicket, isGenerating } = useBookingTicket();
-  const billingRef = useRef<HTMLDivElement>(null);
+  const paymentSlipRef = useRef<HTMLDivElement>(null);
+
+  const paymentSlipData: PaymentSlipData = {
+    bookingId: booking.id,
+    invoiceNumber: `INV-${booking.id.slice(-6).toUpperCase()}`,
+    transactionId: booking.payment_id || `TXN-${booking.id.slice(-6).toUpperCase()}`,
+    bookingDate: booking.date,
+    bookingTime: booking.start_time,
+    endTime: booking.end_time,
+    sport: game.sport,
+    turfName: booking.turf_name,
+    groundName: game.venue,
+    duration: booking.hours,
+    address: game.venue,
+    customerName: user?.name || game.host_name || "Host",
+    customerEmail: user?.email || "—",
+    customerPhone: user?.phone || "—",
+    paymentMethod: "Host Booking",
+    paymentGateway: "Razorpay",
+    upiReference: booking.payment_id || undefined,
+    subtotal: booking.amount,
+    platformFee: 20,
+    discount: 0,
+    gst: Math.round(booking.amount * 0.18),
+    total: booking.amount + 20 + Math.round(booking.amount * 0.18),
+    bookingStatus: booking.status === "confirmed" ? "confirmed" : "pending",
+    paymentStatus: booking.status === "confirmed" ? "PAID" : "PENDING",
+    qrCodeValue: `PlayTurf|${booking.id}|${user?.name || game.host_name || "Host"}|${booking.amount + 20 + Math.round(booking.amount * 0.18)}|INV-${booking.id.slice(-6).toUpperCase()}|www.playturf.in`,
+    createdAt: booking.created_at,
+  };
 
   const handleCopy = () => {
     navigator.clipboard.writeText(receiptText(booking, game));
@@ -98,8 +128,12 @@ export function HostBookingReceipt({ booking, game, onClose }: HostBookingReceip
   };
 
   const handleDownloadPDF = async () => {
-    if (billingRef.current) {
-      await downloadPDF(billingRef.current, `PlayTurf-Host-Billing-${booking.id}`);
+    if (paymentSlipRef.current) {
+      await downloadPaymentSlip(paymentSlipRef.current, {
+        filename: `PlayTurf-Host-Invoice-${booking.id}`,
+        scale: 2.5,
+        quality: 0.92,
+      });
     }
   };
 
@@ -295,14 +329,12 @@ export function HostBookingReceipt({ booking, game, onClose }: HostBookingReceip
         </div>
       </div>
 
-      {/* Hidden Billing Receipt for PDF capture */}
+      {/* Hidden Payment Slip for PDF capture */}
       <div style={{ position: "absolute", left: "-9999px", top: 0, visibility: "hidden" }}>
-        <BillingReceipt
-          ref={billingRef}
-          booking={booking}
-          game={game}
-          user={user ? { name: user.name || game.host_name, email: user.email } : { name: game.host_name }}
-          isHost={true}
+        <PaymentSlip
+          ref={paymentSlipRef}
+          data={paymentSlipData}
+          hideActions
         />
       </div>
 

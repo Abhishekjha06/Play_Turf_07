@@ -359,7 +359,7 @@ const BookingDetail = () => {
                             </button>
                         )}
 
-                        {booking.status === "CONFIRMED" && (
+                        {booking.status === "confirmed" && (
                             <button
                                 onClick={() => setShowTicket(true)}
                                 className="w-full rounded-2xl border border-primary/40 bg-primary/10 py-3 text-sm font-semibold text-primary pressable flex items-center justify-center gap-2"
@@ -432,7 +432,7 @@ const BookingDetail = () => {
                             </Link>
                         )}
 
-                        {booking.status === "COMPLETED" && (
+                        {booking.status === "completed" && (
                             <Link
                                 to={`/turf/${booking.turf_id}`}
                                 className="w-full rounded-2xl border border-primary/40 bg-primary/10 py-3 text-sm font-semibold text-primary pressable flex items-center justify-center gap-2"

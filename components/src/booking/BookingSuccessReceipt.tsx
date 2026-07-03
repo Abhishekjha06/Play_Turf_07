@@ -10,7 +10,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { api } from "@/lib/api";
 import { useAuth } from "@/hooks/use-auth";
 import { BookingTicket } from "@/booking/BookingTicket";
-import { BillingReceipt } from "@/booking/BillingReceipt";
+import { PaymentSlip, type PaymentSlipData } from "@/components/PaymentSlip";
+import { downloadPaymentSlip } from "@/utils/downloadPaymentSlip";
 import { useBookingTicket } from "@/hooks/useBookingTicket";
 import playTurfLogo from "../assets/play-turf-logo.png";
 
@@ -142,11 +143,15 @@ export function BookingSuccessReceipt({
     const [showTicket, setShowTicket] = useState(false);
     const { user } = useAuth();
     const { ticketRef, downloadPDF, shareTicket, isGenerating } = useBookingTicket();
-    const billingRef = useRef<HTMLDivElement>(null);
+    const paymentSlipRef = useRef<HTMLDivElement>(null);
 
     const handleDownloadBillingPDF = async () => {
-        if (billingRef.current) {
-            await downloadPDF(billingRef.current, `PlayTurf-Billing-${booking.id}`);
+        if (paymentSlipRef.current) {
+            await downloadPaymentSlip(paymentSlipRef.current, {
+                filename: `PlayTurf-Invoice-${booking.id}`,
+                scale: 2.5,
+                quality: 0.92,
+            });
         }
     };
 
@@ -155,6 +160,35 @@ export function BookingSuccessReceipt({
     const [sh, sm] = booking.start_time.split(":").map(Number);
     const eh = sh + durationHours;
     const end_time_str = `${eh.toString().padStart(2, "0")}:${sm.toString().padStart(2, "0")}`;
+
+    const paymentSlipData: PaymentSlipData = {
+        bookingId: booking.id,
+        invoiceNumber: `INV-${booking.id.slice(-6).toUpperCase()}`,
+        transactionId: booking.payment_id || `TXN-${booking.id.slice(-6).toUpperCase()}`,
+        bookingDate: booking.date,
+        bookingTime: booking.start_time,
+        endTime: end_time_str,
+        sport: turf.sport_types?.[0] || "Football",
+        turfName: booking.turf_name,
+        groundName: turf.name,
+        duration: durationHours,
+        address: turf.address || turf.city || "—",
+        customerName: user?.name || "Guest",
+        customerEmail: user?.email || "—",
+        customerPhone: user?.phone || "—",
+        paymentMethod: cricket.state?.paymentMethod || "UPI",
+        paymentGateway: "Razorpay",
+        upiReference: booking.payment_id || undefined,
+        subtotal: total,
+        platformFee: 20,
+        discount: 0,
+        gst: Math.round(total * 0.18),
+        total: total + 20 + Math.round(total * 0.18),
+        bookingStatus: booking.status === "confirmed" ? "confirmed" : "pending",
+        paymentStatus: booking.status === "confirmed" ? "PAID" : "PENDING",
+        qrCodeValue: `PlayTurf|${booking.id}|${user?.name || "Guest"}|${total + 20 + Math.round(total * 0.18)}|INV-${booking.id.slice(-6).toUpperCase()}|www.playturf.in`,
+        createdAt: booking.created_at,
+    };
 
     const releasedSlots = [];
     for (let i = 0; i < durationHours; i++) {
@@ -580,15 +614,12 @@ export function BookingSuccessReceipt({
                     </div>
                 </div>
             )}
-            {/* Hidden Billing Receipt for PDF capture */}
+            {/* Hidden Payment Slip for PDF capture */}
             <div style={{ position: "absolute", left: "-9999px", top: 0, visibility: "hidden" }}>
-                <BillingReceipt
-                    ref={billingRef}
-                    booking={booking}
-                    turf={turf}
-                    user={user ? { name: user.name, email: user.email } : undefined}
-                    teamA={cricket.teamA}
-                    teamB={cricket.teamB}
+                <PaymentSlip
+                    ref={paymentSlipRef}
+                    data={paymentSlipData}
+                    hideActions
                 />
             </div>
 
