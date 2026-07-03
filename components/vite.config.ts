@@ -30,11 +30,8 @@ export default defineConfig(({ mode }) => ({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       workbox: {
-        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MB
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
       },
-      manifest: {
-      registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
         name: 'Play Turf',
         short_name: 'PlayTurf',
@@ -107,6 +104,29 @@ export default defineConfig(({ mode }) => ({
           // Lucide icons — large icon set
           if (id.includes("node_modules/lucide-react/")) {
             return "vendor-icons";
+          }
+          // PDF rendering — very large, lazy-loaded
+          if (
+            id.includes("node_modules/@react-pdf/") ||
+            id.includes("node_modules/pdfkit/") ||
+            id.includes("node_modules/@react-pdf/")
+          ) {
+            return "vendor-pdf";
+          }
+          // QR code generation
+          if (
+            id.includes("node_modules/qrcode/") ||
+            id.includes("node_modules/dijkstrajs/")
+          ) {
+            return "vendor-qr";
+          }
+          // Recharts / charts
+          if (
+            id.includes("node_modules/recharts/") ||
+            id.includes("node_modules/victory-") ||
+            id.includes("node_modules/d3-")
+          ) {
+            return "vendor-charts";
           }
           // Remaining utilities
           if (id.includes("node_modules/")) {
