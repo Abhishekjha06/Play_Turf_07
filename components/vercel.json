@@ -1,9 +1,9 @@
 {
   "version": 2,
   "framework": "vite",
-  "buildCommand": "cd components && npm run build",
-  "outputDirectory": "components/dist",
-  "installCommand": "cd components && npm install",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "installCommand": "npm install",
   "regions": ["bom1", "sin1", "hkg1"],
 
   "rewrites": [
