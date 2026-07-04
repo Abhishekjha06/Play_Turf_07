@@ -183,31 +183,40 @@ const Login = () => {
               <div className="h-px flex-1 bg-white/10" />
             </div>
 
-            <form onSubmit={handleSubmit(onSubmit)} className="rounded-3xl border border-white/10 bg-panel-2/80 p-5 text-left">
-              <input
-                {...register("email")}
-                className="mt-3 h-12 w-full rounded-2xl border border-white/10 bg-background px-4 text-sm outline-none focus:border-primary"
-                placeholder="Email Address"
-                type="email"
-              />
-              {errors.email && <p className="text-destructive text-xs mt-1 ml-1">{errors.email.message}</p>}
-              
-              <div className="relative mt-3">
+            <form onSubmit={handleSubmit(onSubmit)} className="rounded-3xl border border-white/10 bg-panel-2/80 p-5 text-left space-y-3">
+              <div>
+                <label htmlFor="login-email" className="block text-xs font-medium text-soft mb-1">Email Address</label>
                 <input
-                  type={showPassword ? "text" : "password"}
-                  {...register("password")}
-                  className="h-12 w-full rounded-2xl border border-white/10 bg-background px-4 pr-10 text-sm outline-none focus:border-primary"
-                  placeholder="Password"
+                  id="login-email"
+                  {...register("email")}
+                  className="h-12 w-full rounded-2xl border border-white/10 bg-background px-4 text-sm outline-none focus:border-primary"
+                  placeholder="you@example.com"
+                  type="email"
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-soft hover:text-foreground"
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
+                {errors.email && <p className="text-destructive text-xs mt-1 ml-1">{errors.email.message}</p>}
               </div>
-              {errors.password && <p className="text-destructive text-xs mt-1 ml-1">{errors.password.message}</p>}
+
+              <div>
+                <label htmlFor="login-password" className="block text-xs font-medium text-soft mb-1">Password</label>
+                <div className="relative">
+                  <input
+                    id="login-password"
+                    type={showPassword ? "text" : "password"}
+                    {...register("password")}
+                    className="h-12 w-full rounded-2xl border border-white/10 bg-background px-4 pr-10 text-sm outline-none focus:border-primary"
+                    placeholder="Enter your password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-soft hover:text-foreground"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+                {errors.password && <p className="text-destructive text-xs mt-1 ml-1">{errors.password.message}</p>}
+              </div>
               
               <div className="flex justify-end mt-2">
                 <Link to="/forgot-password" className="text-xs text-soft hover:text-primary">

@@ -114,7 +114,7 @@ export function TurfCard({
               style={{ background: "rgba(255,255,255,0.92)", border: "1px solid #E2E8F0" }}
             >
               <Star className="h-3 w-3" style={{ color: "#F59E0B", fill: "#F59E0B" }} />
-              <span style={{ fontSize: "11px", fontWeight: 600, color: "#0F172A" }}>
+              <span className="text-xs font-semibold text-[#0F172A]">
                 {turf.rating}
               </span>
             </div>
@@ -124,7 +124,7 @@ export function TurfCard({
                 className="absolute bottom-2.5 right-2.5 rounded-full px-2 py-0.5"
                 style={{ background: "rgba(255,255,255,0.92)", border: "1px solid #E2E8F0" }}
               >
-                <span style={{ fontSize: "10px", fontWeight: 600, color: "#64748B" }}>
+                <span className="text-xs font-semibold text-[#64748B]">
                   {km.toFixed(1)} km
                 </span>
               </div>
@@ -132,27 +132,27 @@ export function TurfCard({
           </div>
 
           <div className="flex flex-col flex-1 p-3 gap-1.5">
-            <h3 className="line-clamp-1 font-semibold" style={{ fontSize: "15px", color: "#0F172A" }}>
+            <h3 className="line-clamp-1 font-semibold text-base" style={{ color: "#0F172A" }}>
               {turf.name}
             </h3>
             <div className="flex items-center gap-1">
               <MapPin className="h-3 w-3 flex-shrink-0" style={{ color: "#14B8B0" }} />
-              <p className="line-clamp-1" style={{ fontSize: "12px", color: "#64748B" }}>
+              <p className="line-clamp-1 text-xs" style={{ color: "#64748B" }}>
                 {turf.address}
               </p>
             </div>
             <div className="flex items-center gap-1">
               <Clock className="h-3 w-3 flex-shrink-0" style={{ color: "#94A3B8" }} />
-              <span className="line-clamp-1" style={{ fontSize: "11px", color: "#94A3B8" }}>
+              <span className="line-clamp-1 text-xs" style={{ color: "#94A3B8" }}>
                 {turf.timing}
               </span>
             </div>
             <div className="flex items-center justify-between mt-auto pt-1">
               <p>
-                <span style={{ fontWeight: 700, color: "#14B8B0", fontSize: "15px" }}>
+                <span className="font-bold text-base text-[#14B8B0]">
                   ₹{turf.price_per_hour}
                 </span>
-                <span style={{ fontSize: "11px", color: "#94A3B8" }}>/hr</span>
+                <span className="text-xs text-[#94A3B8]">/hr</span>
               </p>
             </div>
           </div>

@@ -178,9 +178,9 @@ const TurfDetail = () => {
 
   return (
     <MobileShell>
-      <div className="relative h-56 w-full overflow-hidden rounded-b-3xl shadow-[0_8px_32px_rgba(0,0,0,0.18)]">
+      <div className="relative aspect-[16/9] w-full overflow-hidden rounded-b-3xl shadow-[0_8px_32px_rgba(0,0,0,0.18)]">
         <Carousel setApi={setCarouselApi} className="w-full h-full" opts={{ loop: true }}>
-          <CarouselContent className="h-56 ml-0">
+          <CarouselContent className="h-full ml-0">
             {headerImages.map((src, idx) => (
               <CarouselItem key={idx} className="relative h-full pl-0">
                 <img
@@ -248,7 +248,7 @@ const TurfDetail = () => {
           </div>
           <div className="flex flex-wrap gap-2 mt-3">
             {turf.sport_types.map((s) => (
-              <span key={s} className="text-[11px] bg-panel-2 px-2 py-1 rounded-full border border-white/5">{s}</span>
+              <span key={s} className="text-xs bg-panel-2 px-2 py-1 rounded-full border border-white/5">{s}</span>
             ))}
           </div>
         </div>
@@ -290,15 +290,15 @@ const TurfDetail = () => {
                           {g.sport === "Football" ? "5-a-side football" : `${g.sport} Session`}
                         </h4>
                         <div className="flex gap-1.5 items-center">
-                          <span className="text-[9px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
+                          <span className="text-xs font-black uppercase tracking-wider px-2.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
                             open
                           </span>
                           {g.is_private ? (
-                            <span className="text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/30 text-amber-400">
+                            <span className="text-xs font-black uppercase tracking-wider px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/30 text-amber-400">
                               🔒 Private
                             </span>
                           ) : (
-                            <span className="text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-sky-500/10 border border-sky-500/30 text-sky-400">
+                            <span className="text-xs font-black uppercase tracking-wider px-2 py-0.5 rounded bg-sky-500/10 border border-sky-500/30 text-sky-400">
                               🌐 Public
                             </span>
                           )}
@@ -417,7 +417,7 @@ const TurfDetail = () => {
             return (
               <>
                 <div>
-                  <p className="text-[11px] text-muted2">Price per slot</p>
+                  <p className="text-xs text-muted2">Price per slot</p>
                   <p className="font-bold text-lg neon-text">₹{game.price_per_slot}<span className="text-muted2 text-xs">/slot</span></p>
                 </div>
                 <button
@@ -433,7 +433,7 @@ const TurfDetail = () => {
         ) : (
           <>
             <div>
-              <p className="text-[11px] text-muted2">Starting at</p>
+              <p className="text-xs text-muted2">Starting at</p>
               <p className="font-bold text-lg neon-text">₹{turf.price_per_hour}<span className="text-muted2 text-xs">/hr</span></p>
             </div>
             <button
@@ -497,7 +497,7 @@ const TurfDetail = () => {
                   <span>split across</span>
                   <div className="text-right">
                     <span className="font-black text-foreground text-sm block leading-none">{selectedJoinGame.slots_total}</span>
-                    <span className="text-[10px] text-muted-foreground leading-none font-bold uppercase tracking-wider block mt-1">players</span>
+                    <span className="text-xs text-muted-foreground leading-none font-bold uppercase tracking-wider block mt-1">players</span>
                   </div>
                 </div>
 
@@ -511,7 +511,7 @@ const TurfDetail = () => {
 
               {/* Payment Methods */}
               <div className="space-y-2 text-left">
-                <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest block">
+                <span className="text-xs font-black uppercase text-muted-foreground tracking-widest block">
                   Select Payment Method
                 </span>
                 <div className="grid grid-cols-3 gap-2">
@@ -534,7 +534,7 @@ const TurfDetail = () => {
                         }`}
                       >
                         <Icon className="h-5 w-5 mb-1" />
-                        <span className="text-[10px] font-bold">{m.label}</span>
+                        <span className="text-xs font-bold">{m.label}</span>
                       </button>
                     );
                   })}
@@ -565,7 +565,7 @@ const TurfDetail = () => {
                   )}
                 </button>
 
-                <p className="text-[11px] text-muted-foreground text-center font-bold">
+                <p className="text-xs text-muted-foreground text-center font-bold">
                   free cancellation up to 6 hours before
                 </p>
               </div>

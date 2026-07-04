@@ -43,7 +43,6 @@ export function CategoryPills({
     : { background: "hsl(var(--panel-2))", border: "1px solid hsl(var(--primary) / 0.40)", boxShadow: "0 0 18px rgba(198,248,6,0.18)" };
 
   const labelStyle = {
-    fontSize: "11px",
     color: isPremium ? "#64748B" : "hsl(var(--foreground-soft))",
   };
 
@@ -99,7 +98,7 @@ export function CategoryPills({
               </span>
             </div>
           </div>
-          <span className="mt-1 text-center leading-tight" style={labelStyle}>Toss Time</span>
+          <span className="mt-1 text-center leading-tight text-xs" style={labelStyle}>Toss Time</span>
         </motion.button>
 
         {/* ── Other shortcuts ── */}
@@ -123,7 +122,7 @@ export function CategoryPills({
               >
                 <c.icon className="h-6 w-6" style={{ color: iconColor }} />
               </motion.div>
-              <span className="mt-1 text-center leading-tight" style={labelStyle}>{c.label}</span>
+              <span className="mt-1 text-center leading-tight text-xs" style={labelStyle}>{c.label}</span>
             </Link>
           </motion.div>
         ))}

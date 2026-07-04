@@ -95,68 +95,84 @@ const Signup = () => {
           <div className="space-y-4">
             <form onSubmit={handleSubmit(onSubmit)} className="rounded-3xl border border-white/10 bg-panel-2/80 p-5 text-left space-y-4">
               <div>
+                <label htmlFor="signup-fullName" className="block text-xs font-medium text-soft mb-1">Full Name</label>
                 <input
+                  id="signup-fullName"
                   {...register("fullName")}
                   className="h-12 w-full rounded-2xl border border-white/10 bg-background px-4 text-sm outline-none focus:border-primary"
-                  placeholder="Full Name"
+                  placeholder="John Doe"
                   type="text"
                 />
                 {errors.fullName && <p className="text-destructive text-xs mt-1 ml-1">{errors.fullName.message}</p>}
               </div>
 
               <div>
+                <label htmlFor="signup-email" className="block text-xs font-medium text-soft mb-1">Email Address</label>
                 <input
+                  id="signup-email"
                   {...register("email")}
                   className="h-12 w-full rounded-2xl border border-white/10 bg-background px-4 text-sm outline-none focus:border-primary"
-                  placeholder="Email Address"
+                  placeholder="you@example.com"
                   type="email"
                 />
                 {errors.email && <p className="text-destructive text-xs mt-1 ml-1">{errors.email.message}</p>}
               </div>
 
               <div>
+                <label htmlFor="signup-phone" className="block text-xs font-medium text-soft mb-1">Phone Number</label>
                 <input
+                  id="signup-phone"
                   {...register("phone")}
                   className="h-12 w-full rounded-2xl border border-white/10 bg-background px-4 text-sm outline-none focus:border-primary"
-                  placeholder="Phone Number (10 digits)"
+                  placeholder="10-digit mobile number"
                   type="tel"
                 />
                 {errors.phone && <p className="text-destructive text-xs mt-1 ml-1">{errors.phone.message}</p>}
               </div>
 
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  {...register("password")}
-                  className="h-12 w-full rounded-2xl border border-white/10 bg-background px-4 pr-10 text-sm outline-none focus:border-primary"
-                  placeholder="Password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-soft hover:text-foreground"
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
+              <div>
+                <label htmlFor="signup-password" className="block text-xs font-medium text-soft mb-1">Password</label>
+                <div className="relative">
+                  <input
+                    id="signup-password"
+                    type={showPassword ? "text" : "password"}
+                    {...register("password")}
+                    className="h-12 w-full rounded-2xl border border-white/10 bg-background px-4 pr-10 text-sm outline-none focus:border-primary"
+                    placeholder="Create a password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-soft hover:text-foreground"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+                {errors.password && <p className="text-destructive text-xs mt-1 ml-1">{errors.password.message}</p>}
               </div>
-              {errors.password && <p className="text-destructive text-xs mt-1 ml-1">{errors.password.message}</p>}
 
-              <div className="relative">
-                <input
-                  type={showConfirmPassword ? "text" : "password"}
-                  {...register("confirmPassword")}
-                  className="h-12 w-full rounded-2xl border border-white/10 bg-background px-4 pr-10 text-sm outline-none focus:border-primary"
-                  placeholder="Confirm Password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-soft hover:text-foreground"
-                >
-                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
+              <div>
+                <label htmlFor="signup-confirmPassword" className="block text-xs font-medium text-soft mb-1">Confirm Password</label>
+                <div className="relative">
+                  <input
+                    id="signup-confirmPassword"
+                    type={showConfirmPassword ? "text" : "password"}
+                    {...register("confirmPassword")}
+                    className="h-12 w-full rounded-2xl border border-white/10 bg-background px-4 pr-10 text-sm outline-none focus:border-primary"
+                    placeholder="Repeat your password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-soft hover:text-foreground"
+                    aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                  >
+                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+                {errors.confirmPassword && <p className="text-destructive text-xs mt-1 ml-1">{errors.confirmPassword.message}</p>}
               </div>
-              {errors.confirmPassword && <p className="text-destructive text-xs mt-1 ml-1">{errors.confirmPassword.message}</p>}
               
               <button
                 type="submit"

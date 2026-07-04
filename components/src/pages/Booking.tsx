@@ -273,7 +273,7 @@ const BookingContent = () => {
                     <div className="flex items-center gap-2">
                         <button
                             onClick={() => setManagerOpen(true)}
-                            className="px-2.5 py-1 rounded-xl border border-border bg-panel hover:bg-panel-2 text-foreground font-black text-[9px] tracking-wider uppercase cursor-pointer flex items-center gap-1.5 transition-all"
+                            className="px-2.5 py-1 rounded-xl border border-border bg-panel hover:bg-panel-2 text-foreground font-black text-xs tracking-wider uppercase cursor-pointer flex items-center gap-1.5 transition-all"
                             style={{ borderColor: "var(--border-primary)", backgroundColor: "var(--card-bg)" }}
                         >
                             <User className="h-3 w-3 text-muted-foreground" /> Team Manager
@@ -297,7 +297,7 @@ const BookingContent = () => {
 
                     <div className="flex-1 text-center flex flex-col items-center">
                         <span
-                            className="text-[9px] font-extrabold tracking-widest px-2.5 py-0.5 rounded-full uppercase"
+                            className="text-xs font-extrabold tracking-widest px-2.5 py-0.5 rounded-full uppercase"
                             style={{ backgroundColor: "var(--l-accent-soft)", color: "var(--primary)", border: "1px solid var(--border-primary)" }}
                         >
                             Step {step === "pick" ? 1 : step === "confirm" ? 2 : 3} of 3
@@ -306,7 +306,7 @@ const BookingContent = () => {
                             {step === "pick" ? "Pick Match" : step === "confirm" ? "Confirm Bet & Pay" : "Payment Receipt"}
                         </h2>
                         {step === "pick" && (
-                            <p className="text-[9px] text-muted-foreground uppercase font-bold tracking-wider mt-0.5">
+                            <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider mt-0.5">
                                 Choose your teams, date & time
                             </p>
                         )}
@@ -346,20 +346,20 @@ const BookingContent = () => {
                                             <CheckCircle2 className="h-4 w-4 text-blue-500 fill-blue-500/10 flex-shrink-0" />
                                         </div>
 
-                                        <div className="flex items-center gap-1 text-[11px] text-muted-foreground font-semibold mt-1">
+                                        <div className="flex items-center gap-1 text-xs text-muted-foreground font-semibold mt-1">
                                             <MapPin className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
                                             <span className="truncate">{turf.city}, India</span>
                                         </div>
 
                                         <div className="flex flex-wrap gap-1.5 mt-2.5">
                                             <span
-                                                className="text-[9px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded-full flex items-center gap-1"
+                                                className="text-xs font-extrabold uppercase tracking-widest px-2 py-0.5 rounded-full flex items-center gap-1"
                                                 style={{ backgroundColor: "var(--bg-secondary)", border: "1px solid var(--border-primary)" }}
                                             >
                                                 <Trophy className="h-2.5 w-2.5 text-primary" /> Indoor Cage
                                             </span>
                                             <span
-                                                className="text-[9px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded-full flex items-center gap-1"
+                                                className="text-xs font-extrabold uppercase tracking-widest px-2 py-0.5 rounded-full flex items-center gap-1"
                                                 style={{ backgroundColor: "var(--bg-secondary)", border: "1px solid var(--border-primary)" }}
                                             >
                                                 <Tag className="h-2.5 w-2.5 text-primary" /> ID: {turf.id}
@@ -372,7 +372,7 @@ const BookingContent = () => {
 
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <p className="text-[9px] text-muted-foreground uppercase font-black tracking-wider leading-none">Total Amount</p>
+                                        <p className="text-xs text-muted-foreground uppercase font-black tracking-wider leading-none">Total Amount</p>
                                         <p className="text-xl font-black text-foreground mt-1 font-display">
                                             ₹{total.toLocaleString()}
                                         </p>
@@ -419,7 +419,7 @@ const BookingContent = () => {
                             }}
                         >
                             <div>
-                                <p className="text-[8px] text-muted-foreground uppercase font-black tracking-wider leading-none">Selected Slot</p>
+                                <p className="text-xs text-muted-foreground uppercase font-black tracking-wider leading-none">Selected Slot</p>
                                 <p className="text-xs font-black text-foreground mt-0.5 truncate max-w-[130px]">
                                     {slot ? `${date} • ${slot}` : "No Slot Selected"}
                                 </p>

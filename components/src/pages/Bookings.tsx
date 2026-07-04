@@ -136,7 +136,7 @@ const Bookings = () => {
             key={t}
             onClick={() => setTab(t)}
             className={cn(
-              "flex-1 py-2 text-[10px] font-extrabold rounded-full uppercase tracking-wider pressable min-h-[36px] transition cursor-pointer border-none",
+              "flex-1 py-2 text-xs font-extrabold rounded-full uppercase tracking-wider pressable min-h-[36px] transition cursor-pointer border-none",
               tab === t ? "bg-primary text-primary-foreground shadow-neon" : "text-soft"
             )}
             data-testid={`tab-${t}`}

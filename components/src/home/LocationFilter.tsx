@@ -95,7 +95,7 @@ export function LocationPill({
         <span
           className="mt-1 text-center leading-tight line-clamp-1 w-full"
           style={{
-            fontSize: "11px",
+            
             color: isPremium
               ? hasFilter ? "#14B8B0" : "#64748B"
               : hasFilter ? "hsl(var(--primary))" : "hsl(var(--foreground-soft))",
@@ -223,7 +223,7 @@ function LocationSheet({
       height: "44px",
       paddingLeft: "12px",
       paddingRight: "12px",
-      fontSize: "14px",
+      
       fontWeight: 500,
       outline: "none",
       width: "100%",
@@ -236,7 +236,7 @@ function LocationSheet({
       height: "44px",
       paddingLeft: "12px",
       paddingRight: "12px",
-      fontSize: "14px",
+      
       fontWeight: 500,
       outline: "none",
       width: "100%",
@@ -253,7 +253,7 @@ function LocationSheet({
           />
           <span
             style={{
-              fontSize: "15px",
+              
               fontWeight: 700,
               color: isPremium ? "#0F172A" : "hsl(var(--foreground))",
             }}

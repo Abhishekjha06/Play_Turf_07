@@ -20,6 +20,8 @@ export function MobileShell({ children }: MobileShellProps) {
           w-full
           min-w-0
           max-w-[480px]
+          md:max-w-[640px]
+          lg:max-w-[768px]
           min-h-dvh
 
           md:my-4

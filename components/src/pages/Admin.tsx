@@ -676,7 +676,7 @@ function Dashboard({ turfs, bookings, offers, tournaments }: { turfs: Turf[]; bo
 
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 px-4 md:px-8 lg:px-10 ml-3 md:ml-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 px-4 md:px-8 lg:px-10 ml-3 md:ml-6">
         <StatCard label="Daily Users" value={String(dailyUsers)} />
         <StatCard label="Bookings (Today)" value={String(todayBookings)} />
         <StatCard label="Revenue" value={`Rs ${revenue}`} />

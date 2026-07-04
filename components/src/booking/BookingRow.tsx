@@ -8,7 +8,7 @@ const formatSlotTime = (timeStr: string) => {
   if (!timeStr) return "";
   const [hourStr, minStr] = timeStr.split(":");
   let hour = parseInt(hourStr, 10);
-  const ampm = hour >= 12 ? "PM" : "AM";
+  const ampm = hour>= 12 ? "PM" : "AM";
   hour = hour % 12;
   if (hour === 0) hour = 12;
   const formattedHour = hour.toString().padStart(2, "0");
@@ -65,7 +65,7 @@ export function BookingRow({
 
       const currentH = currentTime.getHours();
       const currentM = currentTime.getMinutes();
-      isPast = currentH > endH || (currentH === endH && currentM >= endM);
+      isPast = currentH> endH || (currentH === endH && currentM>= endM);
     }
 
     if (isPast) {
@@ -82,45 +82,39 @@ export function BookingRow({
     toast.success("Booking ID copied!");
   };
 
-  // Base card styling properties for text overflow
+  // Base card styling — safe word breaking only at word boundaries
   const cardStyle = {
-    wordBreak: "break-word" as const,
-    overflowWrap: "anywhere" as const,
+    overflowWrap: "break-word" as const,
     whiteSpace: "normal" as const,
   };
 
   if (isPremium) {
     return (
       <Link
-        to={`/booking/${booking.id}`}
-        className="flex items-start gap-3 pressable text-left mb-3 w-full border border-[#e5e7eb] rounded-[14px] p-3.5 shadow-sm block transition hover:border-[#14B8B0]/50"
+        to={`/booking/${booking.id}`} className="flex items-start gap-3 pressable text-left mb-3 w-full border border-[#e5e7eb] rounded-[14px] p-3.5 shadow-sm block transition hover:border-[#14B8B0]/50"
         style={{
           background: "#FFFFFF",
           boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
           ...cardStyle
         }}
-        data-testid={`booking-row-${booking.id}`}
-      >
+        data-testid={`booking-row-${booking.id}`}>
         <img
           src={booking.turf_image}
           alt={booking.turf_name}
           loading="lazy"
-          decoding="async"
-          className="h-14 w-14 rounded-xl object-cover flex-shrink-0 border border-slate-100"
+          decoding="async" className="h-14 w-14 rounded-xl object-cover flex-shrink-0 border border-slate-100"
         />
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-1.5 flex-wrap">
-            <p className="font-bold text-sm text-[#0F172A] line-clamp-2" style={{ wordBreak: "break-word" }}>
+            <p className="font-bold text-sm text-[#0F172A] line-clamp-2">
               {booking.turf_name}
             </p>
-            <span
-              className="text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider"
+            <span className="text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider"
               style={{
                 background: statusBg,
                 color: statusColor,
                 border: `1px solid ${statusColor}30`,
-              }}
-            >
+              }}>
               {statusText}
             </span>
           </div>
@@ -130,10 +124,8 @@ export function BookingRow({
               ID: {booking.id}
             </span>
             <button
-              onClick={handleCopyId}
-              className="p-0.5 hover:bg-[#F1F5F9] rounded text-[#64748B] hover:text-[#0F172A] cursor-pointer"
-              title="Copy ID"
-            >
+              onClick={handleCopyId} className="p-0.5 hover:bg-[#F1F5F9] rounded text-[#64748B] hover:text-[#0F172A] cursor-pointer"
+              title="Copy ID">
               <Copy className="h-3 w-3" />
             </button>
           </div>
@@ -148,7 +140,7 @@ export function BookingRow({
               {formatSlotTime(booking.start_time)} - {formatSlotTime(endTimeStr)}
             </span>
             <span className="text-[10px] text-[#64748B] mt-0.5">
-              Duration: <strong className="text-[#0F172A] font-bold">{duration} Hr{duration > 1 ? "s" : ""}</strong>
+              Duration: <strong className="text-[#0F172A] font-bold">{duration} Hr{duration> 1 ? "s" : ""}</strong>
             </span>
           </div>
 
@@ -164,36 +156,31 @@ export function BookingRow({
   // Dark Theme / Legacy
   return (
     <Link
-      to={`/booking/${booking.id}`}
-      className="flex items-start gap-3 pressable text-left mb-3 w-full border rounded-[14px] p-3.5 shadow-md block transition"
+      to={`/booking/${booking.id}`} className="flex items-start gap-3 pressable text-left mb-3 w-full border rounded-[14px] p-3.5 shadow-md block transition"
       style={{
         backgroundColor: "var(--card-bg)",
         borderColor: "var(--border-primary)",
         boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
         ...cardStyle
       }}
-      data-testid={`booking-row-${booking.id}`}
-    >
+      data-testid={`booking-row-${booking.id}`}>
       <img
         src={booking.turf_image}
         alt={booking.turf_name}
         loading="lazy"
-        decoding="async"
-        className="h-14 w-14 rounded-xl object-cover flex-shrink-0 border border-white/5 shadow-sm"
+        decoding="async" className="h-14 w-14 rounded-xl object-cover flex-shrink-0 border border-white/5 shadow-sm"
       />
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-1.5 flex-wrap">
-          <p className="font-extrabold text-sm text-foreground line-clamp-2" style={{ wordBreak: "break-word" }}>
+          <p className="font-extrabold text-sm text-foreground line-clamp-2">
             {booking.turf_name}
           </p>
-          <span
-            className="text-[9px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider border"
+          <span className="text-[9px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider border"
             style={{
               background: statusBg,
               color: statusColor,
               borderColor: `${statusColor}30`,
-            }}
-          >
+            }}>
             {statusText}
           </span>
         </div>
@@ -203,10 +190,8 @@ export function BookingRow({
             ID: {booking.id}
           </span>
           <button
-            onClick={handleCopyId}
-            className="p-0.5 hover:bg-white/10 rounded text-muted-foreground hover:text-foreground cursor-pointer transition"
-            title="Copy ID"
-          >
+            onClick={handleCopyId} className="p-0.5 hover:bg-white/10 rounded text-muted-foreground hover:text-foreground cursor-pointer transition"
+            title="Copy ID">
             <Copy className="h-3 w-3" />
           </button>
         </div>
@@ -221,7 +206,7 @@ export function BookingRow({
             {formatSlotTime(booking.start_time)} - {formatSlotTime(endTimeStr)}
           </span>
           <span className="text-[10px] text-muted-foreground mt-0.5">
-            Duration: <strong className="text-foreground font-black font-display">{duration} Hr{duration > 1 ? "s" : ""}</strong>
+            Duration: <strong className="text-foreground font-black font-display">{duration} Hr{duration> 1 ? "s" : ""}</strong>
           </span>
         </div>
 

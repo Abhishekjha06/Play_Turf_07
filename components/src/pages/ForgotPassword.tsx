@@ -68,14 +68,18 @@ const ForgotPassword = () => {
           className="mt-10 w-full max-w-sm"
         >
           {!sent ? (
-            <div className="rounded-3xl border border-white/10 bg-panel-2/80 p-5 text-left">
-              <input
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="h-12 w-full rounded-2xl border border-white/10 bg-background px-4 text-sm outline-none focus:border-primary"
-                placeholder="Email Address"
-                type="email"
-              />
+            <div className="rounded-3xl border border-white/10 bg-panel-2/80 p-5 text-left space-y-3">
+              <div>
+                <label htmlFor="forgot-email" className="block text-xs font-medium text-soft mb-1">Email Address</label>
+                <input
+                  id="forgot-email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="h-12 w-full rounded-2xl border border-white/10 bg-background px-4 text-sm outline-none focus:border-primary"
+                  placeholder="you@example.com"
+                  type="email"
+                />
+              </div>
 
               <button
                 onClick={handleResetPassword}

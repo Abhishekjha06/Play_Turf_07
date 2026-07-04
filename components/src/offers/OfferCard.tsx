@@ -51,9 +51,9 @@ export function OfferCard({ offer, index = 0 }: { offer: Offer; index?: number }
               {offer.badge}
             </span>
             <div>
-              <h4 className="font-semibold leading-tight" style={{ fontSize: "13px", color: "white" }}>{offer.title}</h4>
-              <p className="line-clamp-1 mt-0.5" style={{ fontSize: "11px", color: "rgba(255,255,255,0.75)" }}>{offer.subtitle}</p>
-              <p className="mt-1 font-bold" style={{ fontSize: "16px", color: "#F59E0B" }}>{offer.discount} OFF</p>
+              <h4 className="font-semibold leading-tight" className="text-sm text-white">{offer.title}</h4>
+              <p className="line-clamp-1 mt-0.5" className="text-xs text-white/75">{offer.subtitle}</p>
+              <p className="mt-1 font-bold" className="text-base text-[#F59E0B]">{offer.discount} OFF</p>
             </div>
           </div>
         </Link>

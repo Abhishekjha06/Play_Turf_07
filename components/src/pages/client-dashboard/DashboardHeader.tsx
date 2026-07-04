@@ -56,7 +56,7 @@ export function DashboardHeader({ wsConnected, onLogout }: DashboardHeaderProps)
                 <p className="text-sm text-muted2 mb-1">Welcome back, Turf Owner 👋</p>
                 <div className="flex items-center gap-1.5">
                     <MapPin className="h-4 w-4" style={{ color: "#4ade80" }} />
-                    <p style={{ color: "white", fontSize: "16px", fontWeight: 600 }}>
+                    <p className="text-base text-white font-semibold">
                         Manage your turf seamlessly
                     </p>
                 </div>

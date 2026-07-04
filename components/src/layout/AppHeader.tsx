@@ -130,7 +130,7 @@ function CollapsingHeader({
         variants={fadeSlideDown}
         initial="hidden"
         animate="visible"
-        className="fixed top-0 md:top-4 left-1/2 w-full max-w-[480px] md:rounded-t-[2rem] z-40 overflow-hidden"
+        className="fixed top-0 md:top-4 left-1/2 w-full max-w-[480px] md:max-w-[640px] lg:max-w-[768px] md:rounded-t-[2rem] z-40 overflow-hidden"
         style={{
           height: headerHeight,
           x: "-50%",
@@ -181,10 +181,10 @@ function CollapsingHeader({
                 className="flex flex-col justify-center"
               >
                 <h1
+                  className="text-3xl"
                   style={{
                     fontFamily: "'Inter', 'Outfit', system-ui, sans-serif",
                     fontWeight: 800,
-                    fontSize: "32px",
                     lineHeight: 1.1,
                     letterSpacing: "-0.02em",
                     color: "white",
@@ -194,8 +194,8 @@ function CollapsingHeader({
                   <span style={{ color: accentColor }}>_Turf</span>
                 </h1>
                 <motion.p
+                  className="text-xs"
                   style={{
-                    fontSize: "10px",
                     letterSpacing: "0.2em",
                     color: "rgba(255,255,255,0.55)",
                     textTransform: "uppercase",
@@ -237,7 +237,7 @@ function CollapsingHeader({
                 {unreadCount > 0 && (
                   <span
                     className={cn(
-                      "absolute -top-1 -right-1 h-4 w-4 rounded-full text-[9px] font-black grid place-items-center text-white border border-[#0f172a]",
+                      "absolute -top-1 -right-1 h-4 w-4 rounded-full text-xs font-black grid place-items-center text-white border border-[#0f172a]",
                       isBlinking ? "animate-bounce" : ""
                     )}
                     style={{ background: accentColor }}
@@ -270,9 +270,9 @@ function CollapsingHeader({
             className="flex flex-col justify-center my-3 select-none pointer-events-none"
           >
             <p
+              className="text-sm"
               style={{
                 color: "rgba(255,255,255,0.65)",
-                fontSize: "13px",
                 marginBottom: "2px",
               }}
             >
@@ -281,7 +281,7 @@ function CollapsingHeader({
             </p>
             <div className="flex items-center gap-1.5">
               <MapPin className="h-4 w-4" style={{ color: accentColor }} />
-              <p style={{ color: "white", fontSize: "16px", fontWeight: 600 }}>
+              <p className="text-base font-semibold" style={{ color: "white" }}>
                 Find your perfect turf
               </p>
             </div>
@@ -313,7 +313,7 @@ function CollapsingHeader({
               exit={{ opacity: 0 }}
               onClick={() => setIsNotifOpen(false)}
               className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
-              style={{ maxWidth: "480px", left: "50%", transform: "translateX(-50%)" }}
+              className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm max-w-[480px] md:max-w-[640px] lg:max-w-[768px] left-1/2 -translate-x-1/2"
             />
 
             {/* Panel */}
@@ -334,7 +334,7 @@ function CollapsingHeader({
                 <div>
                   <h3 className="font-display font-black text-base text-foreground">Notifications</h3>
                   {unreadCount > 0 && (
-                    <span className="text-[10px] font-bold text-primary uppercase tracking-wider">{unreadCount} Unread Alerts</span>
+                    <span className="text-xs font-bold text-primary uppercase tracking-wider">{unreadCount} Unread Alerts</span>
                   )}
                 </div>
                 <button
@@ -353,7 +353,7 @@ function CollapsingHeader({
                     key={cat}
                     onClick={() => setActiveFilter(cat)}
                     className={cn(
-                      "px-2.5 py-1 text-[9px] font-black uppercase tracking-wider rounded-full shrink-0 cursor-pointer border transition",
+                      "px-2.5 py-1 text-xs font-black uppercase tracking-wider rounded-full shrink-0 cursor-pointer border transition",
                       activeFilter === cat
                         ? "bg-primary border-transparent text-primary-foreground"
                         : "bg-white/5 border-white/5 text-muted-foreground hover:text-foreground"
@@ -365,7 +365,7 @@ function CollapsingHeader({
               </div>
 
               {/* Actions */}
-              <div className="px-4.5 py-2.5 bg-white/5 flex items-center justify-between text-[10px] font-extrabold uppercase tracking-wider">
+              <div className="px-4.5 py-2.5 bg-white/5 flex items-center justify-between text-xs font-extrabold uppercase tracking-wider">
                 <button
                   onClick={() => {
                     markAllAsRead();
@@ -422,17 +422,17 @@ function CollapsingHeader({
                           <span className="absolute top-3.5 right-3.5 h-1.5 w-1.5 rounded-full animate-pulse" style={{ backgroundColor: accentColor }} />
                         )}
                         <div className="flex items-center gap-2">
-                          <span className="text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-white/10 text-foreground">
+                          <span className="text-xs font-black uppercase tracking-wider px-2 py-0.5 rounded bg-white/10 text-foreground">
                             {notif.type.replace("_", " ")}
                           </span>
-                          <span className="text-[9px] text-muted-foreground">
+                          <span className="text-xs text-muted-foreground">
                             {new Date(notif.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </span>
                         </div>
                         <h4 className={cn("mt-2 text-xs text-foreground font-display", notif.isRead ? "font-semibold" : "font-black")}>
                           {notif.title}
                         </h4>
-                        <p className="mt-1 text-[11px] text-muted-foreground leading-relaxed font-semibold">{notif.body}</p>
+                        <p className="mt-1 text-xs text-muted-foreground leading-relaxed font-semibold">{notif.body}</p>
                       </div>
                     );
                   })
@@ -453,7 +453,7 @@ function CollapsingHeader({
             <div
               onClick={() => setSelectedNotifForDetail(null)}
               className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-md"
-              style={{ maxWidth: "480px", left: "50%", transform: "translateX(-50%)" }}
+              className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm max-w-[480px] md:max-w-[640px] lg:max-w-[768px] left-1/2 -translate-x-1/2"
             />
             
             {/* Modal Container */}
@@ -461,7 +461,7 @@ function CollapsingHeader({
               initial={{ opacity: 0, scale: 0.95, y: "-40%", x: "-50%" }}
               animate={{ opacity: 1, scale: 1, y: "-50%", x: "-50%" }}
               exit={{ opacity: 0, scale: 0.95, y: "-40%", x: "-50%" }}
-              className="fixed left-1/2 top-1/2 z-[70] w-[90%] max-w-[400px] rounded-[2rem] border overflow-hidden p-5 space-y-4 text-left"
+              className="fixed left-1/2 top-1/2 z-[70] w-[90%] max-w-[400px] sm:max-w-[420px] md:max-w-[480px] rounded-[2rem] border overflow-hidden p-5 space-y-4 text-left"
               style={{
                 backgroundColor: "var(--card-bg, #1a1a1a)",
                 borderColor: "var(--border-primary, #333)",
@@ -470,7 +470,7 @@ function CollapsingHeader({
             >
               {/* Header */}
               <div className="flex items-center justify-between border-b border-white/5 pb-3">
-                <span className="text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded bg-white/10 text-foreground">
+                <span className="text-xs font-black uppercase tracking-widest px-2.5 py-0.5 rounded bg-white/10 text-foreground">
                   {selectedNotifForDetail.type.replace("_", " ")}
                 </span>
                 <button
@@ -504,7 +504,7 @@ function CollapsingHeader({
                 const isExpired = selectedNotifForDetail.expiryDate && new Date(selectedNotifForDetail.expiryDate).getTime() < Date.now();
                 return (
                   <div className="space-y-4 text-left">
-                    <div className="border border-white/5 p-3 rounded-xl bg-white/5 space-y-1.5 text-[11px] font-semibold text-muted-foreground">
+                    <div className="border border-white/5 p-3 rounded-xl bg-white/5 space-y-1.5 text-xs font-semibold text-muted-foreground">
                       <div className="flex justify-between items-center">
                         <span>Valid Until:</span>
                         <span className={cn("font-bold", isExpired ? "text-red-400" : "text-foreground")}>
@@ -514,7 +514,7 @@ function CollapsingHeader({
                         </span>
                       </div>
                       {isExpired && (
-                        <div className="text-[10px] text-red-400 font-extrabold uppercase tracking-wide flex items-center gap-1.5 pt-1 border-t border-white/5 mt-1">
+                        <div className="text-xs text-red-400 font-extrabold uppercase tracking-wide flex items-center gap-1.5 pt-1 border-t border-white/5 mt-1">
                           <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-ping" />
                           Offer Expired. This promotion is no longer available.
                         </div>
@@ -523,8 +523,8 @@ function CollapsingHeader({
 
                     {/* Terms */}
                     <div className="space-y-1">
-                      <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-black block">Terms & Conditions</span>
-                      <p className="text-[10px] text-muted-foreground leading-relaxed">
+                      <span className="text-xs uppercase tracking-wider text-muted-foreground font-black block">Terms & Conditions</span>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
                         * Offer valid on booking values above ₹500.<br />
                         * Subject to slot availability and cannot be merged with other codes.<br />
                         * Promotion is valid only inside the PlayTurf app logs.

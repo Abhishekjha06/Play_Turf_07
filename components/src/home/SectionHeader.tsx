@@ -18,10 +18,8 @@ export function SectionHeader({
     return (
       <div className="flex items-center justify-between gap-3 px-4 mt-7 mb-3">
         <h2
-          className="min-w-0 truncate"
+          className="min-w-0 truncate text-lg font-bold"
           style={{
-            fontSize: "17px",
-            fontWeight: 700,
             color: "#0F172A",
             letterSpacing: "-0.01em",
             lineHeight: 1.3,
@@ -32,8 +30,7 @@ export function SectionHeader({
         {to ? (
           <Link
             to={to}
-            className="shrink-0"
-            style={{ fontSize: "12px", fontWeight: 600, color: "#14B8B0" }}
+            className="shrink-0 text-xs font-semibold text-[#14B8B0]"
           >
             {action ?? "See all"}
           </Link>

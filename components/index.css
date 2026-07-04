@@ -124,30 +124,30 @@
 
   h1 {
     font-family: "Plus Jakarta Sans", system-ui, sans-serif;
-    font-size: 28px;
+    font-size: 1.75rem;   /* 28px */
     font-weight: 700;
-    line-height: 36px;
+    line-height: 2.25rem; /* 36px */
     letter-spacing: -0.02em;
   }
   h2 {
     font-family: "Plus Jakarta Sans", system-ui, sans-serif;
-    font-size: 24px;
+    font-size: 1.5rem;    /* 24px */
     font-weight: 700;
-    line-height: 32px;
+    line-height: 2rem;    /* 32px */
     letter-spacing: -0.015em;
   }
   h3 {
     font-family: "Plus Jakarta Sans", system-ui, sans-serif;
-    font-size: 20px;
+    font-size: 1.25rem;   /* 20px */
     font-weight: 600;
-    line-height: 28px;
+    line-height: 1.75rem; /* 28px */
     letter-spacing: -0.01em;
   }
   h4 {
     font-family: "Plus Jakarta Sans", system-ui, sans-serif;
-    font-size: 18px;
+    font-size: 1.125rem;  /* 18px */
     font-weight: 600;
-    line-height: 26px;
+    line-height: 1.625rem; /* 26px */
   }
 
   #root {
@@ -183,7 +183,7 @@
 
   button,
   a {
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
   }
 
   /* Hide scrollbars on horizontal scrollers */

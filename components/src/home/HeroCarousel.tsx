@@ -99,12 +99,12 @@ export function HeroCarousel({ banners }: { banners: Banner[] }) {
                 transition={{ delay: 0.15, duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
                 className="absolute bottom-4 left-4 right-4 z-20 flex flex-col"
               >
-                <h2 className="font-extrabold leading-tight drop-shadow-lg" style={{ fontSize: "22px", color: "white" }}>
+                <h2 className="font-extrabold leading-tight drop-shadow-lg text-xl text-white">
                   {headingParts[0]}
                   <span style={{ color: "#14B8B0" }}>{b.highlight}</span>
                   {headingParts[1]}
                 </h2>
-                <p className="mt-1 line-clamp-1 drop-shadow-md" style={{ color: "rgba(255,255,255,0.78)", fontSize: "12px" }}>
+                <p className="mt-1 line-clamp-1 drop-shadow-md text-xs" style={{ color: "rgba(255,255,255,0.78)" }}>
                   {b.subtitle}
                 </p>
                 <div className="mt-3 flex items-center justify-between">

@@ -263,7 +263,7 @@ export function OpenGameCard({
 
         {/* Status badge top-left - dim style */}
         <span
-          className={`absolute top-2.5 left-2.5 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider flex items-center gap-1.5 z-20 ${
+          className={`absolute top-2.5 left-2.5 px-2.5 py-1 rounded-full text-xs font-black uppercase tracking-wider flex items-center gap-1.5 z-20 ${
             isCancelled
               ? "bg-red-950/60 text-red-400/80 border border-red-500/20"
               : isFull
@@ -277,14 +277,14 @@ export function OpenGameCard({
 
         {/* Hot badge - dim orange */}
         {isHot && (
-          <span className="absolute top-2.5 left-16 z-20 text-[9px] text-orange-400/80 font-bold bg-orange-950/40 border border-orange-500/20 px-2 py-1 rounded-full flex items-center gap-1">
+          <span className="absolute top-2.5 left-16 z-20 text-xs text-orange-400/80 font-bold bg-orange-950/40 border border-orange-500/20 px-2 py-1 rounded-full flex items-center gap-1">
             <Flame className="h-2.5 w-2.5 text-orange-500/70" /> Filling Fast
           </span>
         )}
 
         {/* Private badge - dim */}
         {game.is_private && (
-          <span className="absolute top-2.5 right-2.5 z-20 text-[9px] text-amber-400/70 font-bold bg-black/40 border border-amber-500/20 px-2 py-1 rounded-full backdrop-blur-sm flex items-center gap-1">
+          <span className="absolute top-2.5 right-2.5 z-20 text-xs text-amber-400/70 font-bold bg-black/40 border border-amber-500/20 px-2 py-1 rounded-full backdrop-blur-sm flex items-center gap-1">
             <Lock className="h-2.5 w-2.5 text-amber-500/60" /> Private
           </span>
         )}
@@ -299,7 +299,7 @@ export function OpenGameCard({
                 </div>
               ))}
             </div>
-            {remainingCount > 0 && <div className="ml-1 text-[10px] font-bold text-white/70">+{remainingCount}</div>}
+            {remainingCount > 0 && <div className="ml-1 text-xs font-bold text-white/70">+{remainingCount}</div>}
           </div>
         )}
       </div>
@@ -315,7 +315,7 @@ export function OpenGameCard({
             <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: sConfig.bg, border: `1px solid ${sConfig.border}` }}>
               <span style={{ color: sConfig.color, opacity: 0.8 }}>{getSportIcon(game.sport, "w-4 h-4")}</span>
             </div>
-            <h3 className="font-display font-bold text-[15px] text-foreground leading-tight line-clamp-2 break-words min-w-0">
+            <h3 className="font-display font-bold text-base text-foreground leading-tight line-clamp-2 break-words min-w-0">
               {game.venue}
             </h3>
           </div>
@@ -326,19 +326,19 @@ export function OpenGameCard({
 
         {/* Tags */}
         <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="px-2 py-0.5 rounded-full text-[9px] font-medium flex items-center gap-1" style={{ backgroundColor: sConfig.bg, color: sConfig.color, border: `1px solid ${sConfig.border}` }}>
+          <span className="px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-1" style={{ backgroundColor: sConfig.bg, color: sConfig.color, border: `1px solid ${sConfig.border}` }}>
             <Star className="h-2.5 w-2.5" /> {skillLabels[skillLevel]}
           </span>
-          <span className="px-2 py-0.5 rounded-full text-[9px] font-medium text-foreground-soft bg-foreground/5 border border-border/40">
+          <span className="px-2 py-0.5 rounded-full text-xs font-medium text-foreground-soft bg-foreground/5 border border-border/40">
             {turfSurface}
           </span>
-          <span className="px-2 py-0.5 rounded-full text-[9px] font-medium text-foreground-soft bg-foreground/5 border border-border/40">
+          <span className="px-2 py-0.5 rounded-full text-xs font-medium text-foreground-soft bg-foreground/5 border border-border/40">
             {Math.round(game.slots_total / 2)}-a-side {game.sport}
           </span>
         </div>
 
         {/* Venue + metadata */}
-        <div className="flex items-baseline flex-wrap gap-x-3 gap-y-1 text-foreground-soft/75 text-[11px] font-medium">
+        <div className="flex items-baseline flex-wrap gap-x-3 gap-y-1 text-foreground-soft/75 text-xs font-medium">
           <span className="flex items-baseline gap-1 min-w-0">
             <MapPin className="h-3 w-3 shrink-0 self-center" strokeWidth={1.5} />
             <span className="break-words">{turfAddress || game.venue}</span>
@@ -372,7 +372,7 @@ export function OpenGameCard({
           <div className="w-full h-1.5 rounded-full overflow-hidden bg-background border border-border/20">
             <div className="h-full rounded-full transition-all duration-300" style={{ width: `${progress}%`, backgroundColor: sConfig.color, opacity: 0.7 }} />
           </div>
-          <div className="flex items-center justify-between text-[11px] font-medium">
+          <div className="flex items-center justify-between text-xs font-medium">
             <span className="text-foreground-soft">{game.slots_filled} joined</span>
             <span className="text-foreground-muted">{game.slots_total - game.slots_filled} spots left</span>
           </div>
@@ -387,15 +387,15 @@ export function OpenGameCard({
               </div>
             )}
             <div className="min-w-0 flex-1">
-              <p className="text-[9px] text-foreground-muted uppercase leading-none tracking-wider font-bold">Host</p>
+              <p className="text-xs text-foreground-muted uppercase leading-none tracking-wider font-bold">Host</p>
               <p className="text-xs font-bold text-foreground mt-0.5 truncate">{game.host_name}</p>
-              <p className="text-[10px] text-foreground-soft font-medium mt-0.5 flex items-center gap-0.5">
+              <p className="text-xs text-foreground-soft font-medium mt-0.5 flex items-center gap-0.5">
                 <CheckCircle className="h-3 w-3 text-emerald-500/80 shrink-0" /> Verified
               </p>
             </div>
           </div>
           <div className="text-right shrink-0 ml-2">
-            <p className="text-[9px] text-foreground-muted uppercase leading-none tracking-wider font-bold">Share</p>
+            <p className="text-xs text-foreground-muted uppercase leading-none tracking-wider font-bold">Share</p>
             <p className="text-lg font-black mt-0.5 text-primary">₹{game.price_per_slot}</p>
           </div>
         </div>

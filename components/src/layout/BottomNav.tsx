@@ -26,7 +26,7 @@ export function BottomNav() {
           aria-hidden
         />
         <nav
-          className="fixed bottom-0 left-1/2 -translate-x-1/2 z-40 w-full max-w-[480px] flex items-center justify-between"
+          className="fixed bottom-0 left-1/2 -translate-x-1/2 z-40 w-full max-w-[480px] md:max-w-[640px] lg:max-w-[768px] flex items-center justify-between"
           style={{
             height: "auto",
             minHeight: "66px",
@@ -87,7 +87,7 @@ export function BottomNav() {
         aria-hidden
       />
       <nav
-        className="fixed bottom-3 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-1.5rem)] max-w-[456px] glass-strong rounded-full px-3 py-2 flex items-center justify-between"
+        className="fixed bottom-3 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-1.5rem)] max-w-[456px] md:max-w-[616px] lg:max-w-[744px] glass-strong rounded-full px-3 py-2 flex items-center justify-between"
         style={{ paddingBottom: "calc(0.5rem + env(safe-area-inset-bottom, 0px))" }}
         data-testid="bottom-nav"
         aria-label="Main navigation"
@@ -170,12 +170,8 @@ function PremiumNavItem({
       </motion.div>
 
       <span
-        style={{
-          fontSize: "11px",
-          fontWeight: active ? 700 : 500,
-          color: active ? "#14B8B0" : "#94A3B8",
-          letterSpacing: "0.03em",
-        }}
+        className={cn("text-xs tracking-wide", active ? "font-bold text-[#14B8B0]" : "font-medium text-[#94A3B8]")}
+        style={{ letterSpacing: "0.03em" }}
       >
         {label}
       </span>

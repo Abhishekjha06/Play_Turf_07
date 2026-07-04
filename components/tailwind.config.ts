@@ -12,21 +12,14 @@ export default {
         display: ["Plus Jakarta Sans", "system-ui", "sans-serif"],
       },
       fontSize: {
-        h1: ["48px", { lineHeight: "1.1", fontWeight: "700" }],
-        h2: ["32px", { lineHeight: "1.2", fontWeight: "700" }],
-        h3: ["22px", { lineHeight: "1.3", fontWeight: "700" }],
-        h4: ["18px", { lineHeight: "1.4", fontWeight: "700" }],
-        bodySmall: ["14px", { lineHeight: "1.5", fontWeight: "400" }],
-        "hero-title": ["32px", { lineHeight: "40px" }],
-        "screen-title": ["28px", { lineHeight: "36px" }],
-        "section-title": ["24px", { lineHeight: "32px" }],
-        "card-title": ["20px", { lineHeight: "28px" }],
-        "subtitle": ["18px", { lineHeight: "26px" }],
-        "body-lg": ["16px", { lineHeight: "24px" }],
-        "secondary-text": ["14px", { lineHeight: "22px" }],
-        "small-label": ["12px", { lineHeight: "18px" }],
-        "button-text": ["16px", { lineHeight: "20px" }],
-        "nav-text": ["12px", { lineHeight: "16px" }],
+        // Design token aliases — use Tailwind defaults consistently
+        xs: ["0.75rem", { lineHeight: "1.25rem" }],     // 12px — MINIMUM readable
+        sm: ["0.875rem", { lineHeight: "1.375rem" }],   // 14px
+        base: ["1rem", { lineHeight: "1.5rem" }],       // 16px
+        lg: ["1.125rem", { lineHeight: "1.75rem" }],    // 18px
+        xl: ["1.25rem", { lineHeight: "1.75rem" }],     // 20px
+        "2xl": ["1.5rem", { lineHeight: "2rem" }],      // 24px
+        "3xl": ["1.875rem", { lineHeight: "2.25rem" }], // 30px
       },
       spacing: {
         xs: "var(--spacing-xs, 0.25rem)",

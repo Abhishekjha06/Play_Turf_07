@@ -46,24 +46,24 @@ export function CompactTurfCard({
           <div className="p-2.5 flex flex-col gap-0.5">
             <p
               className="line-clamp-1 font-semibold"
-              style={{ fontSize: "12px", color: "#0F172A" }}
+              className="text-xs text-[#0F172A]"
             >
               {turf.name}
             </p>
             <p
               className="line-clamp-1"
-              style={{ fontSize: "11px", color: "#64748B" }}
+              className="text-xs text-[#64748B]"
             >
               {turf.address}
             </p>
             {km !== null && Number.isFinite(km) && (
-              <p style={{ fontSize: "10px", color: "#94A3B8", marginTop: "2px" }}>
+              <p className="text-xs text-[#94A3B8] mt-0.5">
                 {km.toFixed(1)} km away
               </p>
             )}
-            <p style={{ fontSize: "12px", marginTop: "4px" }}>
+            <p className="text-xs mt-1">
               <span style={{ fontWeight: 700, color: "#14B8B0" }}>₹{turf.price_per_hour}</span>
-              <span style={{ color: "#94A3B8", fontSize: "10px" }}>/hr</span>
+              <span className="text-xs text-[#94A3B8]">/hr</span>
             </p>
           </div>
         </div>
