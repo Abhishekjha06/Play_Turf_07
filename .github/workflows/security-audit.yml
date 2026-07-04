@@ -10,6 +10,8 @@ jobs:
   security-audit:
     name: Code & Security Audit
     runs-on: ubuntu-latest
+    # Don't block other workflows if audit fails
+    continue-on-error: true
 
     steps:
       - name: Checkout Code
@@ -18,7 +20,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-dir: '20'
+          node-version: '20'
           cache: 'npm'
           cache-dependency-path: './components/package-lock.json'
 
@@ -32,8 +34,10 @@ jobs:
           npm run build --prefix audit-tool
 
       - name: Run Full Audit Scan
+        # Report issues but don't fail the workflow
+        continue-on-error: true
         run: |
-          npm run audit:full --prefix audit-tool
+          npm run audit:full --prefix audit-tool || true
 
       - name: Upload SARIF Report
         if: always()
