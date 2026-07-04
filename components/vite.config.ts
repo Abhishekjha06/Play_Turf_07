@@ -128,9 +128,6 @@ export default defineConfig(({ mode }) => ({
         skipWaiting: true,
         clientsClaim: true,
         cleanupOutdatedCaches: true,
-        offlineFallback: {
-          page: "/offline.html",
-        },
       },
       manifest: {
         name: "PlayTurf",
