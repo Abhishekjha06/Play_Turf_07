@@ -66,6 +66,7 @@ export function BookingDateSelect({
                     <div className="flex gap-1.5">
                         <button
                             onClick={handlePrevDate}
+                            aria-label="Previous date"
                             className="w-7 h-7 rounded-lg border flex items-center justify-center cursor-pointer transition-all hover:bg-panel-2 active:scale-90"
                             style={{ borderColor: "var(--border-primary)", backgroundColor: "var(--card-bg)" }}
                         >
@@ -73,6 +74,7 @@ export function BookingDateSelect({
                         </button>
                         <button
                             onClick={handleNextDate}
+                            aria-label="Next date"
                             className="w-7 h-7 rounded-lg border flex items-center justify-center cursor-pointer transition-all hover:bg-panel-2 active:scale-90"
                             style={{ borderColor: "var(--border-primary)", backgroundColor: "var(--card-bg)" }}
                         >

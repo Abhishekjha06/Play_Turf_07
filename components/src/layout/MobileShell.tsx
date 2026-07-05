@@ -14,6 +14,13 @@ export function MobileShell({ children }: MobileShellProps) {
       className="flex min-h-dvh w-full min-w-0 justify-center"
       style={{ background: isPremium ? "#F1F5F9" : undefined }}
     >
+      {/* Skip to main content link for screen readers / keyboard users */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-xl focus:font-semibold focus:text-sm"
+      >
+        Skip to main content
+      </a>
       <div
         className="
           relative
@@ -36,7 +43,9 @@ export function MobileShell({ children }: MobileShellProps) {
         }}
         data-testid="mobile-shell"
       >
-        {children}
+        <main id="main-content" className="min-h-dvh">
+          {children}
+        </main>
       </div>
     </div>
   );

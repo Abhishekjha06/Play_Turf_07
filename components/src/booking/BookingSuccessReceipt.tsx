@@ -453,7 +453,7 @@ export function BookingSuccessReceipt({
                                             <span className="text-muted-foreground font-semibold">Booking ID</span>
                                             <div className="flex items-center gap-1.5">
                                                 <span className="font-black text-foreground font-display">{booking.id}</span>
-                                                <button onClick={handleCopyId} className="p-1 hover:bg-white/10 rounded text-muted-foreground hover:text-foreground cursor-pointer">
+                                                <button onClick={handleCopyId} aria-label="Copy booking ID" className="p-1 hover:bg-white/10 rounded text-muted-foreground hover:text-foreground cursor-pointer">
                                                     <Copy className="h-3.5 w-3.5" />
                                                 </button>
                                             </div>
@@ -605,6 +605,7 @@ export function BookingSuccessReceipt({
                                 <h3 className="text-lg font-bold text-white">Your Booking Ticket</h3>
                                 <button
                                     onClick={() => setShowTicket(false)}
+                                    aria-label="Close ticket"
                                     className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition cursor-pointer border-none"
                                 >
                                     <X className="w-5 h-5 text-white" />

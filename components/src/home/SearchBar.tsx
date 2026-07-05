@@ -35,6 +35,7 @@ export function SearchBar() {
             trackEvent("Search Executed", { query: e.target.value });
           }}
           placeholder="Search for turfs, locations, offers…"
+          aria-label="Search for turfs, locations, offers"
           className="flex-1 bg-transparent outline-none text-sm placeholder:text-muted2"
           data-testid="search-input"
         />

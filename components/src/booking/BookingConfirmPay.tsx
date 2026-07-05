@@ -216,6 +216,7 @@ export function BookingConfirmPay({
                     <div className="card-panel relative flex flex-col gap-4 overflow-hidden rounded-3xl p-6 shadow-2xl bg-panel-2 w-full max-w-lg max-h-[85vh]">
                         <button
                             onClick={() => setShowPolicyModal(false)}
+                            aria-label="Close privacy policy"
                             className="absolute right-4 top-4 rounded-full bg-white/5 p-2 text-soft transition-colors hover:bg-white/10 hover:text-white"
                         >
                             <X className="h-4 w-4" />
