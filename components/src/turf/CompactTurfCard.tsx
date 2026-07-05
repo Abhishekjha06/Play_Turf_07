@@ -25,10 +25,10 @@ export function CompactTurfCard({
         <div
           className="flex flex-col overflow-hidden"
           style={{
-            background: "#FFFFFF",
+            background: "hsl(var(--color-surface-elevated))",
             borderRadius: "20px",
-            border: "1px solid #E2E8F0",
-            boxShadow: "0 8px 30px rgba(15,23,42,0.08)",
+            border: "1px solid hsl(var(--color-border-default))",
+            boxShadow: "var(--shadow-card)",
           }}
         >
           <div
@@ -45,25 +45,25 @@ export function CompactTurfCard({
           </div>
           <div className="p-2.5 flex flex-col gap-0.5">
             <p
-              className="line-clamp-1 font-semibold"
-              className="text-xs text-[#0F172A]"
+              className="line-clamp-1 font-semibold text-xs"
+              style={{ color: "hsl(var(--color-text-primary))" }}
             >
               {turf.name}
             </p>
             <p
-              className="line-clamp-1"
-              className="text-xs text-[#64748B]"
+              className="line-clamp-1 text-xs"
+              style={{ color: "hsl(var(--color-text-secondary))" }}
             >
               {turf.address}
             </p>
             {km !== null && Number.isFinite(km) && (
-              <p className="text-xs text-[#94A3B8] mt-0.5">
+              <p className="text-xs mt-0.5" style={{ color: "hsl(var(--color-text-tertiary))" }}>
                 {km.toFixed(1)} km away
               </p>
             )}
             <p className="text-xs mt-1">
-              <span style={{ fontWeight: 700, color: "#14B8B0" }}>₹{turf.price_per_hour}</span>
-              <span className="text-xs text-[#94A3B8]">/hr</span>
+              <span style={{ fontWeight: 700, color: "hsl(var(--color-primary))" }}>₹{turf.price_per_hour}</span>
+              <span className="text-xs" style={{ color: "hsl(var(--color-text-tertiary))" }}>/hr</span>
             </p>
           </div>
         </div>
