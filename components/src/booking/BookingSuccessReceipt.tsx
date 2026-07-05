@@ -7,6 +7,7 @@ import { ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import { Dialog, DialogContent, DialogTitle } from "@/ui/dialog";
 import { api } from "@/lib/api";
 import { useAuth } from "@/hooks/use-auth";
 import { BookingTicket } from "@/booking/BookingTicket";
@@ -593,51 +594,37 @@ export function BookingSuccessReceipt({
             )}
 
             {showTicket && (
-                <AnimatePresence>
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md overflow-y-auto p-4"
-                    >
-                        <div className="max-w-lg mx-auto">
-                            <div className="flex items-center justify-between mb-4 sticky top-0 z-10 py-2">
-                                <h3 className="text-lg font-bold text-white">Your Booking Ticket</h3>
-                                <button
-                                    onClick={() => setShowTicket(false)}
-                                    aria-label="Close ticket"
-                                    className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition cursor-pointer border-none"
-                                >
-                                    <X className="w-5 h-5 text-white" />
-                                </button>
-                            </div>
-                            <BookingTicket
-                                ref={ticketRef}
-                                booking={booking}
-                                turf={turf}
-                                user={user ? { name: user.name, email: user.email } : undefined}
-                                onDownload={() => {}}
-                                onShare={() => shareTicket({
-                                    bookingId: booking.id,
-                                    turfName: turf.name,
-                                    sport: turf.sport_types?.[0] || "Football",
-                                    date: booking.date,
-                                    startTime: booking.start_time,
-                                    endTime: end_time_str,
-                                    duration: durationHours,
-                                    amount: total,
-                                    status: booking.status,
-                                    paymentId: booking.payment_id,
-                                    playerName: user?.name || "Player",
-                                    address: turf.address,
-                                    paymentMethod: cricket.state?.paymentMethod || "UPI",
-                                    bookedAt: booking.created_at,
-                                })}
-                                isGenerating={isGenerating}
-                            />
+                <Dialog open={showTicket} onOpenChange={setShowTicket}>
+                    <DialogContent className="border-0 bg-transparent shadow-none max-w-lg max-h-[90dvh] overflow-y-auto w-full">
+                        <div className="flex items-center justify-between mb-4">
+                            <DialogTitle className="text-lg font-bold text-white">Your Booking Ticket</DialogTitle>
                         </div>
-                    </motion.div>
-                </AnimatePresence>
+                        <BookingTicket
+                            ref={ticketRef}
+                            booking={booking}
+                            turf={turf}
+                            user={user ? { name: user.name, email: user.email } : undefined}
+                            onDownload={() => {}}
+                            onShare={() => shareTicket({
+                                bookingId: booking.id,
+                                turfName: turf.name,
+                                sport: turf.sport_types?.[0] || "Football",
+                                date: booking.date,
+                                startTime: booking.start_time,
+                                endTime: end_time_str,
+                                duration: durationHours,
+                                amount: total,
+                                status: booking.status,
+                                paymentId: booking.payment_id,
+                                playerName: user?.name || "Player",
+                                address: turf.address,
+                                paymentMethod: cricket.state?.paymentMethod || "UPI",
+                                bookedAt: booking.created_at,
+                            })}
+                            isGenerating={isGenerating}
+                        />
+                    </DialogContent>
+                </Dialog>
             )}
         </motion.div>
     );
