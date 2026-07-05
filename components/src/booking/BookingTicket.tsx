@@ -10,7 +10,7 @@ import type { OpenGame } from "@/types/openGames";
 /* Logo paths — referenced at runtime, not imported at build time.
  * This prevents Vite build failures if the file is missing in the repo.
  */
-const LOGO_FULL = "/playturf-logo.png";
+const LOGO_FULL = "/playturf-logo.webp";
 /* Second logo (teal P mark) from external CDN with local fallback */
 const LOGO_MARK = "https://compulsory-red-bcsumray.edgeone.dev/image%20(1).png";
 
@@ -362,7 +362,7 @@ export const BookingTicket = React.forwardRef<HTMLDivElement, BookingTicketProps
             onError={(e) => {
               /* Fallback to local logo if CDN fails */
               const target = e.target as HTMLImageElement;
-              target.src = "/playturf-logo.png";
+              target.src = "/playturf-logo.webp";
               target.onerror = () => { target.style.display = "none"; };
             }}
             style={{ height: "40px", width: "auto", objectFit: "contain", margin: "0 auto 10px" }}
