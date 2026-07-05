@@ -5,18 +5,107 @@
 /* play_Turf design system — DARK ONLY. All colors HSL. */
 
 @layer base {
+  /* ═══════════════════════════════════════════════════════════════
+     DESIGN TOKENS — PlayTurf Design System
+     Phase 4.1: Semantic token foundation
+     Principle: Semantic names describe PURPOSE, not value.
+     See docs/UI_DECISIONS.md AD-014, AD-015
+     ═══════════════════════════════════════════════════════════════ */
   :root {
-    /* Core palette */
+    /* ── Color Primitives (HSL) ───────────────────────────────── */
+    --color-primary: 195 90% 50%;
+    --color-primary-hover: 195 90% 45%;
+    --color-primary-foreground: 215 30% 10%;
+    --color-primary-glow: 195 90% 50%;
+
+    --color-surface-default: 215 25% 10%;
+    --color-surface-elevated: 215 22% 14%;
+    --color-surface-overlay: 215 20% 18%;
+    --color-surface-subtle: 215 18% 22%;
+
+    --color-text-primary: 210 20% 98%;
+    --color-text-secondary: 215 15% 75%;
+    --color-text-tertiary: 215 10% 60%;
+    --color-text-inverse: 215 30% 10%;
+
+    --color-border-default: 220 26% 22%;
+    --color-border-subtle: 220 26% 18%;
+    --color-border-inverse: 210 40% 90%;
+
+    --color-success: 150 70% 45%;
+    --color-warning: 38 92% 50%;
+    --color-danger: 0 84% 60%;
+    --color-danger-foreground: 210 20% 98%;
+
+    /* ── Spacing Scale ────────────────────────────────────────── */
+    --space-0: 0rem;
+    --space-1: 0.25rem;   /* 4px  */
+    --space-2: 0.5rem;    /* 8px  */
+    --space-3: 0.75rem;   /* 12px */
+    --space-4: 1rem;      /* 16px */
+    --space-5: 1.25rem;   /* 20px */
+    --space-6: 1.5rem;    /* 24px */
+    --space-8: 2rem;      /* 32px */
+    --space-10: 2.5rem;   /* 40px */
+    --space-12: 3rem;     /* 48px */
+    --space-16: 4rem;     /* 64px */
+    --space-20: 5rem;     /* 80px */
+    --space-24: 6rem;     /* 96px */
+
+    /* ── Border Radius ────────────────────────────────────────── */
+    --radius-none: 0rem;
+    --radius-sm: 0.25rem;   /* 4px  */
+    --radius-md: 0.5rem;    /* 8px  */
+    --radius-lg: 0.75rem;   /* 12px */
+    --radius-xl: 1rem;      /* 16px */
+    --radius-2xl: 1.25rem;  /* 20px */
+    --radius-3xl: 1.75rem;  /* 28px */
+    --radius-full: 9999px;
+
+    /* ── Shadows ──────────────────────────────────────────────── */
+    --shadow-sm: 0 1px 2px hsl(0 0% 0% / 0.05);
+    --shadow-md: 0 4px 6px hsl(0 0% 0% / 0.1);
+    --shadow-lg: 0 10px 15px hsl(0 0% 0% / 0.1);
+    --shadow-xl: 0 20px 25px hsl(0 0% 0% / 0.15);
+    --shadow-neon: 0 0 16px hsl(var(--color-primary) / 0.35);
+    --shadow-neon-lg: 0 0 32px hsl(var(--color-primary) / 0.4),
+                      0 0 10px hsl(var(--color-primary) / 0.25);
+    --shadow-card: 0 4px 20px hsl(0 0% 0% / 0.3);
+
+    /* ── Motion / Animation ───────────────────────────────────── */
+    --duration-instant: 0ms;
+    --duration-fast: 150ms;
+    --duration-normal: 200ms;
+    --duration-slow: 300ms;
+    --duration-slower: 400ms;
+
+    --easing-default: cubic-bezier(0.4, 0, 0.2, 1);
+    --easing-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --easing-gentle: cubic-bezier(0.4, 0, 0.6, 1);
+
+    /* ── Z-Index Scale ────────────────────────────────────────── */
+    --z-base: 0;
+    --z-dropdown: 10;
+    --z-sticky: 20;
+    --z-header: 40;
+    --z-drawer: 50;
+    --z-dialog: 50;
+    --z-toast: 60;
+    --z-tooltip: 70;
+    --z-modal-backdrop: 50;
+
+    /* ═══════════════════════════════════════════════════════════════
+       LEGACY TOKENS — Kept for backward compatibility.
+       Components currently reference these. Do NOT remove.
+       Migrate components to semantic tokens in Phase 4.3.
+       ═══════════════════════════════════════════════════════════════ */
     --background: 215 25% 10%;
-    /* #13171f */
     --foreground: 210 20% 98%;
     --foreground-soft: 215 15% 75%;
     --foreground-muted: 215 10% 60%;
 
     --panel: 215 22% 14%;
-    /* #1b212c */
     --panel-2: 215 20% 18%;
-    /* #252b36 */
     --panel-3: 215 18% 22%;
 
     --card: 215 22% 14%;
@@ -25,40 +114,36 @@
     --popover: 215 22% 14%;
     --popover-foreground: 210 20% 98%;
 
-    /* Cyan / Electric blue accent */
     --primary: 195 90% 50%;
-    /* #0cc0f5 */
     --primary-foreground: 215 30% 10%;
     --primary-glow: 195 90% 50%;
 
-    --secondary: 222 34% 16%; /* #1a2235 */
+    --secondary: 222 34% 16%;
     --secondary-foreground: 210 20% 98%;
-    --surface: 217 28% 16%; /* #1e2735 */
+    --surface: 217 28% 16%;
 
     --muted: 215 15% 16%;
     --muted-foreground: 215 10% 60%;
 
-    --accent: 142 71% 45%; /* #22c55e */
+    --accent: 142 71% 45%;
     --accent-foreground: 215 30% 10%;
-    --text-muted: 220 9% 46%; /* #6b7280 */
+    --text-muted: 220 9% 46%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 20% 98%;
-    --danger: 0 84% 60%; /* #ef4444 */
+    --danger: 0 84% 60%;
 
     --success: 150 70% 45%;
-    --warning: 38 92% 50%; /* #f59e0b */
+    --warning: 38 92% 50%;
 
-    --border: 220 26% 22%; /* #2a3448 */
-    --input: 217 28% 16%; /* #1e2735 */
+    --border: 220 26% 22%;
+    --input: 217 28% 16%;
     --ring: 195 90% 50%;
 
     --radius: 1rem;
     --radius-card: 0.75rem;
     --radius-input: 0.5rem;
-    --radius-sm: 0.25rem;
 
-    /* Spacing scale */
     --spacing-xs: 0.25rem;
     --spacing-sm: 0.5rem;
     --spacing-md: 1rem;
@@ -75,20 +160,13 @@
       hsl(var(--background));
     --gradient-card: linear-gradient(180deg, hsl(215 22% 16%), hsl(215 22% 12%));
     --gradient-neon: linear-gradient(135deg, hsl(195 90% 50%), hsl(210 90% 55%));
-    /* Softer overlay for sharper images */
     --gradient-overlay: linear-gradient(180deg,
         transparent 0%,
         transparent 30%,
         hsl(215 25% 8% / 0.5) 60%,
         hsl(215 25% 8% / 0.85) 100%);
 
-    /* Shadows */
-    --shadow-neon: 0 0 16px hsl(195 90% 50% / 0.35);
-    --shadow-neon-lg: 0 0 32px hsl(195 90% 50% / 0.4),
-      0 0 10px hsl(195 90% 50% / 0.25);
-    --shadow-card: 0 4px 20px hsl(0 0% 0% / 0.3);
-
-    /* Sidebar (unused but kept) */
+    /* Sidebar */
     --sidebar-background: 215 25% 10%;
     --sidebar-foreground: 210 20% 98%;
     --sidebar-primary: 195 90% 50%;
@@ -97,6 +175,89 @@
     --sidebar-accent-foreground: 210 20% 98%;
     --sidebar-border: 215 15% 22%;
     --sidebar-ring: 195 90% 50%;
+  }
+
+  /* ── Light Theme (Premium Teal) Overrides ───────────────────── */
+  html.light {
+    /* Semantic color overrides */
+    --color-primary: 174 80% 40%;
+    --color-primary-hover: 174 80% 35%;
+    --color-primary-foreground: 210 40% 98%;
+
+    --color-surface-default: 210 40% 96%;
+    --color-surface-elevated: 0 0% 100%;
+    --color-surface-overlay: 210 40% 98%;
+    --color-surface-subtle: 210 40% 94%;
+
+    --color-text-primary: 215 28% 11%;
+    --color-text-secondary: 215 16% 47%;
+    --color-text-tertiary: 215 14% 60%;
+    --color-text-inverse: 210 40% 98%;
+
+    --color-border-default: 214 32% 91%;
+    --color-border-subtle: 214 32% 88%;
+    --color-border-inverse: 215 28% 11%;
+
+    --color-danger: 0 84% 60%;
+    --color-danger-foreground: 210 40% 98%;
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px hsl(215 28% 11% / 0.05);
+    --shadow-md: 0 4px 6px hsl(215 28% 11% / 0.08);
+    --shadow-lg: 0 10px 15px hsl(215 28% 11% / 0.1);
+    --shadow-xl: 0 20px 25px hsl(215 28% 11% / 0.12);
+    --shadow-card: 0 8px 30px hsl(215 28% 11% / 0.08);
+
+    /* Legacy token overrides (kept for backward compat) */
+    --background: 210 40% 96%;
+    --foreground: 215 28% 11%;
+    --foreground-soft: 215 16% 47%;
+    --foreground-muted: 215 14% 60%;
+
+    --panel: 210 40% 96%;
+    --panel-2: 0 0% 100%;
+    --panel-3: 210 40% 98%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 215 28% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 28% 11%;
+
+    --primary: 174 80% 40%;
+    --primary-foreground: 210 40% 98%;
+    --primary-glow: 174 80% 40%;
+
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 215 28% 11%;
+    --surface: 210 40% 96%;
+
+    --muted: 210 40% 94%;
+    --muted-foreground: 215 14% 60%;
+
+    --accent: 174 80% 40%;
+    --accent-foreground: 210 40% 98%;
+    --text-muted: 215 16% 47%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+    --danger: 0 84% 60%;
+
+    --success: 150 70% 45%;
+    --warning: 38 92% 50%;
+
+    --border: 214 32% 91%;
+    --input: 210 40% 96%;
+    --ring: 174 80% 40%;
+
+    --sidebar-background: 210 40% 96%;
+    --sidebar-foreground: 215 28% 11%;
+    --sidebar-primary: 174 80% 40%;
+    --sidebar-primary-foreground: 210 40% 98%;
+    --sidebar-accent: 210 40% 94%;
+    --sidebar-accent-foreground: 215 28% 11%;
+    --sidebar-border: 214 32% 91%;
+    --sidebar-ring: 174 80% 40%;
   }
 
   html {
