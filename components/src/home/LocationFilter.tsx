@@ -1,8 +1,8 @@
-import { useMemo, useState, useEffect, useRef } from "react";
+import { useMemo, useState } from "react";
 import { LocateFixed, MapPin, ChevronDown, X } from "lucide-react";
 import type { Turf } from "@/data/seed";
 import { useLuxuryTheme } from "@/luxury/LuxuryThemeProvider";
-import { AnimatePresence, motion } from "framer-motion";
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/ui/sheet";
 
 /* ─────────────────────────────────────────────────────────────────────
    LocationPill — compact trigger shown inline in the category row.
@@ -28,131 +28,93 @@ export function LocationPill({
   const [open, setOpen] = useState(false);
   const { themeId } = useLuxuryTheme();
   const isPremium = themeId === "premium-teal";
-  const sheetRef = useRef<HTMLDivElement>(null);
 
   const hasFilter = !!(city || area);
   const label = area || city || "Location";
 
-  // Close on outside click
-  useEffect(() => {
-    if (!open) return;
-    function handleClick(e: MouseEvent) {
-      if (sheetRef.current && !sheetRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [open]);
-
   return (
     <div className="relative shrink-0 flex flex-col items-center" style={{ width: "72px", minWidth: "64px" }}>
-      {/* ── Pill button ── */}
-      <button
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-        aria-label="Open location filter"
-        className="pressable flex flex-col items-center w-full bg-transparent border-none outline-none cursor-pointer"
-      >
-        <div
-          className="h-14 w-14 rounded-full grid place-items-center relative"
-          style={
-            isPremium
-              ? {
-                background: hasFilter ? "#14B8B0" : "#FFFFFF",
-                border: hasFilter ? "2px solid #0D9488" : "1px solid #E2E8F0",
-                boxShadow: hasFilter
-                  ? "0 4px 14px rgba(20,184,176,0.35)"
-                  : "0 4px 14px rgba(15,23,42,0.08)",
-                transition: "all 0.2s ease",
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetTrigger asChild>
+          {/* ── Pill button ── */}
+          <button
+            onClick={() => setOpen((v) => !v)}
+            aria-expanded={open}
+            aria-label="Open location filter"
+            className="pressable flex flex-col items-center w-full bg-transparent border-none outline-none cursor-pointer"
+          >
+            <div
+              className="h-14 w-14 rounded-full grid place-items-center relative"
+              style={
+                isPremium
+                  ? {
+                    background: hasFilter ? "#14B8B0" : "#FFFFFF",
+                    border: hasFilter ? "2px solid #0D9488" : "1px solid #E2E8F0",
+                    boxShadow: hasFilter
+                      ? "0 4px 14px rgba(20,184,176,0.35)"
+                      : "0 4px 14px rgba(15,23,42,0.08)",
+                    transition: "all 0.2s ease",
+                  }
+                  : {
+                    background: hasFilter
+                      ? "hsl(var(--primary))"
+                      : "hsl(var(--panel-2))",
+                    border: "1px solid hsl(var(--primary) / 0.40)",
+                    boxShadow: "0 0 18px rgba(198,248,6,0.18)",
+                    transition: "all 0.2s ease",
+                  }
               }
-              : {
-                background: hasFilter
-                  ? "hsl(var(--primary))"
-                  : "hsl(var(--panel-2))",
-                border: "1px solid hsl(var(--primary) / 0.40)",
-                boxShadow: "0 0 18px rgba(198,248,6,0.18)",
-                transition: "all 0.2s ease",
-              }
-          }
-        >
-          <MapPin
-            className="h-6 w-6"
-            style={{
-              color: isPremium
-                ? hasFilter ? "white" : "#14B8B0"
-                : hasFilter ? "hsl(var(--primary-foreground))" : "hsl(var(--primary))",
-            }}
-          />
-          {/* active dot */}
-          {hasFilter && !isPremium && (
-            <span
-              className="absolute top-1 right-1 h-2 w-2 rounded-full bg-primary border-2"
-              style={{ borderColor: "hsl(var(--panel-2))" }}
-            />
-          )}
-        </div>
-        <span
-          className="mt-1 text-center leading-tight line-clamp-1 w-full"
-          style={{
-            
-            color: isPremium
-              ? hasFilter ? "#14B8B0" : "#64748B"
-              : hasFilter ? "hsl(var(--primary))" : "hsl(var(--foreground-soft))",
-            fontWeight: hasFilter ? 700 : 500,
-            maxWidth: "70px",
-          }}
-        >
-          {label}
-        </span>
-      </button>
-
-      {/* ── Drop-down sheet centered in viewport ── */}
-      <AnimatePresence>
-        {open && (
-          <>
-            {/* Backdrop */}
-            <motion.div
-              className="fixed inset-0 z-40"
-              style={{
-                background: "rgba(0, 0, 0, 0.45)",
-                maxWidth: "480px",
-                left: "50%",
-                transform: "translateX(-50%)"
-              }}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
-              onClick={() => setOpen(false)}
-              aria-hidden
-            />
-
-            {/* Sheet - Centered layout */}
-            <motion.div
-              ref={sheetRef}
-              className="fixed left-1/2 top-1/2 z-50 w-[calc(100vw-32px)] max-w-[448px]"
-              style={{ x: "-50%", y: "-50%" }}
-              initial={{ opacity: 0, scale: 0.95, x: "-50%", y: "-50%" }}
-              animate={{ opacity: 1, scale: 1, x: "-50%", y: "-50%" }}
-              exit={{ opacity: 0, scale: 0.95, x: "-50%", y: "-50%" }}
-              transition={{ type: "spring", stiffness: 380, damping: 32 }}
             >
-              <LocationSheet
-                turfs={turfs}
-                city={city}
-                area={area}
-                locating={locating}
-                onCity={onCity}
-                onArea={onArea}
-                onNearMe={() => { onNearMe(); setOpen(false); }}
-                onClose={() => setOpen(false)}
-                isPremium={isPremium}
+              <MapPin
+                className="h-6 w-6"
+                style={{
+                  color: isPremium
+                    ? hasFilter ? "white" : "#14B8B0"
+                    : hasFilter ? "hsl(var(--primary-foreground))" : "hsl(var(--primary))",
+                }}
               />
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+              {/* active dot */}
+              {hasFilter && !isPremium && (
+                <span
+                  className="absolute top-1 right-1 h-2 w-2 rounded-full bg-primary border-2"
+                  style={{ borderColor: "hsl(var(--panel-2))" }}
+                />
+              )}
+            </div>
+            <span
+              className="mt-1 text-center leading-tight line-clamp-1 w-full"
+              style={{
+                
+                color: isPremium
+                  ? hasFilter ? "#14B8B0" : "#64748B"
+                  : hasFilter ? "hsl(var(--primary))" : "hsl(var(--foreground-soft))",
+                fontWeight: hasFilter ? 700 : 500,
+                maxWidth: "70px",
+              }}
+            >
+              {label}
+            </span>
+          </button>
+        </SheetTrigger>
+
+        <SheetContent
+          side="bottom"
+          className="bg-transparent border-t-0 p-0 max-w-[448px] mx-auto shadow-none overflow-hidden [&>button]:hidden"
+        >
+          <SheetTitle className="sr-only">Filter by Location</SheetTitle>
+          <LocationSheet
+            turfs={turfs}
+            city={city}
+            area={area}
+            locating={locating}
+            onCity={onCity}
+            onArea={onArea}
+            onNearMe={() => { onNearMe(); setOpen(false); }}
+            onClose={() => setOpen(false)}
+            isPremium={isPremium}
+          />
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
