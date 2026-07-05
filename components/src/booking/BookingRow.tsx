@@ -91,9 +91,9 @@ export function BookingRow({
   if (isPremium) {
     return (
       <Link
-        to={`/booking/${booking.id}`} className="flex items-start gap-3 pressable text-left mb-3 w-full border border-[#e5e7eb] rounded-[14px] p-3.5 shadow-sm block transition hover:border-[#14B8B0]/50"
+        to={`/booking/${booking.id}`} className="flex items-start gap-3 pressable text-left mb-3 w-full border border-[hsl(var(--color-border-default))] rounded-[14px] p-3.5 shadow-sm block transition hover:border-[hsl(var(--color-primary))]/50"
         style={{
-          background: "#FFFFFF",
+          background: "hsl(var(--color-surface-elevated))",
           boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
           ...cardStyle
         }}
@@ -106,7 +106,7 @@ export function BookingRow({
         />
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-1.5 flex-wrap">
-            <p className="font-bold text-sm text-[#0F172A] line-clamp-2">
+            <p className="font-bold text-sm line-clamp-2" style={{ color: "hsl(var(--color-text-primary))" }}>
               {booking.turf_name}
             </p>
             <span className="text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider"
@@ -120,33 +120,33 @@ export function BookingRow({
           </div>
 
           <div className="flex items-center gap-1 mt-1 text-[10px] text-[#64748B]">
-            <span className="bg-[#F8FAFC] px-1.5 py-0.5 rounded border border-[#E2E8F0] font-mono text-[9px]">
+            <span className="px-1.5 py-0.5 rounded border font-mono text-[9px]" style={{ background: "hsl(var(--color-surface-overlay))", borderColor: "hsl(var(--color-border-default))" }}>
               ID: {booking.id}
             </span>
             <button
-              onClick={handleCopyId} className="p-0.5 hover:bg-[#F1F5F9] rounded text-[#64748B] hover:text-[#0F172A] cursor-pointer"
+              onClick={handleCopyId} className="p-0.5 rounded cursor-pointer" style={{ color: "hsl(var(--color-text-secondary))" }}
               title="Copy ID">
               <Copy className="h-3 w-3" />
             </button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 mt-2.5 border-t border-[#F1F5F9] pt-2.5 text-[10.5px] text-[#64748B] font-medium">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 mt-2.5 border-t pt-2.5 text-[10.5px] font-medium" style={{ borderColor: "hsl(var(--color-surface-default))", color: "hsl(var(--color-text-secondary))" }}>
             <span className="inline-flex items-center gap-1">
-              <Calendar className="h-3.5 w-3.5 text-[#14B8B0]" />
+              <Calendar className="h-3.5 w-3.5" style={{ color: "hsl(var(--color-primary))" }} />
               {booking.date}
             </span>
             <span className="inline-flex items-center gap-1">
-              <Clock className="h-3.5 w-3.5 text-[#14B8B0]" />
+              <Clock className="h-3.5 w-3.5" style={{ color: "hsl(var(--color-primary))" }} />
               {formatSlotTime(booking.start_time)} - {formatSlotTime(endTimeStr)}
             </span>
-            <span className="text-[10px] text-[#64748B] mt-0.5">
-              Duration: <strong className="text-[#0F172A] font-bold">{duration} Hr{duration> 1 ? "s" : ""}</strong>
+            <span className="text-[10px] mt-0.5" style={{ color: "hsl(var(--color-text-secondary))" }}>
+              Duration: <strong className="font-bold" style={{ color: "hsl(var(--color-text-primary))" }}>{duration} Hr{duration> 1 ? "s" : ""}</strong>
             </span>
           </div>
 
-          <div className="flex items-center justify-between mt-2.5 border-t border-[#F1F5F9] pt-2">
-            <span className="text-[9px] uppercase font-bold text-[#64748B] tracking-wider">Amount Paid</span>
-            <p className="text-sm font-extrabold text-[#14B8B0]">₹{booking.amount}</p>
+          <div className="flex items-center justify-between mt-2.5 border-t pt-2" style={{ borderColor: "hsl(var(--color-surface-default))" }}>
+            <span className="text-[9px] uppercase font-bold tracking-wider" style={{ color: "hsl(var(--color-text-secondary))" }}>Amount Paid</span>
+            <p className="text-sm font-extrabold" style={{ color: "hsl(var(--color-primary))" }}>₹{booking.amount}</p>
           </div>
         </div>
       </Link>
