@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useState } from "react";
 import { motion } from "framer-motion";
 import {
   MapPin,
@@ -173,7 +173,7 @@ export function OpenGameCardSkeleton({ index = 0 }: { index?: number }) {
 
 /* ── Component ───────────────────────────────────────────────── */
 
-export function OpenGameCard({
+export const OpenGameCard = memo(function OpenGameCard({
   game,
   turfImage,
   turfSurface = "Outdoor",
@@ -456,4 +456,4 @@ export function OpenGameCard({
       </div>
     </motion.article>
   );
-}
+});

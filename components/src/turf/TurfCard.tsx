@@ -8,7 +8,7 @@ import { Card, CardContent, CardTitle, CardDescription, CardFooter } from "@/ui/
 import { toast } from "sonner";
 import { cardLift, cardLiftDark, ease } from "@/lib/motion";
 
-export function TurfCard({
+export const TurfCard = React.memo(function TurfCard({
   turf,
   index = 0,
   userLocation,
@@ -169,7 +169,7 @@ export function TurfCard({
         </div>
       </motion.div>
   );
-}
+});
 
 /** Ripple button — shows expanding circle on tap */
 function RippleButton({
@@ -222,4 +222,4 @@ function RippleButton({
   );
 }
 
-export default React.memo(TurfCard);
+export default TurfCard;

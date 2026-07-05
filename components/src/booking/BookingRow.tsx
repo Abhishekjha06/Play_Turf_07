@@ -1,3 +1,4 @@
+import { memo } from "react";
 import type { Booking } from "@/data/seed";
 import { Calendar, Clock, Copy } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -14,7 +15,7 @@ const formatSlotTime = (timeStr: string) => {
   return `${formattedHour}:${minStr} ${ampm}`;
 };
 
-export function BookingRow({
+export const BookingRow = memo(function BookingRow({
   booking,
   currentTime = new Date()
 }: {
@@ -151,4 +152,4 @@ export function BookingRow({
         </div>
       </Link>
   );
-}
+});

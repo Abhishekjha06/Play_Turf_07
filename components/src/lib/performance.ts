@@ -146,16 +146,16 @@ export async function getOptimalImageFormat(): Promise<"avif" | "webp" | "jpg"> 
 }
 
 /**
- * Batch multiple DOM reads/writes to avoid layout thrashing.
+ * Batch multiple DOM operations to avoid layout thrashing.
+ * Schedules work in the next animation frame for smooth execution.
  */
-export function batchDomOperations<T>(operations: (() => T)[]): T[] {
-  const results: T[] = [];
-  // Force layout sync by reading offsetHeight
-  document.body.offsetHeight;
-  for (const op of operations) {
-    results.push(op());
-  }
-  return results;
+export function batchDomOperations<T>(operations: (() => T)[]): Promise<T[]> {
+  return new Promise((resolve) => {
+    requestAnimationFrame(() => {
+      const results = operations.map((op) => op());
+      resolve(results);
+    });
+  });
 }
 
 /**
