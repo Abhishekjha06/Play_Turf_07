@@ -141,7 +141,7 @@ export function TossModal({ open, onClose }: TossModalProps) {
                                             key="flipping"
                                             initial={{ opacity: 0 }}
                                             animate={{ opacity: 1 }}
-                                            className="text-[10px] text-white/40 font-bold tracking-[0.4em] uppercase"
+                                            className="text-[10px] text-white/60 font-bold tracking-[0.4em] uppercase"
                                         >
                                             Flipping...
                                         </motion.div>
@@ -150,7 +150,7 @@ export function TossModal({ open, onClose }: TossModalProps) {
                                             key="idle"
                                             initial={{ opacity: 0 }}
                                             animate={{ opacity: 1 }}
-                                            className="text-[10px] text-white/20 font-bold tracking-[0.4em] uppercase"
+                                            className="text-[10px] text-white/50 font-bold tracking-[0.4em] uppercase"
                                         >
                                             Click to flip
                                         </motion.div>

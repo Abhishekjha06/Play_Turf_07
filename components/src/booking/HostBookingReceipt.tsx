@@ -158,7 +158,7 @@ export function HostBookingReceipt({ booking, game, onClose }: HostBookingReceip
           <span className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-400/80">Play Turf</span>
         </div>
         <h2 className="font-display text-lg font-black text-white">Host Booking Receipt</h2>
-        <p className="text-[10px] text-white/30 mt-1">Full Court Reservation</p>
+        <p className="text-[10px] text-white/50 mt-1">Full Court Reservation</p>
       </div>
 
       {/* Body */}
@@ -166,14 +166,14 @@ export function HostBookingReceipt({ booking, game, onClose }: HostBookingReceip
         {/* Receipt ID */}
         <div className="flex items-center justify-between rounded-lg p-3" style={{ backgroundColor: "#111111" }}>
           <div>
-            <p className="text-[9px] text-white/30 uppercase tracking-wider font-bold">Receipt ID</p>
+            <p className="text-[9px] text-white/50 uppercase tracking-wider font-bold">Receipt ID</p>
             <p className="text-xs font-mono text-white/60 mt-0.5">{booking.payment_id || booking.id}</p>
           </div>
           <button
             onClick={handleCopy}
             className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition"
           >
-            {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5 text-white/40" />}
+            {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5 text-white/60" />}
           </button>
         </div>
 
@@ -186,7 +186,7 @@ export function HostBookingReceipt({ booking, game, onClose }: HostBookingReceip
             </div>
             <div>
               <p className="text-sm font-bold text-white">{game.host_name}</p>
-              <p className="text-[10px] text-white/30">Verified Host</p>
+              <p className="text-[10px] text-white/50">Verified Host</p>
             </div>
           </div>
         </div>
@@ -196,15 +196,15 @@ export function HostBookingReceipt({ booking, game, onClose }: HostBookingReceip
           <p className="text-[9px] text-emerald-400/60 uppercase tracking-wider font-bold">Venue Details</p>
           <div className="space-y-2 text-xs">
             <div className="flex items-center justify-between">
-              <span className="text-white/40 flex items-center gap-1.5"><MapPin className="h-3 w-3" /> Turf</span>
+              <span className="text-white/60 flex items-center gap-1.5"><MapPin className="h-3 w-3" /> Turf</span>
               <span className="text-white/80 font-semibold text-right">{booking.turf_name}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-white/40 flex items-center gap-1.5"><Calendar className="h-3 w-3" /> Sport</span>
+              <span className="text-white/60 flex items-center gap-1.5"><Calendar className="h-3 w-3" /> Sport</span>
               <span className="text-white/80 font-semibold">{game.sport}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-white/40 flex items-center gap-1.5"><MapPin className="h-3 w-3" /> Address</span>
+              <span className="text-white/60 flex items-center gap-1.5"><MapPin className="h-3 w-3" /> Address</span>
               <span className="text-white/80 font-semibold text-right max-w-[60%]">{game.venue}</span>
             </div>
           </div>
@@ -215,15 +215,15 @@ export function HostBookingReceipt({ booking, game, onClose }: HostBookingReceip
           <p className="text-[9px] text-emerald-400/60 uppercase tracking-wider font-bold">Schedule</p>
           <div className="space-y-2 text-xs">
             <div className="flex items-center justify-between">
-              <span className="text-white/40 flex items-center gap-1.5"><Calendar className="h-3 w-3" /> Date</span>
+              <span className="text-white/60 flex items-center gap-1.5"><Calendar className="h-3 w-3" /> Date</span>
               <span className="text-white/80 font-semibold">{formatDate(booking.date)}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-white/40 flex items-center gap-1.5"><Clock className="h-3 w-3" /> Time</span>
+              <span className="text-white/60 flex items-center gap-1.5"><Clock className="h-3 w-3" /> Time</span>
               <span className="text-white/80 font-semibold">{formatTime(booking.start_time)} — {formatTime(booking.end_time)}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-white/40 flex items-center gap-1.5"><Timer className="h-3 w-3" /> Duration</span>
+              <span className="text-white/60 flex items-center gap-1.5"><Timer className="h-3 w-3" /> Duration</span>
               <span className="text-white/80 font-semibold">{booking.hours} hour(s)</span>
             </div>
           </div>
@@ -234,15 +234,15 @@ export function HostBookingReceipt({ booking, game, onClose }: HostBookingReceip
           <p className="text-[9px] text-emerald-400/60 uppercase tracking-wider font-bold">Payment</p>
           <div className="space-y-2 text-xs">
             <div className="flex items-center justify-between">
-              <span className="text-white/40 flex items-center gap-1.5"><CreditCard className="h-3 w-3" /> Amount Paid</span>
+              <span className="text-white/60 flex items-center gap-1.5"><CreditCard className="h-3 w-3" /> Amount Paid</span>
               <span className="text-emerald-400 font-black text-sm">₹{booking.amount.toLocaleString("en-IN")}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-white/40 flex items-center gap-1.5"><CreditCard className="h-3 w-3" /> Method</span>
+              <span className="text-white/60 flex items-center gap-1.5"><CreditCard className="h-3 w-3" /> Method</span>
               <span className="text-white/80 font-semibold">Host Booking</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-white/40 flex items-center gap-1.5"><Shield className="h-3 w-3" /> Status</span>
+              <span className="text-white/60 flex items-center gap-1.5"><Shield className="h-3 w-3" /> Status</span>
               <span className="text-emerald-400 font-semibold">{booking.status}</span>
             </div>
           </div>
@@ -251,11 +251,11 @@ export function HostBookingReceipt({ booking, game, onClose }: HostBookingReceip
         {/* Slot Summary */}
         <div className="rounded-lg p-3" style={{ backgroundColor: "#111111" }}>
           <div className="flex items-center justify-between text-xs">
-            <span className="text-white/40">Total Slots</span>
+            <span className="text-white/60">Total Slots</span>
             <span className="text-white/80 font-semibold">{game.slots_total}</span>
           </div>
           <div className="flex items-center justify-between text-xs mt-1">
-            <span className="text-white/40">Filled Slots</span>
+            <span className="text-white/60">Filled Slots</span>
             <span className="text-emerald-400 font-semibold">{game.slots_filled}</span>
           </div>
         </div>
@@ -282,7 +282,7 @@ export function HostBookingReceipt({ booking, game, onClose }: HostBookingReceip
 
         {/* Footer */}
         <div className="text-center pt-2" style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
-          <p className="text-[9px] text-white/20 uppercase tracking-wider font-bold">© 2026 Play Turf — All Rights Reserved</p>
+          <p className="text-[9px] text-white/50 uppercase tracking-wider font-bold">© 2026 Play Turf — All Rights Reserved</p>
           <div className="flex justify-center gap-3 mt-1">
             <span className="text-[8px] text-white/15">Terms</span>
             <span className="text-[8px] text-white/15">Privacy</span>
