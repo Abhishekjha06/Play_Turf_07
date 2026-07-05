@@ -2,7 +2,6 @@ import { Home, CalendarCheck, Trophy, MoreHorizontal, Goal, Users } from "lucide
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { useLuxuryTheme } from "@/luxury/LuxuryThemeProvider";
 import { ease } from "@/lib/motion";
 
 const items = [
@@ -15,11 +14,9 @@ const items = [
 export function BottomNav() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const { themeId } = useLuxuryTheme();
-  const isPremium = themeId === "premium-teal";
 
-  if (isPremium) {
-    return (
+
+  return (
       <>
         <div
           style={{ height: "calc(7rem + env(safe-area-inset-bottom, 0px))" }}
@@ -41,7 +38,7 @@ export function BottomNav() {
           aria-label="Main navigation"
         >
           {items.slice(0, 2).map((it) => (
-            <PremiumNavItem key={it.to} {...it} active={pathname === it.to} />
+            <NavItem key={it.to} {...it} active={pathname === it.to} />
           ))}
 
           {/* Central FAB */}
@@ -68,58 +65,19 @@ export function BottomNav() {
               className="absolute inset-0 rounded-full animate-glow-pulse pointer-events-none"
               style={{ background: "hsl(var(--color-primary) / 0.25)" }}
             />
-            <Goal className="h-7 w-7 text-white relative z-10" strokeWidth={2.5} />
+            <Goal className="h-7 w-7 relative z-10" style={{ color: "hsl(var(--color-text-inverse))" }} strokeWidth={2.5} />
           </motion.button>
 
           {items.slice(2).map((it) => (
-            <PremiumNavItem key={it.to} {...it} active={pathname === it.to} />
+            <NavItem key={it.to} {...it} active={pathname === it.to} />
           ))}
         </nav>
       </>
     );
-  }
-
-  // Legacy dark theme nav
-  return (
-    <>
-      <div
-        style={{ height: "calc(7rem + env(safe-area-inset-bottom, 0px))" }}
-        aria-hidden
-      />
-      <nav
-        className="fixed bottom-3 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-1.5rem)] max-w-[456px] md:max-w-[616px] lg:max-w-[744px] glass-strong rounded-full px-3 py-2 flex items-center justify-between"
-        style={{ paddingBottom: "calc(0.5rem + env(safe-area-inset-bottom, 0px))" }}
-        data-testid="bottom-nav"
-        aria-label="Main navigation"
-      >
-        {items.slice(0, 2).map((it) => (
-          <LegacyNavItem key={it.to} {...it} active={pathname === it.to} />
-        ))}
-
-        <motion.button
-          whileTap={{ scale: 0.88 }}
-          whileHover={{ scale: 1.05 }}
-          onClick={() => {
-            localStorage.removeItem("play_turf_selected_city");
-            localStorage.removeItem("play_turf_selected_area");
-            navigate("/");
-          }}
-          aria-label="Quick book"
-          className="relative -mt-10 h-16 w-16 rounded-full bg-gradient-neon text-primary-foreground grid place-items-center animate-pulse-glow"
-          data-testid="fab-book"
-        >
-          <Goal className="h-7 w-7" strokeWidth={2.5} />
-        </motion.button>
-
-        {items.slice(2).map((it) => (
-          <LegacyNavItem key={it.to} {...it} active={pathname === it.to} />
-        ))}
-      </nav>
-    </>
   );
 }
 
-function PremiumNavItem({
+function NavItem({
   to,
   label,
   icon: Icon,
@@ -171,8 +129,7 @@ function PremiumNavItem({
 
       <span
         className={cn("text-xs tracking-wide", active ? "font-bold" : "font-medium")}
-        style={{ color: active ? "hsl(var(--color-primary))" : "hsl(var(--color-text-tertiary))" }}
-        style={{ letterSpacing: "0.03em" }}
+        style={{ color: active ? "hsl(var(--color-primary))" : "hsl(var(--color-text-tertiary))", letterSpacing: "0.03em" }}
       >
         {label}
       </span>

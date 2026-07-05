@@ -1,0 +1,17 @@
+{
+  "name": "play-turf",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Play Turf — root wrapper. The actual app lives in components/. This file forwards npm scripts so commands like `npm run dev` work from the repo root.",
+  "scripts": {
+    "dev": "npm --prefix components run dev",
+    "build": "npm --prefix components run build",
+    "build:dev": "npm --prefix components run build:dev",
+    "lint": "npm --prefix components run lint",
+    "typecheck": "npm --prefix components run typecheck",
+    "preview": "npm --prefix components run preview",
+    "test": "npm --prefix components run test",
+    "test:watch": "npm --prefix components run test:watch",
+    "install:app": "npm --prefix components install"
+  }
+}

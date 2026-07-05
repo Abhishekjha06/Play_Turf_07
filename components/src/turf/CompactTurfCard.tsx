@@ -2,7 +2,6 @@ import { Link } from "react-router-dom";
 import type { Turf } from "@/data/seed";
 import { api } from "@/lib/api";
 import { Card, CardContent, CardTitle, CardDescription } from "@/ui/card";
-import { useLuxuryTheme } from "@/luxury/LuxuryThemeProvider";
 
 export function CompactTurfCard({
   turf,
@@ -12,11 +11,8 @@ export function CompactTurfCard({
   userLocation?: { lat: number; lng: number } | null;
 }) {
   const km = userLocation ? api.distanceKm(userLocation, turf) : null;
-  const { themeId } = useLuxuryTheme();
-  const isPremium = themeId === "premium-teal";
 
-  if (isPremium) {
-    return (
+  return (
       <Link
         to={`/turf/${turf.id}`}
         className="shrink-0 w-[40vw] max-w-40 pressable"
@@ -69,40 +65,5 @@ export function CompactTurfCard({
         </div>
       </Link>
     );
-  }
-
-  return (
-    <Link
-      to={`/turf/${turf.id}`}
-      className="shrink-0 w-[40vw] max-w-40 pressable"
-      data-testid={`compact-turf-${turf.id}`}
-    >
-      <Card compact hoverable bordered className="h-full flex flex-col p-0">
-        <div className="relative aspect-[4/3] rounded-t-2xl overflow-hidden shrink-0">
-          <img
-            src={turf.image}
-            alt={turf.name}
-            loading="lazy"
-            decoding="async"
-            className="absolute inset-0 h-full w-full object-cover"
-          />
-        </div>
-        <CardContent padding="none" className="p-2.5 flex-1 flex flex-col">
-          <CardTitle size="sm" as="h4" className="text-xs line-clamp-1">
-            {turf.name}
-          </CardTitle>
-          <CardDescription size="xs" className="text-[11px] line-clamp-1">
-            {turf.address}
-          </CardDescription>
-          {km !== null && Number.isFinite(km) && (
-            <p className="mt-1 text-[11px] text-soft">{km.toFixed(1)} km away</p>
-          )}
-          <p className="text-[12px] mt-auto pt-1">
-            <span className="neon-text font-bold">₹{turf.price_per_hour}</span>
-            <span className="text-muted2">/hr</span>
-          </p>
-        </CardContent>
-      </Card>
-    </Link>
   );
 }

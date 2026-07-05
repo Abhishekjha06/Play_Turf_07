@@ -6,7 +6,6 @@ import React, { useEffect, useState, useRef } from "react";
 import { api } from "@/lib/api";
 import { Card, CardContent, CardTitle, CardDescription, CardFooter } from "@/ui/card";
 import { toast } from "sonner";
-import { useLuxuryTheme } from "@/luxury/LuxuryThemeProvider";
 import { cardLift, cardLiftDark, ease } from "@/lib/motion";
 
 export function TurfCard({
@@ -19,8 +18,6 @@ export function TurfCard({
   userLocation?: { lat: number; lng: number } | null;
 }) {
   const [fav, setFav] = useState(false);
-  const { themeId } = useLuxuryTheme();
-  const isPremium = themeId === "premium-teal";
   const km = userLocation ? api.distanceKm(userLocation, turf) : null;
 
   const prefersReducedMotion =
@@ -52,8 +49,7 @@ export function TurfCard({
     },
   };
 
-  if (isPremium) {
-    return (
+  return (
       <motion.div
         variants={prefersReducedMotion ? {} : enterVariants}
         initial="hidden"
@@ -173,84 +169,6 @@ export function TurfCard({
         </div>
       </motion.div>
     );
-  }
-
-  // Legacy (dark themes)
-  return (
-    <motion.div
-      variants={prefersReducedMotion ? {} : enterVariants}
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, amount: 0.15 }}
-      whileHover={prefersReducedMotion ? {} : { y: -6, boxShadow: "0 20px 48px rgba(0,0,0,0.50)" }}
-      whileTap={prefersReducedMotion ? {} : { scale: 0.975, y: -2 }}
-      transition={{ duration: 0.22, ease: [0.25, 1, 0.5, 1] }}
-      data-testid={`turf-card-${turf.id}`}
-      className="flex h-full"
-      style={{ willChange: "transform" }}
-    >
-      <Card className="flex flex-col w-full" hoverable bordered compact={false}>
-        <div className="relative aspect-[4/3] rounded-t-2xl overflow-hidden shrink-0">
-          <motion.img
-            src={turf.image}
-            alt={turf.name}
-            loading="lazy"
-            decoding="async"
-            className="absolute inset-0 h-full w-full object-cover"
-            whileHover={prefersReducedMotion ? {} : { scale: 1.06 }}
-            transition={{ duration: 0.55, ease: [0.25, 1, 0.5, 1] }}
-          />
-          <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/60 to-transparent" />
-          <motion.button
-            whileTap={{ scale: 0.82 }}
-            onClick={toggleFav}
-            aria-label="Favourite"
-            className="absolute top-2 right-2 h-8 w-8 grid place-items-center rounded-full glass"
-            data-testid={`fav-${turf.id}`}
-          >
-            <motion.div
-              animate={fav ? { scale: [1, 1.4, 1] } : { scale: 1 }}
-              transition={{ duration: 0.3 }}
-            >
-              <Heart className={`h-4 w-4 ${fav ? "fill-primary text-primary" : "text-white"}`} />
-            </motion.div>
-          </motion.button>
-          <div className="absolute bottom-2 left-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full glass text-[11px]">
-            <Star className="h-3 w-3 fill-primary text-primary" /> {turf.rating}
-          </div>
-          {km !== null && Number.isFinite(km) && (
-            <div className="absolute bottom-2 right-2 rounded-full glass px-2 py-0.5 text-[11px] font-semibold">
-              {km.toFixed(1)} km
-            </div>
-          )}
-        </div>
-        <CardContent padding="sm" removeTopPadding={false} className="flex-1 flex flex-col gap-2">
-          <div>
-            <CardTitle size="sm" as="h3" className="line-clamp-1">{turf.name}</CardTitle>
-            <CardDescription size="xs" className="line-clamp-1 mt-0.5">{turf.address}</CardDescription>
-          </div>
-          <div className="flex items-center gap-2 text-[11px] text-soft">
-            <Clock className="h-3 w-3" />{" "}
-            <span className="line-clamp-1">{turf.timing}</span>
-          </div>
-          <div className="flex items-center justify-between mt-auto pt-1">
-            <p className="text-sm">
-              <span className="font-bold neon-text">₹{turf.price_per_hour}</span>
-              <span className="text-muted2 text-[11px]">/hr</span>
-            </p>
-          </div>
-        </CardContent>
-        <CardFooter padding="sm" className="px-4 pb-4 pt-0">
-          <Link
-            to={`/turf/${turf.id}`}
-            className="w-full text-center bg-primary text-primary-foreground font-semibold rounded-full py-2 text-xs shadow-neon pressable"
-            data-testid={`book-${turf.id}`}
-          >
-            Book Now
-          </Link>
-        </CardFooter>
-      </Card>
-    </motion.div>
   );
 }
 
@@ -291,8 +209,7 @@ function RippleButton({
       {ripples.map(({ id, x, y }) => (
         <span
           key={id}
-          className="absolute rounded-full bg-white/30 pointer-events-none animate-ripple"
-          style={{
+          className="absolute rounded-full pointer-events-none animate-ripple" style={{
             width: 32,
             height: 32,
             left: x - 16,
