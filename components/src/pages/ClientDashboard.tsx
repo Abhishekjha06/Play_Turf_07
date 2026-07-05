@@ -5,7 +5,7 @@ import { Button } from "@/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/ui/tabs";
 import { toast } from "sonner";
-import { debounce } from "lodash-es";
+import { debounce } from "@/lib/utils";
 import {
     BarChart3,
     CalendarDays,

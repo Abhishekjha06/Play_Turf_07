@@ -295,8 +295,12 @@ export default defineConfig(({ mode }) => ({
           ) {
             return "vendor-supabase";
           }
-          // Framer Motion — animation, isolated
-          if (id.includes("node_modules/framer-motion/")) {
+          // Framer Motion — includes sub-packages (motion-dom, motion-utils)
+          if (
+            id.includes("node_modules/framer-motion") ||
+            id.includes("node_modules/motion-dom") ||
+            id.includes("node_modules/motion-utils")
+          ) {
             return "vendor-framer";
           }
           // TanStack Query — data fetching
