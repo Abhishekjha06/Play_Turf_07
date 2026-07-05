@@ -29,13 +29,15 @@ export function BookingRow({
 
   // Determine status (Upcoming, Past, Cancelled)
   let statusText = "Upcoming";
-  let statusColor = "#22C55E"; // Green
-  let statusBg = "rgba(34, 197, 94, 0.12)";
+  let statusColor = "hsl(var(--color-success))";
+  let statusBg = "hsl(var(--color-success-surface))";
+  let statusBorder = "hsl(var(--color-success) / 0.18)";
 
   if (booking.status === "cancelled") {
     statusText = "Cancelled";
-    statusColor = "#EF4444"; // Red
-    statusBg = "rgba(239, 68, 68, 0.12)";
+    statusColor = "hsl(var(--color-danger))";
+    statusBg = "hsl(var(--color-danger-surface))";
+    statusBorder = "hsl(var(--color-danger) / 0.18)";
   } else {
     // Check if past
     const todayStr = currentTime.toLocaleDateString('en-CA');
@@ -68,8 +70,9 @@ export function BookingRow({
 
     if (isPast) {
       statusText = "Past";
-      statusColor = "#64748B"; // Grey
-      statusBg = "rgba(100, 116, 139, 0.12)";
+      statusColor = "hsl(var(--color-neutral))";
+      statusBg = "hsl(var(--color-neutral-surface))";
+      statusBorder = "hsl(var(--color-neutral) / 0.18)";
     }
   }
 
@@ -110,7 +113,7 @@ export function BookingRow({
               style={{
                 background: statusBg,
                 color: statusColor,
-                border: `1px solid ${statusColor}30`,
+                border: `1px solid ${statusBorder}`,
               }}>
               {statusText}
             </span>

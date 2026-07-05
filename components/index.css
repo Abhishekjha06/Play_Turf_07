@@ -37,6 +37,19 @@
     --color-danger: 0 84% 60%;
     --color-danger-foreground: 210 20% 98%;
 
+    /* Status tokens — foreground + surface variants */
+    --color-success-foreground: 210 20% 98%;
+    --color-success-surface: 150 70% 45% / 0.12;
+
+    --color-warning-foreground: 215 30% 10%;
+    --color-warning-surface: 38 92% 50% / 0.12;
+
+    --color-danger-surface: 0 84% 60% / 0.12;
+
+    --color-neutral: 215 16% 47%;
+    --color-neutral-foreground: 210 20% 98%;
+    --color-neutral-surface: 215 16% 47% / 0.12;
+
     /* ── Spacing Scale ────────────────────────────────────────── */
     --space-0: 0rem;
     --space-1: 0.25rem;   /* 4px  */
@@ -71,6 +84,15 @@
     --shadow-neon-lg: 0 0 32px hsl(var(--color-primary) / 0.4),
                       0 0 10px hsl(var(--color-primary) / 0.25);
     --shadow-card: 0 4px 20px hsl(0 0% 0% / 0.3);
+
+    /* Overlay tokens — for image gradients, dialog backdrops, carousels */
+    --overlay-light: 0 0% 0% / 0.15;
+    --overlay-medium: 0 0% 0% / 0.40;
+    --overlay-heavy: 0 0% 0% / 0.70;
+
+    /* Primary-colored shadows (compose with --color-primary) */
+    --shadow-primary: 0 4px 14px hsl(var(--color-primary) / 0.30);
+    --shadow-primary-lg: 0 10px 30px hsl(var(--color-primary) / 0.40);
 
     /* ── Motion / Animation ───────────────────────────────────── */
     --duration-instant: 0ms;
@@ -200,6 +222,19 @@
 
     --color-danger: 0 84% 60%;
     --color-danger-foreground: 210 40% 98%;
+
+    /* Status tokens */
+    --color-success-foreground: 210 40% 98%;
+    --color-success-surface: 150 70% 45% / 0.12;
+
+    --color-warning-foreground: 215 28% 11%;
+    --color-warning-surface: 38 92% 50% / 0.12;
+
+    --color-danger-surface: 0 84% 60% / 0.12;
+
+    --color-neutral: 215 16% 47%;
+    --color-neutral-foreground: 210 40% 98%;
+    --color-neutral-surface: 215 16% 47% / 0.12;
 
     /* Shadows */
     --shadow-sm: 0 1px 2px hsl(215 28% 11% / 0.05);

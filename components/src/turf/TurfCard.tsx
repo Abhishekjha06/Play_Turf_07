@@ -68,7 +68,7 @@ export function TurfCard({
           className="flex flex-col w-full overflow-hidden"
           style={{
             background: "hsl(var(--color-surface-elevated))",
-            borderRadius: "20px",
+            borderRadius: "var(--radius-2xl)",
             border: "1px solid hsl(var(--color-border-default))",
             boxShadow: "var(--shadow-card)",
           }}
@@ -84,7 +84,7 @@ export function TurfCard({
               whileHover={prefersReducedMotion ? {} : { scale: 1.06 }}
               transition={{ duration: 0.55, ease: [0.25, 1, 0.5, 1] }}
             />
-            <div className="absolute inset-x-0 top-0 h-12 bg-gradient-to-b from-black/40 to-transparent" />
+            <div className="absolute inset-x-0 top-0 h-12" style={{ background: "linear-gradient(to bottom, hsl(var(--overlay-medium)), transparent)" }} />
 
             <motion.button
               whileTap={{ scale: 0.85 }}
@@ -160,7 +160,7 @@ export function TurfCard({
               style={{
                 background: "hsl(var(--color-primary))",
                 color: "hsl(var(--color-text-inverse))",
-                boxShadow: "0 4px 14px hsl(var(--color-primary) / 0.30)",
+                boxShadow: "var(--shadow-primary)",
               }}
             >
               Book Now

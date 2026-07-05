@@ -22,14 +22,14 @@ export function CompactTurfCard({
           className="flex flex-col overflow-hidden"
           style={{
             background: "hsl(var(--color-surface-elevated))",
-            borderRadius: "20px",
+            borderRadius: "var(--radius-2xl)",
             border: "1px solid hsl(var(--color-border-default))",
             boxShadow: "var(--shadow-card)",
           }}
         >
           <div
             className="relative overflow-hidden flex-shrink-0"
-            style={{ height: "110px", borderRadius: "20px 20px 0 0" }}
+            style={{ height: "110px", borderRadius: "var(--radius-2xl) var(--radius-2xl) 0 0" }}
           >
             <img
               src={turf.image}

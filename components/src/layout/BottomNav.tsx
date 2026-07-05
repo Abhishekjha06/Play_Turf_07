@@ -56,7 +56,7 @@ export function BottomNav() {
               height: "64px",
               width: "64px",
               background: "hsl(var(--color-primary))",
-              boxShadow: "0 10px 30px hsl(var(--color-primary) / 0.40)",
+              boxShadow: "var(--shadow-primary-lg)",
             }}
             data-testid="fab-book"
           >
