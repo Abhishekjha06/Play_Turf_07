@@ -30,8 +30,8 @@ export function BottomNav() {
           style={{
             height: "auto",
             minHeight: "66px",
-            background: "#FFFFFF",
-            borderTop: "1px solid #E2E8F0",
+            background: "hsl(var(--color-surface-elevated))",
+            borderTop: "1px solid hsl(var(--color-border-default))",
             paddingLeft: "12px",
             paddingRight: "12px",
             paddingTop: "10px",
@@ -58,15 +58,15 @@ export function BottomNav() {
             style={{
               height: "64px",
               width: "64px",
-              background: "#14B8B0",
-              boxShadow: "0 10px 30px rgba(20,184,176,0.40)",
+              background: "hsl(var(--color-primary))",
+              boxShadow: "0 10px 30px hsl(var(--color-primary) / 0.40)",
             }}
             data-testid="fab-book"
           >
             {/* Glow ring */}
             <span
               className="absolute inset-0 rounded-full animate-glow-pulse pointer-events-none"
-              style={{ background: "rgba(20,184,176,0.25)" }}
+              style={{ background: "hsl(var(--color-primary) / 0.25)" }}
             />
             <Goal className="h-7 w-7 text-white relative z-10" strokeWidth={2.5} />
           </motion.button>
@@ -153,7 +153,7 @@ function PremiumNavItem({
           <motion.span
             layoutId="premium-nav-indicator"
             className="absolute -top-2.5 left-1/2 -translate-x-1/2 h-1 rounded-full"
-            style={{ width: "20px", background: "#14B8B0" }}
+            style={{ width: "20px", background: "hsl(var(--color-primary))" }}
             initial={{ scaleX: 0, opacity: 0 }}
             animate={{ scaleX: 1, opacity: 1 }}
             exit={{ scaleX: 0, opacity: 0 }}
@@ -166,11 +166,12 @@ function PremiumNavItem({
         animate={active ? { scale: 1.18, y: -2 } : { scale: 1, y: 0 }}
         transition={ease.springBounce}
       >
-        <Icon className="h-5 w-5" style={{ color: active ? "#14B8B0" : "#94A3B8" }} />
+        <Icon className="h-5 w-5" style={{ color: active ? "hsl(var(--color-primary))" : "hsl(var(--color-text-tertiary))" }} />
       </motion.div>
 
       <span
-        className={cn("text-xs tracking-wide", active ? "font-bold text-[#14B8B0]" : "font-medium text-[#94A3B8]")}
+        className={cn("text-xs tracking-wide", active ? "font-bold" : "font-medium")}
+        style={{ color: active ? "hsl(var(--color-primary))" : "hsl(var(--color-text-tertiary))" }}
         style={{ letterSpacing: "0.03em" }}
       >
         {label}
