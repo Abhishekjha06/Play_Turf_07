@@ -71,10 +71,10 @@ export function TurfCard({
         <div
           className="flex flex-col w-full overflow-hidden"
           style={{
-            background: "#FFFFFF",
+            background: "hsl(var(--color-surface-elevated))",
             borderRadius: "20px",
-            border: "1px solid #E2E8F0",
-            boxShadow: "0 8px 30px rgba(15,23,42,0.08)",
+            border: "1px solid hsl(var(--color-border-default))",
+            boxShadow: "var(--shadow-card)",
           }}
         >
           {/* Image with zoom on card hover */}
@@ -95,7 +95,7 @@ export function TurfCard({
               onClick={toggleFav}
               aria-label="Favourite"
               className="absolute top-2.5 right-2.5 h-8 w-8 grid place-items-center rounded-full"
-              style={{ background: "rgba(255,255,255,0.92)", border: "1px solid #E2E8F0" }}
+              style={{ background: "hsl(var(--color-surface-elevated) / 0.92)", border: "1px solid hsl(var(--color-border-default))" }}
               data-testid={`fav-${turf.id}`}
             >
               <motion.div
@@ -104,17 +104,17 @@ export function TurfCard({
               >
                 <Heart
                   className="h-4 w-4"
-                  style={{ color: fav ? "#EF4444" : "#94A3B8", fill: fav ? "#EF4444" : "none" }}
+                  style={{ color: fav ? "hsl(var(--color-danger))" : "hsl(var(--color-text-tertiary))", fill: fav ? "hsl(var(--color-danger))" : "none" }}
                 />
               </motion.div>
             </motion.button>
 
             <div
               className="absolute bottom-2.5 left-2.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full"
-              style={{ background: "rgba(255,255,255,0.92)", border: "1px solid #E2E8F0" }}
+              style={{ background: "hsl(var(--color-surface-elevated) / 0.92)", border: "1px solid hsl(var(--color-border-default))" }}
             >
-              <Star className="h-3 w-3" style={{ color: "#F59E0B", fill: "#F59E0B" }} />
-              <span className="text-xs font-semibold text-[#0F172A]">
+              <Star className="h-3 w-3" style={{ color: "hsl(var(--color-warning))", fill: "hsl(var(--color-warning))" }} />
+              <span className="text-xs font-semibold" style={{ color: "hsl(var(--color-text-primary))" }}>
                 {turf.rating}
               </span>
             </div>
@@ -122,9 +122,9 @@ export function TurfCard({
             {km !== null && Number.isFinite(km) && (
               <div
                 className="absolute bottom-2.5 right-2.5 rounded-full px-2 py-0.5"
-                style={{ background: "rgba(255,255,255,0.92)", border: "1px solid #E2E8F0" }}
+                style={{ background: "hsl(var(--color-surface-elevated) / 0.92)", border: "1px solid hsl(var(--color-border-default))" }}
               >
-                <span className="text-xs font-semibold text-[#64748B]">
+                <span className="text-xs font-semibold" style={{ color: "hsl(var(--color-text-secondary))" }}>
                   {km.toFixed(1)} km
                 </span>
               </div>
@@ -132,27 +132,27 @@ export function TurfCard({
           </div>
 
           <div className="flex flex-col flex-1 p-3 gap-1.5">
-            <h3 className="line-clamp-1 font-semibold text-base" style={{ color: "#0F172A" }}>
+            <h3 className="line-clamp-1 font-semibold text-base" style={{ color: "hsl(var(--color-text-primary))" }}>
               {turf.name}
             </h3>
             <div className="flex items-center gap-1">
-              <MapPin className="h-3 w-3 flex-shrink-0" style={{ color: "#14B8B0" }} />
-              <p className="line-clamp-1 text-xs" style={{ color: "#64748B" }}>
+              <MapPin className="h-3 w-3 flex-shrink-0" style={{ color: "hsl(var(--color-primary))" }} />
+              <p className="line-clamp-1 text-xs" style={{ color: "hsl(var(--color-text-secondary))" }}>
                 {turf.address}
               </p>
             </div>
             <div className="flex items-center gap-1">
-              <Clock className="h-3 w-3 flex-shrink-0" style={{ color: "#94A3B8" }} />
-              <span className="line-clamp-1 text-xs" style={{ color: "#94A3B8" }}>
+              <Clock className="h-3 w-3 flex-shrink-0" style={{ color: "hsl(var(--color-text-tertiary))" }} />
+              <span className="line-clamp-1 text-xs" style={{ color: "hsl(var(--color-text-tertiary))" }}>
                 {turf.timing}
               </span>
             </div>
             <div className="flex items-center justify-between mt-auto pt-1">
               <p>
-                <span className="font-bold text-base text-[#14B8B0]">
+                <span className="font-bold text-base" style={{ color: "hsl(var(--color-primary))" }}>
                   ₹{turf.price_per_hour}
                 </span>
-                <span className="text-xs text-[#94A3B8]">/hr</span>
+                <span className="text-xs" style={{ color: "hsl(var(--color-text-tertiary))" }}>/hr</span>
               </p>
             </div>
           </div>
@@ -162,9 +162,9 @@ export function TurfCard({
               to={`/turf/${turf.id}`}
               testid={`book-${turf.id}`}
               style={{
-                background: "#14B8B0",
-                color: "white",
-                boxShadow: "0 4px 14px rgba(20,184,176,0.30)",
+                background: "hsl(var(--color-primary))",
+                color: "hsl(var(--color-text-inverse))",
+                boxShadow: "0 4px 14px hsl(var(--color-primary) / 0.30)",
               }}
             >
               Book Now
