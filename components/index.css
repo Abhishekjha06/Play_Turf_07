@@ -708,55 +708,59 @@
   0%, 100% { box-shadow: 0 0 20px var(--glow), 0 0 40px var(--glow); }
   50% { box-shadow: 0 0 30px var(--glow), 0 0 60px var(--glow); }
 }
+/* ── Light Theme Utility Overrides ────────────────────────────
+   These override specific utility classes for the premium teal theme.
+   All values reference semantic tokens so they stay in sync
+   with the token system defined in :root / html.light.
+   ───────────────────────────────────────────────────────────── */
 html.light body {
-  background: #F1F5F9;
+  background: hsl(var(--color-surface-default));
   background-image: none;
-  background-color: #F1F5F9;
-  color: #0F172A;
+  background-color: hsl(var(--color-surface-default));
+  color: hsl(var(--color-text-primary));
 }
 
 html.light #root {
-  background: #F1F5F9;
+  background: hsl(var(--color-surface-default));
 }
 
-/* Ensure card backgrounds show as white in premium teal */
 html.light .card-panel {
-  background: #FFFFFF;
-  border: 1px solid #E2E8F0;
-  box-shadow: 0 8px 30px rgba(15, 23, 42, 0.08);
+  background: hsl(var(--color-surface-elevated));
+  border: 1px solid hsl(var(--color-border-default));
+  box-shadow: 0 8px 30px hsl(var(--color-text-primary) / 0.08);
 }
 
 html.light .glass {
-  background: rgba(255, 255, 255, 0.85);
-  border: 1px solid rgba(226, 232, 240, 0.9);
+  background: hsl(var(--color-surface-elevated) / 0.85);
+  border: 1px solid hsl(var(--color-border-default) / 0.9);
 }
 
 html.light .glass-strong {
-  background: rgba(255, 255, 255, 0.92);
-  border: 1px solid rgba(226, 232, 240, 0.95);
+  background: hsl(var(--color-surface-elevated) / 0.92);
+  border: 1px solid hsl(var(--color-border-default) / 0.95);
 }
 
 html.light .neon-text {
-  color: #14B8B0;
+  color: hsl(var(--color-primary));
   text-shadow: none;
 }
 
 html.light .text-soft {
-  color: #64748B;
+  color: hsl(var(--color-text-secondary));
 }
 
 html.light .text-muted2 {
-  color: #94A3B8;
+  color: hsl(var(--color-text-tertiary));
 }
 
 html.light .bg-panel {
-  background-color: #F1F5F9;
+  background-color: hsl(var(--color-surface-default));
 }
 
 html.light .bg-panel-2 {
-  background-color: #FFFFFF;
+  background-color: hsl(var(--color-surface-elevated));
 }
 
 html.light .bg-panel-3 {
-  background-color: #F8FAFC;
+  background-color: hsl(var(--color-surface-overlay));
 }
