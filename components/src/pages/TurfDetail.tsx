@@ -1,9 +1,10 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { MobileShell } from "@/layout/MobileShell";
 import { BackButton } from "@/layout/BackButton";
 import { api } from "@/lib/api";
 import { useAuth } from "@/hooks/use-auth";
+import { useModalFocus } from "@/hooks/useModalFocus";
 import type { Turf } from "@/data/seed";
 import type { Review } from "@/data/seed";
 import type { OpenGame } from "@/types/openGames";
@@ -36,6 +37,13 @@ const TurfDetail = () => {
   const [selectedJoinGame, setSelectedJoinGame] = useState<OpenGame | null>(null);
   const [joiningGame, setJoiningGame] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("UPI");
+  const joinGameRef = useRef<HTMLDivElement>(null);
+
+  useModalFocus({
+    isOpen: !!selectedJoinGame,
+    onClose: () => setSelectedJoinGame(null),
+    containerRef: joinGameRef,
+  });
 
   const fetchOpenGames = async () => {
     if (turf) {
@@ -459,6 +467,7 @@ const TurfDetail = () => {
               style={{ maxWidth: "480px", left: "50%", transform: "translateX(-50%)" }}
             />
             <motion.div
+              ref={joinGameRef}
               initial={{ y: "100%", x: "-50%" }}
               animate={{ y: 0, x: "-50%" }}
               exit={{ y: "100%", x: "-50%" }}
@@ -478,6 +487,7 @@ const TurfDetail = () => {
                 </div>
                 <button
                   onClick={() => setSelectedJoinGame(null)}
+                  aria-label="Close join game panel"
                   className="p-1 hover:bg-white/10 rounded-full cursor-pointer text-muted-foreground hover:text-foreground border-none bg-transparent"
                 >
                   <X className="h-5 w-5" />
