@@ -537,6 +537,7 @@ const TurfDetail = () => {
                         key={m.value}
                         type="button"
                         onClick={() => setSelectedPaymentMethod(m.value)}
+                        aria-pressed={isSelected}
                         className={`flex flex-col items-center justify-center p-3 rounded-2xl border transition-all cursor-pointer bg-transparent ${
                           isSelected
                             ? "border-primary text-primary bg-primary/5"

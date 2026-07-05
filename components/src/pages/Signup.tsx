@@ -28,6 +28,10 @@ const Signup = () => {
     defaultValues: { fullName: "", email: "", phone: "", password: "", confirmPassword: "" }
   });
 
+  const prefersReducedMotion =
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
   const onSubmit = async (data: SignupFormValues) => {
     setLoading(true);
     try {
@@ -81,7 +85,7 @@ const Signup = () => {
       </div>
 
       <div className="relative z-10 px-5 pt-10 flex flex-col items-center text-center">
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+        <motion.div initial={prefersReducedMotion ? {} : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
           <h1 className="font-display font-extrabold text-3xl">
             Create Account
           </h1>
@@ -89,7 +93,7 @@ const Signup = () => {
         </motion.div>
 
         <motion.div
-          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+          initial={prefersReducedMotion ? {} : { opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
           className="mt-8 w-full max-w-sm"
         >
           <div className="space-y-4">
@@ -99,11 +103,13 @@ const Signup = () => {
                 <input
                   id="signup-fullName"
                   {...register("fullName")}
+                  aria-invalid={errors.fullName ? "true" : "false"}
+                  aria-describedby={errors.fullName ? "signup-fullName-error" : undefined}
                   className="h-12 w-full rounded-2xl border border-white/10 bg-background px-4 text-sm outline-none focus:border-primary"
                   placeholder="John Doe"
                   type="text"
                 />
-                {errors.fullName && <p className="text-destructive text-xs mt-1 ml-1">{errors.fullName.message}</p>}
+                {errors.fullName && <p id="signup-fullName-error" className="text-destructive text-xs mt-1 ml-1">{errors.fullName.message}</p>}
               </div>
 
               <div>
@@ -111,11 +117,13 @@ const Signup = () => {
                 <input
                   id="signup-email"
                   {...register("email")}
+                  aria-invalid={errors.email ? "true" : "false"}
+                  aria-describedby={errors.email ? "signup-email-error" : undefined}
                   className="h-12 w-full rounded-2xl border border-white/10 bg-background px-4 text-sm outline-none focus:border-primary"
                   placeholder="you@example.com"
                   type="email"
                 />
-                {errors.email && <p className="text-destructive text-xs mt-1 ml-1">{errors.email.message}</p>}
+                {errors.email && <p id="signup-email-error" className="text-destructive text-xs mt-1 ml-1">{errors.email.message}</p>}
               </div>
 
               <div>
@@ -123,11 +131,13 @@ const Signup = () => {
                 <input
                   id="signup-phone"
                   {...register("phone")}
+                  aria-invalid={errors.phone ? "true" : "false"}
+                  aria-describedby={errors.phone ? "signup-phone-error" : undefined}
                   className="h-12 w-full rounded-2xl border border-white/10 bg-background px-4 text-sm outline-none focus:border-primary"
                   placeholder="10-digit mobile number"
                   type="tel"
                 />
-                {errors.phone && <p className="text-destructive text-xs mt-1 ml-1">{errors.phone.message}</p>}
+                {errors.phone && <p id="signup-phone-error" className="text-destructive text-xs mt-1 ml-1">{errors.phone.message}</p>}
               </div>
 
               <div>
@@ -137,6 +147,8 @@ const Signup = () => {
                     id="signup-password"
                     type={showPassword ? "text" : "password"}
                     {...register("password")}
+                    aria-invalid={errors.password ? "true" : "false"}
+                    aria-describedby={errors.password ? "signup-password-error" : undefined}
                     className="h-12 w-full rounded-2xl border border-white/10 bg-background px-4 pr-10 text-sm outline-none focus:border-primary"
                     placeholder="Create a password"
                   />
@@ -149,7 +161,7 @@ const Signup = () => {
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
-                {errors.password && <p className="text-destructive text-xs mt-1 ml-1">{errors.password.message}</p>}
+                {errors.password && <p id="signup-password-error" className="text-destructive text-xs mt-1 ml-1">{errors.password.message}</p>}
               </div>
 
               <div>
@@ -159,6 +171,8 @@ const Signup = () => {
                     id="signup-confirmPassword"
                     type={showConfirmPassword ? "text" : "password"}
                     {...register("confirmPassword")}
+                    aria-invalid={errors.confirmPassword ? "true" : "false"}
+                    aria-describedby={errors.confirmPassword ? "signup-confirmPassword-error" : undefined}
                     className="h-12 w-full rounded-2xl border border-white/10 bg-background px-4 pr-10 text-sm outline-none focus:border-primary"
                     placeholder="Repeat your password"
                   />
@@ -171,7 +185,7 @@ const Signup = () => {
                     {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
-                {errors.confirmPassword && <p className="text-destructive text-xs mt-1 ml-1">{errors.confirmPassword.message}</p>}
+                {errors.confirmPassword && <p id="signup-confirmPassword-error" className="text-destructive text-xs mt-1 ml-1">{errors.confirmPassword.message}</p>}
               </div>
               
               <button

@@ -32,6 +32,10 @@ const Login = () => {
     defaultValues: { email: "", password: "" }
   });
 
+  const prefersReducedMotion =
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
   const onSubmit = async (data: LoginFormValues) => {
     setLoading(true);
     await handleSupabaseLogin(data);
@@ -152,7 +156,7 @@ const Login = () => {
       </div>
 
       <div className="relative z-10 px-5 pt-16 flex flex-col items-center text-center">
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+        <motion.div initial={prefersReducedMotion ? {} : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
           <h1 className="font-display font-extrabold text-4xl">
             <span className="text-foreground">play</span><span className="neon-text">_Turf</span>
           </h1>
@@ -160,7 +164,7 @@ const Login = () => {
         </motion.div>
 
         <motion.div
-          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+          initial={prefersReducedMotion ? {} : { opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
           className="mt-10 w-full max-w-sm"
         >
           <div className="space-y-4">
@@ -189,11 +193,13 @@ const Login = () => {
                 <input
                   id="login-email"
                   {...register("email")}
+                  aria-invalid={errors.email ? "true" : "false"}
+                  aria-describedby={errors.email ? "login-email-error" : undefined}
                   className="h-12 w-full rounded-2xl border border-white/10 bg-background px-4 text-sm outline-none focus:border-primary"
                   placeholder="you@example.com"
                   type="email"
                 />
-                {errors.email && <p className="text-destructive text-xs mt-1 ml-1">{errors.email.message}</p>}
+                {errors.email && <p id="login-email-error" className="text-destructive text-xs mt-1 ml-1">{errors.email.message}</p>}
               </div>
 
               <div>
@@ -203,6 +209,8 @@ const Login = () => {
                     id="login-password"
                     type={showPassword ? "text" : "password"}
                     {...register("password")}
+                    aria-invalid={errors.password ? "true" : "false"}
+                    aria-describedby={errors.password ? "login-password-error" : undefined}
                     className="h-12 w-full rounded-2xl border border-white/10 bg-background px-4 pr-10 text-sm outline-none focus:border-primary"
                     placeholder="Enter your password"
                   />
@@ -215,7 +223,7 @@ const Login = () => {
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
-                {errors.password && <p className="text-destructive text-xs mt-1 ml-1">{errors.password.message}</p>}
+                {errors.password && <p id="login-password-error" className="text-destructive text-xs mt-1 ml-1">{errors.password.message}</p>}
               </div>
               
               <div className="flex justify-end mt-2">
