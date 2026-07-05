@@ -147,6 +147,5 @@ export function BookingRow({
           </div>
         </div>
       </Link>
-    );
   );
 }

@@ -168,7 +168,6 @@ export function TurfCard({
           </div>
         </div>
       </motion.div>
-    );
   );
 }
 
@@ -209,7 +208,7 @@ function RippleButton({
       {ripples.map(({ id, x, y }) => (
         <span
           key={id}
-          className="absolute rounded-full pointer-events-none animate-ripple" style={{
+          className="absolute rounded-full pointer-events-none animate-ripple" style={{ background: "hsl(var(--color-text-inverse) / 0.30)",
             width: 32,
             height: 32,
             left: x - 16,

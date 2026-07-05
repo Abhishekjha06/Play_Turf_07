@@ -64,6 +64,5 @@ export function CompactTurfCard({
           </div>
         </div>
       </Link>
-    );
   );
 }

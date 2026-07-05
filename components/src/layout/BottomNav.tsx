@@ -73,7 +73,6 @@ export function BottomNav() {
           ))}
         </nav>
       </>
-    );
   );
 }
 
@@ -137,58 +136,3 @@ function NavItem({
   );
 }
 
-function LegacyNavItem({
-  to,
-  label,
-  icon: Icon,
-  active,
-  testid,
-}: {
-  to: string;
-  label: string;
-  icon: typeof Home;
-  active: boolean;
-  testid: string;
-}) {
-  return (
-    <Link
-      to={to}
-      onClick={() => {
-        if (to === "/") {
-          localStorage.removeItem("play_turf_selected_city");
-          localStorage.removeItem("play_turf_selected_area");
-        }
-      }}
-      data-testid={testid}
-      aria-label={label}
-      aria-current={active ? "page" : undefined}
-      className={cn(
-        "relative flex flex-col items-center justify-center gap-0.5 min-h-[44px] w-[18vw] max-w-[72px] min-w-[56px] rounded-2xl",
-        active ? "text-primary font-bold" : "text-muted2"
-      )}
-    >
-      {/* Sliding background pill */}
-      <AnimatePresence>
-        {active && (
-          <motion.span
-            layoutId="legacy-nav-bg"
-            className="absolute inset-0 rounded-2xl bg-primary/10"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={ease.springGentle}
-          />
-        )}
-      </AnimatePresence>
-
-      <motion.div
-        animate={active ? { scale: 1.15, y: -2 } : { scale: 1, y: 0 }}
-        transition={ease.springBounce}
-        className="relative z-10"
-      >
-        <Icon className="h-5 w-5" />
-      </motion.div>
-      <span className="relative z-10 text-[11px] font-medium tracking-wide">{label}</span>
-    </Link>
-  );
-}
