@@ -312,7 +312,6 @@ function CollapsingHeader({
               animate={{ opacity: 0.5 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsNotifOpen(false)}
-              className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
               className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm max-w-[480px] md:max-w-[640px] lg:max-w-[768px] left-1/2 -translate-x-1/2"
             />
 
@@ -452,8 +451,7 @@ function CollapsingHeader({
             {/* Backdrop */}
             <div
               onClick={() => setSelectedNotifForDetail(null)}
-              className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-md"
-              className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm max-w-[480px] md:max-w-[640px] lg:max-w-[768px] left-1/2 -translate-x-1/2"
+              className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-md max-w-[480px] md:max-w-[640px] lg:max-w-[768px] left-1/2 -translate-x-1/2"
             />
             
             {/* Modal Container */}
