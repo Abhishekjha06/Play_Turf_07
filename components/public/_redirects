@@ -1,8 +1,0 @@
-# Cloudflare Pages _redirects file
-# Docs: https://developers.cloudflare.com/pages/configuration/redirects/
-
-# API proxy
-/api/* https://your-api.example.com/:splat 200
-
-# SPA fallback (all routes to index.html)
-/* /index.html 200
