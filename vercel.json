@@ -2,5 +2,22 @@
   "installCommand": "cd components && npm install",
   "buildCommand": "cd components && npm run build",
   "outputDirectory": "components/dist",
-  "framework": "vite"
+  "framework": "vite",
+  "rewrites": [
+    {
+      "source": "/((?!api/|assets/|.*\\.(?:js|css|svg|png|jpg|jpeg|gif|ico|webp|woff|woff2|ttf|otf|eot|json|xml|txt|webmanifest|map)).*)",
+      "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    }
+  ]
 }
