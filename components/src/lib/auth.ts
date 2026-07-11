@@ -56,6 +56,7 @@ function mapAuthUser(user: SupabaseUser, role: string): User {
 
 export async function refreshUser() {
   _loading = true; emit();
+  initSupabaseListener(); // lazy init on first use
 
   try {
     const supabase = await getSupabase();
@@ -95,47 +96,49 @@ export async function refreshUser() {
   _loading = false; emit();
 }
 
-// Setup Supabase auth state listener
-getSupabase().then(supabase => {
-  supabase.auth.onAuthStateChange(async (event, session) => {
-    _loading = true; emit();
-    try {
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        const user = session?.user;
-        if (user) {
-          const role = await fetchUserRole(supabase, user.id);
-          _user = mapAuthUser(user, role);
+export let _supabaseInit = false;
+export function initSupabaseListener() {
+  if (_supabaseInit) return;
+  _supabaseInit = true;
+  getSupabase().then(supabase => {
+    supabase.auth.onAuthStateChange(async (event, session) => {
+      _loading = true; emit();
+      try {
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          const user = session?.user;
+          if (user) {
+            const role = await fetchUserRole(supabase, user.id);
+            _user = mapAuthUser(user, role);
+          }
+        } else if (event === 'INITIAL_SESSION') {
+          const user = session?.user;
+          if (user) {
+            const role = await fetchUserRole(supabase, user.id);
+            _user = mapAuthUser(user, role);
+            supabase.auth.getUser().then(({ data: { user: validated }, error }) => {
+              if (error || !validated) {
+                console.warn("INITIAL_SESSION validation failed — signing out");
+                void supabase.auth.signOut().then(() => { _user = null; emit(); });
+              }
+            });
+          }
+        } else if (event === 'SIGNED_OUT') {
+          _user = null;
         }
-      } else if (event === 'INITIAL_SESSION') {
-        // INITIAL_SESSION is raised from the persisted (unvalidated) session.
-        // Show the user immediately, then validate with getUser() in the
-        // background; if the token is invalid we sign out.
-        const user = session?.user;
-        if (user) {
-          const role = await fetchUserRole(supabase, user.id);
-          _user = mapAuthUser(user, role);
-
-          supabase.auth.getUser().then(({ data: { user: validated }, error }) => {
-            if (error || !validated) {
-              console.warn("INITIAL_SESSION validation failed — signing out");
-              void supabase.auth.signOut().then(() => { _user = null; emit(); });
-            }
-          });
-        }
-      } else if (event === 'SIGNED_OUT') {
-        _user = null;
+      } catch (err) {
+        console.error("onAuthStateChange error:", err);
+      } finally {
+        _loading = false;
+        emit();
       }
-    } catch (err) {
-      console.error("onAuthStateChange error:", err);
-    } finally {
-      _loading = false;
-      emit();
-    }
+    });
+  }).catch(err => {
+    console.error("Failed to setup Supabase auth state listener:", err);
+    _loading = false; emit();
   });
-}).catch(err => {
-  console.error("Failed to setup Supabase auth state listener:", err);
-  _loading = false; emit();
-});
+}
+
+// Lazy init happens via refreshUser() or useAuth() — never at module load
 
 export function updateUserAvatar(avatarUrl: string) {
   if (_user) {

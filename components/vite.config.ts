@@ -214,7 +214,7 @@ export default defineConfig(({ mode }) => ({
     // BUILD-1: Terser minification with console/debugger removal in production
     minify: "terser",
     cssMinify: true,
-    sourcemap: mode === "development",
+    sourcemap: true,
     chunkSizeWarningLimit: 500,
     reportCompressedSize: false, // Faster builds
     assetsInlineLimit: 4096, // Inline small assets < 4KB
@@ -229,15 +229,6 @@ export default defineConfig(({ mode }) => ({
         drop_console: mode === "production",
         drop_debugger: true,
         passes: 2,
-        pure_getters: true,
-        unsafe_comps: true,
-        unsafe_math: true,
-        unsafe_methods: true,
-      },
-      mangle: {
-        properties: {
-          regex: /^_/,
-        },
       },
       format: {
         comments: false,
