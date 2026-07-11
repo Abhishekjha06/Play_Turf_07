@@ -45,26 +45,47 @@ onTTFB(sendToAnalytics);
 // Initialize error monitoring
 initMonitoring();
 
-// ── React 18 Concurrent Features ──────────────────────────────
+// ── Environment Variable Guard ────────────────────────────────
+const MISSING_ENVS: string[] = [];
+if (!import.meta.env.VITE_SUPABASE_URL) MISSING_ENVS.push("VITE_SUPABASE_URL");
+if (!import.meta.env.VITE_SUPABASE_ANON_KEY) MISSING_ENVS.push("VITE_SUPABASE_ANON_KEY");
+
 const rootElement = document.getElementById("root");
 if (!rootElement) throw new Error("Root element not found");
 
-// Use hydrateRoot if server-side rendering is enabled, otherwise createRoot
-try {
-  if (rootElement.hasChildNodes()) {
-    hydrateRoot(rootElement, <AppWrapper />);
-  } else {
-    createRoot(rootElement).render(<AppWrapper />);
-  }
-} catch (err: any) {
+if (MISSING_ENVS.length > 0) {
   rootElement.innerHTML = `
-    <div style="padding:2rem;font-family:system-ui,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh">
-      <h1 style="color:#ef4444;font-size:1.25rem;margin-bottom:1rem">❌ App Failed to Load</h1>
-      <p style="margin-bottom:0.5rem"><strong>Error:</strong> ${err?.message || 'Unknown error'}</p>
-      <p style="color:#94a3b8;font-size:0.875rem">Check browser console (F12 → Console) for details.</p>
+    <div style="padding:2rem;font-family:system-ui,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center">
+      <h1 style="color:#ef4444;font-size:1.5rem;margin-bottom:1rem">⚠️ Missing Environment Variables</h1>
+      <p style="margin-bottom:1.5rem;max-width:500px">These variables are required but not found in Vercel:</p>
+      <ul style="text-align:left;margin-bottom:1.5rem;color:#fbbf24">
+        ${MISSING_ENVS.map(v => `<li style="margin-bottom:0.5rem"><code>${v}</code></li>`).join('')}
+      </ul>
+      <p style="color:#94a3b8;font-size:0.875rem;max-width:500px">
+        Go to Vercel Dashboard → Settings → Environment Variables → add these exact names (with <code>VITE_</code> prefix).
+        Then redeploy.
+      </p>
     </div>
   `;
-  console.error("React root render failed:", err);
+  console.error("Missing env vars:", MISSING_ENVS);
+} else {
+  // ── React 18 Concurrent Features ──────────────────────────────
+  try {
+    if (rootElement.hasChildNodes()) {
+      hydrateRoot(rootElement, <AppWrapper />);
+    } else {
+      createRoot(rootElement).render(<AppWrapper />);
+    }
+  } catch (err: any) {
+    rootElement.innerHTML = `
+      <div style="padding:2rem;font-family:system-ui,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh">
+        <h1 style="color:#ef4444;font-size:1.25rem;margin-bottom:1rem">❌ App Failed to Load</h1>
+        <p style="margin-bottom:0.5rem"><strong>Error:</strong> ${err?.message || 'Unknown error'}</p>
+        <p style="color:#94a3b8;font-size:0.875rem">Check browser console (F12 → Console) for details.</p>
+      </div>
+    `;
+    console.error("React root render failed:", err);
+  }
 }
 
 // ── Service Worker Registration ───────────────────────────────
