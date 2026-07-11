@@ -50,10 +50,21 @@ const rootElement = document.getElementById("root");
 if (!rootElement) throw new Error("Root element not found");
 
 // Use hydrateRoot if server-side rendering is enabled, otherwise createRoot
-if (rootElement.hasChildNodes()) {
-  hydrateRoot(rootElement, <AppWrapper />);
-} else {
-  createRoot(rootElement).render(<AppWrapper />);
+try {
+  if (rootElement.hasChildNodes()) {
+    hydrateRoot(rootElement, <AppWrapper />);
+  } else {
+    createRoot(rootElement).render(<AppWrapper />);
+  }
+} catch (err: any) {
+  rootElement.innerHTML = `
+    <div style="padding:2rem;font-family:system-ui,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh">
+      <h1 style="color:#ef4444;font-size:1.25rem;margin-bottom:1rem">❌ App Failed to Load</h1>
+      <p style="margin-bottom:0.5rem"><strong>Error:</strong> ${err?.message || 'Unknown error'}</p>
+      <p style="color:#94a3b8;font-size:0.875rem">Check browser console (F12 → Console) for details.</p>
+    </div>
+  `;
+  console.error("React root render failed:", err);
 }
 
 // ── Service Worker Registration ───────────────────────────────

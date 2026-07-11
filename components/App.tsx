@@ -90,15 +90,15 @@ function LoadingFallback() {
 
 export default function App() {
   return (
-    <LuxuryThemeProvider>
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <Sonner position="top-center" theme="dark" />
-          <BrowserRouter>
-            <AuthCallback>
-              <RealtimeNotificationsProvider>
-                <Suspense fallback={<LoadingFallback />}>
-                  <GlobalErrorBoundary>
+    <GlobalErrorBoundary>
+      <LuxuryThemeProvider>
+        <QueryClientProvider client={queryClient}>
+          <TooltipProvider>
+            <Sonner position="top-center" theme="dark" />
+            <BrowserRouter>
+              <AuthCallback>
+                <RealtimeNotificationsProvider>
+                  <Suspense fallback={<LoadingFallback />}>
                     <MultiRoleLoginModal />
                     <Routes>
                     {/* Public pages inside MobileShell */}
@@ -221,13 +221,13 @@ export default function App() {
                       }
                     />
                     </Routes>
-                  </GlobalErrorBoundary>
-                </Suspense>
-              </RealtimeNotificationsProvider>
-            </AuthCallback>
-          </BrowserRouter>
-        </TooltipProvider>
-      </QueryClientProvider>
-    </LuxuryThemeProvider>
+                  </Suspense>
+                </RealtimeNotificationsProvider>
+              </AuthCallback>
+            </BrowserRouter>
+          </TooltipProvider>
+        </QueryClientProvider>
+      </LuxuryThemeProvider>
+    </GlobalErrorBoundary>
   );
 }
