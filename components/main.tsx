@@ -69,22 +69,50 @@ if (MISSING_ENVS.length > 0) {
   `;
   console.error("Missing env vars:", MISSING_ENVS);
 } else {
-  // ── React 18 Concurrent Features ──────────────────────────────
-  try {
-    if (rootElement.hasChildNodes()) {
-      hydrateRoot(rootElement, <AppWrapper />);
-    } else {
-      createRoot(rootElement).render(<AppWrapper />);
-    }
-  } catch (err: any) {
+  // ── Debug: show what env vars are actually loaded ─────────────
+  const url = import.meta.env.VITE_SUPABASE_URL;
+  const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  const keyPrefix = key?.slice(0, 20) + "..." || "undefined";
+  const isJwt = key?.startsWith("eyJ") || false;
+
+  console.log("[ENV DEBUG] VITE_SUPABASE_URL:", url);
+  console.log("[ENV DEBUG] VITE_SUPABASE_ANON_KEY prefix:", keyPrefix);
+  console.log("[ENV DEBUG] Is JWT format (starts with eyJ):", isJwt);
+
+  // If key is NOT in JWT format (eyJ...), show a warning
+  if (!isJwt) {
     rootElement.innerHTML = `
-      <div style="padding:2rem;font-family:system-ui,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh">
-        <h1 style="color:#ef4444;font-size:1.25rem;margin-bottom:1rem">❌ App Failed to Load</h1>
-        <p style="margin-bottom:0.5rem"><strong>Error:</strong> ${err?.message || 'Unknown error'}</p>
-        <p style="color:#94a3b8;font-size:0.875rem">Check browser console (F12 → Console) for details.</p>
+      <div style="padding:2rem;font-family:system-ui,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center">
+        <h1 style="color:#fbbf24;font-size:1.5rem;margin-bottom:1rem">⚠️ Wrong API Key Format</h1>
+        <p style="margin-bottom:1rem;max-width:500px">Your <code>VITE_SUPABASE_ANON_KEY</code> is set, but it's not the correct key.</p>
+        <p style="margin-bottom:0.5rem"><strong>Current value starts with:</strong> <code style="background:#1e293b;padding:0.25rem;border-radius:4px">${keyPrefix}</code></p>
+        <p style="margin-bottom:1.5rem;color:#f87171"><strong>It should start with:</strong> <code style="background:#1e293b;padding:0.25rem;border-radius:4px">eyJhbG...</code></p>
+        <p style="color:#94a3b8;font-size:0.875rem;max-width:500px;margin-bottom:1rem">
+          Go to Supabase → Project Settings → API → copy the <strong>anon</strong> key (not publishable key).
+        </p>
+        <p style="color:#94a3b8;font-size:0.875rem;max-width:500px">
+          Then paste it in Vercel: <code>VITE_SUPABASE_ANON_KEY</code> → Save → Redeploy.
+        </p>
       </div>
     `;
-    console.error("React root render failed:", err);
+  } else {
+    // ── React 18 Concurrent Features ──────────────────────────────
+    try {
+      if (rootElement.hasChildNodes()) {
+        hydrateRoot(rootElement, <AppWrapper />);
+      } else {
+        createRoot(rootElement).render(<AppWrapper />);
+      }
+    } catch (err: any) {
+      rootElement.innerHTML = `
+        <div style="padding:2rem;font-family:system-ui,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh">
+          <h1 style="color:#ef4444;font-size:1.25rem;margin-bottom:1rem">❌ App Failed to Load</h1>
+          <p style="margin-bottom:0.5rem"><strong>Error:</strong> ${err?.message || 'Unknown error'}</p>
+          <p style="color:#94a3b8;font-size:0.875rem">Check browser console (F12 → Console) for details.</p>
+        </div>
+      `;
+      console.error("React root render failed:", err);
+    }
   }
 }
 
