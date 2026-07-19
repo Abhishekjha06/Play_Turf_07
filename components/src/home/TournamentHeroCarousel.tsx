@@ -1,9 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Trophy, MapPin, Calendar, Users, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
-import useEmblaCarousel from "embla-carousel-react";
-import Autoplay from "embla-carousel-autoplay";
 
 import type { Tournament } from "@/data/seed";
 import { cn } from "@/lib/utils";
@@ -11,9 +9,9 @@ import { Shimmer } from "@/ui/Shimmer";
 
 export type TournamentHeroCarouselProps = {
   tournaments: Tournament[];
-  /** Loop back to the first slide after the last (infinite scrolling). Default: true */
+  /** Loop back to the first slide after the last (infinite scrolling). Default: false */
   loop?: boolean;
-  /** Auto-advance slides. Default: true */
+  /** Auto-advance slides. Default: false */
   autoPlay?: boolean;
   /** Auto-advance interval in ms. Default: 5000 */
   autoPlayInterval?: number;
@@ -21,7 +19,7 @@ export type TournamentHeroCarouselProps = {
   showArrows?: boolean;
   /** Show pagination dots. Default: true */
   showDots?: boolean;
-  /** Pause auto-play when the carousel is scrolled into view's tab is hidden. Default: true */
+  /** Pause auto-play when the document is hidden. Default: true */
   pauseOnHidden?: boolean;
   className?: string;
 };
@@ -29,42 +27,32 @@ export type TournamentHeroCarouselProps = {
 /**
  * Horizontal, swipeable carousel of tournament "hero" cards.
  *
- * - Mouse drag on desktop + touch swipe on mobile (Embla)
- * - Snap-on-scroll positioning (one card per view on mobile, peek on larger screens)
- * - Pagination dots + prev/next arrow buttons
+ * Uses NATIVE CSS scroll-snap (not a JS drag polyfill) so it feels exactly
+ * like swiping on a phone — native momentum, native touch handling, native
+ * scrollbar behavior, on every device.
+ *
+ * - Touch swipe + mouse drag work out of the box (browser-native)
+ * - `scroll-snap-type: x mandatory` snaps one card at a time
+ * - `-webkit-overflow-scrolling: touch` for iOS momentum
+ * - Pagination dots + prev/next arrow buttons (with smooth scroll)
  * - Optional infinite looping (loop) and auto-play (autoPlay)
- * - Fully responsive: full-width card on phones, 80% peek on md+, 60% on lg+
+ * - Responsive: full card on phones, peek of next card on wider screens
  */
 export function TournamentHeroCarousel({
   tournaments,
-  loop = true,
-  autoPlay = true,
+  loop = false,
+  autoPlay = false,
   autoPlayInterval = 5000,
   showArrows = true,
   showDots = true,
   pauseOnHidden = true,
   className,
 }: TournamentHeroCarouselProps) {
-  // Build Embla with plugins. Autoplay is conditionally included so it isn't
-  // active when the consumer disables it via props.
-  const [emblaRef, emblaApi] = useEmblaCarousel(
-    {
-      loop: loop && tournaments.length > 1,
-      align: "center",
-      containScroll: "trimSnaps",
-      dragFree: false,
-    },
-    autoPlay && tournaments.length > 1
-      ? [Autoplay({ delay: autoPlayInterval, stopOnInteraction: true, stopOnMouseEnter: true })]
-      : [],
-  );
-
+  const scrollerRef = useRef<HTMLDivElement | null>(null);
   const [selected, setSelected] = useState(0);
-  const [scrollSnaps, setScrollSnaps] = useState<number[]>([]);
   const [paused, setPaused] = useState(false);
 
-  // Pause autoplay when the document/tab is hidden — avoids burning cycles
-  // and re-engaging a slide the user can't see.
+  // Pause autoplay when the document/tab is hidden.
   useEffect(() => {
     if (!pauseOnHidden) return;
     const onVisibilityChange = () => setPaused(document.hidden);
@@ -72,34 +60,74 @@ export function TournamentHeroCarousel({
     return () => document.removeEventListener("visibilitychange", onVisibilityChange);
   }, [pauseOnHidden]);
 
+  /* ── Track which card is currently in view (drives dots + arrows) ── */
   useEffect(() => {
-    if (!emblaApi) return;
-    const onSelect = () => setSelected(emblaApi.selectedScrollSnap());
-    setScrollSnaps(emblaApi.scrollSnapList());
-    onSelect();
-    emblaApi.on("select", onSelect);
-    emblaApi.on("reInit", onSelect);
-    return () => {
-      emblaApi.off("select", onSelect);
-      emblaApi.off("reInit", onSelect);
+    const el = scrollerRef.current;
+    if (!el) return;
+    let raf = 0;
+    const onScroll = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        // Index = nearest card based on scrollLeft / card width.
+        const cardWidth = el.clientWidth * CARD_WIDTH_RATIO;
+        const idx = Math.round(el.scrollLeft / cardWidth);
+        setSelected(Math.max(0, Math.min(idx, tournaments.length - 1)));
+      });
     };
-  }, [emblaApi]);
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      el.removeEventListener("scroll", onScroll);
+      cancelAnimationFrame(raf);
+    };
+  }, [tournaments.length]);
 
-  // Drive autoplay pause/resume from visibility state.
+  /* ── Autoplay ── */
   useEffect(() => {
-    if (!emblaApi) return;
-    const autoplay = emblaApi.plugins()?.autoplay;
-    if (!autoplay) return;
-    if (paused) autoplay.stop();
-    else autoplay.play();
-  }, [emblaApi, paused]);
+    if (!autoPlay || paused || tournaments.length <= 1) return;
+    const id = setInterval(() => {
+      const el = scrollerRef.current;
+      if (!el) return;
+      const cardWidth = el.clientWidth * CARD_WIDTH_RATIO;
+      const atEnd = selected >= tournaments.length - 1;
+      if (atEnd) {
+        if (loop) {
+          el.scrollTo({ left: 0, behavior: "smooth" });
+        }
+        // If not looping, stop at the end.
+      } else {
+        el.scrollTo({ left: (selected + 1) * cardWidth, behavior: "smooth" });
+      }
+    }, autoPlayInterval);
+    return () => clearInterval(id);
+  }, [autoPlay, autoPlayInterval, loop, paused, selected, tournaments.length]);
 
-  const scrollTo = useCallback(
-    (index: number) => emblaApi?.scrollTo(index),
-    [emblaApi],
-  );
-  const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi]);
-  const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi]);
+  const scrollToIndex = useCallback((index: number) => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const cardWidth = el.clientWidth * CARD_WIDTH_RATIO;
+    el.scrollTo({ left: index * cardWidth, behavior: "smooth" });
+  }, []);
+
+  const scrollPrev = useCallback(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    if (loop && selected === 0) {
+      // Wrap to the end for true loop on arrow press.
+      el.scrollTo({ left: (tournaments.length - 1) * el.clientWidth * CARD_WIDTH_RATIO, behavior: "smooth" });
+      return;
+    }
+    scrollToIndex(Math.max(0, selected - 1));
+  }, [loop, selected, tournaments.length, scrollToIndex]);
+
+  const scrollNext = useCallback(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    if (loop && selected === tournaments.length - 1) {
+      el.scrollTo({ left: 0, behavior: "smooth" });
+      return;
+    }
+    scrollToIndex(Math.min(tournaments.length - 1, selected + 1));
+  }, [loop, selected, tournaments.length, scrollToIndex]);
 
   /* ── Skeleton while tournaments load ── */
   if (!tournaments.length) {
@@ -125,43 +153,58 @@ export function TournamentHeroCarousel({
       aria-label="Featured tournaments"
     >
       <div className="relative">
-        {/* Embla viewport */}
-        <div className="overflow-hidden" ref={emblaRef}>
-          {/* Embla container */}
-          <div className="flex">
-            {tournaments.map((t, idx) => (
-              <TournamentCard
-                key={t.id}
-                tournament={t}
-                index={idx}
-                // basis controls how much of the next card "peeks" on wider screens:
-                // - mobile: full-width single card
-                // - md: 80% (peek of next)
-                // - lg: 60% (more visible siblings)
-                basis="basis-[85%] sm:basis-[80%] md:basis-[70%] lg:basis-[60%]"
-              />
-            ))}
-          </div>
+        {/* Native scroll-snap viewport — this is the "phone swipe" surface */}
+        <div
+          ref={scrollerRef}
+          className="
+            tournament-hero-scroller
+            flex
+            overflow-x-auto
+            overflow-y-hidden
+            snap-x snap-mandatory
+            scroll-smooth
+            gap-0
+            px-4
+            pb-1
+            no-scrollbar
+            touch-pan-x
+          "
+          style={{
+            // iOS momentum scrolling — the key to the "phone" feel.
+            WebkitOverflowScrolling: "touch",
+            scrollSnapType: "x mandatory",
+            scrollbarWidth: "none",
+          }}
+        >
+          {tournaments.map((t, idx) => (
+            <TournamentCard key={t.id} tournament={t} index={idx} />
+          ))}
+          {/* Trailing spacer so the last card can fully scroll into view */}
+          <div className="snap-none shrink-0 w-4" aria-hidden />
         </div>
 
-        {/* Arrow buttons — hidden on touch-first devices where swipe is primary */}
+        {/* Arrow buttons */}
         {showArrows && tournaments.length > 1 && (
           <>
             <button
               type="button"
               onClick={scrollPrev}
-              disabled={!loop && selected === 0}
               aria-label="Previous tournament"
-              className="absolute left-1 top-1/2 -translate-y-1/2 z-20 grid place-items-center h-9 w-9 rounded-full bg-surface/85 backdrop-blur border border-white/10 text-white shadow-lg pressable disabled:opacity-30 disabled:pointer-events-none"
+              className={cn(
+                "absolute left-1 top-1/2 -translate-y-1/2 z-20 grid place-items-center h-9 w-9 rounded-full bg-surface/85 backdrop-blur border border-white/10 text-white shadow-lg pressable transition-opacity",
+                !loop && selected === 0 ? "opacity-30 pointer-events-none" : "opacity-100",
+              )}
             >
               <ChevronLeft className="h-5 w-5" />
             </button>
             <button
               type="button"
               onClick={scrollNext}
-              disabled={!loop && selected === tournaments.length - 1}
               aria-label="Next tournament"
-              className="absolute right-1 top-1/2 -translate-y-1/2 z-20 grid place-items-center h-9 w-9 rounded-full bg-surface/85 backdrop-blur border border-white/10 text-white shadow-lg pressable disabled:opacity-30 disabled:pointer-events-none"
+              className={cn(
+                "absolute right-1 top-1/2 -translate-y-1/2 z-20 grid place-items-center h-9 w-9 rounded-full bg-surface/85 backdrop-blur border border-white/10 text-white shadow-lg pressable transition-opacity",
+                !loop && selected === tournaments.length - 1 ? "opacity-30 pointer-events-none" : "opacity-100",
+              )}
             >
               <ChevronRight className="h-5 w-5" />
             </button>
@@ -172,14 +215,14 @@ export function TournamentHeroCarousel({
       {/* Pagination dots */}
       {showDots && tournaments.length > 1 && (
         <div className="flex items-center justify-center gap-1.5 mt-3" role="tablist">
-          {scrollSnaps.map((_, idx) => (
+          {tournaments.map((_, idx) => (
             <motion.button
               key={idx}
               type="button"
               aria-label={`Go to tournament ${idx + 1}`}
               aria-selected={idx === selected}
               role="tab"
-              onClick={() => scrollTo(idx)}
+              onClick={() => scrollToIndex(idx)}
               animate={{
                 width: idx === selected ? "28px" : "6px",
                 background: idx === selected ? "hsl(var(--primary))" : "rgba(255,255,255,0.25)",
@@ -198,23 +241,27 @@ export function TournamentHeroCarousel({
   );
 }
 
-/* ─────────────────────────────────────────────────────────────────────── */
+/* Card occupies 85% of viewport width on phones → next card "peeks" to hint scrollability.
+ * On wider screens we shrink the basis so 1.5–2 cards are visible. The ratio is reused
+ * above to compute scroll offsets, so the math stays consistent across breakpoints. */
+const CARD_WIDTH_RATIO = 0.85;
 
 function TournamentCard({
   tournament: t,
   index,
-  basis,
 }: {
   tournament: Tournament;
   index: number;
-  basis: string;
 }) {
   return (
     <div
       className={cn(
-        // Embla items are shrink-0 + grow-0; `basis` controls width per breakpoint.
-        "min-w-0 shrink-0 grow-0 pl-3 first:pl-4 last:pr-1",
-        basis,
+        "min-w-0 shrink-0 grow-0",
+        // Responsive widths: 85% phones → 70% md → 55% lg
+        "basis-[85%] md:basis-[70%] lg:basis-[55%]",
+        // First card aligns to the left edge; snap-align center keeps it crisp.
+        "snap-center",
+        "pr-3",
       )}
       role="group"
       aria-roledescription="slide"
@@ -234,7 +281,7 @@ function TournamentCard({
             loading="lazy"
             decoding="async"
             draggable={false}
-            className="absolute inset-0 h-full w-full object-cover select-none"
+            className="absolute inset-0 h-full w-full object-cover select-none pointer-events-none"
           />
           <div className="absolute inset-0 bg-gradient-overlay" />
 
