@@ -171,5 +171,7 @@ export async function updateAvatar(avatarId: string): Promise<void> {
   const { error } = await withTimeout(
     supabase.from("profiles").update({ avatar_id: avatarId }).eq("id", user.id),
   );
-  if (error) throw error;
+  // PostgrestError is a plain object (not an Error instance) — wrap it so the
+  // real database message (e.g. a missing column) reaches the UI toast.
+  if (error) throw new Error(error.message);
 }
