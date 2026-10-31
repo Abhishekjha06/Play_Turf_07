@@ -335,9 +335,9 @@ onToggleReminder,
                                 className="pressable relative h-11 rounded-2xl border font-black text-xs uppercase tracking-wider transition-all duration-350"
                                 style={{
                                     backgroundColor: isSelected ? "var(--l-accent-soft)" : "var(--card-bg)",
-                                    borderColor: isSelected ? "var(--gold-primary)" : "var(--border-primary)",
+                                    borderColor: isSelected ? "hsl(var(--primary))" : "var(--border-primary)",
                                     color: "var(--text-primary)",
-                                    boxShadow: isSelected ? "var(--l-shadow-glow)" : "none",
+                                    boxShadow: isSelected ? "var(--l-shadow-glow)" : "var(--shadow-card)",
                                 }}
                             >
                                 {isSelected && (
