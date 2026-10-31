@@ -24,6 +24,9 @@ import {
   UserMinus,
   LogOut,
   UserCheck,
+  Globe,
+  ChevronLeft,
+  MapPin,
 } from "lucide-react";
 import { toast } from "sonner";
 import { trackEvent } from "@/lib/analytics";
@@ -32,6 +35,13 @@ import { useRealtimeOpenGames } from "@/lib/realtime";
 import { addNotification } from "@/lib/notifications";
 import { OpenGameCard, OpenGameCardSkeleton } from "@/open-games";
 import { MascotAvatar } from "@/ui/MascotAvatar";
+
+// ── Host Open Game wizard constants ──
+const HOST_SPORTS = ["Cricket", "Football", "Basketball"];
+const HOST_TIME_SLOTS = ["06:00", "07:00", "08:00", "17:00", "18:00", "19:00", "20:00", "21:00"];
+const HOST_SLOT_OPTIONS = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24]; // even numbers keep teams fair
+const HOST_DURATION_OPTIONS = [1, 2, 3, 4];
+const HOST_STEP_LABELS = ["Details", "Schedule", "Cost"];
 
 const OpenGames = () => {
   const { user } = useAuth();
@@ -70,9 +80,10 @@ const OpenGames = () => {
   const [hostTime, setHostTime] = useState("19:00");
   const [hostDuration, setHostDuration] = useState(1);
   const [hostSlots, setHostSlots] = useState(10);
-  const [hostAmount, setHostAmount] = useState(1000);
   const [hostIsPrivate, setHostIsPrivate] = useState(false);
   const [hosting, setHosting] = useState(false);
+  const [hostStep, setHostStep] = useState(1);
+  const [hostDir, setHostDir] = useState(1); // 1 = forward slide, -1 = back slide
 
   // Find current active join game player status
   const activePlayerRecord = useMemo(() => {
@@ -120,9 +131,125 @@ const OpenGames = () => {
   useEffect(() => {
     api.listTurfs().then((data) => {
       setTurfs(data);
-      if (data.length > 0 && !hostVenue) setHostVenue(data[0].id);
+      setHostVenue((v) => v || data[0]?.id || "");
     }).catch(console.error);
   }, []);
+
+  // Reset the host wizard to a fresh form every time it opens
+  useEffect(() => {
+    if (!hostModalOpen) return;
+    const firstTurf = turfs[0];
+    setHostSport("Cricket");
+    setHostVenue(firstTurf?.id ?? "");
+    setHostDate(getLocalDateString());
+    setHostTime("19:00");
+    setHostDuration(1);
+    setHostSlots(10);
+    setHostIsPrivate(false);
+    setHostStep(1);
+    setHostDir(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hostModalOpen]);
+
+  // If the sheet opens before venues finish loading, pick the first one as
+  // soon as they arrive so step 1 is never stuck without a venue.
+  useEffect(() => {
+    if (!hostModalOpen || hostVenue || turfs.length === 0) return;
+    setHostVenue(turfs[0].id);
+  }, [hostModalOpen, hostVenue, turfs]);
+
+  // ── Host wizard helpers ──
+  // Next 7 days (local time) for the date chips
+  const hostDateOptions = useMemo(() => {
+    const out: { value: string; label: string; sub: string }[] = [];
+    const now = new Date();
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i);
+      const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      const label = i === 0 ? "Today" : i === 1 ? "Tomorrow" : d.toLocaleDateString("en-IN", { weekday: "short" });
+      const sub = d.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+      out.push({ value, label, sub });
+    }
+    return out;
+  }, []);
+
+  const selectedTurf = useMemo(() => turfs.find((t) => t.id === hostVenue), [turfs, hostVenue]);
+  // Total court fee is always computed from the venue's hourly rate — the
+  // host never types it in.
+  const hostAmount = (selectedTurf?.price_per_hour ?? 0) * Math.max(1, hostDuration);
+  const hostPerSlot = Math.max(1, Math.round(hostAmount / Math.max(1, hostSlots)));
+  const hostDateDisplay = (() => {
+    const opt = hostDateOptions.find((o) => o.value === hostDate);
+    return opt ? `${opt.label}, ${opt.sub}` : hostDate;
+  })();
+  const hostTimeDisplay = (() => {
+    const [h, m] = hostTime.split(":").map(Number);
+    if (Number.isNaN(h)) return hostTime;
+    const ampm = h >= 12 ? "PM" : "AM";
+    const h12 = h % 12 === 0 ? 12 : h % 12;
+    return `${h12}:${String(m || 0).padStart(2, "0")} ${ampm}`;
+  })();
+
+  // A preset time slot is disabled when the chosen date is today and the slot
+  // has already passed.
+  const isTimeSlotPast = (time: string) => {
+    if (hostDate !== getLocalDateString()) return false;
+    const [h, m] = time.split(":").map(Number);
+    const now = new Date();
+    return (h || 0) * 60 + (m || 0) <= now.getHours() * 60 + now.getMinutes();
+  };
+
+  const isScheduleInPast = () => {
+    if (!hostDate || !hostTime) return false;
+    const [y, mo, d] = hostDate.split("-").map(Number);
+    const [h, mi] = hostTime.split(":").map(Number);
+    const when = new Date(y, (mo || 1) - 1, d || 1, h || 0, mi || 0);
+    return when.getTime() <= Date.now();
+  };
+
+  const canProceedFrom = (step: number): boolean => {
+    if (step === 1) {
+      if (!hostVenue) {
+        toast.error("Select a venue to continue.");
+        return false;
+      }
+      return true;
+    }
+    if (step === 2) {
+      if (!hostDate || !hostTime) {
+        toast.error("Pick a date and start time for the game.");
+        return false;
+      }
+      if (isScheduleInPast()) {
+        toast.error("Game time must be in the future.");
+        return false;
+      }
+      return true;
+    }
+    if (step === 3) {
+      if (!hostAmount || hostAmount < 100) {
+        toast.error("Total court fee must be at least ₹100.");
+        return false;
+      }
+      if (hostSlots < 2 || hostSlots % 2 !== 0) {
+        toast.error("Slots total must be an even number to ensure equal teams.");
+        return false;
+      }
+      return true;
+    }
+    return false;
+  };
+
+  const goNextStep = () => {
+    if (!canProceedFrom(hostStep)) return;
+    setHostDir(1);
+    setHostStep((s) => Math.min(3, s + 1));
+  };
+
+  const goPrevStep = () => {
+    setHostDir(-1);
+    setHostStep((s) => Math.max(1, s - 1));
+  };
 
   // Live feed: realtime subscription + a 15s polling safety-net so a newly
   // hosted game reliably appears for EVERY viewer (including anonymous users
@@ -317,18 +444,14 @@ const OpenGames = () => {
     }
   };
 
-  // Handle Host Game submit
-  const handleHostSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Handle Host Game submit (fired by the wizard's Publish button)
+  const handleHostSubmit = async () => {
     if (!user) {
       toast.error("Please sign in to host a game.");
       navigate("/login", { state: { from: location.pathname + location.search } });
       return;
     }
-    if (hostSlots % 2 !== 0) {
-      toast.error("Slots total must be an even number to ensure equal teams.");
-      return;
-    }
+    if (!canProceedFrom(3)) return;
     setHosting(true);
 
     const matchedTurf = turfs.find((t) => t.id === hostVenue) || turfs[0];
@@ -540,11 +663,10 @@ const OpenGames = () => {
           <>
             <motion.div
               initial={{ opacity: 0 }}
-              animate={{ opacity: 0.5 }}
+              animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setActiveJoinGame(null)}
               className="fixed inset-0 z-[45] bg-black/70 backdrop-blur-sm"
-              style={{ maxWidth: "480px", left: "50%", transform: "translateX(-50%)" }}
             />
             <motion.div
               initial={{ y: "100%", x: "-50%" }}
@@ -695,11 +817,10 @@ const OpenGames = () => {
             <>
               <motion.div
                 initial={{ opacity: 0 }}
-                animate={{ opacity: 0.5 }}
+                animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => setManageGame(null)}
                 className="fixed inset-0 z-[49] bg-black/70 backdrop-blur-sm"
-                style={{ maxWidth: "480px", left: "50%", transform: "translateX(-50%)" }}
               />
               <motion.div
                 initial={{ opacity: 0, scale: 0.9, y: "-40%", x: "-50%" }}
@@ -925,28 +1046,33 @@ const OpenGames = () => {
         })()}
       </AnimatePresence>
 
-      {/* ── Host Game Dialog (3-tap Flow) ── */}
+      {/* ── Host Open Game — 3-step wizard sheet ── */}
       <AnimatePresence>
         {hostModalOpen && (
           <>
             <motion.div
               initial={{ opacity: 0 }}
-              animate={{ opacity: 0.5 }}
+              animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setHostModalOpen(false)}
-              className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm"
-              style={{ maxWidth: "480px", left: "50%", transform: "translateX(-50%)" }}
+              className="fixed inset-0 z-[45] bg-black/70 backdrop-blur-sm"
             />
             <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: "-40%", x: "-50%" }}
-              animate={{ opacity: 1, scale: 1, y: "-50%", x: "-50%" }}
-              exit={{ opacity: 0, scale: 0.9, y: "-40%", x: "-50%" }}
-              className="fixed left-1/2 top-1/2 z-50 w-[90%] max-w-[420px] bg-card rounded-[2rem] border border-border p-5 shadow-2xl overflow-y-auto max-h-[90dvh]"
+              initial={{ y: "100%", x: "-50%" }}
+              animate={{ y: 0, x: "-50%" }}
+              exit={{ y: "100%", x: "-50%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="fixed bottom-0 left-1/2 z-50 flex w-full max-w-[480px] max-h-[92dvh] flex-col bg-card rounded-t-[2rem] border-t border-border shadow-2xl"
+              style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom, 0px))" }}
             >
-              <div className="flex items-center justify-between border-b border-border pb-2">
-                <h3 className="font-display font-black text-base flex items-center gap-1.5 text-foreground">
-                  <PlusCircle className="h-5 w-5 text-primary" /> Host Open Game
-                </h3>
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-border px-5 pt-4 pb-3">
+                <div>
+                  <h3 className="font-display font-black text-base flex items-center gap-1.5 text-foreground">
+                    <PlusCircle className="h-5 w-5 text-primary" /> Host Open Game
+                  </h3>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">Split the court fee with players</p>
+                </div>
                 <button
                   onClick={() => setHostModalOpen(false)}
                   className="p-1 hover:bg-muted rounded-full cursor-pointer text-muted-foreground hover:text-foreground border-none bg-transparent"
@@ -955,160 +1081,362 @@ const OpenGames = () => {
                 </button>
               </div>
 
-              <form onSubmit={handleHostSubmit} className="space-y-4 mt-3">
-                {/* Step 1: Sport and Venue */}
-                <div className="space-y-3 text-left">
-                  <span className="text-[10px] font-black uppercase text-primary tracking-widest">
-                    Step 1: Game Details
-                  </span>
-
-                  <div>
-                    <label htmlFor="host-sport-select" className="text-xs font-semibold text-soft block mb-1">Select Sport</label>
-                    <select
-                      id="host-sport-select"
-                      value={hostSport}
-                      onChange={(e) => setHostSport(e.target.value)}
-                      className="w-full bg-panel-2 border border-border rounded-xl px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
-                    >
-                      <option value="Cricket">Cricket</option>
-                      <option value="Football">Football</option>
-                      <option value="Basketball">Basketball</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label htmlFor="host-venue-select" className="text-xs font-semibold text-soft block mb-1">Select Venue</label>
-                    <select
-                      id="host-venue-select"
-                      value={hostVenue}
-                      onChange={(e) => setHostVenue(e.target.value)}
-                      className="w-full bg-panel-2 border border-border rounded-xl px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
-                    >
-                      {turfs.length > 0 ? (
-                        turfs.map((t) => (
-                          <option key={t.id} value={t.id}>
-                            {t.name} ({t.city})
-                          </option>
-                        ))
-                      ) : (
-                        <option value="">Loading venues…</option>
+              {/* Step rail */}
+              <div className="flex items-center gap-1.5 px-5 pt-3 pb-1">
+                {HOST_STEP_LABELS.map((label, i) => {
+                  const stepNum = i + 1;
+                  const done = stepNum < hostStep;
+                  const active = stepNum === hostStep;
+                  return (
+                    <div key={label} className={`flex items-center gap-1.5 ${i < HOST_STEP_LABELS.length - 1 ? "flex-1" : ""}`}>
+                      {i > 0 && (
+                        <div className={`h-[2px] w-4 flex-1 rounded-full ${hostStep > i ? "bg-primary/50" : "bg-border"}`} />
                       )}
-                    </select>
-                  </div>
-                </div>
-
-                {/* Step 2: Schedule */}
-                <div className="space-y-3 text-left border-t border-border pt-3">
-                  <span className="text-[10px] font-black uppercase text-primary tracking-widest">
-                    Step 2: Schedule
-                  </span>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label htmlFor="host-date-input" className="text-xs font-semibold text-soft block mb-1">Date</label>
-                      <input
-                        id="host-date-input"
-                        type="date"
-                        value={hostDate}
-                        onChange={(e) => setHostDate(e.target.value)}
-                        className="w-full bg-panel-2 border border-border rounded-xl px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
-                      />
+                      <button
+                        onClick={() => {
+                          if (done) {
+                            setHostDir(-1);
+                            setHostStep(stepNum);
+                          }
+                        }}
+                        disabled={!done}
+                        className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[10px] font-black uppercase tracking-wider border transition-all duration-200 ${
+                          active
+                            ? "bg-primary text-primary-foreground border-transparent shadow-neon"
+                            : done
+                              ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/15 cursor-pointer"
+                              : "bg-panel text-muted-foreground border-border/40"
+                        }`}
+                      >
+                        {done ? (
+                          <CheckCircle className="h-3 w-3" />
+                        ) : (
+                          <span className={`flex h-3.5 w-3.5 items-center justify-center rounded-full text-[9px] font-black ${active ? "bg-primary-foreground/20" : "bg-foreground/10"}`}>
+                            {stepNum}
+                          </span>
+                        )}
+                        {label}
+                      </button>
                     </div>
-                    <div>
-                      <label htmlFor="host-time-input" className="text-xs font-semibold text-soft block mb-1">Time (24h)</label>
-                      <input
-                        id="host-time-input"
-                        type="time"
-                        value={hostTime}
-                        onChange={(e) => setHostTime(e.target.value)}
-                        className="w-full bg-panel-2 border border-border rounded-xl px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
-                      />
-                    </div>
-                  </div>
+                  );
+                })}
+              </div>
 
-                  <div>
-                    <label htmlFor="host-duration-input" className="text-xs font-semibold text-soft block mb-1">Duration (hours)</label>
-                    <input
-                      id="host-duration-input"
-                      type="number"
-                      min="1"
-                      max="4"
-                      value={hostDuration}
-                      onChange={(e) => setHostDuration(Number(e.target.value))}
-                      className="w-full bg-panel-2 border border-border rounded-xl px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
-                    />
-                  </div>
-                </div>
+              {/* Step body */}
+              <div className="flex-1 overflow-y-auto px-5 py-3">
+                <AnimatePresence mode="wait" initial={false}>
+                  <motion.div
+                    key={`host-step-${hostStep}`}
+                    initial={{ opacity: 0, x: hostDir * 48 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: hostDir * -48 }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                    className="space-y-4 text-left"
+                  >
+                    {hostStep === 1 && (
+                      <>
+                        {/* Sport chips */}
+                        <div>
+                          <p className="text-[10px] font-black uppercase text-primary tracking-widest mb-2">Sport</p>
+                          <div className="flex gap-2 overflow-x-auto no-scrollbar">
+                            {HOST_SPORTS.map((sport) => (
+                              <button
+                                key={sport}
+                                onClick={() => setHostSport(sport)}
+                                aria-pressed={hostSport === sport}
+                                className={`px-4 py-2 rounded-full text-xs font-bold transition-all border duration-200 ${
+                                  hostSport === sport
+                                    ? "bg-primary border-transparent text-primary-foreground shadow-neon"
+                                    : "bg-panel border-border/60 text-soft hover:text-foreground hover:border-primary/40"
+                                } cursor-pointer`}
+                              >
+                                {sport}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
 
-                {/* Step 3: Cost Splits & Max Slots */}
-                <div className="space-y-3 text-left border-t border-border pt-3">
-                  <span className="text-[10px] font-black uppercase text-primary tracking-widest">
-                    Step 3: Cost Division
-                  </span>
+                        {/* Venue cards */}
+                        <div>
+                          <p className="text-[10px] font-black uppercase text-primary tracking-widest mb-2">Venue</p>
+                          <div className="space-y-2 max-h-60 overflow-y-auto pr-0.5">
+                            {turfs.length === 0 && (
+                              <p className="text-xs text-muted-foreground">Loading venues…</p>
+                            )}
+                            {turfs.map((t) => {
+                              const selected = hostVenue === t.id;
+                              return (
+                                <button
+                                  key={t.id}
+                                  onClick={() => setHostVenue(t.id)}
+                                  aria-pressed={selected}
+                                  className={`w-full flex items-center justify-between gap-2 p-3 rounded-2xl border text-left transition-all duration-200 bg-transparent ${
+                                    selected
+                                      ? "border-primary bg-primary/5"
+                                      : "border-border hover:border-primary/40"
+                                  } cursor-pointer`}
+                                >
+                                  <div className="min-w-0">
+                                    <p className={`text-sm font-bold truncate ${selected ? "text-primary" : "text-foreground"}`}>
+                                      {t.name}
+                                    </p>
+                                    <p className="text-[11px] text-muted-foreground flex items-center gap-1">
+                                      <MapPin className="h-3 w-3 shrink-0" /> {t.city}
+                                    </p>
+                                  </div>
+                                  <span
+                                    className={`shrink-0 text-[11px] font-black px-2 py-1 rounded-full border ${
+                                      selected
+                                        ? "border-primary/30 text-primary bg-primary/10"
+                                        : "border-border/40 text-soft bg-panel"
+                                    }`}
+                                  >
+                                    ₹{t.price_per_hour}/hr
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </>
+                    )}
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label htmlFor="host-slots-input" className="text-xs font-semibold text-soft block mb-1">Max Players (Slots)</label>
-                      <input
-                        id="host-slots-input"
-                        type="number"
-                        min="2"
-                        max="24"
-                        step="2"
-                        value={hostSlots}
-                        onChange={(e) => setHostSlots(Number(e.target.value))}
-                        className="w-full bg-panel-2 border border-border rounded-xl px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="host-amount-input" className="text-xs font-semibold text-soft block mb-1">Total Court Fee (₹)</label>
-                      <input
-                        id="host-amount-input"
-                        type="number"
-                        min="100"
-                        value={hostAmount}
-                        onChange={(e) => setHostAmount(Number(e.target.value))}
-                        className="w-full bg-panel-2 border border-border rounded-xl px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
-                      />
-                    </div>
-                  </div>
+                    {hostStep === 2 && (
+                      <>
+                        {/* Date chips */}
+                        <div>
+                          <p className="text-[10px] font-black uppercase text-primary tracking-widest mb-2">Date</p>
+                          <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+                            {hostDateOptions.map((d) => {
+                              const selected = hostDate === d.value;
+                              return (
+                                <button
+                                  key={d.value}
+                                  onClick={() => setHostDate(d.value)}
+                                  aria-pressed={selected}
+                                  className={`shrink-0 w-16 h-16 flex flex-col items-center justify-center gap-0.5 rounded-2xl border transition-all duration-200 ${
+                                    selected
+                                      ? "bg-primary border-transparent text-primary-foreground shadow-neon"
+                                      : "bg-panel border-border/60 text-soft hover:border-primary/40"
+                                  } cursor-pointer`}
+                                >
+                                  <span className="text-[9px] font-black uppercase tracking-wider">{d.label}</span>
+                                  <span className={`text-[11px] font-bold ${selected ? "text-primary-foreground/90" : "text-muted-foreground"}`}>
+                                    {d.sub}
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
 
-                  {/* Split Math Preview */}
-                  <div className="bg-primary/5 border border-primary/20 p-3 rounded-2xl flex items-center justify-between text-xs font-semibold mt-2">
-                    <span className="text-muted-foreground">Individual Slot Split:</span>
-                    <span className="text-sm font-black text-primary">
-                      ₹{Math.round(hostAmount / Math.max(1, hostSlots))} / slot
-                    </span>
-                  </div>
+                        {/* Time chips + custom picker */}
+                        <div>
+                          <p className="text-[10px] font-black uppercase text-primary tracking-widest mb-2">Start Time</p>
+                          <div className="grid grid-cols-4 gap-2">
+                            {HOST_TIME_SLOTS.map((time) => {
+                              const past = isTimeSlotPast(time);
+                              const selected = hostTime === time;
+                              return (
+                                <button
+                                  key={time}
+                                  disabled={past}
+                                  onClick={() => setHostTime(time)}
+                                  aria-pressed={selected}
+                                  className={`h-9 rounded-xl border text-xs font-bold transition-all duration-200 ${
+                                    selected
+                                      ? "bg-primary border-transparent text-primary-foreground shadow-neon"
+                                      : "bg-panel border-border/60 text-soft hover:border-primary/40"
+                                  } ${past ? "opacity-35 cursor-not-allowed" : "cursor-pointer"}`}
+                                >
+                                  {time}
+                                </button>
+                              );
+                            })}
+                          </div>
+                          <div className="flex items-center gap-2 mt-2">
+                            <Clock className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                            <input
+                              id="host-time-input"
+                              type="time"
+                              value={hostTime}
+                              min={hostDate === getLocalDateString() ? new Date().toTimeString().slice(0, 5) : undefined}
+                              onChange={(e) => setHostTime(e.target.value)}
+                              className="flex-1 bg-panel-2 border border-border rounded-xl px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
+                            />
+                          </div>
+                          {hostDate && hostTime && isScheduleInPast() && (
+                            <p className="text-[11px] text-red-400 flex items-center gap-1 mt-2">
+                              <AlertCircle className="h-3 w-3" /> Pick a time later in the day
+                            </p>
+                          )}
+                        </div>
 
-                  {/* Game Type: Public or Private */}
-                  <div className="mt-3">
-                    <label htmlFor="host-privacy-select" className="text-xs font-semibold text-soft block mb-1">Game Type (Privacy)</label>
-                    <select
-                      id="host-privacy-select"
-                      value={hostIsPrivate ? "private" : "public"}
-                      onChange={(e) => setHostIsPrivate(e.target.value === "private")}
-                      className="w-full bg-panel-2 border border-border rounded-xl px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
-                    >
-                      <option value="public">Public (Instant Join)</option>
-                      <option value="private">Private (Requires Host Approval)</option>
-                    </select>
-                  </div>
-                </div>
+                        {/* Duration chips */}
+                        <div>
+                          <p className="text-[10px] font-black uppercase text-primary tracking-widest mb-2">Duration</p>
+                          <div className="grid grid-cols-4 gap-2">
+                            {HOST_DURATION_OPTIONS.map((h) => (
+                              <button
+                                key={h}
+                                onClick={() => setHostDuration(h)}
+                                aria-pressed={hostDuration === h}
+                                className={`h-9 rounded-xl border text-xs font-black uppercase tracking-wider transition-all duration-200 ${
+                                  hostDuration === h
+                                    ? "bg-primary border-transparent text-primary-foreground shadow-neon"
+                                    : "bg-panel border-border/60 text-soft hover:border-primary/40"
+                                } cursor-pointer`}
+                              >
+                                {h} hr
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </>
+                    )}
 
-                {/* Submit button */}
-                <button
-                  disabled={hosting}
-                  type="submit"
-                  className="w-full py-3 rounded-xl bg-gradient-neon text-primary-foreground font-black text-xs uppercase tracking-widest shadow-neon pressable cursor-pointer border-none flex items-center justify-center min-h-[44px]"
-                >
-                  {hosting ? (
-                    <div className="w-5 h-5 rounded-full border-2 border-t-transparent animate-spin border-primary-foreground" />
-                  ) : (
-                    "Publish Hosted Game"
-                  )}
-                </button>
-              </form>
+                    {hostStep === 3 && (
+                      <>
+                        {/* Slots chips */}
+                        <div>
+                          <p className="text-[10px] font-black uppercase text-primary tracking-widest mb-2">Max Players</p>
+                          <div className="grid grid-cols-6 gap-2">
+                            {HOST_SLOT_OPTIONS.map((n) => (
+                              <button
+                                key={n}
+                                onClick={() => setHostSlots(n)}
+                                aria-pressed={hostSlots === n}
+                                className={`h-9 rounded-xl border text-xs font-black transition-all duration-200 ${
+                                  hostSlots === n
+                                    ? "bg-primary border-transparent text-primary-foreground shadow-neon"
+                                    : "bg-panel border-border/60 text-soft hover:border-primary/40"
+                                } cursor-pointer`}
+                              >
+                                {n}
+                              </button>
+                            ))}
+                          </div>
+                          <p className="text-[10px] text-muted-foreground mt-1.5">Even numbers keep the teams fair</p>
+                        </div>
+
+                        {/* Court fee — computed from the venue rate, not user input */}
+                        <div className="bg-panel-2 border border-border/40 p-3 rounded-2xl flex items-center justify-between">
+                          <div>
+                            <p className="text-xs font-semibold text-soft">Total Court Fee</p>
+                            <p className="text-[10px] text-muted-foreground mt-0.5">
+                              {selectedTurf
+                                ? `₹${selectedTurf.price_per_hour.toLocaleString("en-IN")}/hr × ${hostDuration}h at ${selectedTurf.name}`
+                                : "Select a venue"}
+                            </p>
+                          </div>
+                          <span className="text-lg font-black text-primary">₹{hostAmount.toLocaleString("en-IN")}</span>
+                        </div>
+
+                        {/* Live split math */}
+                        <div className="bg-primary/5 border border-primary/20 p-3 rounded-2xl space-y-1">
+                          <div className="flex items-center justify-between text-xs font-semibold">
+                            <span className="text-muted-foreground">Individual Slot Split</span>
+                            <span className="text-sm font-black text-primary">₹{hostPerSlot.toLocaleString("en-IN")} / slot</span>
+                          </div>
+                          <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                            <span>{hostSlots} players × ₹{hostPerSlot.toLocaleString("en-IN")}</span>
+                            <span>≈ ₹{(hostPerSlot * hostSlots).toLocaleString("en-IN")} collected</span>
+                          </div>
+                        </div>
+
+                        {/* Privacy tiles */}
+                        <div>
+                          <p className="text-[10px] font-black uppercase text-primary tracking-widest mb-2">Game Type</p>
+                          <div className="grid grid-cols-2 gap-2">
+                            <button
+                              onClick={() => setHostIsPrivate(false)}
+                              aria-pressed={!hostIsPrivate}
+                              className={`flex flex-col items-center justify-center gap-1 p-3 rounded-2xl border transition-all duration-200 bg-transparent ${
+                                !hostIsPrivate ? "border-primary text-primary bg-primary/5" : "border-border text-muted2 hover:text-foreground"
+                              } cursor-pointer`}
+                            >
+                              <Globe className="h-5 w-5" />
+                              <span className="text-xs font-bold">Public</span>
+                              <span className="text-[10px] text-muted-foreground text-center">Anyone can join instantly</span>
+                            </button>
+                            <button
+                              onClick={() => setHostIsPrivate(true)}
+                              aria-pressed={hostIsPrivate}
+                              className={`flex flex-col items-center justify-center gap-1 p-3 rounded-2xl border transition-all duration-200 bg-transparent ${
+                                hostIsPrivate ? "border-primary text-primary bg-primary/5" : "border-border text-muted2 hover:text-foreground"
+                              } cursor-pointer`}
+                            >
+                              <Lock className="h-5 w-5" />
+                              <span className="text-xs font-bold">Private</span>
+                              <span className="text-[10px] text-muted-foreground text-center">You approve each player</span>
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Summary */}
+                        <div className="bg-panel-2 rounded-2xl p-3 space-y-2">
+                          <p className="text-[10px] font-black uppercase text-primary tracking-widest">Match Summary</p>
+                          <div className="flex items-center gap-2 text-xs text-soft">
+                            <MapPin className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                            <span className="truncate">{selectedTurf ? `${selectedTurf.name} · ${selectedTurf.city}` : "—"}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-xs text-soft">
+                            <Calendar className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                            <span>{hostDateDisplay} · {hostTimeDisplay} · {hostDuration}h</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-xs text-soft">
+                            <Users className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                            <span>{hostSport} · {hostSlots} players · ₹{hostPerSlot.toLocaleString("en-IN")}/slot</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-xs text-soft">
+                            {hostIsPrivate ? <Lock className="h-3.5 w-3.5 text-muted-foreground shrink-0" /> : <Globe className="h-3.5 w-3.5 text-muted-foreground shrink-0" />}
+                            <span>{hostIsPrivate ? "Private — you approve players" : "Public — instant join"}</span>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+
+              {/* Footer nav */}
+              <div className="flex items-center gap-2 px-5 pt-3 border-t border-border">
+                {hostStep > 1 && (
+                  <button
+                    onClick={goPrevStep}
+                    className="py-3 px-4 rounded-xl bg-panel hover:bg-panel-2 border border-border/40 text-foreground-soft font-bold text-xs uppercase tracking-wider pressable cursor-pointer flex items-center gap-1 min-h-[44px]"
+                  >
+                    <ChevronLeft className="h-4 w-4" /> Back
+                  </button>
+                )}
+                {hostStep < 3 ? (
+                  <button
+                    onClick={goNextStep}
+                    disabled={hostStep === 1 && !hostVenue && turfs.length === 0}
+                    className="flex-1 py-3 rounded-xl bg-gradient-neon text-primary-foreground font-black text-xs uppercase tracking-widest shadow-neon pressable cursor-pointer border-none flex items-center justify-center gap-1.5 min-h-[44px] disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {hostStep === 1 && !hostVenue && turfs.length === 0 ? (
+                      "Loading venues…"
+                    ) : (
+                      <>
+                        Next <ChevronRight className="h-4 w-4" />
+                      </>
+                    )}
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleHostSubmit}
+                    disabled={hosting}
+                    className="flex-1 py-3 rounded-xl bg-gradient-neon text-primary-foreground font-black text-xs uppercase tracking-widest shadow-neon pressable cursor-pointer border-none flex items-center justify-center min-h-[44px] disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {hosting ? (
+                      <div className="w-5 h-5 rounded-full border-2 border-t-transparent animate-spin border-primary-foreground" />
+                    ) : (
+                      "Publish Hosted Game"
+                    )}
+                  </button>
+                )}
+              </div>
             </motion.div>
           </>
         )}

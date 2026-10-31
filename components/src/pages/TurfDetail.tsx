@@ -665,11 +665,10 @@ const TurfDetail = () => {
           <>
             <motion.div
               initial={{ opacity: 0 }}
-              animate={{ opacity: 0.5 }}
+              animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setSelectedJoinGame(null)}
               className="fixed inset-0 z-[45] bg-black/70 backdrop-blur-sm"
-              style={{ maxWidth: "480px", left: "50%", transform: "translateX(-50%)" }}
             />
             <motion.div
               ref={joinGameRef}

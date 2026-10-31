@@ -174,8 +174,8 @@ function CollapsingHeader({
                     color: "white",
                   }}
                 >
-                  play
-                  <span style={{ color: "hsl(var(--primary))" }}>_Turf</span>
+                  Play
+                  <span style={{ color: "hsl(var(--primary))" }}>Turf</span>
                 </h1>
                 <motion.p
                   className="text-xs"
@@ -288,10 +288,10 @@ function CollapsingHeader({
             {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
-              animate={{ opacity: 0.5 }}
+              animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsNotifOpen(false)}
-              className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm max-w-[480px] md:max-w-[640px] lg:max-w-[768px] left-1/2 -translate-x-1/2"
+              className="fixed inset-y-0 z-50 bg-black/60 backdrop-blur-sm max-w-[480px] md:max-w-[640px] lg:max-w-[768px] w-full left-1/2 -translate-x-1/2"
             />
 
             {/* Panel */}
@@ -430,7 +430,7 @@ function CollapsingHeader({
             {/* Backdrop */}
             <div
               onClick={() => setSelectedNotifForDetail(null)}
-              className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-md max-w-[480px] md:max-w-[640px] lg:max-w-[768px] left-1/2 -translate-x-1/2"
+              className="fixed inset-y-0 z-[60] bg-black/80 backdrop-blur-md max-w-[480px] md:max-w-[640px] lg:max-w-[768px] w-full left-1/2 -translate-x-1/2"
             />
             
             {/* Modal Container */}

@@ -54,7 +54,7 @@ export function BookingMatchSummary({
                             boxShadow: "var(--shadow-primary)",
                         }}
                     >
-                        <div className="flex items-center gap-3 justify-center">
+                        <div className="flex items-center gap-2.5 justify-center">
                             <TeamSelectorCard
                                 side="A"
                                 teams={cricket.state.teams}
@@ -62,7 +62,7 @@ export function BookingMatchSummary({
                                 blockedId={cricket.state.teamBId}
                                 onChange={cricket.setTeamA}
                             />
-                            <VsBadge />
+                            <VsBadge compact />
                             <TeamSelectorCard
                                 side="B"
                                 teams={cricket.state.teams}
@@ -71,6 +71,9 @@ export function BookingMatchSummary({
                                 onChange={cricket.setTeamB}
                             />
                         </div>
+                        <p className="text-center text-[10px] font-semibold text-muted-foreground -mt-3">
+                            Tap a team card to change it
+                        </p>
 
                         <div className="flex flex-col gap-3.5 border-t border-[var(--border-primary)] pt-5">
                             <RowItem label="Turf" value={turf.name} icon={MapPin} />

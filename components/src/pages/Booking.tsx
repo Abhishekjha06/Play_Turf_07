@@ -268,7 +268,7 @@ const BookingContent = () => {
         if (!turfDbId || !date || !selectedSport) {
             toast.error("Sport information is missing.");
             return;
-}
+        }
 
         setSlot(s);
         setSelectedPitch(null);
@@ -281,42 +281,9 @@ const BookingContent = () => {
             sport: selectedSport,
         });
 
-        const result = await api.getCourtAvailability(
-            Number(turfDbId),
-            date,
-            selectedSport
-            );
-
-            const booked = (result?.bookings || [])
-            .filter((booking: any) => {
-                if (
-                booking.status === "CANCELLED" ||
-                booking.status === "cancelled"
-                ) {
-                return false;
-                }
-
-                if (selectedPitch?.pitch_id != null) {
-                return booking.pitch_id === selectedPitch.pitch_id;
-                }
-
-                return true;
-            })
-            .flatMap((booking: any) => {
-                const [hour, minute] = booking.start_time
-                .split(":")
-                .map(Number);
-
-                const hours = Number(booking.hours) || 1;
-
-                return Array.from({ length: hours }, (_, i) =>
-                `${String(hour + i).padStart(2, "0")}:${String(minute).padStart(2, "0")}`
-                );
-            });
-
         try {
             const result = await api.getCourtAvailability(
-                turfDbId,
+                Number(turfDbId),
                 date,
                 selectedSport
             );
@@ -324,53 +291,69 @@ const BookingContent = () => {
             console.log("COURT AVAILABILITY:", result);
 
             const courts = (result?.pitches || []).map((pitch: any) => {
-            const booked = (result?.bookings || []).some(
-                (booking: any) => {
-                if (booking.pitch_id !== pitch.pitch_id) {
-                    return false;
-                }
+                const booked = (result?.bookings || []).some(
+                    (booking: any) => {
+                        if (booking.pitch_id !== pitch.pitch_id) {
+                            return false;
+                        }
 
-                if (
-                    booking.status === "CANCELLED" ||
-                    booking.status === "cancelled"
-                ) {
-                    return false;
-                }
+                        if (
+                            booking.status === "CANCELLED" ||
+                            booking.status === "cancelled"
+                        ) {
+                            return false;
+                        }
 
-                const bookingStart = booking.start_time;
-                const bookingHours = Number(booking.hours) || 1;
+                        const bookingStart = booking.start_time;
+                        const bookingHours = Number(booking.hours) || 1;
 
-                const [bookingHour, bookingMinute] =
-                    bookingStart.split(":").map(Number);
+                        const [bookingHour, bookingMinute] =
+                            bookingStart.split(":").map(Number);
 
-                const [slotHour, slotMinute] =
-                    s.split(":").map(Number);
+                        const [slotHour, slotMinute] =
+                            s.split(":").map(Number);
 
-                const bookingStartMinutes =
-                    bookingHour * 60 + bookingMinute;
+                        const bookingStartMinutes =
+                            bookingHour * 60 + bookingMinute;
 
-                const bookingEndMinutes =
-                    bookingStartMinutes + bookingHours * 60;
+                        const bookingEndMinutes =
+                            bookingStartMinutes + bookingHours * 60;
 
-                const selectedMinutes =
-                    slotHour * 60 + slotMinute;
+                        const selectedMinutes =
+                            slotHour * 60 + slotMinute;
 
-                return (
-                    selectedMinutes >= bookingStartMinutes &&
-                    selectedMinutes < bookingEndMinutes
+                        return (
+                            selectedMinutes >= bookingStartMinutes &&
+                            selectedMinutes < bookingEndMinutes
+                        );
+                    }
                 );
-                }
-            );
 
-            return {
-                ...pitch,
-                booked,
-            };
+                return {
+                    ...pitch,
+                    booked,
+                };
             });
 
             console.log("COURTS WITH AVAILABILITY:", courts);
 
             setCourtList(courts);
+
+            if (courts.length === 0) {
+                // This venue has no court inventory for the sport — the
+                // booking proceeds without a pitch, so don't nag the user
+                // with an empty "No pitches available" popup.
+                setSelectedPitch(null);
+                return;
+            }
+
+            // Pre-select the first free court so "Continue" never blocks on
+            // "Please select a court" — the popup stays open so the user can
+            // still switch courts.
+            const firstFree = courts.find((c: any) => !c.booked);
+            if (firstFree) {
+                setSelectedPitch(firstFree);
+            }
 
             // Open pitch/court popup
             setShowCourtPopup(true);
@@ -482,8 +465,9 @@ const BookingContent = () => {
             return;
         }
 
-        // 3. Check court
-        if (!selectedPitch) {
+        // 3. Check court — only required when this venue actually lists
+        // courts for the sport; pitches are optional inventory.
+        if (courtList.length > 0 && !selectedPitch) {
             toast.error("Please select a court");
             return;
         }
@@ -516,7 +500,7 @@ const BookingContent = () => {
             // 6. Create booking with selected pitch
             const b = await api.createBooking({
             turf_id: turf.id,
-            pitch_id: selectedPitch.pitch_id,
+            pitch_id: selectedPitch?.pitch_id,
             date,
             start_time: slot,
             hours,

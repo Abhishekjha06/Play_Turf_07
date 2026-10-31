@@ -127,7 +127,7 @@ function NavItem({
       </motion.div>
 
       <span
-        className={cn("text-xs tracking-wide", active ? "font-bold" : "font-medium")}
+        className={cn("text-[11px] tracking-wide whitespace-nowrap", active ? "font-bold" : "font-medium")}
         style={{ color: active ? "hsl(var(--color-primary))" : "hsl(var(--color-text-tertiary))", letterSpacing: "0.03em" }}
       >
         {label}

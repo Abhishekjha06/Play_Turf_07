@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import type { Banner } from "@/data/seed";
-import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Shimmer } from "@/ui/Shimmer";
 
 const AUTOPLAY_MS = 4500;
@@ -18,7 +18,7 @@ const MANUAL_GRACE_MS = 8000;
  * animations and behavior are identical everywhere by construction.
  *
  * Uses NATIVE CSS scroll-snap so slides can be swiped on touch and dragged
- * with the mouse, plus prev/next arrows, clickable dots and keyboard arrows.
+ * with the mouse, plus clickable dots and keyboard arrows.
  * Auto-sliding every 4.5s (wrapping), pausing while the tab is hidden and for
  * a grace period after the user navigated manually.
  */
@@ -253,38 +253,10 @@ export function HeroCarousel({ banners }: { banners: Banner[] }) {
           })}
         </div>
 
-        {banners.length > 1 && <HeroArrows onPrev={goPrev} onNext={goNext} />}
       </div>
 
       {banners.length > 1 && <HeroDots count={banners.length} selected={selected} onSelect={scrollToIndex} />}
     </motion.section>
-  );
-}
-
-/* ── Prev/next arrows, overlaid at the vertical center of the track.
-   White-over-photo is a semantic constant — identical in both themes. ── */
-function HeroArrows({ onPrev, onNext }: { onPrev: () => void; onNext: () => void }) {
-  return (
-    <>
-      <button
-        type="button"
-        onClick={onPrev}
-        aria-label="Previous slide"
-        data-testid="hero-prev"
-        className="pressable absolute left-2 top-1/2 z-20 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full border border-white/20 bg-black/40 text-white shadow-lg backdrop-blur"
-      >
-        <ChevronLeft className="h-5 w-5" />
-      </button>
-      <button
-        type="button"
-        onClick={onNext}
-        aria-label="Next slide"
-        data-testid="hero-next"
-        className="pressable absolute right-2 top-1/2 z-20 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full border border-white/20 bg-black/40 text-white shadow-lg backdrop-blur"
-      >
-        <ChevronRight className="h-5 w-5" />
-      </button>
-    </>
   );
 }
 

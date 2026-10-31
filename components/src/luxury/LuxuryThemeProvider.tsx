@@ -176,7 +176,7 @@ export const THEMES: Record<LuxuryThemeId, LuxuryTheme> = {
             gradientOverlay: "linear-gradient(180deg, rgba(0,0,0,0.10) 0%, rgba(0,0,0,0.50) 100%)",
             shadowNeon: "0 0 16px rgba(20,184,176,0.30)",
             shadowNeonLg: "0 10px 30px rgba(20,184,176,0.35), 0 0 10px rgba(20,184,176,0.20)",
-            shadowCard: "0 8px 30px rgba(15,23,42,0.08)",
+            shadowCard: "0 2px 12px rgba(15,23,42,0.06)",
             /* Semantic --color-* namespace (mirrors index.css html.light) */
             colorPrimary: "174 80% 40%",
             colorPrimaryHover: "174 80% 35%",
@@ -261,7 +261,7 @@ export const THEMES: Record<LuxuryThemeId, LuxuryTheme> = {
             gradientOverlay: "linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.5) 40%, rgba(0,0,0,0.98) 100%)",
             shadowNeon: "0 0 20px rgba(0,230,118,0.3)",
             shadowNeonLg: "0 0 35px rgba(0,230,118,0.45), 0 0 10px rgba(255,215,0,0.2)",
-            shadowCard: "0 8px 32px rgba(0,0,0,0.6)",
+            shadowCard: "0 2px 12px rgba(0,0,0,0.35)",
             /* Semantic --color-* namespace — pure-black surfaces, emerald accents */
             colorPrimary: "151 100% 45%",
             colorPrimaryHover: "151 100% 38%",
