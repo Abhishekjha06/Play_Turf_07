@@ -44,21 +44,22 @@ export function TossModal({ open, onClose }: TossModalProps) {
 
         const outcome: TossResult = Math.random() < 0.5 ? "HEADS" : "TAILS";
 
-        // Calculate next rotation: add at least 5 full spins (1800deg) 
-        // plus the needed offset to land on the correct side relative to current rotation.
-        // If we want it to always land correctly, we need to find the next valid rotation point.
+        // Calculate next rotation: add at least 15 full spins over the 10s
+        // flight, plus the needed offset to land on the correct side relative
+        // to current rotation. If we want it to always land correctly, we need
+        // to find the next valid rotation point.
         const currentSpins = Math.floor(rotation / 360);
-        const nextTargetBase = (currentSpins + 5) * 360;
+        const nextTargetBase = (currentSpins + 15) * 360;
         const nextRotation = nextTargetBase + (outcome === "TAILS" ? 180 : 0);
 
         setRotation(nextRotation);
 
-        // Landing logic
+        // Landing logic — must match the flip transition duration below
         timeoutRef.current = setTimeout(() => {
             setResult(outcome);
             setTossing(false);
             setShowResult(true);
-        }, 1200);
+        }, 10000);
     }, [tossing, rotation]);
 
     const handleClose = useCallback(() => {
@@ -107,10 +108,18 @@ export function TossModal({ open, onClose }: TossModalProps) {
                             {/* Coin Section */}
                             <div className="py-8 md:py-10 flex items-center justify-center perspective-1000">
                                 <div className="w-[35vw] h-[35vw] max-w-[160px] max-h-[160px] min-w-[120px] min-h-[120px] relative preserve-3d">
+                                    {/* Glow halo while the coin is airborne — a sibling
+                                        layer, because a filter on the preserve-3d element
+                                        itself would flatten the 3D backface flip. */}
+                                    <motion.div
+                                        className="absolute -inset-5 rounded-full bg-primary/30 blur-xl pointer-events-none"
+                                        animate={{ opacity: tossing ? 1 : 0 }}
+                                        transition={{ duration: 0.8 }}
+                                    />
                                     <motion.div
                                         className="w-full h-full relative preserve-3d"
                                         animate={{ rotateY: rotation }}
-                                        transition={{ duration: 1.2, ease: "easeInOut" }}
+                                        transition={{ duration: 10, ease: "easeInOut" }}
                                     >
                                         <div className="absolute inset-0 backface-hidden">
                                             <img src={headsImg} alt="Heads" className="w-full h-full object-contain rounded-full" loading="lazy" decoding="async" />
