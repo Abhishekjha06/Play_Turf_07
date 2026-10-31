@@ -20,6 +20,21 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from "@/ui/carousel";
 import { MobileGallery } from "@/ui/MobileGallery";
+import { formatDateDMY } from "@/open-games/OpenGameCard";
+
+/** "today" / "tomorrow" / DD-MM-YYYY — from the game's real date. */
+const gameDayLabel = (iso: string): string => {
+  const [y, m, d] = (iso || "").split("-").map(Number);
+  if (!y || !m || !d) return iso;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const gameDay = new Date(y, m - 1, d);
+  gameDay.setHours(0, 0, 0, 0);
+  const diffDays = Math.round((gameDay.getTime() - today.getTime()) / 86400000);
+  if (diffDays === 0) return "today";
+  if (diffDays === 1) return "tomorrow";
+  return formatDateDMY(iso);
+};
 //pop up import
 
 import {
@@ -408,7 +423,6 @@ const TurfDetail = () => {
                   <div
                     key={g.id}
                     className="card-panel rounded-3xl p-4 flex flex-col gap-3.5 relative overflow-hidden"
-                    style={{ backgroundColor: "#1e1e1e", border: "1px solid rgba(255,255,255,0.06)" }}
                   >
                     <div>
                       <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Find a game</p>
@@ -438,7 +452,8 @@ const TurfDetail = () => {
                         <MapPin className="h-3.5 w-3.5 text-muted-foreground" /> {turf.name}, {turf.city}
                       </p>
                       <p className="flex items-center gap-1.5">
-                        <Calendar className="h-3.5 w-3.5 text-muted-foreground" /> today, {g.time} • 90 min
+                        <Calendar className="h-3.5 w-3.5 text-muted-foreground" /> {gameDayLabel(g.date)}, {g.time}
+                        {g.duration_hours ? ` • ${g.duration_hours}h` : ""}
                       </p>
                     </div>
 
@@ -733,9 +748,8 @@ const TurfDetail = () => {
               animate={{ y: 0, x: "-50%" }}
               exit={{ y: "100%", x: "-50%" }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed bottom-0 left-1/2 z-50 w-full max-w-[480px] bg-panel rounded-t-[2.5rem] border-t border-white/10 p-6 space-y-5"
+              className="fixed bottom-0 left-1/2 z-50 w-full max-w-[480px] bg-panel rounded-t-[2.5rem] border-t border-[hsl(var(--color-border-default))] p-6 space-y-5"
               style={{
-                backgroundColor: "#1e1e1e",
                 paddingBottom: "calc(1.5rem + env(safe-area-inset-bottom, 0px))"
               }}
             >
@@ -743,7 +757,8 @@ const TurfDetail = () => {
                 <div>
                   <h3 className="font-display font-black text-lg text-foreground">Confirm your spot</h3>
                   <p className="text-xs text-muted-foreground mt-0.5 font-semibold">
-                    {selectedJoinGame.sport === "Football" ? "5-a-side football" : `${selectedJoinGame.sport} Session`} • today, {selectedJoinGame.time}
+                    {selectedJoinGame.sport === "Football" ? "5-a-side football" : `${selectedJoinGame.sport} Session`} • {gameDayLabel(selectedJoinGame.date)}, {selectedJoinGame.time}
+                    {selectedJoinGame.duration_hours ? ` • ${selectedJoinGame.duration_hours}h` : ""}
                   </p>
                 </div>
                 <button
