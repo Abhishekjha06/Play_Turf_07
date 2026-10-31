@@ -27,18 +27,6 @@ function TeamSummary({ team }: { team: any }) {
     );
 }
 
-function MiniStat({ label, value }: { label: string; value: string }) {
-    return (
-        <div
-            className="rounded-2xl border p-3 text-center transition-all duration-300"
-            style={{ backgroundColor: "var(--bg-secondary)", borderColor: "var(--border-primary)" }}
-        >
-            <p className="text-[8px] font-extrabold uppercase tracking-wider text-muted-foreground">{label}</p>
-            <p className="mt-1.5 text-xs font-black text-foreground font-display">{value}</p>
-        </div>
-    );
-}
-
 function Row({ icon: Icon, label, value, valueClass }: { icon: any; label: string; value: string; valueClass?: string }) {
     return (
         <div className="flex items-center justify-between text-xs">
@@ -91,12 +79,6 @@ export function BookingConfirmPay({
                     <TeamSummary team={cricket.teamA} />
                     <VsBadge />
                     <TeamSummary team={cricket.teamB} />
-                </div>
-
-                <div className="mt-5 grid grid-cols-3 gap-2.5">
-                    <MiniStat label="Turf Total" value={`Rs ${total.toLocaleString()}`} />
-                    <MiniStat label="Odds Ratio" value={`${cricket.state.odds}x`} />
-                    <MiniStat label="Est. Return" value={`Rs ${cricket.potentialWin.toLocaleString()}`} />
                 </div>
 
                 <div
