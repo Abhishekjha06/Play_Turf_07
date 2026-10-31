@@ -53,11 +53,11 @@ export function TossModal({ open, onClose }: TossModalProps) {
 
         const outcome: TossResult = Math.random() < 0.5 ? "HEADS" : "TAILS";
 
-        // 6-second flight with a fast spin (≈16 turns, ~2.7 rev/s): a steady
-        // linear spin covers 92% of the time, then a 0.8s ease-out settle of
-        // the final turn onto the correct face.
+        // 4-second flight with a 2× faster spin (≈21 turns, ~5.3 rev/s): a
+        // steady linear spin covers 92% of the time, then a 0.8s ease-out
+        // settle of the final turn onto the correct face.
         const currentSpins = Math.floor(currentRotation / 360);
-        const nextTargetBase = (currentSpins + 16) * 360;
+        const nextTargetBase = (currentSpins + 21) * 360;
         const nextRotation = nextTargetBase + (outcome === "TAILS" ? 180 : 0);
 
         setRotation([currentRotation, nextRotation - 360, nextRotation]);
@@ -67,7 +67,7 @@ export function TossModal({ open, onClose }: TossModalProps) {
             setResult(outcome);
             setTossing(false);
             setShowResult(true);
-        }, 6000);
+        }, 4000);
     }, [tossing, rotation]);
 
     const handleClose = useCallback(() => {
@@ -121,7 +121,7 @@ export function TossModal({ open, onClose }: TossModalProps) {
                                         animate={{ rotateY: rotation }}
                                         transition={
                                             Array.isArray(rotation)
-                                                ? { duration: 6, times: [0, 0.92, 1], ease: ["linear", "easeOut"] }
+                                                ? { duration: 4, times: [0, 0.92, 1], ease: ["linear", "easeOut"] }
                                                 : { duration: 0 }
                                         }
                                     >
