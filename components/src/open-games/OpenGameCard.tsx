@@ -323,8 +323,9 @@ export const OpenGameCard = memo(function OpenGameCard({
               {game.venue}
             </h3>
           </div>
-          <div className="shrink-0 opacity-60">
-            <PlayTurfLogo className="w-7 h-7" />
+          {/* Brand mark — highlighted badge so it pops on any theme */}
+          <div className="shrink-0 rounded-full bg-primary/10 ring-1 ring-primary/30 p-1">
+            <PlayTurfLogo className="w-6 h-6 drop-shadow-[0_0_8px_hsl(var(--primary)/0.5)]" />
           </div>
         </div>
 

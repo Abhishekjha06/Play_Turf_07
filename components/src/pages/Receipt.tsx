@@ -176,7 +176,7 @@ function HeaderStatus() {
     <div className="relative overflow-hidden rounded-[1.5rem] border border-border bg-[hsl(var(--foreground)/0.06)] p-5 text-center lg:flex lg:flex-col lg:justify-between">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,hsl(var(--success)/0.2),transparent_35%),linear-gradient(160deg,hsl(var(--primary)/0.12),transparent)]" />
       <div className="relative flex flex-col items-center">
-        <img src={playTurfLogo} alt="Play Turf Logo" className="mx-auto h-16 w-16 object-contain mb-2" />
+        <img src={playTurfLogo} alt="Play Turf Logo" className="mx-auto h-16 w-16 object-contain mb-2 drop-shadow-[0_0_10px_hsl(var(--primary)/0.5)]" />
         <h1 className="font-display text-3xl font-black tracking-tight">PLAY_TURF</h1>
         <p className="mt-1 text-xs font-semibold text-soft">Your Match. Your Turf. Your Victory.</p>
       </div>

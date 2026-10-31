@@ -377,7 +377,7 @@ export function BookingSuccessReceipt({
                                 <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_50%_0%,var(--primary),transparent_50%)]" />
                                 <div className="absolute inset-x-10 top-0 h-[2px] bg-gradient-neon" />
                                 <div className="relative flex flex-col items-center">
-                                    <img src={playTurfLogo} alt="Play Turf Logo" className="w-12 h-12 object-contain mb-2.5" />
+                                    <img src={playTurfLogo} alt="Play Turf Logo" className="w-12 h-12 object-contain mb-2.5 drop-shadow-[0_0_10px_hsl(var(--primary)/0.5)]" />
                                     <p className="text-[10px] font-black uppercase tracking-[0.32em] text-primary">PLAYTURF CONFIRMATION</p>
                                     <h2 className="mt-1 font-display text-2xl font-black text-foreground">Booking Confirmed</h2>
                                     <p className="mt-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Your Match. Your Turf. Your Victory.</p>

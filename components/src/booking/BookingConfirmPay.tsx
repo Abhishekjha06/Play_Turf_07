@@ -62,7 +62,7 @@ export function BookingConfirmPay({
         <div className="mt-4 px-4 pb-32">
             {/* Logo header */}
             <div className="flex items-center gap-2.5 mb-5 px-1">
-                <img src={playTurfLogo} alt="Play Turf Logo" className="w-8 h-8 object-contain" />
+                <img src={playTurfLogo} alt="Play Turf Logo" className="w-8 h-8 object-contain drop-shadow-[0_0_8px_hsl(var(--primary)/0.5)]" />
                 <div>
                     <h2 className="font-display font-black text-base text-foreground tracking-tight leading-none">PLAY_TURF</h2>
                     <p className="text-[9px] text-muted-foreground font-extrabold mt-1 uppercase tracking-widest">Billing & Checkout</p>
