@@ -21,8 +21,17 @@ export function TossModal({ open, onClose }: TossModalProps) {
     const [tossing, setTossing] = useState(false);
     const [result, setResult] = useState<TossResult>(null);
     const [showResult, setShowResult] = useState(false);
-    const [rotation, setRotation] = useState(0);
+    // Holds either a resting angle (number) or a 3-point keyframe array
+    // [start, preLanding, landing] while a toss is in flight.
+    const [rotation, setRotation] = useState<number | number[]>(0);
     const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    const currentRotation = Array.isArray(rotation) ? rotation[rotation.length - 1] : rotation;
+
+    // Clear any pending landing if the modal unmounts mid-flight
+    useEffect(() => () => {
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    }, []);
 
     // Reset state when modal opens
     useEffect(() => {
@@ -44,15 +53,15 @@ export function TossModal({ open, onClose }: TossModalProps) {
 
         const outcome: TossResult = Math.random() < 0.5 ? "HEADS" : "TAILS";
 
-        // Calculate next rotation: add at least 15 full spins over the 10s
-        // flight, plus the needed offset to land on the correct side relative
-        // to current rotation. If we want it to always land correctly, we need
-        // to find the next valid rotation point.
-        const currentSpins = Math.floor(rotation / 360);
-        const nextTargetBase = (currentSpins + 15) * 360;
+        // 10-second flight: a steady linear spin (≈14 turns) covering 92% of
+        // the time, then a 0.8s ease-out settle of the final turn onto the
+        // correct face. Keyframing this way avoids the long near-stationary
+        // crawl an easeInOut tail produces, which read as a stuck toss.
+        const currentSpins = Math.floor(currentRotation / 360);
+        const nextTargetBase = (currentSpins + 14) * 360;
         const nextRotation = nextTargetBase + (outcome === "TAILS" ? 180 : 0);
 
-        setRotation(nextRotation);
+        setRotation([currentRotation, nextRotation - 360, nextRotation]);
 
         // Landing logic — must match the flip transition duration below
         timeoutRef.current = setTimeout(() => {
@@ -119,7 +128,11 @@ export function TossModal({ open, onClose }: TossModalProps) {
                                     <motion.div
                                         className="w-full h-full relative preserve-3d"
                                         animate={{ rotateY: rotation }}
-                                        transition={{ duration: 10, ease: "easeInOut" }}
+                                        transition={
+                                            Array.isArray(rotation)
+                                                ? { duration: 10, times: [0, 0.92, 1], ease: ["linear", "easeOut"] }
+                                                : { duration: 0 }
+                                        }
                                     >
                                         <div className="absolute inset-0 backface-hidden">
                                             <img src={headsImg} alt="Heads" className="w-full h-full object-contain rounded-full" loading="lazy" decoding="async" />
@@ -148,6 +161,7 @@ export function TossModal({ open, onClose }: TossModalProps) {
                                             key="flipping"
                                             initial={{ opacity: 0 }}
                                             animate={{ opacity: 1 }}
+                                            exit={{ opacity: 0 }}
                                             className="text-[10px] text-white/60 font-bold tracking-[0.4em] uppercase"
                                         >
                                             Flipping...
