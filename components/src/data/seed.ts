@@ -18,6 +18,10 @@ export type Turf = {
   address: string;
   lat?: number;
   lng?: number;
+  land_mark?: string;
+  landmark_lat?: number;
+  landmark_long?: number;
+
   image: string;
   gallery: string[];
   rating: number;
@@ -90,7 +94,9 @@ export type Booking = {
   amount: number;
   status: BookingStatus;
   payment_id: string | null;
+  pitch_id?: number | null;
   created_at: string;
+  sport: string;
 };
 
 export type User = {
@@ -98,6 +104,7 @@ export type User = {
   email: string;
   name: string;
   picture: string;
+  avatar_id: string;
   is_admin: boolean;
   role: string;
 };
@@ -151,7 +158,7 @@ export const turfs: Turf[] = [
     rating: 4.8,
     timing: "06:00 AM – 11:00 PM",
     price_per_hour: 1200,
-    sport_types: ["Football", "Futsal"],
+    sport_types: ["Football", "Futsal","seed data"],
     amenities: ["Floodlights", "Parking", "Washroom", "Drinking water"],
     description: "Premium 5-a-side floodlit turf in the heart of Indiranagar.",
     is_popular: true,

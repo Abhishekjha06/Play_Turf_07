@@ -432,8 +432,8 @@
 
   .stadium-grid {
     background-image:
-      linear-gradient(rgba(34, 211, 238, 0.08) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(168, 85, 247, 0.08) 1px, transparent 1px);
+      linear-gradient(hsl(var(--primary) / 0.08) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--primary) / 0.05) 1px, transparent 1px);
     background-size: 42px 42px;
     mask-image: linear-gradient(to bottom, transparent, black 18%, transparent 88%);
   }
@@ -456,8 +456,8 @@
 
   .btn-secondary {
     background-color: transparent;
-    border: 1px solid #0db9f2;
-    color: #0db9f2;
+    border: 1px solid hsl(var(--primary));
+    color: hsl(var(--primary));
     border-radius: 9999px;
     font-weight: 600;
     padding: 0.75rem 1.5rem;
@@ -467,13 +467,13 @@
     transition: background-color 0.25s, opacity 0.2s;
   }
   .btn-secondary:hover {
-    background-color: rgba(13, 185, 242, 0.08);
+    background-color: hsl(var(--primary) / 0.08);
   }
 
   .btn-ghost {
     background-color: transparent;
     border: none;
-    color: #f9fafb;
+    color: hsl(var(--foreground));
     font-weight: 500;
     padding: 0.75rem 1.5rem;
     display: inline-flex;
@@ -483,7 +483,7 @@
     border-radius: 9999px;
   }
   .btn-ghost:hover {
-    background-color: rgba(249, 250, 251, 0.08);
+    background-color: hsl(var(--foreground) / 0.08);
   }
 
   .app-card {
@@ -494,7 +494,7 @@
 
   .badge-available {
     background-color: hsl(var(--accent));
-    color: #131820;
+    color: hsl(var(--accent-foreground));
     border-radius: 9999px;
     padding: 0.25rem 0.75rem;
     font-size: 14px;
@@ -505,7 +505,7 @@
 
   .badge-booked {
     background-color: hsl(var(--danger));
-    color: #f9fafb;
+    color: hsl(var(--color-danger-foreground));
     border-radius: 9999px;
     padding: 0.25rem 0.75rem;
     font-size: 14px;
@@ -517,7 +517,7 @@
   .app-input {
     background-color: hsl(var(--surface));
     border: 1px solid hsl(var(--border));
-    color: #f9fafb;
+    color: hsl(var(--foreground));
     border-radius: var(--radius-input);
     font-size: 14px;
     padding: 0.5rem 0.75rem;
@@ -704,11 +704,11 @@
   perspective: 1000px;
 }
 
-/* Gold Neon Text */
+/* Gold Neon Text — gold follows the theme's reward token */
 .neon-text-gold {
-  color: #f2ca50;
-  text-shadow: 0 0 15px rgba(242, 202, 80, 0.6),
-    0 0 30px rgba(242, 202, 80, 0.3);
+  color: var(--l-gold);
+  text-shadow: 0 0 15px color-mix(in srgb, var(--l-gold) 60%, transparent),
+    0 0 30px color-mix(in srgb, var(--l-gold) 30%, transparent);
 }
 
 /* Dynamic Pulse Glow Keyframes Override using Theme Primary */
@@ -716,11 +716,11 @@
 
   0%,
   100% {
-    box-shadow: 0 0 0 0 hsla(var(--primary), 0.55), 0 0 22px hsla(var(--primary), 0.5);
+    box-shadow: 0 0 0 0 hsl(var(--primary) / 0.55), 0 0 22px hsl(var(--primary) / 0.5);
   }
 
   50% {
-    box-shadow: 0 0 0 14px hsla(var(--primary), 0), 0 0 32px hsla(var(--primary), 0.7);
+    box-shadow: 0 0 0 14px hsl(var(--primary) / 0), 0 0 32px hsl(var(--primary) / 0.7);
   }
 }
 
@@ -732,7 +732,7 @@
 }
 
 .shimmer-bg {
-  background: linear-gradient(90deg, #1a1a1a 25%, #2a2a2a 50%, #1a1a1a 75%);
+  background: linear-gradient(90deg, hsl(var(--panel-2)) 25%, hsl(var(--panel-3)) 50%, hsl(var(--panel-2)) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
   border-radius: 4px;
@@ -799,3 +799,5 @@ html.light .bg-panel-2 {
 html.light .bg-panel-3 {
   background-color: hsl(var(--color-surface-overlay));
 }
+
+/* ── landmark css ───────────────────────────────────────────── */

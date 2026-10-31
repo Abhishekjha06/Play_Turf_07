@@ -11,6 +11,7 @@ import {
 } from "@/lib/admin-attempt-tracker";
 import { signInWithGoogle as authServiceGoogle } from "@/services/authService";
 import { getSupabase, withTimeout, clearSupabaseCache } from "@/lib/supabase";
+import { DEFAULT_AVATAR_ID } from "@/lib/avatars";
 import type { SupabaseClient, User as SupabaseUser } from "@supabase/supabase-js";
 
 // minimal store using plain event emitter pattern
@@ -24,37 +25,69 @@ export function getUser() { return _user; }
 export function isLoading() { return _loading; }
 
 /**
- * Fetch the profile role for a user id. Falls back to "user" if the row or the
- * request is unavailable — the real authorization decision is enforced by the
- * database (RLS) and by Supabase Auth (JWT), so a missing profile never grants
- * privilege, it only degrades gracefully.
+ * Fetch the profile role + mascot avatar for a user id. Falls back to
+ * "user"/the default mascot if the row or the request is unavailable — the
+ * real authorization decision is enforced by the database (RLS) and by
+ * Supabase Auth (JWT), so a missing profile never grants privilege, it only
+ * degrades gracefully.
  */
-async function fetchUserRole(supabase: SupabaseClient, userId: string): Promise<string> {
+async function fetchProfile(supabase: SupabaseClient, userId: string): Promise<{ role: string; avatarId: string }> {
   const { data: profile, error } = await withTimeout(
-    supabase.from("profiles").select("role").eq("id", userId).maybeSingle(),
+    supabase.from("profiles").select("role, avatar_id").eq("id", userId).maybeSingle(),
     8000
   );
   if (error) console.warn("Profile fetch error:", error);
-  return profile?.role || "user";
+  return {
+    role: profile?.role || "user",
+    avatarId: profile?.avatar_id || DEFAULT_AVATAR_ID,
+  };
 }
 
 /**
- * Build the app-level `User` object from a validated Supabase user + its role.
- * Centralized so every code path (refresh, listener, OAuth) constructs it the
- * same way — no drift, no privilege miscalculation.
+ * Build the app-level `User` object from a validated Supabase user + its
+ * profile. Centralized so every code path (refresh, listener, OAuth)
+ * constructs it the same way — no drift, no privilege miscalculation.
  */
-function mapAuthUser(user: SupabaseUser, role: string): User {
+function mapAuthUser(user: SupabaseUser, role: string, avatarId: string): User {
   return {
     user_id: user.id,
     email: user.email || "",
     name: user.user_metadata?.full_name || user.user_metadata?.name || "Player",
     picture: user.user_metadata?.avatar_url || user.user_metadata?.picture || "",
+    avatar_id: avatarId,
     is_admin: role === "super_admin" || role === "admin",
     role,
   };
 }
 
+// ── Session revalidation scheduling ──────────────────────────────────────────
+// When getUser() fails transiently (network blip / timeout) we keep the locally
+// cached session but never trust it indefinitely: a one-shot timer re-validates
+// it. `validationEpoch` makes stale timers harmless — every refreshUser() and
+// signOut() bumps the epoch, so a timer that fires after a logout or account
+// switch becomes a no-op instead of validating the NEW user's session.
+let revalidateTimer: ReturnType<typeof setTimeout> | null = null;
+let validationEpoch = 0;
+
+function clearRevalidation() {
+  if (revalidateTimer) {
+    clearTimeout(revalidateTimer);
+    revalidateTimer = null;
+  }
+}
+
+function scheduleRevalidation(delayMs = 30_000) {
+  clearRevalidation();
+  const epoch = validationEpoch;
+  revalidateTimer = setTimeout(() => {
+    revalidateTimer = null;
+    if (epoch === validationEpoch) void refreshUser();
+  }, delayMs);
+}
+
 export async function refreshUser() {
+  validationEpoch++; // any newer call supersedes pending timers
+  clearRevalidation();
   _loading = true; emit();
   initSupabaseListener(); // lazy init on first use
 
@@ -67,30 +100,49 @@ export async function refreshUser() {
     // immediately validate below.
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.user) {
-      const role = await fetchUserRole(supabase, session.user.id);
-      _user = mapAuthUser(session.user, role);
+      const profile = await fetchProfile(supabase, session.user.id);
+      _user = mapAuthUser(session.user, profile.role, profile.avatarId);
       _loading = false; emit();
     }
 
     // ── STEP 2: Server-side validation — the REAL security check ──
     // getUser() sends the access token to Supabase Auth, which verifies the
-    // JWT signature and expiry. If the token is revoked/expired this fails and
-    // we clear the session so the UI can never show a stale authenticated state.
-    const { data: { user: validatedUser }, error: authError } = await withTimeout(
+    // JWT signature and expiry. Retry once first — a single failure can be a
+    // transient network blip, which must not log the user out.
+    let { data: { user: validatedUser }, error: authError } = await withTimeout(
       supabase.auth.getUser(), 8000
     );
+    if (authError || !validatedUser) {
+      ({ data: { user: validatedUser }, error: authError } = await withTimeout(
+        supabase.auth.getUser(), 8000
+      ));
+    }
 
     if (authError || !validatedUser) {
-      console.warn("getUser() validation failed — session is invalid, revoked, or expired:", authError);
-      await supabase.auth.signOut();
-      _user = null;
+      const status = (authError as { status?: number } | null)?.status;
+      const isRejectedByServer = status === 401 || status === 403; // revoked / invalid token
+      if (isRejectedByServer || !session?.user) {
+        console.warn("getUser() validation failed — session is invalid, revoked, or expired:", authError);
+        await supabase.auth.signOut();
+        _user = null;
+      } else {
+        // Network/timeout/5xx while a local session exists: keep the
+        // session-derived user TEMPORARILY (signing out here used to bounce
+        // users who had JUST signed in straight back to /login) and
+        // re-validate shortly — the session is never trusted indefinitely.
+        console.warn("getUser() failed transiently — keeping session user, re-validating shortly:", authError);
+        scheduleRevalidation();
+      }
     } else {
-      const role = await fetchUserRole(supabase, validatedUser.id);
-      _user = mapAuthUser(validatedUser, role);
+      const profile = await fetchProfile(supabase, validatedUser.id);
+      _user = mapAuthUser(validatedUser, profile.role, profile.avatarId);
     }
   } catch (err) {
+    // withTimeout() throws on timeout — same transient-failure policy: keep an
+    // existing session-derived user and re-validate, otherwise stay signed out.
     console.error("Supabase refreshUser error:", err);
-    _user = null;
+    if (getUser()) scheduleRevalidation();
+    else _user = null;
   }
 
   _loading = false; emit();
@@ -107,14 +159,14 @@ export function initSupabaseListener() {
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
           const user = session?.user;
           if (user) {
-            const role = await fetchUserRole(supabase, user.id);
-            _user = mapAuthUser(user, role);
+            const profile = await fetchProfile(supabase, user.id);
+            _user = mapAuthUser(user, profile.role, profile.avatarId);
           }
         } else if (event === 'INITIAL_SESSION') {
           const user = session?.user;
           if (user) {
-            const role = await fetchUserRole(supabase, user.id);
-            _user = mapAuthUser(user, role);
+            const profile = await fetchProfile(supabase, user.id);
+            _user = mapAuthUser(user, profile.role, profile.avatarId);
             supabase.auth.getUser().then(({ data: { user: validated }, error }) => {
               if (error || !validated) {
                 console.warn("INITIAL_SESSION validation failed — signing out");
@@ -140,9 +192,14 @@ export function initSupabaseListener() {
 
 // Lazy init happens via refreshUser() or useAuth() — never at module load
 
-export function updateUserAvatar(avatarUrl: string) {
+/**
+ * Persists the selected mascot avatar to the user's own profile (Supabase)
+ * and updates the in-memory store so every mounted component re-renders.
+ */
+export async function updateUserAvatar(avatarId: string) {
+  await api.updateAvatar(avatarId);
   if (_user) {
-    _user = { ..._user, picture: avatarUrl };
+    _user = { ..._user, avatar_id: avatarId };
     emit();
   }
 }
@@ -219,6 +276,8 @@ function clearStaleAuthArtifacts() {
 }
 
 export async function signOut() {
+  validationEpoch++; // any pending revalidation timer must not fire for the next session
+  clearRevalidation();
   await api.logout();
   clearStaleAuthArtifacts();
   clearSupabaseCache();

@@ -14,12 +14,18 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     full_name text not null,
     phone varchar(10) not null,
     is_admin boolean DEFAULT false NOT NULL,
+    role text DEFAULT 'user' NOT NULL,
+    avatar_id text DEFAULT 'yeti' NOT NULL,
     created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
     constraint phone_length check (phone ~ '^[0-9]{10}$')
 );
 
 -- Ensure is_admin column exists if table was already created
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS is_admin boolean DEFAULT false NOT NULL;
+-- Ensure role column exists (read by login, me(), admin sign-in) if table was already created
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS role text DEFAULT 'user' NOT NULL;
+-- Ensure avatar_id column exists (mascot avatar system: yeti|sky|blush|mint|buddy)
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS avatar_id text DEFAULT 'yeti' NOT NULL;
 
 -- Table: turfs
 CREATE TABLE IF NOT EXISTS public.turfs (

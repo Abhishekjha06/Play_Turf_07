@@ -10,6 +10,12 @@ import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/ui/skeleton";
 
+import {
+  useNavigate,
+  useParams,
+  useLocation,
+  useSearchParams,
+} from "react-router-dom"; // Importing useSearchParams from react-router-dom
 type Tab = "all" | "upcoming" | "past" | "cancelled";
 
 export function groupBookings(bookings: Booking[]): (Booking & { durationHours: number; end_time: string })[] {
@@ -48,6 +54,26 @@ const Bookings = () => {
   const [list, setList] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
+
+// sports pop up ad pitches
+
+
+
+const { turfId } = useParams();
+const navigate = useNavigate();
+const location = useLocation();
+
+const [searchParams] = useSearchParams();
+
+const selectedSport =
+  searchParams.get("sport") ||
+  location.state?.selectedSport ||
+  "";
+
+
+
+
+////
 
   useEffect(() => {
     if (user) {
@@ -144,6 +170,33 @@ const Bookings = () => {
             {t}
           </button>
         ))}
+      </div>
+
+      <div className="
+        flex items-center justify-between
+        bg-white/5
+        border border-white/10
+        rounded-2xl
+        px-4 py-3
+        mb-4
+      ">
+        <div>
+          <p className="text-xs text-white/50">
+            Sport
+          </p>
+
+          <p className="text-sm font-bold capitalize text-white">
+            {selectedSport}
+          </p>
+        </div>
+
+        <span className="text-2xl">
+          {selectedSport.toLowerCase() === "cricket" && "🏏"}
+          {selectedSport.toLowerCase() === "football" && "⚽"}
+          {selectedSport.toLowerCase() === "badminton" && "🏸"}
+          {selectedSport.toLowerCase() === "tennis" && "🎾"}
+          {selectedSport.toLowerCase() === "basketball" && "🏀"}
+        </span>
       </div>
 
       <div className="px-4 mt-5 flex flex-col gap-4 pb-24">

@@ -1,8 +1,4 @@
-import { useLuxuryTheme } from "@/luxury/LuxuryThemeProvider";
-
 export function VsBadge() {
-  const { themeId } = useLuxuryTheme();
-
   return (
     <div 
       className="relative grid h-16 w-16 place-items-center rounded-full border transition-all duration-300"

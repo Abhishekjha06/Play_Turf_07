@@ -1,18 +1,14 @@
 import { ReactNode } from "react";
-import { useLuxuryTheme } from "@/luxury/LuxuryThemeProvider";
 
 interface MobileShellProps {
   children: ReactNode;
 }
 
 export function MobileShell({ children }: MobileShellProps) {
-  const { themeId } = useLuxuryTheme();
-  const isPremium = themeId === "premium-teal";
-
   return (
     <div
       className="flex min-h-dvh w-full min-w-0 justify-center"
-      style={{ background: isPremium ? "#F1F5F9" : undefined }}
+      style={{ background: "hsl(var(--background))" }}
     >
       {/* Skip to main content link for screen readers / keyboard users */}
       <a
@@ -36,8 +32,6 @@ export function MobileShell({ children }: MobileShellProps) {
           md:shadow-2xl
         "
         style={{
-          background: isPremium ? "#F1F5F9" : undefined,
-          border: isPremium ? "none" : undefined,
           paddingTop: "env(safe-area-inset-top, 0px)",
           paddingBottom: "env(safe-area-inset-bottom, 0px)",
         }}

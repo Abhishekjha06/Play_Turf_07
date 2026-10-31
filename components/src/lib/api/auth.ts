@@ -1,5 +1,6 @@
 import type { User } from "@/data/seed";
 import { getSupabase, withTimeout } from "../supabase";
+import { DEFAULT_AVATAR_ID } from "@/lib/avatars";
 
 export type OtpVerifyPayload = {
   phone: string;
@@ -16,6 +17,7 @@ export function normalizeUser(raw: Partial<User> & { role?: string; user_id?: st
     email: raw.email ?? "",
     name: raw.name ?? "Player",
     picture: raw.picture ?? "",
+    avatar_id: raw.avatar_id ?? DEFAULT_AVATAR_ID,
     is_admin: raw.is_admin ?? (role === "admin" || role === "super_admin"),
     role: role,
   };
@@ -77,7 +79,7 @@ export async function me(): Promise<User | null> {
     const { data: profile } = await withTimeout(
       supabase
         .from("profiles")
-        .select("role, full_name, phone")
+        .select("role, full_name, phone, avatar_id")
         .eq("id", user.id)
         .maybeSingle()
     );
@@ -87,6 +89,7 @@ export async function me(): Promise<User | null> {
       email: user.email || "",
       name: profile?.full_name || user.user_metadata?.full_name || user.user_metadata?.name || "Player",
       picture: user.user_metadata?.avatar_url || user.user_metadata?.picture || "",
+      avatar_id: profile?.avatar_id || DEFAULT_AVATAR_ID,
       is_admin: userRole === "super_admin" || userRole === "admin",
       role: userRole,
     };
@@ -153,4 +156,20 @@ export async function clientLogin(clientId: string, password: string, meGetter: 
 export async function logout(): Promise<void> {
   const supabase = await getSupabase();
   await supabase.auth.signOut();
+}
+
+/**
+ * Persists the selected mascot avatar to the caller's own profile row.
+ * RLS ("Users can update own profile") scopes the write to the signed-in
+ * user — no other profile can be touched.
+ */
+export async function updateAvatar(avatarId: string): Promise<void> {
+  const supabase = await getSupabase();
+  const { data: { user }, error: userError } = await withTimeout(supabase.auth.getUser());
+  if (userError || !user) throw new Error("You need to be signed in to change your avatar.");
+
+  const { error } = await withTimeout(
+    supabase.from("profiles").update({ avatar_id: avatarId }).eq("id", user.id),
+  );
+  if (error) throw error;
 }

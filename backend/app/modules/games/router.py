@@ -366,11 +366,18 @@ def host_game(
     total_amount = turf.price_per_hour * payload.hours
 
     # Check for overlapping bookings (one slot = one owner)
-    if check_booking_overlap(db, turf_id, payload.date, payload.start_time, end_time):
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="One or more slots in this time range are already booked.",
-        )
+    if check_booking_overlap(
+            db,
+            turf.id,
+            payload.date,
+            payload.start_time,
+            end_time,
+            payload.pitch_id,
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="This pitch is already booked for the selected slot.",
+            )
 
     # Generate game code for private games
     game_code: str | None = None

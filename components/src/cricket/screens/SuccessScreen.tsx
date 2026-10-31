@@ -4,11 +4,8 @@ import { useCricketBooking } from "../BookingContext";
 import { TeamAvatar } from "../components/TeamAvatar";
 import { NeonButton } from "../components/NeonButton";
 
-import { useLuxuryTheme } from "@/luxury/LuxuryThemeProvider";
-
 export function SuccessScreen() {
   const { state, teamA, teamB, potentialWin, resetFlow } = useCricketBooking();
-  const { themeId } = useLuxuryTheme();
   const timestamp = state.placedAt ? new Date(state.placedAt) : new Date();
 
   const receipt = [

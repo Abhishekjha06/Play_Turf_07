@@ -152,19 +152,19 @@ export function JoinGameReceipt({ booking, game, playerName, onClose }: JoinGame
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className="rounded-xl overflow-hidden flex flex-col"
-      style={{ backgroundColor: "#0a0a0a", border: "1px solid rgba(255,255,255,0.06)" }}
+      style={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}
     >
       {/* Header */}
-      <div className="relative p-5 text-center" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-        <div className="absolute inset-x-10 top-0 h-0.5 bg-emerald-500/50" />
+      <div className="relative p-5 text-center" style={{ borderBottom: "1px solid hsl(var(--border))" }}>
+        <div className="absolute inset-x-10 top-0 h-0.5 bg-[hsl(var(--primary)/0.5)]" />
         <div className="flex items-center justify-center gap-2 mb-2">
-          <div className="w-8 h-8 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center">
-            <Shield className="h-4 w-4 text-emerald-400" />
+          <div className="w-8 h-8 rounded-full bg-[hsl(var(--primary)/0.10)] border border-[hsl(var(--primary)/0.30)] flex items-center justify-center">
+            <Shield className="h-4 w-4 text-primary" />
           </div>
-          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-400/80">Play Turf</span>
+          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[hsl(var(--primary)/0.8)]">Play Turf</span>
         </div>
-        <h2 className="font-display text-lg font-black text-white">Join Game Receipt</h2>
-        <p className="text-[10px] text-emerald-400/50 mt-1 font-bold">
+        <h2 className="font-display text-lg font-black text-foreground">Join Game Receipt</h2>
+        <p className="text-[10px] text-[hsl(var(--primary)/0.5)] mt-1 font-bold">
           Joined Game hosted by: {game.host_name}
         </p>
       </div>
@@ -172,121 +172,121 @@ export function JoinGameReceipt({ booking, game, playerName, onClose }: JoinGame
       {/* Body */}
       <div className="p-4 space-y-4">
         {/* Receipt ID */}
-        <div className="flex items-center justify-between rounded-lg p-3" style={{ backgroundColor: "#111111" }}>
+        <div className="flex items-center justify-between rounded-lg p-3" style={{ backgroundColor: "hsl(var(--panel-3))" }}>
           <div>
-            <p className="text-[9px] text-white/50 uppercase tracking-wider font-bold">Receipt ID</p>
-            <p className="text-xs font-mono text-white/60 mt-0.5">{booking.payment_id || booking.id}</p>
+            <p className="text-[9px] text-muted2 uppercase tracking-wider font-bold">Receipt ID</p>
+            <p className="text-xs font-mono text-soft mt-0.5">{booking.payment_id || booking.id}</p>
           </div>
           <button
             onClick={handleCopy}
-            className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition"
+            className="p-2 rounded-lg bg-panel-2 hover:bg-panel-3 transition"
           >
-            {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5 text-white/60" />}
+            {copied ? <Check className="h-3.5 w-3.5 text-primary" /> : <Copy className="h-3.5 w-3.5 text-soft" />}
           </button>
         </div>
 
         {/* Player Info */}
-        <div className="rounded-lg p-3 space-y-2" style={{ backgroundColor: "#111111" }}>
-          <p className="text-[9px] text-emerald-400/60 uppercase tracking-wider font-bold">Player Details</p>
+        <div className="rounded-lg p-3 space-y-2" style={{ backgroundColor: "hsl(var(--panel-3))" }}>
+          <p className="text-[9px] text-[hsl(var(--primary)/0.6)] uppercase tracking-wider font-bold">Player Details</p>
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center">
-              <User className="h-4 w-4 text-emerald-400/60" />
+            <div className="w-8 h-8 rounded-full bg-[hsl(var(--primary)/0.10)] flex items-center justify-center">
+              <User className="h-4 w-4 text-[hsl(var(--primary)/0.6)]" />
             </div>
             <div>
-              <p className="text-sm font-bold text-white">{playerName}</p>
-              <p className="text-[10px] text-white/50">Joined Player</p>
+              <p className="text-sm font-bold text-foreground">{playerName}</p>
+              <p className="text-[10px] text-muted2">Joined Player</p>
             </div>
           </div>
         </div>
 
         {/* Host Info */}
-        <div className="rounded-lg p-3 space-y-2" style={{ backgroundColor: "#111111" }}>
-          <p className="text-[9px] text-emerald-400/60 uppercase tracking-wider font-bold">Host Details</p>
+        <div className="rounded-lg p-3 space-y-2" style={{ backgroundColor: "hsl(var(--panel-3))" }}>
+          <p className="text-[9px] text-[hsl(var(--primary)/0.6)] uppercase tracking-wider font-bold">Host Details</p>
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-amber-500/10 flex items-center justify-center">
-              <User className="h-4 w-4 text-amber-400/60" />
+            <div className="w-8 h-8 rounded-full bg-[hsl(var(--primary)/0.10)] flex items-center justify-center">
+              <User className="h-4 w-4 text-[hsl(var(--primary)/0.6)]" />
             </div>
             <div>
-              <p className="text-sm font-bold text-white">{game.host_name}</p>
-              <p className="text-[10px] text-white/50">Game Host</p>
+              <p className="text-sm font-bold text-foreground">{game.host_name}</p>
+              <p className="text-[10px] text-muted2">Game Host</p>
             </div>
           </div>
         </div>
 
         {/* Venue Info */}
-        <div className="rounded-lg p-3 space-y-2.5" style={{ backgroundColor: "#111111" }}>
-          <p className="text-[9px] text-emerald-400/60 uppercase tracking-wider font-bold">Venue Details</p>
+        <div className="rounded-lg p-3 space-y-2.5" style={{ backgroundColor: "hsl(var(--panel-3))" }}>
+          <p className="text-[9px] text-[hsl(var(--primary)/0.6)] uppercase tracking-wider font-bold">Venue Details</p>
           <div className="space-y-2 text-xs">
             <div className="flex items-center justify-between">
-              <span className="text-white/60 flex items-center gap-1.5"><MapPin className="h-3 w-3" /> Turf</span>
-              <span className="text-white/80 font-semibold text-right">{booking.turf_name}</span>
+              <span className="text-soft flex items-center gap-1.5"><MapPin className="h-3 w-3" /> Turf</span>
+              <span className="text-foreground font-semibold text-right">{booking.turf_name}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-white/60 flex items-center gap-1.5"><Calendar className="h-3 w-3" /> Sport</span>
-              <span className="text-white/80 font-semibold">{game.sport}</span>
+              <span className="text-soft flex items-center gap-1.5"><Calendar className="h-3 w-3" /> Sport</span>
+              <span className="text-foreground font-semibold">{game.sport}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-white/60 flex items-center gap-1.5"><MapPin className="h-3 w-3" /> Address</span>
-              <span className="text-white/80 font-semibold text-right max-w-[60%]">{game.venue}</span>
+              <span className="text-soft flex items-center gap-1.5"><MapPin className="h-3 w-3" /> Address</span>
+              <span className="text-foreground font-semibold text-right max-w-[60%]">{game.venue}</span>
             </div>
           </div>
         </div>
 
         {/* Schedule */}
-        <div className="rounded-lg p-3 space-y-2.5" style={{ backgroundColor: "#111111" }}>
-          <p className="text-[9px] text-emerald-400/60 uppercase tracking-wider font-bold">Schedule</p>
+        <div className="rounded-lg p-3 space-y-2.5" style={{ backgroundColor: "hsl(var(--panel-3))" }}>
+          <p className="text-[9px] text-[hsl(var(--primary)/0.6)] uppercase tracking-wider font-bold">Schedule</p>
           <div className="space-y-2 text-xs">
             <div className="flex items-center justify-between">
-              <span className="text-white/60 flex items-center gap-1.5"><Calendar className="h-3 w-3" /> Date</span>
-              <span className="text-white/80 font-semibold">{formatDate(booking.date)}</span>
+              <span className="text-soft flex items-center gap-1.5"><Calendar className="h-3 w-3" /> Date</span>
+              <span className="text-foreground font-semibold">{formatDate(booking.date)}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-white/60 flex items-center gap-1.5"><Clock className="h-3 w-3" /> Time</span>
-              <span className="text-white/80 font-semibold">{formatTime(booking.start_time)} — {formatTime(booking.end_time)}</span>
+              <span className="text-soft flex items-center gap-1.5"><Clock className="h-3 w-3" /> Time</span>
+              <span className="text-foreground font-semibold">{formatTime(booking.start_time)} — {formatTime(booking.end_time)}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-white/60 flex items-center gap-1.5"><Timer className="h-3 w-3" /> Slot</span>
-              <span className="text-white/80 font-semibold">{Math.round(game.slots_total / 2)}-a-side</span>
+              <span className="text-soft flex items-center gap-1.5"><Timer className="h-3 w-3" /> Slot</span>
+              <span className="text-foreground font-semibold">{Math.round(game.slots_total / 2)}-a-side</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-white/60 flex items-center gap-1.5"><Timer className="h-3 w-3" /> Duration</span>
-              <span className="text-white/80 font-semibold">{booking.hours} hour(s)</span>
+              <span className="text-soft flex items-center gap-1.5"><Timer className="h-3 w-3" /> Duration</span>
+              <span className="text-foreground font-semibold">{booking.hours} hour(s)</span>
             </div>
           </div>
         </div>
 
         {/* Payment */}
-        <div className="rounded-lg p-3 space-y-2.5" style={{ backgroundColor: "#111111" }}>
-          <p className="text-[9px] text-emerald-400/60 uppercase tracking-wider font-bold">Payment</p>
+        <div className="rounded-lg p-3 space-y-2.5" style={{ backgroundColor: "hsl(var(--panel-3))" }}>
+          <p className="text-[9px] text-[hsl(var(--primary)/0.6)] uppercase tracking-wider font-bold">Payment</p>
           <div className="space-y-2 text-xs">
             <div className="flex items-center justify-between">
-              <span className="text-white/60 flex items-center gap-1.5"><CreditCard className="h-3 w-3" /> Amount Paid</span>
-              <span className="text-emerald-400 font-black text-sm">₹{booking.amount.toLocaleString("en-IN")}</span>
+              <span className="text-soft flex items-center gap-1.5"><CreditCard className="h-3 w-3" /> Amount Paid</span>
+              <span className="text-primary font-black text-sm">₹{booking.amount.toLocaleString("en-IN")}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-white/60 flex items-center gap-1.5"><Shield className="h-3 w-3" /> Payment Status</span>
-              <span className="text-emerald-400 font-semibold">{booking.status}</span>
+              <span className="text-soft flex items-center gap-1.5"><Shield className="h-3 w-3" /> Payment Status</span>
+              <span className="text-primary font-semibold">{booking.status}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-white/60 flex items-center gap-1.5"><Shield className="h-3 w-3" /> Booking Status</span>
-              <span className="text-emerald-400 font-semibold">{booking.status}</span>
+              <span className="text-soft flex items-center gap-1.5"><Shield className="h-3 w-3" /> Booking Status</span>
+              <span className="text-primary font-semibold">{booking.status}</span>
             </div>
           </div>
         </div>
 
         {/* Player Count */}
-        <div className="rounded-lg p-3" style={{ backgroundColor: "#111111" }}>
+        <div className="rounded-lg p-3" style={{ backgroundColor: "hsl(var(--panel-3))" }}>
           <div className="flex items-center justify-between text-xs">
-            <span className="text-white/60 flex items-center gap-1.5"><Users className="h-3 w-3" /> Players Joined</span>
-            <span className="text-emerald-400 font-semibold">{game.slots_filled} / {game.slots_total}</span>
+            <span className="text-soft flex items-center gap-1.5"><Users className="h-3 w-3" /> Players Joined</span>
+            <span className="text-primary font-semibold">{game.slots_filled} / {game.slots_total}</span>
           </div>
-          <div className="w-full h-1.5 rounded-full mt-2" style={{ backgroundColor: "#1a1a1a" }}>
+          <div className="w-full h-1.5 rounded-full mt-2" style={{ backgroundColor: "hsl(var(--panel-2))" }}>
             <div
-              className="h-full rounded-full bg-emerald-500/60"
+              className="h-full rounded-full bg-[hsl(var(--primary)/0.6)]"
               style={{ width: `${(game.slots_filled / game.slots_total) * 100}%` }}
             />
           </div>
-          <p className="text-[10px] text-white/50 mt-1 text-right">
+          <p className="text-[10px] text-muted2 mt-1 text-right">
             {game.slots_total - game.slots_filled} spots remaining
           </p>
         </div>
@@ -296,7 +296,7 @@ export function JoinGameReceipt({ booking, game, playerName, onClose }: JoinGame
           <button
             onClick={() => setShowTicket(true)}
             className="py-2.5 rounded-lg font-bold text-[10px] uppercase tracking-wider flex items-center justify-center gap-1.5 transition"
-            style={{ background: "linear-gradient(135deg, #14b8a6, #0d9488)", color: "#ffffff", border: "none" }}
+            style={{ background: "var(--gradient-neon)", color: "hsl(var(--primary-foreground))", border: "none" }}
           >
             <Ticket className="h-3.5 w-3.5" /> Ticket
           </button>
@@ -304,7 +304,7 @@ export function JoinGameReceipt({ booking, game, playerName, onClose }: JoinGame
             <button
               onClick={onClose}
               className="py-2.5 rounded-lg font-bold text-[10px] uppercase tracking-wider flex items-center justify-center gap-1.5 transition"
-              style={{ backgroundColor: "rgba(34,197,94,0.15)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.2)" }}
+              style={{ backgroundColor: "hsl(var(--color-success-surface))", color: "hsl(var(--success))", border: "1px solid hsl(var(--success) / 0.2)" }}
             >
               Done
             </button>
@@ -312,12 +312,12 @@ export function JoinGameReceipt({ booking, game, playerName, onClose }: JoinGame
         </div>
 
         {/* Footer */}
-        <div className="text-center pt-2" style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
-          <p className="text-[9px] text-white/50 uppercase tracking-wider font-bold">© 2026 Play Turf — All Rights Reserved</p>
+        <div className="text-center pt-2" style={{ borderTop: "1px solid hsl(var(--border) / 0.5)" }}>
+          <p className="text-[9px] text-muted2 uppercase tracking-wider font-bold">© 2026 Play Turf — All Rights Reserved</p>
           <div className="flex justify-center gap-3 mt-1">
-            <span className="text-[8px] text-white/15">Terms</span>
-            <span className="text-[8px] text-white/15">Privacy</span>
-            <span className="text-[8px] text-white/15">Support</span>
+            <span className="text-[8px] text-muted2 opacity-60">Terms</span>
+            <span className="text-[8px] text-muted2 opacity-60">Privacy</span>
+            <span className="text-[8px] text-muted2 opacity-60">Support</span>
           </div>
         </div>
       </div>

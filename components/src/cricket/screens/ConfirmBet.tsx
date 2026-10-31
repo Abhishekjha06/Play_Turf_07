@@ -8,8 +8,6 @@ import { TeamAvatar } from "../components/TeamAvatar";
 import { NeonButton } from "../components/NeonButton";
 import { VsBadge } from "../components/VsBadge";
 
-import { useLuxuryTheme } from "@/luxury/LuxuryThemeProvider";
-
 const methods: Array<{ value: PaymentMethod; label: string; icon: typeof Smartphone }> = [
   { value: "UPI", label: "Fake UPI", icon: Smartphone },
   { value: "Card", label: "Card", icon: CreditCard },
@@ -18,7 +16,6 @@ const methods: Array<{ value: PaymentMethod; label: string; icon: typeof Smartph
 
 export function ConfirmBet() {
   const { state, teamA, teamB, potentialWin, setStep, setPaymentMethod, completeBooking } = useCricketBooking();
-  const { themeId } = useLuxuryTheme();
   const [loading, setLoading] = useState(false);
 
   const confirm = async () => {

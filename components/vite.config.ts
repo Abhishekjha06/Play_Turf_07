@@ -58,6 +58,7 @@ export default defineConfig(({ mode }) => ({
       registerType: "autoUpdate",
       strategies: "generateSW",
       workbox: {
+        importScripts: ["push-sw.js"],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         navigateFallback: "/index.html",
         navigateFallbackDenylist: [/^\/api/, /^\/admin/, /^\/client\/login/],

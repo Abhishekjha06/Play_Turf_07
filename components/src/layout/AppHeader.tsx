@@ -1,10 +1,8 @@
 import { Bell, MapPin, Search, X } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
-import { useLuxuryTheme } from "@/luxury/LuxuryThemeProvider";
+import { MascotAvatar } from "@/ui/MascotAvatar";
 import { CoolThemeToggle } from "@/ui/CoolThemeToggle";
-import { Avatar, AvatarImage } from "@/ui/avatar";
-import { AvatarPicker } from "@/ui/AvatarPicker";
 import { useState, useEffect, useMemo } from "react";
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import { fadeSlideDown } from "@/lib/motion";
@@ -23,37 +21,23 @@ import {
 
 export function AppHeader() {
   const { user } = useAuth();
-  const [isAvatarPickerOpen, setIsAvatarPickerOpen] = useState(false);
 
-  return (
-    <CollapsingHeader
-      user={user}
-      isAvatarPickerOpen={isAvatarPickerOpen}
-      setIsAvatarPickerOpen={setIsAvatarPickerOpen}
-    />
-  );
+  return <CollapsingHeader user={user} />;
 }
 
 /* ─── Collapsing Header ─────────────────────────────────────────────── */
 
 function CollapsingHeader({
   user,
-  isAvatarPickerOpen,
-  setIsAvatarPickerOpen,
 }: {
   user: any;
-  isAvatarPickerOpen: boolean;
-  setIsAvatarPickerOpen: (v: boolean) => void;
 }) {
   const { scrollY } = useScroll();
-  const { themeId } = useLuxuryTheme();
   const navigate = useNavigate();
-  
-  const isPremiumTeal = themeId === "premium-teal";
-  const accentColor = isPremiumTeal ? "#14B8B0" : "#00E676";
-  const bgGradient = isPremiumTeal
-    ? "linear-gradient(135deg, #0F172A 0%, #0E4F5F 30%, #14B8B0 70%, #0F172A 100%)"
-    : "linear-gradient(135deg, #000000 0%, #090909 30%, #004D26 70%, #000000 100%)";
+
+  // Header gradient + accent come from the active theme's tokens. The header
+  // keeps its dark cinematic look in BOTH themes (white artwork is a constant).
+  const bgGradient = "var(--header-gradient)";
 
   // Interpolate header height from 300px down to 80px over a scroll distance of 220px
   const headerHeight = useTransform(scrollY, [0, 220], [300, 80]);
@@ -191,7 +175,7 @@ function CollapsingHeader({
                   }}
                 >
                   play
-                  <span style={{ color: accentColor }}>_Turf</span>
+                  <span style={{ color: "hsl(var(--primary))" }}>_Turf</span>
                 </h1>
                 <motion.p
                   className="text-xs"
@@ -237,10 +221,10 @@ function CollapsingHeader({
                 {unreadCount > 0 && (
                   <span
                     className={cn(
-                      "absolute -top-1 -right-1 h-4 w-4 rounded-full text-xs font-black grid place-items-center text-white border border-[#0f172a]",
+                      "absolute -top-1 -right-1 h-4 w-4 rounded-full text-xs font-black grid place-items-center text-white border border-black/40",
                       isBlinking ? "animate-bounce" : ""
                     )}
-                    style={{ background: accentColor }}
+                    style={{ background: "hsl(var(--primary))" }}
                   >
                     {unreadCount}
                   </span>
@@ -249,17 +233,16 @@ function CollapsingHeader({
 
               <motion.button
                 whileTap={{ scale: 0.9 }}
-                onClick={() => setIsAvatarPickerOpen(true)}
-                aria-label="Profile"
+                onClick={() => navigate("/avatar")}
+                aria-label="Profile — choose your avatar"
                 className="rounded-full"
                 data-testid="header-avatar"
               >
-                <Avatar
-                  className="h-9 w-9 cursor-pointer"
-                  style={{ border: "2px solid rgba(255,255,255,0.35)" }}
-                >
-                  <AvatarImage src={user?.picture} alt={user?.name || "User"} />
-                </Avatar>
+                <MascotAvatar
+                  avatarId={user?.avatar_id}
+                  className="h-9 w-9 cursor-pointer border-2 border-white/35"
+                  alt={user?.name || "Your mascot"}
+                />
               </motion.button>
             </div>
           </div>
@@ -280,7 +263,7 @@ function CollapsingHeader({
               {user?.name?.split(" ")[0] || "Player"} 👋
             </p>
             <div className="flex items-center gap-1.5">
-              <MapPin className="h-4 w-4" style={{ color: accentColor }} />
+              <MapPin className="h-4 w-4" style={{ color: "hsl(var(--primary))" }} />
               <p className="text-base font-semibold" style={{ color: "white" }}>
                 Find your perfect turf
               </p>
@@ -297,10 +280,6 @@ function CollapsingHeader({
         </div>
       </motion.header>
       <div style={{ height: "300px" }} aria-hidden />
-      <AvatarPicker
-        open={isAvatarPickerOpen}
-        onClose={() => setIsAvatarPickerOpen(false)}
-      />
 
       {/* Notifications Drawer */}
       <AnimatePresence>
@@ -323,9 +302,9 @@ function CollapsingHeader({
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
               className="fixed right-0 top-0 bottom-0 z-50 w-[85%] max-w-[400px] border-l backdrop-blur-xl flex flex-col"
               style={{
-                backgroundColor: "var(--card-bg, #1e1e1e)",
-                borderColor: "var(--border-primary, #333)",
-                boxShadow: "var(--shadow-primary, 0 10px 30px rgba(0,0,0,0.5))"
+                backgroundColor: "var(--card-bg)",
+                borderColor: "var(--border-primary)",
+                boxShadow: "var(--shadow-primary)"
               }}
             >
               {/* Header */}
@@ -338,7 +317,7 @@ function CollapsingHeader({
                 </div>
                 <button
                   onClick={() => setIsNotifOpen(false)}
-                  className="p-1.5 hover:bg-white/10 rounded-full cursor-pointer text-muted-foreground hover:text-foreground transition border-none"
+                  className="p-1.5 hover:bg-panel-2 rounded-full cursor-pointer text-muted-foreground hover:text-foreground transition border-none"
                   style={{ backgroundColor: "transparent" }}
                 >
                   <X className="h-5 w-5" />
@@ -355,7 +334,7 @@ function CollapsingHeader({
                       "px-2.5 py-1 text-xs font-black uppercase tracking-wider rounded-full shrink-0 cursor-pointer border transition",
                       activeFilter === cat
                         ? "bg-primary border-transparent text-primary-foreground"
-                        : "bg-white/5 border-white/5 text-muted-foreground hover:text-foreground"
+                        : "bg-panel-2 border-border text-muted-foreground hover:text-foreground"
                     )}
                   >
                     {cat}
@@ -364,7 +343,7 @@ function CollapsingHeader({
               </div>
 
               {/* Actions */}
-              <div className="px-4.5 py-2.5 bg-white/5 flex items-center justify-between text-xs font-extrabold uppercase tracking-wider">
+              <div className="px-4.5 py-2.5 bg-panel-2 flex items-center justify-between text-xs font-extrabold uppercase tracking-wider">
                 <button
                   onClick={() => {
                     markAllAsRead();
@@ -379,7 +358,7 @@ function CollapsingHeader({
                     clearNotifications();
                     toast.info("Notifications cleared");
                   }}
-                  className="text-red-400 hover:underline cursor-pointer border-none bg-transparent"
+                  className="text-destructive hover:underline cursor-pointer border-none bg-transparent"
                 >
                   Clear all
                 </button>
@@ -411,17 +390,17 @@ function CollapsingHeader({
                         }}
                         className={cn(
                           "p-3.5 rounded-2xl border text-left transition relative cursor-pointer",
-                          notif.isRead ? "border-white/5 bg-white/5 opacity-80" : "border-primary/20 bg-primary/5 hover:bg-primary/10"
+                          notif.isRead ? "border-border bg-panel-2 opacity-80" : "border-primary/20 bg-primary/5 hover:bg-primary/10"
                         )}
                         style={{
                           borderColor: notif.isRead ? "var(--border-primary)" : undefined
                         }}
                       >
                         {!notif.isRead && (
-                          <span className="absolute top-3.5 right-3.5 h-1.5 w-1.5 rounded-full animate-pulse" style={{ backgroundColor: accentColor }} />
+                          <span className="absolute top-3.5 right-3.5 h-1.5 w-1.5 rounded-full animate-pulse" style={{ backgroundColor: "hsl(var(--primary))" }} />
                         )}
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-black uppercase tracking-wider px-2 py-0.5 rounded bg-white/10 text-foreground">
+                          <span className="text-xs font-black uppercase tracking-wider px-2 py-0.5 rounded bg-panel-3 text-foreground">
                             {notif.type.replace("_", " ")}
                           </span>
                           <span className="text-xs text-muted-foreground">
@@ -461,19 +440,19 @@ function CollapsingHeader({
               exit={{ opacity: 0, scale: 0.95, y: "-40%", x: "-50%" }}
               className="fixed left-1/2 top-1/2 z-[70] w-[90%] max-w-[400px] sm:max-w-[420px] md:max-w-[480px] rounded-[2rem] border overflow-hidden p-5 space-y-4 text-left"
               style={{
-                backgroundColor: "var(--card-bg, #1a1a1a)",
-                borderColor: "var(--border-primary, #333)",
+                backgroundColor: "var(--card-bg)",
+                borderColor: "var(--border-primary)",
                 boxShadow: "0 20px 50px rgba(0,0,0,0.6)"
               }}
             >
               {/* Header */}
-              <div className="flex items-center justify-between border-b border-white/5 pb-3">
-                <span className="text-xs font-black uppercase tracking-widest px-2.5 py-0.5 rounded bg-white/10 text-foreground">
+              <div className="flex items-center justify-between border-b border-border pb-3">
+                <span className="text-xs font-black uppercase tracking-widest px-2.5 py-0.5 rounded bg-panel-3 text-foreground">
                   {selectedNotifForDetail.type.replace("_", " ")}
                 </span>
                 <button
                   onClick={() => setSelectedNotifForDetail(null)}
-                  className="p-1 hover:bg-white/10 rounded-full cursor-pointer text-muted-foreground hover:text-foreground transition border-none"
+                  className="p-1 hover:bg-panel-2 rounded-full cursor-pointer text-muted-foreground hover:text-foreground transition border-none"
                   style={{ backgroundColor: "transparent" }}
                 >
                   <X className="h-5 w-5" />
@@ -482,7 +461,7 @@ function CollapsingHeader({
 
               {/* Banner */}
               {selectedNotifForDetail.bannerImage && (
-                <div className="w-full h-40 rounded-2xl overflow-hidden border border-white/10 bg-black/20">
+                <div className="w-full h-40 rounded-2xl overflow-hidden border border-border bg-panel-2">
                   <img src={selectedNotifForDetail.bannerImage} alt="Banner" className="w-full h-full object-cover" />
                 </div>
               )}
@@ -502,18 +481,18 @@ function CollapsingHeader({
                 const isExpired = selectedNotifForDetail.expiryDate && new Date(selectedNotifForDetail.expiryDate).getTime() < Date.now();
                 return (
                   <div className="space-y-4 text-left">
-                    <div className="border border-white/5 p-3 rounded-xl bg-white/5 space-y-1.5 text-xs font-semibold text-muted-foreground">
+                    <div className="border border-border p-3 rounded-xl bg-panel-2 space-y-1.5 text-xs font-semibold text-muted-foreground">
                       <div className="flex justify-between items-center">
                         <span>Valid Until:</span>
-                        <span className={cn("font-bold", isExpired ? "text-red-400" : "text-foreground")}>
+                        <span className={cn("font-bold", isExpired ? "text-destructive" : "text-foreground")}>
                           {selectedNotifForDetail.expiryDate
                             ? new Date(selectedNotifForDetail.expiryDate).toLocaleString()
                             : "N/A"}
                         </span>
                       </div>
                       {isExpired && (
-                        <div className="text-xs text-red-400 font-extrabold uppercase tracking-wide flex items-center gap-1.5 pt-1 border-t border-white/5 mt-1">
-                          <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-ping" />
+                        <div className="text-xs text-destructive font-extrabold uppercase tracking-wide flex items-center gap-1.5 pt-1 border-t border-border mt-1">
+                          <span className="h-1.5 w-1.5 rounded-full bg-destructive animate-ping" />
                           Offer Expired. This promotion is no longer available.
                         </div>
                       )}
@@ -542,7 +521,7 @@ function CollapsingHeader({
                       className={cn(
                         "w-full py-3 rounded-2xl text-xs font-black uppercase tracking-wider shadow-neon border-none cursor-pointer text-center block transition",
                         isExpired
-                          ? "bg-zinc-800 text-zinc-500 shadow-none cursor-not-allowed"
+                          ? "bg-panel-3 text-muted-foreground shadow-none cursor-not-allowed"
                           : "bg-gradient-neon text-primary-foreground"
                       )}
                     >
@@ -562,10 +541,6 @@ function CollapsingHeader({
 function HeaderSearchBar() {
   const [q, setQ] = useState("");
   const navigate = useNavigate();
-  const { themeId } = useLuxuryTheme();
-  
-  const isPremiumTeal = themeId === "premium-teal";
-  const focusRingGlow = isPremiumTeal ? "rgba(20,184,176,0.45)" : "rgba(0,230,118,0.45)";
 
   return (
     <form
@@ -581,9 +556,9 @@ function HeaderSearchBar() {
       }}
     >
       <motion.label
-        whileFocusWithin={{ scale: 1.015, boxShadow: `0 0 0 2px ${focusRingGlow}` }}
+        whileFocusWithin={{ scale: 1.015 }}
         transition={{ duration: 0.2 }}
-        className="flex items-center gap-3 px-5 cursor-text"
+        className="flex items-center gap-3 px-5 cursor-text focus-within:shadow-[0_0_0_2px_hsl(var(--primary)/0.45)]"
         style={{
           height: "56px",
           background: "rgba(255,255,255,0.15)",

@@ -11,36 +11,49 @@ export default function AuthCallbackRoute() {
       let redirectUrl = "/";
       try {
         const supabase = await getSupabase();
-        if (supabase) {
-          // 1. If Supabase returned an auth code in the URL, exchange it first.
-          const params = new URLSearchParams(window.location.search);
-          const code = params.get("code");
-          if (code) {
+        const code = new URLSearchParams(window.location.search).get("code");
+
+        // The client consumes the ?code= itself (detectSessionInUrl: true).
+        // Await its own session recovery first: getSession() resolves after
+        // client initialization, and we give an in-flight URL exchange a brief
+        // grace period before considering a manual exchange.
+        let session = (await supabase.auth.getSession()).data.session;
+        if (!session && code) {
+          await new Promise((resolve) => setTimeout(resolve, 400));
+          session = (await supabase.auth.getSession()).data.session;
+        }
+
+        // Manual exchange only as a fallback, isolated in its own try/catch so
+        // an already-consumed code can't abort the rest of the callback.
+        if (!session && code) {
+          try {
             await supabase.auth.exchangeCodeForSession(code);
+          } catch (exchangeErr) {
+            console.warn("Manual code exchange failed (likely already consumed):", exchangeErr);
           }
+        }
 
-          // 2. Refresh local auth store so every subscriber sees the user
-          await refreshUser();
+        // Refresh local auth store so every subscriber sees the user
+        await refreshUser();
 
-          const { data, error } = await withTimeout(supabase.auth.getSession());
-          if (data.session) {
-            // Fetch profile and check role
-            const { data: profile } = await withTimeout(
-              supabase
-                .from("profiles")
-                .select("role")
-                .eq("id", data.session.user.id)
-                .single()
-            );
+        const { data } = await withTimeout(supabase.auth.getSession());
+        if (data.session) {
+          // Fetch profile and check role
+          const { data: profile } = await withTimeout(
+            supabase
+              .from("profiles")
+              .select("role")
+              .eq("id", data.session.user.id)
+              .maybeSingle()
+          );
 
-            if (profile?.role === "super_admin") {
-              redirectUrl = "/admin";
-            } else {
-              const savedRedirect = localStorage.getItem("play_turf_post_login_redirect");
-              if (savedRedirect) {
-                redirectUrl = savedRedirect;
-                localStorage.removeItem("play_turf_post_login_redirect");
-              }
+          if (profile?.role === "super_admin") {
+            redirectUrl = "/admin";
+          } else {
+            const savedRedirect = localStorage.getItem("play_turf_post_login_redirect");
+            if (savedRedirect) {
+              redirectUrl = savedRedirect;
+              localStorage.removeItem("play_turf_post_login_redirect");
             }
           }
         }
@@ -49,7 +62,7 @@ export default function AuthCallbackRoute() {
       }
       navigate(redirectUrl, { replace: true });
     };
-    
+
     processAuth();
   }, [navigate]);
 

@@ -1,6 +1,6 @@
 import { ChangeEvent, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Download, Plus, Save, Trash2, Upload, Lock, Unlock } from "lucide-react";
+import { Download, Plus, Save, Trash2, Upload, Lock, Unlock, X } from "lucide-react";
 import { toast } from "sonner";
 import { MobileShell } from "@/layout/MobileShell";
 import { BackButton } from "@/layout/BackButton";
@@ -10,6 +10,7 @@ import type { Banner, Booking, Offer, Tournament, Turf } from "@/data/seed";
 import { cn } from "@/lib/utils";
 import { getLockedAccounts, resetLockout, getTimeUntilUnlocked, formatTimeRemaining } from "@/lib/admin-attempt-tracker";
 import { FeedbackDashboard } from "./admin/FeedbackDashboard";
+import { BannerManager } from "./admin/BannerManager";
 import { BetaTestingDashboard } from "./admin/BetaTestingDashboard";
 import { SystemHealthDashboard } from "./admin/SystemHealthDashboard";
 import { getNotifications, adminCreateNotification, adminEditNotification, adminDeleteNotification, type AppNotification, type NotificationType } from "@/lib/notifications";
@@ -237,7 +238,7 @@ const Admin = () => {
               onClick={() => setTab(t)}
               className={cn(
                 "shrink-0 rounded-full border px-3 py-2 text-xs font-semibold capitalize",
-                tab === t ? "border-primary bg-primary text-primary-foreground shadow-neon" : "border-white/5 bg-panel-2 text-soft",
+                tab === t ? "border-primary bg-primary text-primary-foreground shadow-neon" : "border-border bg-panel-2 text-soft",
               )}
               data-testid={`admin-tab-${t}`}
             >
@@ -280,7 +281,7 @@ const Admin = () => {
             </>
           )}
 
-          {tab === "banners" && <SimpleList items={banners} kind="banner" refresh={refresh} />}
+          {tab === "banners" && <BannerManager banners={banners} refresh={refresh} />}
           {tab === "offers" && <SimpleList items={offers} kind="offer" refresh={refresh} />}
           {tab === "tournaments" && <SimpleList items={tournaments} kind="tournament" refresh={refresh} />}
           {tab === "bookings" && (
@@ -302,7 +303,7 @@ const Admin = () => {
           {tab === "notifications" && (
             <div className="space-y-4 text-left">
               {/* Create/Edit Form */}
-              <div className="card-panel rounded-3xl p-5 border border-white/5 space-y-4" style={{ backgroundColor: "var(--bg-secondary)" }}>
+              <div className="card-panel rounded-3xl p-5 border border-border space-y-4" style={{ backgroundColor: "var(--bg-secondary)" }}>
                 <h3 className="text-sm font-extrabold uppercase tracking-wider text-primary font-display">
                   {notifEditingId ? "Edit Notification" : "Create Promotional Notification"}
                 </h3>
@@ -317,7 +318,7 @@ const Admin = () => {
                       <select
                         value={notifType}
                         onChange={(e) => setNotifType(e.target.value as NotificationType)}
-                        className="mt-1 h-11 w-full rounded-2xl border border-white/10 bg-background px-3 text-sm outline-none text-foreground cursor-pointer"
+                        className="mt-1 h-11 w-full rounded-2xl border border-border bg-background px-3 text-sm outline-none text-foreground cursor-pointer"
                       >
                         <option value="promotional_offer">Promotional Offer</option>
                         <option value="discount_coupon">Discount Coupon</option>
@@ -334,7 +335,7 @@ const Admin = () => {
                       <select
                         value={notifTargetAudience}
                         onChange={(e) => setNotifTargetAudience(e.target.value)}
-                        className="mt-1 h-11 w-full rounded-2xl border border-white/10 bg-background px-3 text-sm outline-none text-foreground cursor-pointer"
+                        className="mt-1 h-11 w-full rounded-2xl border border-border bg-background px-3 text-sm outline-none text-foreground cursor-pointer"
                       >
                         <option value="All Users">All Users</option>
                         <option value="Selected Users">Selected Users</option>
@@ -355,19 +356,19 @@ const Admin = () => {
                         type="datetime-local"
                         value={notifExpiryDate ? notifExpiryDate.slice(0, 16) : ""}
                         onChange={(e) => setNotifExpiryDate(e.target.value ? new Date(e.target.value).toISOString() : "")}
-                        className="mt-1 h-11 w-full rounded-2xl border border-white/10 bg-background px-3 text-sm outline-none text-foreground cursor-pointer"
+                        className="mt-1 h-11 w-full rounded-2xl border border-border bg-background px-3 text-sm outline-none text-foreground cursor-pointer"
                       />
                     </label>
                   </div>
 
-                  <div className="border border-white/5 p-3.5 rounded-2xl bg-white/5 space-y-3">
+                  <div className="border-border p-3.5 rounded-2xl bg-panel-2 space-y-3">
                     <div className="flex items-center gap-2">
                       <input
                         type="checkbox"
                         id="schedule-toggle"
                         checked={isScheduled}
                         onChange={(e) => setIsScheduled(e.target.checked)}
-                        className="rounded border-white/10 bg-background h-4 w-4 cursor-pointer"
+                        className="rounded border-border bg-background h-4 w-4 cursor-pointer"
                       />
                       <label htmlFor="schedule-toggle" className="text-xs font-semibold text-foreground cursor-pointer select-none">
                         Schedule for later
@@ -380,7 +381,7 @@ const Admin = () => {
                           type="datetime-local"
                           value={scheduleTime}
                           onChange={(e) => setScheduleTime(e.target.value)}
-                          className="mt-1 h-11 w-full rounded-2xl border border-white/10 bg-background px-3 text-sm outline-none text-foreground cursor-pointer"
+                          className="mt-1 h-11 w-full rounded-2xl border border-border bg-background px-3 text-sm outline-none text-foreground cursor-pointer"
                         />
                       </label>
                     )}
@@ -389,7 +390,7 @@ const Admin = () => {
                   <div>
                     <span className="text-[11px] font-semibold uppercase tracking-wider text-muted2 block mb-1">Banner Image (Optional)</span>
                     {notifBanner && (
-                      <div className="mb-2 relative w-full h-32 rounded-2xl overflow-hidden border border-white/10 bg-black/40">
+                      <div className="mb-2 relative w-full h-32 rounded-2xl overflow-hidden border border-border bg-black/40">
                         <img src={notifBanner} alt="Preview" className="w-full h-full object-cover" />
                         <button
                           onClick={() => setNotifBanner("")}
@@ -399,7 +400,7 @@ const Admin = () => {
                         </button>
                       </div>
                     )}
-                    <label className="pressable block rounded-2xl border border-white/10 bg-panel-2 py-3 text-center text-xs font-semibold cursor-pointer hover:bg-white/5 transition">
+                    <label className="pressable block rounded-2xl border border-border bg-panel-2 py-3 text-center text-xs font-semibold cursor-pointer hover:bg-panel-3 transition">
                       Upload Banner Photo
                       <input
                         type="file"
@@ -435,7 +436,7 @@ const Admin = () => {
                         setNotifExpiryDate("");
                         setIsScheduled(false);
                       }}
-                      className="pressable flex-1 rounded-full border border-white/10 bg-panel-2 py-3 font-semibold cursor-pointer"
+                      className="pressable flex-1 rounded-full border border-border bg-panel-2 py-3 font-semibold cursor-pointer"
                     >
                       Cancel
                     </button>
@@ -452,20 +453,20 @@ const Admin = () => {
                   adminNotifs.map((n) => {
                     const isExpired = n.expiryDate && new Date(n.expiryDate).getTime() < Date.now();
                     return (
-                      <div key={n.id} className="card-panel rounded-2xl p-3.5 border border-white/5 flex items-start gap-3 relative" style={{ backgroundColor: "var(--card-bg)" }}>
+                      <div key={n.id} className="card-panel rounded-2xl p-3.5 border border-border flex items-start gap-3 relative" style={{ backgroundColor: "var(--card-bg)" }}>
                         {n.bannerImage && (
                           <img src={n.bannerImage} alt="" className="h-12 w-12 rounded-xl object-cover flex-shrink-0" />
                         )}
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-white/10 text-foreground">
+                            <span className="text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-panel-3 text-foreground">
                               {n.type.replace("_", " ")}
                             </span>
                             <span className="text-[9px] text-muted-foreground">
                               Target: {n.targetAudience || "All Users"}
                             </span>
                             {isExpired && (
-                              <span className="text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-red-950/40 text-red-400 border border-red-500/30">
+                              <span className="text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-[hsl(var(--destructive)/0.12)] text-destructive border border-[hsl(var(--destructive)/0.3)]">
                                 Expired
                               </span>
                             )}
@@ -487,13 +488,13 @@ const Admin = () => {
                         <div className="flex flex-col gap-2 flex-shrink-0">
                           <button
                             onClick={() => handleEditNotif(n)}
-                            className="pressable h-8 px-2.5 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-xs font-semibold cursor-pointer text-foreground"
+                            className="pressable h-8 px-2.5 rounded-lg border border-border bg-panel-2 hover:bg-panel-3 text-xs font-semibold cursor-pointer text-foreground"
                           >
                             Edit
                           </button>
                           <button
                             onClick={() => handleDeleteNotif(n.id)}
-                            className="pressable h-8 w-8 rounded-lg grid place-items-center bg-red-950/40 border border-red-500/20 text-red-400 hover:bg-red-900/40 cursor-pointer border-none"
+                            className="pressable h-8 w-8 rounded-lg grid place-items-center bg-[hsl(var(--destructive)/0.12)] border border-[hsl(var(--destructive)/0.2)] text-destructive hover:bg-[hsl(var(--destructive)/0.2)] cursor-pointer border-none"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </button>
@@ -512,7 +513,7 @@ const Admin = () => {
 
         {tab === "security" && (
           <div className="space-y-4">
-            <div className="rounded-2xl bg-panel-2/80 border border-white/10 p-4">
+            <div className="rounded-2xl bg-panel-2/80 border border-border p-4">
               <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
                 <Lock className="w-4 h-4" />
                 Admin Account Protection
@@ -524,16 +525,16 @@ const Admin = () => {
 
             {lockedAccounts.length === 0 ? (
               <div className="text-center py-8">
-                <Unlock className="w-6 h-6 mx-auto mb-2 text-green-400" />
+                <Unlock className="w-6 h-6 mx-auto mb-2 text-[hsl(var(--success))]" />
                 <p className="text-sm text-muted2">No locked accounts</p>
               </div>
             ) : (
               <div className="space-y-2">
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted2">Locked Accounts ({lockedAccounts.length})</p>
                 {lockedAccounts.map((email) => (
-                  <div key={email} className="flex items-center justify-between gap-3 rounded-xl bg-red-500/10 border border-red-500/30 p-3">
+                  <div key={email} className="flex items-center justify-between gap-3 rounded-xl bg-[hsl(var(--destructive)/0.1)] border border-[hsl(var(--destructive)/0.3)] p-3">
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold text-red-400 truncate">{email}</p>
+                      <p className="text-sm font-semibold text-destructive truncate">{email}</p>
                       <p className="text-xs text-muted2">
                         Unlocks in {Math.ceil(getTimeUntilUnlocked(email) / 1000)} seconds
                       </p>
@@ -544,7 +545,7 @@ const Admin = () => {
                         setLockedAccounts(getLockedAccounts());
                         toast.success(`${email} unlocked`);
                       }}
-                      className="shrink-0 px-3 py-2 bg-red-500/20 border border-red-500/50 rounded-lg text-xs font-semibold text-red-400 hover:bg-red-500/30 pressable"
+                      className="shrink-0 px-3 py-2 bg-[hsl(var(--destructive)/0.2)] border border-[hsl(var(--destructive)/0.5)] rounded-lg text-xs font-semibold text-destructive hover:bg-[hsl(var(--destructive)/0.3)] pressable"
                     >
                       Unlock
                     </button>
@@ -638,11 +639,11 @@ function TurfEditor({ turf, onDone }: { turf: Turf; onDone: () => void }) {
       <Field label="Video URLs" value={form.videos} onChange={(v) => update("videos", v)} multiline placeholder="https://..." />
 
       <div className="grid grid-cols-2 gap-2">
-        <label className="pressable rounded-2xl border border-white/10 bg-panel-2 px-3 py-3 text-center text-xs font-semibold">
+        <label className="pressable rounded-2xl border border-border bg-panel-2 px-3 py-3 text-center text-xs font-semibold">
           Main Photo
           <input type="file" accept="image/*" className="hidden" onChange={handlePhoto} />
         </label>
-        <label className="pressable rounded-2xl border border-white/10 bg-panel-2 px-3 py-3 text-center text-xs font-semibold">
+        <label className="pressable rounded-2xl border border-border bg-panel-2 px-3 py-3 text-center text-xs font-semibold">
           Add Gallery Photos
           <input type="file" accept="image/*" multiple className="hidden" onChange={handleGallery} />
         </label>
@@ -652,7 +653,7 @@ function TurfEditor({ turf, onDone }: { turf: Turf; onDone: () => void }) {
         <button onClick={save} className="pressable inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-primary py-3 font-semibold text-primary-foreground shadow-neon">
           <Save className="h-4 w-4" /> Save
         </button>
-        <button onClick={onDone} className="pressable flex-1 rounded-full border border-white/10 bg-panel-2 py-3 font-semibold">
+        <button onClick={onDone} className="pressable flex-1 rounded-full border border-border bg-panel-2 py-3 font-semibold">
           Cancel
         </button>
       </div>
@@ -714,9 +715,9 @@ function Field({ label, value, onChange, multiline, placeholder }: { label: stri
     <label className="block">
       <span className="text-[11px] font-semibold uppercase tracking-wider text-muted2">{label}</span>
       {multiline ? (
-        <textarea value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} rows={3} className="mt-1 w-full rounded-2xl border border-white/10 bg-background px-3 py-3 text-sm outline-none focus:border-primary" />
+        <textarea value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} rows={3} className="mt-1 w-full rounded-2xl border border-border bg-background px-3 py-3 text-sm outline-none focus:border-primary" />
       ) : (
-        <input value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} className="mt-1 h-11 w-full rounded-2xl border border-white/10 bg-background px-3 text-sm outline-none focus:border-primary" />
+        <input value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} className="mt-1 h-11 w-full rounded-2xl border border-border bg-background px-3 text-sm outline-none focus:border-primary" />
       )}
     </label>
   );
@@ -777,7 +778,7 @@ function SimpleList({ items, kind, refresh }: { items: Array<Banner | Offer | To
             <p className="line-clamp-1 text-sm font-semibold">{"title" in item ? item.title : item.name}</p>
             <p className="line-clamp-1 text-[11px] text-muted2">{"subtitle" in item ? item.subtitle : item.date}</p>
           </div>
-          <button onClick={() => remove(String(item.id))} className="pressable h-8 w-8 rounded-full grid place-items-center text-red-400 hover:bg-red-400/10 transition-colors" aria-label={`Delete ${kind}`}>
+          <button onClick={() => remove(String(item.id))} className="pressable h-8 w-8 rounded-full grid place-items-center text-destructive hover:bg-[hsl(var(--destructive)/0.1)] transition-colors" aria-label={`Delete ${kind}`}>
             <Trash2 className="h-4 w-4" />
           </button>
         </div>

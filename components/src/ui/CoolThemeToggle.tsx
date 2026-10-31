@@ -37,7 +37,9 @@ export function CoolThemeToggle({ className, size = "md" }: CoolThemeToggleProps
   const currentSize = sizes[size];
   const translateX = currentIndex * currentSize.travel;
 
-  // Background color of the whole pill
+  // THEME-PREVIEW SWATCHES (intentional hardcoded constants): each toggle
+  // position previews its target theme's palette, so these colors describe the
+  // other theme and must NOT follow the currently active tokens.
   const bgColors = ["bg-[#E2F4F3]", "bg-[#090909]"];
 
   // Thumb colors

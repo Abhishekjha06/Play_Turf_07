@@ -31,6 +31,7 @@ import { pageEnter, staggerContainer, fadeSlideUp } from "@/lib/motion";
 import { useRealtimeOpenGames } from "@/lib/realtime";
 import { addNotification } from "@/lib/notifications";
 import { OpenGameCard, OpenGameCardSkeleton } from "@/open-games";
+import { MascotAvatar } from "@/ui/MascotAvatar";
 
 const OpenGames = () => {
   const { user } = useAuth();
@@ -761,7 +762,7 @@ const OpenGames = () => {
                             p.payment_status === "approved" ? "border-amber-500/30 bg-amber-500/5" : "border-border"
                           }`}
                         >
-                          <img src={p.avatar} alt={p.name} className="w-4 h-4 rounded-full shrink-0" />
+                          <MascotAvatar avatarId={p.avatar} className="w-4 h-4" alt={p.name} />
                           <span className="text-[11px] font-bold text-foreground truncate max-w-[100px]">{p.name.split(" ")[0]}</span>
                           {p.is_host && <span className="text-[8px] text-primary font-black shrink-0">HOST</span>}
                           {p.payment_status === "approved" && (
@@ -800,7 +801,7 @@ const OpenGames = () => {
                         className="flex items-center justify-between bg-amber-500/5 border border-amber-500/20 rounded-2xl px-3 py-2"
                       >
                         <div className="flex items-center gap-2 min-w-0 flex-1">
-                          <img src={p.avatar} alt={p.name} className="w-6 h-6 rounded-full shrink-0" />
+                          <MascotAvatar avatarId={p.avatar} className="w-6 h-6" alt={p.name} />
                           <span className="text-xs font-bold text-foreground truncate max-w-[140px]">{p.name}</span>
                         </div>
                         <div className="flex items-center gap-1.5">

@@ -137,6 +137,24 @@ export const TurfCard = React.memo(function TurfCard({
                 {turf.address}
               </p>
             </div>
+            {turf.land_mark?.trim() && (
+            <div className="flex items-center gap-1.5 min-w-0 overflow-hidden">
+              <span className="relative flex h-4 w-4 flex-shrink-0 items-center justify-center">
+                <span className="absolute inset-0 rounded-full bg-primary/20 landmark-pulse" />
+                <span className="relative text-xs landmark-bounce">
+                  📍
+                </span>
+              </span>
+
+              <p
+                className="truncate text-xs font-semibold"
+                style={{ color: "hsl(var(--color-primary))" }}
+                title={`Near ${turf.land_mark?.trim()}`}
+              >
+                Near {turf.land_mark?.trim()}
+              </p>
+            </div>
+          )}
             <div className="flex items-center gap-1">
               <Clock className="h-3 w-3 flex-shrink-0" style={{ color: "hsl(var(--color-text-tertiary))" }} />
               <span className="line-clamp-1 text-xs" style={{ color: "hsl(var(--color-text-tertiary))" }}>
@@ -155,7 +173,7 @@ export const TurfCard = React.memo(function TurfCard({
 
           <div className="px-3 pb-3 pt-0">
             <RippleButton
-              to={`/turf/${turf.id}`}
+              to={`/turf/${turf.id}?book=true`}
               testid={`book-${turf.id}`}
               style={{
                 background: "hsl(var(--color-primary))",

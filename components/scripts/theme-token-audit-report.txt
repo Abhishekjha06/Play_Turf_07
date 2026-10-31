@@ -1,0 +1,255 @@
+════════════════════════════════════════════════════════════
+ THEME TOKEN AUDIT — unified Premium Teal / AMOLED Black
+ Date: 2026-10-31T03:52:15.073Z
+ Undocumented violations: 0
+ Documented exceptions:  193
+════════════════════════════════════════════════════════════
+
+luxury/LuxuryThemeProvider.tsx
+   · doc  L127 [hardcoded hex color] #F1F5F9  — theme token definitions (single source of truth)
+   · doc  L128 [hardcoded hex color] #E2E8F0  — theme token definitions (single source of truth)
+   · doc  L129 [hardcoded hex color] #FFFFFF  — theme token definitions (single source of truth)
+   · doc  L130 [hardcoded hex color] #14B8B0  — theme token definitions (single source of truth)
+   · doc  L131 [hardcoded rgb/rgba color] rgba(20,184,176,0.10)  — theme token definitions (single source of truth)
+   · doc  L132 [hardcoded rgb/rgba color] rgba(20,184,176,0.30)  — theme token definitions (single source of truth)
+   · doc  L133 [hardcoded hex color] #F59E0B  — theme token definitions (single source of truth)
+   · doc  L134 [hardcoded hex color] #D97706  — theme token definitions (single source of truth)
+   · doc  L135 [hardcoded hex color] #16A34A  — theme token definitions (single source of truth)
+   · doc  L136 [hardcoded hex color] #22C55E  — theme token definitions (single source of truth)
+   · doc  L137 [hardcoded hex color] #16A34A  — theme token definitions (single source of truth)
+   · doc  L138 [hardcoded hex color] #0F172A  — theme token definitions (single source of truth)
+   · doc  L139 [hardcoded hex color] #64748B  — theme token definitions (single source of truth)
+   · doc  L140 [hardcoded rgb/rgba color] rgba(255,255,255,0.85)  — theme token definitions (single source of truth)
+   · doc  L141 [hardcoded rgb/rgba color] rgba(226,232,240,0.9)  — theme token definitions (single source of truth)
+   · doc  L142 [hardcoded rgb/rgba color] rgba(15,23,42,0.08)  — theme token definitions (single source of truth)
+   · doc  L143 [hardcoded rgb/rgba color] rgba(20,184,176,0.35)  — theme token definitions (single source of truth)
+   · doc  L144 [hardcoded hex color] #E2E8F0  — theme token definitions (single source of truth)
+   · doc  L145 [hardcoded rgb/rgba color] rgba(245,158,11,0.15)  — theme token definitions (single source of truth)
+   · doc  L146 [hardcoded hex color] #F59E0B  — theme token definitions (single source of truth)
+   · doc  L147 [hardcoded rgb/rgba color] rgba(255,255,255,0.92)  — theme token definitions (single source of truth)
+   · doc  L148 [hardcoded rgb/rgba color] rgba(226,232,240,0.9)  — theme token definitions (single source of truth)
+   · doc  L149 [hardcoded hex color] #FFFFFF  — theme token definitions (single source of truth)
+   · doc  L150 [hardcoded hex color] #E2E8F0  — theme token definitions (single source of truth)
+   · doc  L151 [hardcoded hex color] #0F172A  — theme token definitions (single source of truth)
+   · doc  L151 [hardcoded hex color] #0E4F5F  — theme token definitions (single source of truth)
+   · doc  L151 [hardcoded hex color] #14B8B0  — theme token definitions (single source of truth)
+   · doc  L151 [hardcoded hex color] #0F172A  — theme token definitions (single source of truth)
+   · doc  L154 [hardcoded hex color] #F1F5F9  — theme token definitions (single source of truth)
+   · doc  L155 [hardcoded hex color] #0F172A  — theme token definitions (single source of truth)
+   · doc  L156 [hardcoded hex color] #64748B  — theme token definitions (single source of truth)
+   · doc  L158 [hardcoded hex color] #E2E8F0  — theme token definitions (single source of truth)
+   · doc  L159 [hardcoded hex color] #FFFFFF  — theme token definitions (single source of truth)
+   · doc  L161 [hardcoded hex color] #FFFFFF  — theme token definitions (single source of truth)
+   · doc  L163 [hardcoded hex color] #14B8B0  — theme token definitions (single source of truth)
+   · doc  L170 [hardcoded hex color] #E2E8F0  — theme token definitions (single source of truth)
+   · doc  L173 [hardcoded hex color] #F1F5F9  — theme token definitions (single source of truth)
+   · doc  L173 [hardcoded hex color] #E8F4F8  — theme token definitions (single source of truth)
+   · doc  L174 [hardcoded hex color] #FFFFFF  — theme token definitions (single source of truth)
+   · doc  L174 [hardcoded hex color] #F8FAFC  — theme token definitions (single source of truth)
+   · doc  L175 [hardcoded hex color] #14B8B0  — theme token definitions (single source of truth)
+   · doc  L175 [hardcoded hex color] #0D9488  — theme token definitions (single source of truth)
+   · doc  L176 [hardcoded rgb/rgba color] rgba(0,0,0,0.10)  — theme token definitions (single source of truth)
+   · doc  L176 [hardcoded rgb/rgba color] rgba(0,0,0,0.50)  — theme token definitions (single source of truth)
+   · doc  L177 [hardcoded rgb/rgba color] rgba(20,184,176,0.30)  — theme token definitions (single source of truth)
+   · doc  L178 [hardcoded rgb/rgba color] rgba(20,184,176,0.35)  — theme token definitions (single source of truth)
+   · doc  L178 [hardcoded rgb/rgba color] rgba(20,184,176,0.20)  — theme token definitions (single source of truth)
+   · doc  L179 [hardcoded rgb/rgba color] rgba(15,23,42,0.08)  — theme token definitions (single source of truth)
+   · doc  L208 [hardcoded hex color] #000000  — theme token definitions (single source of truth)
+   · doc  L212 [hardcoded hex color] #000000  — theme token definitions (single source of truth)
+   · doc  L213 [hardcoded hex color] #050505  — theme token definitions (single source of truth)
+   · doc  L214 [hardcoded hex color] #090909  — theme token definitions (single source of truth)
+   · doc  L215 [hardcoded hex color] #00E676  — theme token definitions (single source of truth)
+   · doc  L216 [hardcoded rgb/rgba color] rgba(0,230,118,0.12)  — theme token definitions (single source of truth)
+   · doc  L217 [hardcoded rgb/rgba color] rgba(0,230,118,0.35)  — theme token definitions (single source of truth)
+   · doc  L218 [hardcoded hex color] #FFD700  — theme token definitions (single source of truth)
+   · doc  L219 [hardcoded hex color] #E6C200  — theme token definitions (single source of truth)
+   · doc  L220 [hardcoded hex color] #00C853  — theme token definitions (single source of truth)
+   · doc  L221 [hardcoded hex color] #00E676  — theme token definitions (single source of truth)
+   · doc  L222 [hardcoded hex color] #00C853  — theme token definitions (single source of truth)
+   · doc  L223 [hardcoded hex color] #FFFFFF  — theme token definitions (single source of truth)
+   · doc  L224 [hardcoded hex color] #A0A0A0  — theme token definitions (single source of truth)
+   · doc  L225 [hardcoded rgb/rgba color] rgba(9, 9, 9, 0.68)  — theme token definitions (single source of truth)
+   · doc  L226 [hardcoded rgb/rgba color] rgba(0, 230, 118, 0.12)  — theme token definitions (single source of truth)
+   · doc  L227 [hardcoded rgb/rgba color] rgba(0,0,0,0.7)  — theme token definitions (single source of truth)
+   · doc  L228 [hardcoded rgb/rgba color] rgba(0,230,118,0.25)  — theme token definitions (single source of truth)
+   · doc  L229 [hardcoded rgb/rgba color] rgba(255,255,255,0.06)  — theme token definitions (single source of truth)
+   · doc  L230 [hardcoded rgb/rgba color] rgba(0,230,118,0.15)  — theme token definitions (single source of truth)
+   · doc  L231 [hardcoded hex color] #00E676  — theme token definitions (single source of truth)
+   · doc  L232 [hardcoded rgb/rgba color] rgba(9,9,9,0.92)  — theme token definitions (single source of truth)
+   · doc  L233 [hardcoded rgb/rgba color] rgba(0,230,118,0.12)  — theme token definitions (single source of truth)
+   · doc  L234 [hardcoded hex color] #0F0F0F  — theme token definitions (single source of truth)
+   · doc  L235 [hardcoded rgb/rgba color] rgba(0,230,118,0.15)  — theme token definitions (single source of truth)
+   · doc  L236 [hardcoded hex color] #000000  — theme token definitions (single source of truth)
+   · doc  L236 [hardcoded hex color] #090909  — theme token definitions (single source of truth)
+   · doc  L236 [hardcoded hex color] #004D26  — theme token definitions (single source of truth)
+   · doc  L236 [hardcoded hex color] #000000  — theme token definitions (single source of truth)
+   · doc  L239 [hardcoded hex color] #000000  — theme token definitions (single source of truth)
+   · doc  L241 [hardcoded hex color] #A0A0A0  — theme token definitions (single source of truth)
+   · doc  L243 [hardcoded hex color] #050505  — theme token definitions (single source of truth)
+   · doc  L244 [hardcoded hex color] #090909  — theme token definitions (single source of truth)
+   · doc  L248 [hardcoded hex color] #00E676  — theme token definitions (single source of truth)
+   · doc  L258 [hardcoded hex color] #000000  — theme token definitions (single source of truth)
+   · doc  L259 [hardcoded hex color] #090909  — theme token definitions (single source of truth)
+   · doc  L259 [hardcoded hex color] #020202  — theme token definitions (single source of truth)
+   · doc  L260 [hardcoded hex color] #FFD700  — theme token definitions (single source of truth)
+   · doc  L260 [hardcoded hex color] #00E676  — theme token definitions (single source of truth)
+   · doc  L261 [hardcoded rgb/rgba color] rgba(0,0,0,0.5)  — theme token definitions (single source of truth)
+   · doc  L261 [hardcoded rgb/rgba color] rgba(0,0,0,0.98)  — theme token definitions (single source of truth)
+   · doc  L262 [hardcoded rgb/rgba color] rgba(0,230,118,0.3)  — theme token definitions (single source of truth)
+   · doc  L263 [hardcoded rgb/rgba color] rgba(0,230,118,0.45)  — theme token definitions (single source of truth)
+   · doc  L263 [hardcoded rgb/rgba color] rgba(255,215,0,0.2)  — theme token definitions (single source of truth)
+   · doc  L264 [hardcoded rgb/rgba color] rgba(0,0,0,0.6)  — theme token definitions (single source of truth)
+   · doc  L445 [conditional theme-specific JSX] themeId ===  — theme token definitions (single source of truth)
+
+home/HeroCarousel.tsx
+   · doc  L228 [hardcoded Tailwind palette class] text-white  — white text + scrim over banner photos
+   · doc  L233 [hardcoded Tailwind palette class] text-white/70  — white text + scrim over banner photos
+   · doc  L274 [hardcoded Tailwind palette class] border-white/20  — white text + scrim over banner photos
+   · doc  L274 [hardcoded Tailwind palette class] bg-black/40  — white text + scrim over banner photos
+   · doc  L274 [hardcoded Tailwind palette class] text-white  — white text + scrim over banner photos
+   · doc  L283 [hardcoded Tailwind palette class] border-white/20  — white text + scrim over banner photos
+   · doc  L283 [hardcoded Tailwind palette class] bg-black/40  — white text + scrim over banner photos
+   · doc  L283 [hardcoded Tailwind palette class] text-white  — white text + scrim over banner photos
+
+home/SectionHeader.tsx
+   ✓ clean
+
+home/CategoryPills.tsx
+   ✓ clean
+
+home/LocationFilter.tsx
+   ✓ clean
+
+home/TossModal.tsx
+   · doc  L89 [hardcoded Tailwind palette class] bg-white/5  — coin-toss brand artwork (dark panel + coin-side identity colors)
+   · doc  L89 [hardcoded Tailwind palette class] text-white/40  — coin-toss brand artwork (dark panel + coin-side identity colors)
+   · doc  L89 [hardcoded Tailwind palette class] text-white  — coin-toss brand artwork (dark panel + coin-side identity colors)
+   · doc  L99 [hardcoded hex color] #0a0a0a  — coin-toss brand artwork (dark panel + coin-side identity colors)
+   · doc  L104 [hardcoded Tailwind palette class] text-white  — coin-toss brand artwork (dark panel + coin-side identity colors)
+   · doc  L142 [hardcoded Tailwind palette class] text-white/60  — coin-toss brand artwork (dark panel + coin-side identity colors)
+   · doc  L151 [hardcoded Tailwind palette class] text-white/50  — coin-toss brand artwork (dark panel + coin-side identity colors)
+
+offers/OfferCard.tsx
+   · doc  L56 [hardcoded Tailwind palette class] text-white  — white text over offer photo
+   · doc  L57 [hardcoded Tailwind palette class] text-white/75  — white text over offer photo
+
+layout/MobileShell.tsx
+   ✓ clean
+
+layout/AppHeader.tsx
+   · doc  L196 [hardcoded rgb/rgba color] rgba(255,255,255,0.55)  — white furniture + scrims on the always-dark themed header gradient
+   · doc  L227 [hardcoded rgb/rgba color] rgba(255,255,255,0.15)  — white furniture + scrims on the always-dark themed header gradient
+   · doc  L228 [hardcoded rgb/rgba color] rgba(255,255,255,0.20)  — white furniture + scrims on the always-dark themed header gradient
+   · doc  L232 [hardcoded Tailwind palette class] text-white  — white furniture + scrims on the always-dark themed header gradient
+   · doc  L236 [hardcoded Tailwind palette class] text-white  — white furniture + scrims on the always-dark themed header gradient
+   · doc  L236 [hardcoded Tailwind palette class] border-black/40  — white furniture + scrims on the always-dark themed header gradient
+   · doc  L255 [hardcoded rgb/rgba color] rgba(255,255,255,0.35)  — white furniture + scrims on the always-dark themed header gradient
+   · doc  L271 [hardcoded rgb/rgba color] rgba(255,255,255,0.65)  — white furniture + scrims on the always-dark themed header gradient
+   · doc  L311 [hardcoded Tailwind palette class] bg-black/60  — white furniture + scrims on the always-dark themed header gradient
+   · doc  L450 [hardcoded Tailwind palette class] bg-black/80  — white furniture + scrims on the always-dark themed header gradient
+   · doc  L462 [hardcoded rgb/rgba color] rgba(0,0,0,0.6)  — white furniture + scrims on the always-dark themed header gradient
+   · doc  L581 [hardcoded rgb/rgba color] rgba(255,255,255,0.15)  — white furniture + scrims on the always-dark themed header gradient
+   · doc  L583 [hardcoded rgb/rgba color] rgba(255,255,255,0.10)  — white furniture + scrims on the always-dark themed header gradient
+   · doc  L589 [hardcoded rgb/rgba color] rgba(255,255,255,0.70)  — white furniture + scrims on the always-dark themed header gradient
+
+open-games/OpenGameCard.tsx
+   · doc  L63 [hardcoded hex color] #b45309  — status badges + scrim over game photo; sportConfig = per-sport identity colors (basketball/cricket/default palettes)
+   · doc  L64 [hardcoded hex color] #92400e  — status badges + scrim over game photo; sportConfig = per-sport identity colors (basketball/cricket/default palettes)
+   · doc  L65 [hardcoded rgb/rgba color] rgba(180, 83, 9, 0.08)  — status badges + scrim over game photo; sportConfig = per-sport identity colors (basketball/cricket/default palettes)
+   · doc  L66 [hardcoded rgb/rgba color] rgba(180, 83, 9, 0.15)  — status badges + scrim over game photo; sportConfig = per-sport identity colors (basketball/cricket/default palettes)
+   · doc  L67 [hardcoded rgb/rgba color] rgba(180, 83, 9, 0.15)  — status badges + scrim over game photo; sportConfig = per-sport identity colors (basketball/cricket/default palettes)
+   · doc  L68 [hardcoded rgb/rgba color] rgba(180, 83, 9, 0.25)  — status badges + scrim over game photo; sportConfig = per-sport identity colors (basketball/cricket/default palettes)
+   · doc  L73 [hardcoded hex color] #15803d  — status badges + scrim over game photo; sportConfig = per-sport identity colors (basketball/cricket/default palettes)
+   · doc  L74 [hardcoded hex color] #166534  — status badges + scrim over game photo; sportConfig = per-sport identity colors (basketball/cricket/default palettes)
+   · doc  L75 [hardcoded rgb/rgba color] rgba(21, 128, 61, 0.08)  — status badges + scrim over game photo; sportConfig = per-sport identity colors (basketball/cricket/default palettes)
+   · doc  L76 [hardcoded rgb/rgba color] rgba(21, 128, 61, 0.15)  — status badges + scrim over game photo; sportConfig = per-sport identity colors (basketball/cricket/default palettes)
+   · doc  L77 [hardcoded rgb/rgba color] rgba(21, 128, 61, 0.15)  — status badges + scrim over game photo; sportConfig = per-sport identity colors (basketball/cricket/default palettes)
+   · doc  L78 [hardcoded rgb/rgba color] rgba(21, 128, 61, 0.25)  — status badges + scrim over game photo; sportConfig = per-sport identity colors (basketball/cricket/default palettes)
+   · doc  L82 [hardcoded hex color] #1d4ed8  — status badges + scrim over game photo; sportConfig = per-sport identity colors (basketball/cricket/default palettes)
+   · doc  L83 [hardcoded hex color] #1e40af  — status badges + scrim over game photo; sportConfig = per-sport identity colors (basketball/cricket/default palettes)
+   · doc  L84 [hardcoded rgb/rgba color] rgba(29, 78, 216, 0.08)  — status badges + scrim over game photo; sportConfig = per-sport identity colors (basketball/cricket/default palettes)
+   · doc  L85 [hardcoded rgb/rgba color] rgba(29, 78, 216, 0.15)  — status badges + scrim over game photo; sportConfig = per-sport identity colors (basketball/cricket/default palettes)
+   · doc  L86 [hardcoded rgb/rgba color] rgba(29, 78, 216, 0.15)  — status badges + scrim over game photo; sportConfig = per-sport identity colors (basketball/cricket/default palettes)
+   · doc  L87 [hardcoded rgb/rgba color] rgba(29, 78, 216, 0.25)  — status badges + scrim over game photo; sportConfig = per-sport identity colors (basketball/cricket/default palettes)
+   · doc  L141 [hardcoded Tailwind palette class] bg-black  — status badges + scrim over game photo; sportConfig = per-sport identity colors (basketball/cricket/default palettes)
+   · doc  L239 [hardcoded Tailwind palette class] bg-black  — status badges + scrim over game photo; sportConfig = per-sport identity colors (basketball/cricket/default palettes)
+   · doc  L264 [hardcoded Tailwind palette class] bg-red-950/60  — status badges + scrim over game photo; sportConfig = per-sport identity colors (basketball/cricket/default palettes)
+   · doc  L264 [hardcoded Tailwind palette class] text-red-400/80  — status badges + scrim over game photo; sportConfig = per-sport identity colors (basketball/cricket/default palettes)
+   · doc  L264 [hardcoded Tailwind palette class] border-red-500/20  — status badges + scrim over game photo; sportConfig = per-sport identity colors (basketball/cricket/default palettes)
+   · doc  L266 [hardcoded Tailwind palette class] bg-white/5  — status badges + scrim over game photo; sportConfig = per-sport identity colors (basketball/cricket/default palettes)
+   · doc  L266 [hardcoded Tailwind palette class] text-zinc-500  — status badges + scrim over game photo; sportConfig = per-sport identity colors (basketball/cricket/default palettes)
+   · doc  L266 [hardcoded Tailwind palette class] border-white/8  — status badges + scrim over game photo; sportConfig = per-sport identity colors (basketball/cricket/default palettes)
+   · doc  L267 [hardcoded Tailwind palette class] bg-white/8  — status badges + scrim over game photo; sportConfig = per-sport identity colors (basketball/cricket/default palettes)
+   · doc  L267 [hardcoded Tailwind palette class] text-white/70  — status badges + scrim over game photo; sportConfig = per-sport identity colors (basketball/cricket/default palettes)
+   · doc  L267 [hardcoded Tailwind palette class] border-white/10  — status badges + scrim over game photo; sportConfig = per-sport identity colors (basketball/cricket/default palettes)
+   · doc  L276 [hardcoded Tailwind palette class] text-orange-400/80  — status badges + scrim over game photo; sportConfig = per-sport identity colors (basketball/cricket/default palettes)
+   · doc  L276 [hardcoded Tailwind palette class] bg-orange-950/40  — status badges + scrim over game photo; sportConfig = per-sport identity colors (basketball/cricket/default palettes)
+   · doc  L276 [hardcoded Tailwind palette class] border-orange-500/20  — status badges + scrim over game photo; sportConfig = per-sport identity colors (basketball/cricket/default palettes)
+   · doc  L277 [hardcoded Tailwind palette class] text-orange-500/70  — status badges + scrim over game photo; sportConfig = per-sport identity colors (basketball/cricket/default palettes)
+   · doc  L283 [hardcoded Tailwind palette class] text-amber-400/70  — status badges + scrim over game photo; sportConfig = per-sport identity colors (basketball/cricket/default palettes)
+   · doc  L283 [hardcoded Tailwind palette class] bg-black/40  — status badges + scrim over game photo; sportConfig = per-sport identity colors (basketball/cricket/default palettes)
+   · doc  L283 [hardcoded Tailwind palette class] border-amber-500/20  — status badges + scrim over game photo; sportConfig = per-sport identity colors (basketball/cricket/default palettes)
+   · doc  L284 [hardcoded Tailwind palette class] text-amber-500/60  — status badges + scrim over game photo; sportConfig = per-sport identity colors (basketball/cricket/default palettes)
+   · doc  L290 [hardcoded Tailwind palette class] bg-black/40  — status badges + scrim over game photo; sportConfig = per-sport identity colors (basketball/cricket/default palettes)
+   · doc  L290 [hardcoded Tailwind palette class] border-white/8  — status badges + scrim over game photo; sportConfig = per-sport identity colors (basketball/cricket/default palettes)
+   · doc  L293 [hardcoded Tailwind palette class] border-white/10  — status badges + scrim over game photo; sportConfig = per-sport identity colors (basketball/cricket/default palettes)
+   · doc  L298 [hardcoded Tailwind palette class] text-white/70  — status badges + scrim over game photo; sportConfig = per-sport identity colors (basketball/cricket/default palettes)
+
+cricket/screens/PickMatch.tsx
+   · doc  L157 [hardcoded Tailwind palette class] text-white  — white text over team-emblem artwork
+   · doc  L485 [hardcoded Tailwind palette class] text-white  — white text over team-emblem artwork
+   · doc  L493 [hardcoded Tailwind palette class] text-white  — white text over team-emblem artwork
+
+cricket/screens/ConfirmBet.tsx
+   ✓ clean
+
+cricket/screens/SuccessScreen.tsx
+   ✓ clean
+
+cricket/components/VsBadge.tsx
+   ✓ clean
+
+pages/Home.tsx
+   ✓ clean
+
+pages/Receipt.tsx
+   · doc  L235 [hardcoded hex color] #000000  — SVG team-emblem artwork + black scrims/shadows
+   · doc  L259 [hardcoded hex color] #FFFFFF  — SVG team-emblem artwork + black scrims/shadows
+
+pages/Admin.tsx
+   · doc  L393 [hardcoded Tailwind palette class] bg-black/40  — close button over image preview
+   · doc  L397 [hardcoded Tailwind palette class] bg-black/60  — close button over image preview
+   · doc  L397 [hardcoded Tailwind palette class] bg-black/80  — close button over image preview
+   · doc  L397 [hardcoded Tailwind palette class] text-white  — close button over image preview
+
+pages/ClientBookingManagement.tsx
+   ✓ clean
+
+booking/BookingTicket.tsx
+   · doc  L175 [hardcoded rgb/rgba color] rgba(0,0,0,0.5)  — QR white plate (scan reliability) + black-alpha elevation shadow
+   · doc  L222 [hardcoded hex color] #ffffff  — QR white plate (scan reliability) + black-alpha elevation shadow
+
+booking/JoinGameReceipt.tsx
+   · doc  L336 [hardcoded Tailwind palette class] bg-black/90  — over-scrim modal furniture (white on black backdrop)
+   · doc  L340 [hardcoded Tailwind palette class] text-white  — over-scrim modal furniture (white on black backdrop)
+   · doc  L343 [hardcoded Tailwind palette class] bg-white/10  — over-scrim modal furniture (white on black backdrop)
+   · doc  L343 [hardcoded Tailwind palette class] bg-white/20  — over-scrim modal furniture (white on black backdrop)
+   · doc  L345 [hardcoded Tailwind palette class] text-white  — over-scrim modal furniture (white on black backdrop)
+
+booking/HostBookingReceipt.tsx
+   · doc  L305 [hardcoded Tailwind palette class] bg-black/90  — over-scrim modal furniture (white on black backdrop)
+   · doc  L309 [hardcoded Tailwind palette class] text-white  — over-scrim modal furniture (white on black backdrop)
+   · doc  L312 [hardcoded Tailwind palette class] bg-white/10  — over-scrim modal furniture (white on black backdrop)
+   · doc  L312 [hardcoded Tailwind palette class] bg-white/20  — over-scrim modal furniture (white on black backdrop)
+   · doc  L314 [hardcoded Tailwind palette class] text-white  — over-scrim modal furniture (white on black backdrop)
+
+pages/client-dashboard/DashboardCalendar.tsx
+   ✓ clean
+
+ui/CoolThemeToggle.tsx
+   · doc  L43 [hardcoded hex color] #E2F4F3  — theme-preview swatches
+   · doc  L43 [hardcoded hex color] #090909  — theme-preview swatches
+   · doc  L46 [hardcoded Tailwind palette class] bg-teal-400  — theme-preview swatches
+   · doc  L46 [hardcoded Tailwind palette class] bg-emerald-400  — theme-preview swatches
+   · doc  L92 [hardcoded Tailwind palette class] text-teal-900  — theme-preview swatches
+   · doc  L93 [hardcoded Tailwind palette class] text-emerald-900  — theme-preview swatches

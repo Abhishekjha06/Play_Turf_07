@@ -1,12 +1,12 @@
 import { useMemo, useState } from "react";
-import { LocateFixed, MapPin, ChevronDown, X } from "lucide-react";
+import { LocateFixed, MapPin, X } from "lucide-react";
 import type { Turf } from "@/data/seed";
-import { useLuxuryTheme } from "@/luxury/LuxuryThemeProvider";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/ui/sheet";
 
 /* ─────────────────────────────────────────────────────────────────────
    LocationPill — compact trigger shown inline in the category row.
    Clicking opens the full LocationSheet in the middle of the screen.
+   ONE shared UI: all colors come from theme tokens.
  ───────────────────────────────────────────────────────────────────── */
 export function LocationPill({
   turfs,
@@ -26,8 +26,6 @@ export function LocationPill({
   onNearMe: () => void;
 }) {
   const [open, setOpen] = useState(false);
-  const { themeId } = useLuxuryTheme();
-  const isPremium = themeId === "premium-teal";
 
   const hasFilter = !!(city || area);
   const label = area || city || "Location";
@@ -45,49 +43,31 @@ export function LocationPill({
           >
             <div
               className="h-14 w-14 rounded-full grid place-items-center relative"
-              style={
-                isPremium
-                  ? {
-                    background: hasFilter ? "#14B8B0" : "#FFFFFF",
-                    border: hasFilter ? "2px solid #0D9488" : "1px solid #E2E8F0",
-                    boxShadow: hasFilter
-                      ? "0 4px 14px rgba(20,184,176,0.35)"
-                      : "0 4px 14px rgba(15,23,42,0.08)",
-                    transition: "all 0.2s ease",
-                  }
-                  : {
-                    background: hasFilter
-                      ? "hsl(var(--primary))"
-                      : "hsl(var(--panel-2))",
-                    border: "1px solid hsl(var(--primary) / 0.40)",
-                    boxShadow: "0 0 18px rgba(198,248,6,0.18)",
-                    transition: "all 0.2s ease",
-                  }
-              }
+              style={{
+                background: hasFilter ? "hsl(var(--primary))" : "hsl(var(--card))",
+                border: hasFilter ? "1px solid hsl(var(--primary))" : "1px solid hsl(var(--border))",
+                boxShadow: hasFilter ? "0 4px 14px hsl(var(--primary) / 0.35)" : "var(--shadow-card)",
+                transition: "all 0.2s ease",
+              }}
             >
               <MapPin
                 className="h-6 w-6"
                 style={{
-                  color: isPremium
-                    ? hasFilter ? "white" : "#14B8B0"
-                    : hasFilter ? "hsl(var(--primary-foreground))" : "hsl(var(--primary))",
+                  color: hasFilter ? "hsl(var(--primary-foreground))" : "hsl(var(--primary))",
                 }}
               />
               {/* active dot */}
-              {hasFilter && !isPremium && (
+              {hasFilter && (
                 <span
                   className="absolute top-1 right-1 h-2 w-2 rounded-full bg-primary border-2"
-                  style={{ borderColor: "hsl(var(--panel-2))" }}
+                  style={{ borderColor: "hsl(var(--card))" }}
                 />
               )}
             </div>
             <span
               className="mt-1 text-center leading-tight line-clamp-1 w-full"
               style={{
-                
-                color: isPremium
-                  ? hasFilter ? "#14B8B0" : "#64748B"
-                  : hasFilter ? "hsl(var(--primary))" : "hsl(var(--foreground-soft))",
+                color: hasFilter ? "hsl(var(--primary))" : "hsl(var(--foreground-soft))",
                 fontWeight: hasFilter ? 700 : 500,
                 maxWidth: "70px",
               }}
@@ -111,7 +91,6 @@ export function LocationPill({
             onArea={onArea}
             onNearMe={() => { onNearMe(); setOpen(false); }}
             onClose={() => setOpen(false)}
-            isPremium={isPremium}
           />
         </SheetContent>
       </Sheet>
@@ -120,7 +99,8 @@ export function LocationPill({
 }
 
 /* ─────────────────────────────────────────────────────────────────────
-   LocationSheet — the full filter panel that slides up
+   LocationSheet — the full filter panel that slides up.
+   All colors from tokens; "Clear filters" uses the semantic danger role.
  ───────────────────────────────────────────────────────────────────── */
 function LocationSheet({
   turfs,
@@ -131,7 +111,6 @@ function LocationSheet({
   onArea,
   onNearMe,
   onClose,
-  isPremium,
 }: {
   turfs: Turf[];
   city: string;
@@ -141,7 +120,6 @@ function LocationSheet({
   onArea: (area: string) => void;
   onNearMe: () => void;
   onClose: () => void;
-  isPremium: boolean;
 }) {
   const cities = useMemo(
     () => Array.from(new Set(turfs.map((t) => t.city))).sort(),
@@ -160,81 +138,44 @@ function LocationSheet({
     [turfs, city]
   );
 
-  const sheetStyle = isPremium
-    ? {
-      background: "#FFFFFF",
-      borderRadius: "12px",
-      border: "1px solid #E2E8F0",
-      boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
-      padding: "16px",
-    }
-    : {
-      background: "var(--card-bg, hsl(var(--panel)))",
-      borderRadius: "12px",
-      border: "1px solid rgba(255,255,255,0.1)",
-      boxShadow: "0 4px 12px rgba(0,0,0,0.12)",
-      padding: "16px",
-    };
+  const sheetStyle = {
+    background: "hsl(var(--card))",
+    borderRadius: "12px",
+    border: "1px solid hsl(var(--border))",
+    boxShadow: "var(--shadow-card)",
+    padding: "16px",
+  };
 
-  const inputStyle = isPremium
-    ? {
-      background: "#F8FAFC",
-      border: "1px solid #E2E8F0",
-      color: "#0F172A",
-      borderRadius: "12px",
-      height: "44px",
-      paddingLeft: "12px",
-      paddingRight: "12px",
-      
-      fontWeight: 500,
-      outline: "none",
-      width: "100%",
-    }
-    : {
-      background: "hsl(var(--panel-2))",
-      border: "1px solid hsl(var(--border))",
-      color: "hsl(var(--foreground))",
-      borderRadius: "12px",
-      height: "44px",
-      paddingLeft: "12px",
-      paddingRight: "12px",
-      
-      fontWeight: 500,
-      outline: "none",
-      width: "100%",
-    };
+  const inputStyle = {
+    background: "hsl(var(--panel-2))",
+    border: "1px solid hsl(var(--border))",
+    color: "hsl(var(--foreground))",
+    borderRadius: "12px",
+    height: "44px",
+    paddingLeft: "12px",
+    paddingRight: "12px",
+    fontWeight: 500,
+    outline: "none",
+    width: "100%",
+  } as const;
 
   return (
     <div style={sheetStyle}>
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <MapPin
-            className="h-4 w-4"
-            style={{ color: isPremium ? "#14B8B0" : "hsl(var(--primary))" }}
-          />
-          <span
-            style={{
-              
-              fontWeight: 700,
-              color: isPremium ? "#0F172A" : "hsl(var(--foreground))",
-            }}
-          >
+          <MapPin className="h-4 w-4" style={{ color: "hsl(var(--primary))" }} />
+          <span style={{ fontWeight: 700, color: "hsl(var(--foreground))" }}>
             Filter by Location
           </span>
         </div>
         <button
           onClick={onClose}
           className="pressable h-7 w-7 rounded-full grid place-items-center cursor-pointer border-none"
-          style={{
-            background: isPremium ? "#F1F5F9" : "hsl(var(--panel-2))",
-          }}
+          style={{ background: "hsl(var(--panel-2))" }}
           aria-label="Close"
         >
-          <X
-            className="h-4 w-4"
-            style={{ color: isPremium ? "#64748B" : "hsl(var(--foreground-soft))" }}
-          />
+          <X className="h-4 w-4" style={{ color: "hsl(var(--foreground-soft))" }} />
         </button>
       </div>
 
@@ -242,7 +183,7 @@ function LocationSheet({
       <div className="relative mb-3">
         <MapPin
           className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none"
-          style={{ color: isPremium ? "#14B8B0" : "hsl(var(--primary))" }}
+          style={{ color: "hsl(var(--primary))" }}
         />
         <select
           value={city}
@@ -266,11 +207,9 @@ function LocationSheet({
         className="pressable w-full flex items-center justify-center gap-2 rounded-xl mb-3 text-xs font-bold disabled:opacity-60 cursor-pointer border-none"
         style={{
           height: "44px",
-          background: isPremium ? "#14B8B0" : "hsl(var(--primary))",
-          color: isPremium ? "white" : "hsl(var(--primary-foreground))",
-          boxShadow: isPremium
-            ? "0 4px 14px rgba(20,184,176,0.30)"
-            : "var(--shadow-neon)",
+          background: "hsl(var(--primary))",
+          color: "hsl(var(--primary-foreground))",
+          boxShadow: "var(--shadow-neon)",
         }}
       >
         <LocateFixed className="h-4 w-4" />
@@ -291,14 +230,14 @@ function LocationSheet({
         ))}
       </select>
 
-      {/* Clear filters */}
+      {/* Clear filters — semantic danger role */}
       {(city || area) && (
         <button
           className="pressable mt-3 w-full text-center text-xs font-semibold rounded-xl py-2.5 cursor-pointer"
           style={{
-            background: isPremium ? "#FEF2F2" : "hsl(var(--destructive) / 0.10)",
-            color: isPremium ? "#EF4444" : "hsl(var(--destructive))",
-            border: isPremium ? "1px solid #FECACA" : "1px solid hsl(var(--destructive) / 0.25)",
+            background: "hsl(var(--color-danger-surface))",
+            color: "hsl(var(--danger))",
+            border: "1px solid hsl(var(--danger) / 0.25)",
           }}
           onClick={() => { onCity(""); onArea(""); }}
         >
@@ -306,139 +245,5 @@ function LocationSheet({
         </button>
       )}
     </div>
-  );
-}
-
-/* ─────────────────────────────────────────────────────────────────────
-   Legacy LocationFilter — kept for backward compat if needed elsewhere
- ───────────────────────────────────────────────────────────────────── */
-export function LocationFilter({
-  turfs,
-  city,
-  area,
-  locating,
-  onCity,
-  onArea,
-  onNearMe,
-}: {
-  turfs: Turf[];
-  city: string;
-  area: string;
-  locating: boolean;
-  onCity: (city: string) => void;
-  onArea: (area: string) => void;
-  onNearMe: () => void;
-}) {
-  const { themeId } = useLuxuryTheme();
-  const isPremium = themeId === "premium-teal";
-
-  const cities = useMemo(
-    () => Array.from(new Set(turfs.map((t) => t.city))).sort(),
-    [turfs]
-  );
-  const areas = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          turfs
-            .filter((t) => !city || t.city === city)
-            .map((t) => t.address.split(",")[0]?.trim())
-            .filter(Boolean)
-        )
-      ).sort(),
-    [turfs, city]
-  );
-
-  if (isPremium) {
-    return (
-      <section className="mt-3 px-4">
-        <div
-          className="grid gap-2 rounded-2xl p-3"
-          style={{ background: "#FFFFFF", border: "1px solid #E2E8F0", boxShadow: "0 4px 16px rgba(15,23,42,0.05)" }}
-        >
-          <div className="grid grid-cols-[1fr_auto] gap-2">
-            <label
-              className="flex h-11 items-center gap-2 rounded-xl px-3"
-              style={{ background: "#F8FAFC", border: "1px solid #E2E8F0" }}
-            >
-              <MapPin className="h-4 w-4 flex-shrink-0" style={{ color: "#14B8B0" }} />
-              <select
-                value={city}
-                onChange={(e) => onCity(e.target.value)}
-                className="min-w-0 flex-1 rounded-lg px-2 py-1 text-sm font-semibold outline-none"
-                style={{ background: "transparent", color: "#0F172A" }}
-              >
-                <option value="">All cities</option>
-                {cities.map((item) => (
-                  <option key={item} value={item}>{item}</option>
-                ))}
-              </select>
-            </label>
-            <button
-              type="button"
-              onClick={onNearMe}
-              disabled={locating}
-              className="pressable inline-flex h-11 items-center gap-2 rounded-xl px-3 text-xs font-bold disabled:opacity-60 cursor-pointer border-none"
-              style={{ background: "#14B8B0", color: "white", boxShadow: "0 4px 14px rgba(20,184,176,0.30)" }}
-            >
-              <LocateFixed className="h-4 w-4" />
-              {locating ? "Locating..." : "Near Me"}
-            </button>
-          </div>
-          <select
-            value={area}
-            onChange={(e) => onArea(e.target.value)}
-            className="h-11 rounded-xl px-3 text-sm font-semibold outline-none"
-            style={{ background: "#F8FAFC", border: "1px solid #E2E8F0", color: "#0F172A" }}
-          >
-            <option value="">All areas</option>
-            {areas.map((item) => (
-              <option key={item} value={item}>{item}</option>
-            ))}
-          </select>
-        </div>
-      </section>
-    );
-  }
-
-  return (
-    <section className="mt-3 px-4">
-      <div className="glass-strong grid gap-2 rounded-2xl p-3">
-        <div className="grid grid-cols-[1fr_auto] gap-2">
-          <label className="flex h-11 items-center gap-2 rounded-xl border border-border bg-panel px-3">
-            <MapPin className="h-4 w-4 text-primary" />
-            <select
-              value={city}
-              onChange={(event) => onCity(event.target.value)}
-              className="min-w-0 flex-1 rounded-lg bg-panel-2 px-2 py-1 text-sm font-semibold text-foreground outline-none"
-            >
-              <option className="bg-card text-foreground" value="">All cities</option>
-              {cities.map((item) => (
-                <option className="bg-card text-foreground" key={item} value={item}>{item}</option>
-              ))}
-            </select>
-          </label>
-          <button
-            type="button"
-            onClick={onNearMe}
-            disabled={locating}
-            className="pressable inline-flex h-11 items-center gap-2 rounded-xl bg-primary px-3 text-xs font-bold text-primary-foreground shadow-neon disabled:opacity-60 cursor-pointer border-none"
-          >
-            <LocateFixed className="h-4 w-4" />
-            {locating ? "Locating..." : "Near Me"}
-          </button>
-        </div>
-        <select
-          value={area}
-          onChange={(event) => onArea(event.target.value)}
-          className="h-11 rounded-xl border border-border bg-panel-2 px-3 text-sm font-semibold text-foreground outline-none"
-        >
-          <option className="bg-card text-foreground" value="">All areas</option>
-          {areas.map((item) => (
-            <option className="bg-card text-foreground" key={item} value={item}>{item}</option>
-          ))}
-        </select>
-      </div>
-    </section>
   );
 }

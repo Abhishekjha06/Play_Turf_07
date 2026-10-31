@@ -10,12 +10,29 @@ import type { Review } from "@/data/seed";
 import type { OpenGame } from "@/types/openGames";
 import { trackEvent } from "@/lib/analytics";
 import { useRealtimeOpenGames } from "@/lib/realtime";
-import { Star, MapPin, Clock, Heart, Share2, Users, Calendar, Lock, X, AlertCircle, CreditCard, Smartphone, Wallet } from "lucide-react";
+import { Star, MapPin, Clock, Heart, Share2, Users, Calendar, Lock, X, AlertCircle, CreditCard, Smartphone, Wallet,Trophy } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from "@/ui/carousel";
 import { MobileGallery } from "@/ui/MobileGallery";
+//pop up import
 
+import {
+  GiCricketBat,
+  GiSoccerBall,
+  GiBasketballBall,
+  GiShuttlecock,
+  GiTennisRacket,
+} from "react-icons/gi";
+
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/ui/dialog";
+
+//
 const TurfDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -39,6 +56,47 @@ const TurfDetail = () => {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("UPI");
   const joinGameRef = useRef<HTMLDivElement>(null);
 
+  //sport pop up
+
+  
+
+  const [showSportPopup, setShowSportPopup] = useState(false);
+  const [selectedSport, setSelectedSport] = useState<string | null>(null);
+
+ const handleBookNow = () => {
+  setSelectedSport(null);
+  setShowSportPopup(true);
+};
+
+  const getSportIcon = (sport: string) => {
+  const s = sport.toLowerCase();
+
+  if (s.includes("cricket")) {
+    return <GiCricketBat className="text-2xl text-primary" />;
+  }
+
+  if (s.includes("football")) {
+    return <GiSoccerBall className="text-2xl text-primary" />;
+  }
+
+  if (s.includes("basketball")) {
+    return <GiBasketballBall className="text-2xl text-primary" />;
+  }
+
+  if (s.includes("badminton")) {
+    return <GiShuttlecock className="text-2xl text-primary" />;
+  }
+
+  if (s.includes("tennis")) {
+    return <GiTennisRacket className="text-2xl text-primary" />;
+  }
+
+  // Default icon
+  return <span className="text-xl">🏆</span>;
+};
+
+  ///
+
   useModalFocus({
     isOpen: !!selectedJoinGame,
     onClose: () => setSelectedJoinGame(null),
@@ -49,7 +107,7 @@ const TurfDetail = () => {
     if (turf) {
       try {
         const allGames = await api.listOpenGames();
-        const filtered = allGames.filter(g => 
+        const filtered = allGames.filter(g =>
           g.venue.toLowerCase().includes(turf.name.toLowerCase())
         );
         setOpenGames(filtered);
@@ -100,7 +158,9 @@ const TurfDetail = () => {
       setJoiningGame(false);
     }
   };
+  // booknow handler
 
+  //
   const headerImages = useMemo(() => {
     if (!turf) return [];
     return Array.from(new Set([turf.image, ...turf.gallery]));
@@ -135,6 +195,8 @@ const TurfDetail = () => {
       }).catch((e) => setError((e as Error).message));
     }
   }, [id]);
+
+
 
   useEffect(() => {
     if (!id) return;
@@ -344,11 +406,10 @@ const TurfDetail = () => {
                           setSelectedJoinGame(g);
                         }
                       }}
-                      className={`w-full py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-1.5 transition active:scale-[0.98] cursor-pointer border-none shadow-neon ${
-                        g.status === "full" || g.status === "cancelled"
+                      className={`w-full py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-1.5 transition active:scale-[0.98] cursor-pointer border-none shadow-neon ${g.status === "full" || g.status === "cancelled"
                           ? "bg-zinc-800 text-zinc-500 shadow-none cursor-not-allowed"
                           : "bg-gradient-neon text-primary-foreground"
-                      }`}
+                        }`}
                     >
                       {g.status === "full" ? "Game Full" : g.status === "cancelled" ? "Cancelled" : g.is_private ? "Request Invite ↗" : "Join game ↗"}
                     </button>
@@ -445,7 +506,12 @@ const TurfDetail = () => {
               <p className="font-bold text-lg neon-text">₹{turf.price_per_hour}<span className="text-muted2 text-xs">/hr</span></p>
             </div>
             <button
-              onClick={() => navigate(`/booking/new/${turf.id}`)}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleBookNow();
+              }}
               className="bg-primary text-primary-foreground font-semibold rounded-full px-6 py-3.5 text-sm shadow-neon pressable min-h-[44px]"
               data-testid="detail-book-now"
             >
@@ -454,6 +520,145 @@ const TurfDetail = () => {
           </>
         )}
       </div>
+      <Dialog
+        open={showSportPopup}
+        onOpenChange={setShowSportPopup}
+      >
+        <DialogContent
+          className="
+            w-[calc(100%-24px)]
+            max-w-[460px]
+            bg-[#181818]
+            border border-white/10
+            rounded-[28px]
+            p-0
+            overflow-hidden
+            shadow-2xl
+          "
+        >
+          <DialogHeader className="px-5 pt-5 pb-2">
+            <DialogTitle className="text-xl font-black text-white">
+              Choose Sport
+            </DialogTitle>
+          </DialogHeader>
+
+          {/* SPORTS - PREVIOUS STYLE */}
+          <div className="px-5 pb-3">
+            <div className="grid grid-cols-2 gap-3">
+              {turf?.sport_types?.map((sport) => {
+                const sportName = sport.toLowerCase();
+
+                let icon = "🏆";
+
+                if (sportName === "cricket") icon = "🏏";
+                else if (sportName === "football") icon = "⚽";
+                else if (sportName === "badminton") icon = "🏸";
+                else if (sportName === "tennis") icon = "🎾";
+                else if (
+                  sportName === "table tennis" ||
+                  sportName === "table_tennis"
+                ) {
+                  icon = "🏓";
+                } else if (sportName === "basketball") {
+                  icon = "🏀";
+                } else if (sportName === "volleyball") {
+                  icon = "🏐";
+                }
+
+                const isSelected = selectedSport === sport;
+
+                return (
+                  <button
+                    key={sport}
+                    type="button"
+                    onClick={() => {
+                      // ONLY SELECT
+                      // DO NOT NAVIGATE
+                      setSelectedSport(sport);
+                    }}
+                    className={`
+                      relative
+                      flex
+                      items-center
+                      justify-center
+                      gap-2
+                      rounded-2xl
+                      px-4
+                      py-3
+                      min-h-[52px]
+                      border
+                      transition-all
+                      duration-200
+                      ${
+                        isSelected
+                          ? "bg-primary/15 border-primary shadow-[0_0_15px_rgba(0,255,170,0.15)]"
+                          : "bg-white/5 border-white/10 hover:bg-white/10"
+                      }
+                    `}
+                  >
+                    {/* SPORT NAME FIRST */}
+                    <span
+                      className={`
+                        text-sm
+                        font-bold
+                        capitalize
+                        ${
+                          isSelected
+                            ? "text-primary"
+                            : "text-white"
+                        }
+                      `}
+                    >
+                      {sport}
+                    </span>
+
+                    {/* ICON BESIDE SPORT */}
+                    <span className="text-xl leading-none">
+                      {icon}
+                    </span>
+
+                    {/* CHECK */}
+                    {isSelected && (
+                      <span
+                        className="
+                          absolute
+                          top-1.5
+                          right-2
+                          text-primary
+                          text-xs
+                          font-black
+                        "
+                      >
+                        ✓
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* CONTINUE */}
+          <div className="mt-4">
+            <button
+              type="button"
+              disabled={!selectedSport}
+              onClick={() => {
+                if (!selectedSport || !turf) return;
+
+                setShowSportPopup(false);
+
+                navigate(`/booking/new/${turf.id}?sport=${encodeURIComponent(selectedSport)}`
+              );
+              }
+            }
+              className="w-full rounded-xl bg-primary text-primary-foreground py-3 text-sm font-black disabled:opacity-40"
+            >
+              Continue with {selectedSport || "Sport"}
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <AnimatePresence>
         {selectedJoinGame && (
@@ -502,7 +707,7 @@ const TurfDetail = () => {
                   <span>total slot price</span>
                   <span className="font-black text-foreground text-sm">₹{selectedJoinGame.total_amount}</span>
                 </div>
-                
+
                 <div className="flex justify-between items-start pt-1.5 border-t border-white/5">
                   <span>split across</span>
                   <div className="text-right">
@@ -538,11 +743,10 @@ const TurfDetail = () => {
                         type="button"
                         onClick={() => setSelectedPaymentMethod(m.value)}
                         aria-pressed={isSelected}
-                        className={`flex flex-col items-center justify-center p-3 rounded-2xl border transition-all cursor-pointer bg-transparent ${
-                          isSelected
+                        className={`flex flex-col items-center justify-center p-3 rounded-2xl border transition-all cursor-pointer bg-transparent ${isSelected
                             ? "border-primary text-primary bg-primary/5"
                             : "border-white/5 text-muted2 hover:text-foreground"
-                        }`}
+                          }`}
                       >
                         <Icon className="h-5 w-5 mb-1" />
                         <span className="text-xs font-bold">{m.label}</span>

@@ -13,5 +13,8 @@
     "test": "npm --prefix components run test",
     "test:watch": "npm --prefix components run test:watch",
     "install:app": "npm --prefix components install"
+  },
+  "devDependencies": {
+    "supabase": "^2.121.0"
   }
 }

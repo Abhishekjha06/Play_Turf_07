@@ -99,15 +99,15 @@ export default function Receipt() {
   };
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#050814] text-[#F5F7FA] lg:h-screen">
+    <main className="relative min-h-screen overflow-hidden bg-background text-foreground lg:h-screen">
       <div className="absolute inset-0 opacity-35" style={{ backgroundImage: `url(${receiptAssets})`, backgroundSize: "cover", backgroundPosition: "center" }} />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(57,255,20,.22),transparent_30%),radial-gradient(circle_at_80%_10%,rgba(0,217,255,.24),transparent_34%),linear-gradient(180deg,rgba(11,16,32,.78),#050814_58%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,hsl(var(--success)/0.22),transparent_30%),radial-gradient(circle_at_80%_10%,hsl(var(--primary)/0.24),transparent_34%),linear-gradient(180deg,hsl(var(--card)/0.78),hsl(var(--background))_58%)]" />
 
       <div className="pointer-events-none absolute inset-0">
         {Array.from({ length: 26 }).map((_, index) => (
           <span
             key={index}
-            className="absolute h-1 w-1 animate-float rounded-full bg-[#00D9FF] shadow-[0_0_16px_rgba(0,217,255,.9)]"
+            className="absolute h-1 w-1 animate-float rounded-full bg-[hsl(var(--primary))] shadow-[0_0_16px_hsl(var(--primary)/0.9)]"
             style={{ left: `${(index * 17) % 100}%`, top: `${8 + ((index * 29) % 84)}%`, animationDelay: `${index * 0.12}s` }}
           />
         ))}
@@ -115,7 +115,7 @@ export default function Receipt() {
           <span
             key={`confetti-${index}`}
             className="animate-confetti absolute h-2 w-2 rounded-full"
-            style={{ left: `${(index * 31) % 100}%`, background: index % 2 ? "#39FF14" : "#00D9FF", animationDelay: `${index * 0.1}s` }}
+            style={{ left: `${(index * 31) % 100}%`, background: index % 2 ? "hsl(var(--success))" : "hsl(var(--primary))", animationDelay: `${index * 0.1}s` }}
           />
         ))}
       </div>
@@ -126,7 +126,7 @@ export default function Receipt() {
         transition={{ duration: 0.45 }}
         className="relative z-10 mx-auto flex w-full max-w-6xl items-center px-3 py-4 pb-28 sm:px-5"
       >
-        <div className="grid w-full gap-3 rounded-[2rem] border border-cyan-300/20 bg-[#0B1020]/82 p-3 shadow-[0_0_100px_rgba(0,217,255,.18)] backdrop-blur-2xl sm:p-5 lg:max-h-[calc(100vh-2rem)] lg:grid-cols-[.78fr_1.22fr] lg:overflow-hidden">
+        <div className="grid w-full gap-3 rounded-[2rem] border border-[hsl(var(--primary)/0.2)] bg-[hsl(var(--card)/0.82)] p-3 shadow-[0_0_100px_hsl(var(--primary)/0.18)] backdrop-blur-2xl sm:p-5 lg:max-h-[calc(100vh-2rem)] lg:grid-cols-[.78fr_1.22fr] lg:overflow-hidden">
           <HeaderStatus />
 
           <div className="grid min-h-0 gap-3 lg:grid-rows-[auto_1fr_auto]">
@@ -145,19 +145,19 @@ export default function Receipt() {
             </div>
           </div>
 
-          <footer className="border-t border-white/10 pt-3 text-center lg:col-span-2">
-            <div className="flex flex-wrap justify-center gap-3 text-[11px] text-cyan-100/65">
+          <footer className="border-t border-border pt-3 text-center lg:col-span-2">
+            <div className="flex flex-wrap justify-center gap-3 text-[11px] text-soft">
               <span>Terms & Conditions</span>
               <span>Privacy Policy</span>
               <span>Responsible Gaming</span>
               <span>Support</span>
             </div>
-            <p className="mt-2 text-[11px] text-white/45">© 2026 PLAY_TURF — All Rights Reserved</p>
+            <p className="mt-2 text-[11px] text-muted2">© 2026 PLAY_TURF — All Rights Reserved</p>
           </footer>
         </div>
       </motion.section>
 
-      <div className="fixed inset-x-0 bottom-0 z-50 grid grid-cols-4 gap-2 border-t border-white/10 bg-[#0B1020]/92 p-3 backdrop-blur-xl lg:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-50 grid grid-cols-4 gap-2 border-t border-border bg-[hsl(var(--card)/0.92)] p-3 backdrop-blur-xl lg:hidden">
         <ActionButton label="Download" icon={Download} onClick={() => {}} primary compact />
         <ActionButton label="Share" icon={Share2} onClick={share} compact />
         <ActionButton label="Book Again" icon={RotateCcw} onClick={() => toast.success("Ready for another match")} primary compact />
@@ -173,20 +173,20 @@ export default function Receipt() {
 
 function HeaderStatus() {
   return (
-    <div className="relative overflow-hidden rounded-[1.5rem] border border-white/10 bg-white/[0.06] p-5 text-center lg:flex lg:flex-col lg:justify-between">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(57,255,20,.2),transparent_35%),linear-gradient(160deg,rgba(0,217,255,.12),transparent)]" />
+    <div className="relative overflow-hidden rounded-[1.5rem] border border-border bg-[hsl(var(--foreground)/0.06)] p-5 text-center lg:flex lg:flex-col lg:justify-between">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,hsl(var(--success)/0.2),transparent_35%),linear-gradient(160deg,hsl(var(--primary)/0.12),transparent)]" />
       <div className="relative flex flex-col items-center">
         <img src={playTurfLogo} alt="Play Turf Logo" className="mx-auto h-16 w-16 object-contain mb-2" />
         <h1 className="font-display text-3xl font-black tracking-tight">PLAY_TURF</h1>
-        <p className="mt-1 text-xs font-semibold text-white/60">Your Match. Your Turf. Your Victory.</p>
+        <p className="mt-1 text-xs font-semibold text-soft">Your Match. Your Turf. Your Victory.</p>
       </div>
 
       <div className="relative mt-6">
-        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 220 }} className="mx-auto grid h-24 w-24 place-items-center rounded-full border border-[#39FF14]/40 bg-[#39FF14]/15 shadow-[0_0_55px_rgba(57,255,20,.46)]">
-          <CheckCircle2 className="h-14 w-14 text-[#39FF14]" />
+        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 220 }} className="mx-auto grid h-24 w-24 place-items-center rounded-full border border-[hsl(var(--success)/0.4)] bg-[hsl(var(--success)/0.15)] shadow-[0_0_55px_hsl(var(--success)/0.46)]">
+          <CheckCircle2 className="h-14 w-14 text-[hsl(var(--success))]" />
         </motion.div>
         <h2 className="mt-4 text-2xl font-black">PAYMENT SUCCESSFUL</h2>
-        <p className="mt-2 text-sm text-white/62">Your booking has been confirmed successfully.</p>
+        <p className="mt-2 text-sm text-soft">Your booking has been confirmed successfully.</p>
       </div>
     </div>
   );
@@ -194,12 +194,12 @@ function HeaderStatus() {
 
 function MatchShowcase() {
   return (
-    <div className="relative overflow-hidden rounded-[1.5rem] border border-[#00D9FF]/20 bg-white/[0.06] p-4">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,217,255,.2),transparent_34%)]" />
+    <div className="relative overflow-hidden rounded-[1.5rem] border border-[hsl(var(--primary)/0.2)] bg-[hsl(var(--foreground)/0.06)] p-4">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,hsl(var(--primary)/0.2),transparent_34%)]" />
       <div className="relative grid grid-cols-[1fr_auto_1fr] items-center gap-3 text-center">
         <TeamLogo name={receipt.teamA} tone="green" />
-        <div className="grid h-20 w-20 place-items-center rounded-full border border-cyan-300/50 bg-black/70 shadow-[0_0_45px_rgba(0,217,255,.48)]">
-          <span className="text-2xl font-black text-white drop-shadow-[0_0_16px_rgba(0,217,255,.9)]">VS</span>
+        <div className="grid h-20 w-20 place-items-center rounded-full border border-[hsl(var(--primary)/0.5)] bg-[hsl(var(--panel))] shadow-[0_0_45px_hsl(var(--primary)/0.48)]">
+          <span className="text-2xl font-black text-foreground drop-shadow-[0_0_16px_hsl(var(--primary)/0.9)]">VS</span>
         </div>
         <TeamLogo name={receipt.teamB} tone="blue" />
       </div>
@@ -210,8 +210,10 @@ function MatchShowcase() {
 function TeamLogo({ name, tone }: { name: string; tone: "green" | "blue" }) {
   const isGreen = tone === "green";
   const initials = name.split(" ").map((part) => part[0]).join("").toUpperCase();
-  const glowColor = isGreen ? "#39FF14" : "#00D9FF";
-  const secondaryColor = isGreen ? "#16a34a" : "#2563eb";
+  // Team emblem artwork: the glow duo maps to success/primary tokens; the
+  // shield's internal dark gradient and white initials stay brand artwork.
+  const glowColor = isGreen ? "hsl(var(--success))" : "hsl(var(--primary))";
+  const secondaryColor = isGreen ? "hsl(var(--success) / 0.6)" : "hsl(var(--primary) / 0.6)";
 
   return (
     <div className="group flex flex-col items-center min-w-0">
@@ -266,21 +268,21 @@ function TeamLogo({ name, tone }: { name: string; tone: "green" | "blue" }) {
           </text>
         </svg>
       </div>
-      <p className="mt-2.5 truncate text-xs font-black tracking-wide text-white/85 group-hover:text-white transition-colors">{name}</p>
+      <p className="mt-2.5 truncate text-xs font-black tracking-wide text-foreground group-hover:text-foreground transition-colors">{name}</p>
     </div>
   );
 }
 
 function DetailsCard({ copyTxn }: { copyTxn: () => void }) {
   return (
-    <div className="rounded-[1.5rem] border border-white/10 bg-black/25 p-4">
+    <div className="rounded-[1.5rem] border border-border bg-[hsl(var(--panel-2))] p-4">
       <div className="mb-3 flex items-center justify-between">
-        <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-100/70">Payment Details</p>
-        <span className="rounded-full border border-[#39FF14]/30 bg-[#39FF14]/10 px-3 py-1 text-[11px] font-black text-[#39FF14]">SUCCESS</span>
+        <p className="text-xs font-black uppercase tracking-[0.22em] text-soft">Payment Details</p>
+        <span className="rounded-full border border-[hsl(var(--success)/0.3)] bg-[hsl(var(--success)/0.1)] px-3 py-1 text-[11px] font-black text-[hsl(var(--success))]">SUCCESS</span>
       </div>
       <div className="space-y-2">
         <ReceiptRow label="Booking ID" value={receipt.bookingId} />
-        <ReceiptRow label="Transaction ID" value={receipt.transactionId} action={<button onClick={copyTxn} className="text-[#00D9FF] hover:text-white transition-colors"><Copy className="h-4 w-4" /></button>} />
+        <ReceiptRow label="Transaction ID" value={receipt.transactionId} action={<button onClick={copyTxn} className="text-[hsl(var(--primary))] hover:text-foreground transition-colors"><Copy className="h-4 w-4" /></button>} />
         <ReceiptRow label="Match Type" value={receipt.matchType} />
         <ReceiptRow label="Selected Team" value={receipt.selectedTeam} />
         <ReceiptRow label="Bet Amount" value={`Rs ${receipt.betAmount.toLocaleString("en-IN")}`} />
@@ -296,47 +298,47 @@ function DetailsCard({ copyTxn }: { copyTxn: () => void }) {
 
 function SecurityCard() {
   return (
-    <div className="rounded-[1.5rem] border border-[#39FF14]/15 bg-[#39FF14]/[0.02] p-4 flex flex-col justify-between">
+    <div className="rounded-[1.5rem] border border-[hsl(var(--success)/0.15)] bg-[hsl(var(--success)/0.02)] p-4 flex flex-col justify-between">
       <div>
-        <p className="text-xs font-black uppercase tracking-[0.22em] text-lime-400/80">Digital Signature</p>
-        
+        <p className="text-xs font-black uppercase tracking-[0.22em] text-[hsl(var(--success)/0.8)]">Digital Signature</p>
+
         {/* Futuristic Barcode with Scanning Line */}
-        <div className="relative mx-auto mt-4 flex h-20 w-44 flex-col items-center justify-center rounded-xl bg-white/5 p-3 backdrop-blur-md border border-white/5 overflow-hidden group">
+        <div className="relative mx-auto mt-4 flex h-20 w-44 flex-col items-center justify-center rounded-xl bg-[hsl(var(--foreground)/0.05)] p-3 backdrop-blur-md border border-border overflow-hidden group">
           {/* Scan line animation */}
-          <div className="absolute inset-x-0 h-[1.5px] bg-gradient-to-r from-transparent via-[#39FF14] to-transparent animate-[pulse_1.5s_infinite] shadow-[0_0_8px_#39FF14] z-10" />
+          <div className="absolute inset-x-0 h-[1.5px] bg-gradient-to-r from-transparent via-[hsl(var(--success))] to-transparent animate-[pulse_1.5s_infinite] shadow-[0_0_8px_hsl(var(--success))] z-10" />
           
           <svg viewBox="0 0 100 40" className="h-full w-full opacity-70 group-hover:opacity-90 transition-opacity">
-            <rect x="5" y="5" width="2" height="30" fill="#39FF14" />
-            <rect x="9" y="5" width="4" height="30" fill="#39FF14" />
-            <rect x="15" y="5" width="1" height="30" fill="#39FF14" />
-            <rect x="18" y="5" width="3" height="30" fill="#39FF14" />
-            <rect x="23" y="5" width="1" height="30" fill="#39FF14" />
-            <rect x="26" y="5" width="5" height="30" fill="#39FF14" />
-            <rect x="33" y="5" width="2" height="30" fill="#39FF14" />
-            <rect x="37" y="5" width="1" height="30" fill="#39FF14" />
-            <rect x="40" y="5" width="4" height="30" fill="#39FF14" />
-            <rect x="46" y="5" width="2" height="30" fill="#39FF14" />
-            <rect x="50" y="5" width="1" height="30" fill="#39FF14" />
-            <rect x="53" y="5" width="3" height="30" fill="#39FF14" />
-            <rect x="58" y="5" width="5" height="30" fill="#39FF14" />
-            <rect x="65" y="5" width="1" height="30" fill="#39FF14" />
-            <rect x="68" y="5" width="2" height="30" fill="#39FF14" />
-            <rect x="72" y="5" width="4" height="30" fill="#39FF14" />
-            <rect x="78" y="5" width="1" height="30" fill="#39FF14" />
-            <rect x="81" y="5" width="3" height="30" fill="#39FF14" />
-            <rect x="86" y="5" width="2" height="30" fill="#39FF14" />
-            <rect x="90" y="5" width="5" height="30" fill="#39FF14" />
+            <rect x="5" y="5" width="2" height="30" fill="hsl(var(--success))" />
+            <rect x="9" y="5" width="4" height="30" fill="hsl(var(--success))" />
+            <rect x="15" y="5" width="1" height="30" fill="hsl(var(--success))" />
+            <rect x="18" y="5" width="3" height="30" fill="hsl(var(--success))" />
+            <rect x="23" y="5" width="1" height="30" fill="hsl(var(--success))" />
+            <rect x="26" y="5" width="5" height="30" fill="hsl(var(--success))" />
+            <rect x="33" y="5" width="2" height="30" fill="hsl(var(--success))" />
+            <rect x="37" y="5" width="1" height="30" fill="hsl(var(--success))" />
+            <rect x="40" y="5" width="4" height="30" fill="hsl(var(--success))" />
+            <rect x="46" y="5" width="2" height="30" fill="hsl(var(--success))" />
+            <rect x="50" y="5" width="1" height="30" fill="hsl(var(--success))" />
+            <rect x="53" y="5" width="3" height="30" fill="hsl(var(--success))" />
+            <rect x="58" y="5" width="5" height="30" fill="hsl(var(--success))" />
+            <rect x="65" y="5" width="1" height="30" fill="hsl(var(--success))" />
+            <rect x="68" y="5" width="2" height="30" fill="hsl(var(--success))" />
+            <rect x="72" y="5" width="4" height="30" fill="hsl(var(--success))" />
+            <rect x="78" y="5" width="1" height="30" fill="hsl(var(--success))" />
+            <rect x="81" y="5" width="3" height="30" fill="hsl(var(--success))" />
+            <rect x="86" y="5" width="2" height="30" fill="hsl(var(--success))" />
+            <rect x="90" y="5" width="5" height="30" fill="hsl(var(--success))" />
           </svg>
-          <span className="text-[8px] font-mono text-white/50 tracking-widest mt-1">VERIFIED SECURE</span>
+          <span className="text-[8px] font-mono text-muted2 tracking-widest mt-1">VERIFIED SECURE</span>
         </div>
       </div>
       
-      <div className="mt-4 rounded-2xl border border-white/5 bg-black/30 p-3">
-        <div className="inline-flex items-center gap-1.5 rounded-full border border-[#39FF14]/25 bg-[#39FF14]/10 px-2.5 py-0.5 text-[10px] font-bold text-lime-400">
+      <div className="mt-4 rounded-2xl border border-border bg-[hsl(var(--panel-2))] p-3">
+        <div className="inline-flex items-center gap-1.5 rounded-full border border-[hsl(var(--success)/0.25)] bg-[hsl(var(--success)/0.1)] px-2.5 py-0.5 text-[10px] font-bold text-[hsl(var(--success))]">
           <ShieldCheck className="h-3.5 w-3.5" /> SECURE CHECKOUT
         </div>
-        <p className="mt-2 text-xs font-semibold text-white/70">Receipt Authenticated</p>
-        <p className="mt-0.5 text-[10px] text-white/40">Secured transaction token verified by PLAY_TURF.</p>
+        <p className="mt-2 text-xs font-semibold text-soft">Receipt Authenticated</p>
+        <p className="mt-0.5 text-[10px] text-muted2">Secured transaction token verified by PLAY_TURF.</p>
       </div>
     </div>
   );
@@ -344,9 +346,9 @@ function SecurityCard() {
 
 function ReceiptRow({ label, value, strong, action }: { label: string; value: string; strong?: boolean; action?: ReactNode }) {
   return (
-    <div className="flex items-center justify-between gap-3 border-b border-white/5 pb-2 text-sm last:border-0 last:pb-0">
-      <span className="text-white/48">{label}</span>
-      <span className={`ml-auto text-right font-semibold ${strong ? "text-[#39FF14]" : "text-white"}`}>{value}</span>
+    <div className="flex items-center justify-between gap-3 border-b border-border pb-2 text-sm last:border-0 last:pb-0">
+      <span className="text-muted2">{label}</span>
+      <span className={`ml-auto text-right font-semibold ${strong ? "text-[hsl(var(--success))]" : "text-foreground"}`}>{value}</span>
       {action}
     </div>
   );
@@ -357,7 +359,7 @@ function ActionButton({ label, icon: Icon, onClick, primary, compact }: { label:
     <button
       onClick={onClick}
       className={`pressable inline-flex items-center justify-center gap-2 rounded-2xl font-black transition ${compact ? "min-h-12 px-2 text-[11px]" : "min-h-12 px-3 text-xs"
-        } ${primary ? "bg-gradient-to-r from-[#39FF14] to-[#00D9FF] text-black shadow-[0_0_28px_rgba(57,255,20,.34)]" : "border border-white/10 bg-white/10 text-white hover:border-cyan-300/40"}`}
+        } ${primary ? "bg-gradient-neon text-primary-foreground shadow-neon" : "border border-border bg-[hsl(var(--foreground)/0.08)] text-foreground hover:border-[hsl(var(--primary)/0.4)]"}`}
     >
       <Icon className="h-4 w-4" />
       {label}

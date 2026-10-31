@@ -47,3 +47,7 @@ Thumbs.db
 brain/
 .gemini/
 
+
+# Test artifacts
+gui-test-screenshots/
+scripts/preview/

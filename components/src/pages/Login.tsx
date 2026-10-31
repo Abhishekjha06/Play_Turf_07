@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 import { MobileShell } from "@/layout/MobileShell";
@@ -11,7 +11,7 @@ import heroNight from "@/assets/hero-night-turf.webp";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, type LoginFormValues } from "@/lib/validations";
-import { checkRateLimit } from "@/lib/rate-limit";
+import { checkRateLimit, recordRateLimitAttempt } from "@/lib/rate-limit";
 import { trackEvent, identifyUser } from "@/lib/analytics";
 
 
@@ -22,10 +22,24 @@ const Login = () => {
   const redirectUrl = location.state?.from || "/";
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const submittingRef = useRef(false);
+  // Email-confirmation notice + resend state (loading, cooldown countdown)
+  const [unconfirmedEmail, setUnconfirmedEmail] = useState<string | null>(null);
+  const [resending, setResending] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
 
   useEffect(() => {
     trackEvent("Login Started");
   }, []);
+
+  // Resend-confirmation cooldown countdown; interval cleans itself up when it hits 0.
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const t = setInterval(() => {
+      setResendCooldown((s) => (s <= 1 ? 0 : s - 1));
+    }, 1000);
+    return () => clearInterval(t);
+  }, [resendCooldown]);
 
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -37,8 +51,11 @@ const Login = () => {
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   const onSubmit = async (data: LoginFormValues) => {
+    if (submittingRef.current) return; // synchronous guard — a same-tick double-click must not fire two sign-ins
+    submittingRef.current = true;
     setLoading(true);
     await handleSupabaseLogin(data);
+    submittingRef.current = false;
     setLoading(false);
   };
 
@@ -111,11 +128,44 @@ const Login = () => {
         navigate(redirectUrl);
       }
     } catch (err: any) {
-      if (err.message === "Invalid login credentials") {
-        toast.error("Invalid credentials. If you just signed up, please check your email to verify your account first.");
-      } else {
-        toast.error(err.message);
+      // Rate-limit accuracy: record ONLY genuine rejections from the Supabase
+      // auth API (they carry an HTTP status). Network failures/timeouts carry
+      // no status or status 0, and successful logins never reach the catch —
+      // so none of those can lock the user out. Single call site = no
+      // duplicate writes.
+      if (typeof err?.status === "number" && err.status >= 400) {
+        await recordRateLimitAttempt(formData.email, 'login');
       }
+      const msg = String(err?.message || "");
+      if (msg === "Invalid login credentials") {
+        toast.error("Invalid email or password. If you just signed up, please confirm your email first.");
+      } else if (/email not confirmed/i.test(msg)) {
+        // Fresh signup with "Confirm email" enabled — offer a resend instead of a dead end.
+        setUnconfirmedEmail(formData.email);
+        toast.error("Please confirm your email first — use the resend link below.");
+      } else {
+        toast.error(msg || "Something went wrong. Please try again.");
+      }
+    }
+  };
+
+  const handleResendConfirmation = async () => {
+    if (!unconfirmedEmail || resending || resendCooldown > 0) return;
+    setResending(true);
+    try {
+      const supabase = await getSupabase();
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email: unconfirmedEmail,
+        options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+      });
+      if (error) throw error;
+      setResendCooldown(60); // cooldown before the next resend
+      toast.success("Confirmation email sent — check your inbox (and spam folder).");
+    } catch (e: any) {
+      toast.error(e?.message || "Could not resend the email. Please try again in a minute.");
+    } finally {
+      setResending(false);
     }
   };
 
@@ -241,6 +291,27 @@ const Login = () => {
               </button>
             </form>
             
+            {unconfirmedEmail && (
+              <div className="rounded-2xl border border-amber-400/30 bg-amber-400/10 p-4 text-left">
+                <p className="text-xs leading-relaxed text-amber-200">
+                  <span className="font-semibold">{unconfirmedEmail}</span> isn&apos;t confirmed yet.
+                  Click the link we emailed you, then sign in.
+                </p>
+                <button
+                  type="button"
+                  onClick={handleResendConfirmation}
+                  disabled={resending || resendCooldown > 0}
+                  className="mt-2 w-full rounded-full border border-amber-400/40 bg-amber-400/15 py-2.5 text-xs font-semibold text-amber-100 pressable disabled:opacity-50"
+                >
+                  {resending
+                    ? "Resending…"
+                    : resendCooldown > 0
+                      ? `Resend available in ${resendCooldown}s`
+                      : "Resend confirmation email"}
+                </button>
+              </div>
+            )}
+
             <p className="text-sm text-soft mt-4">
               Don't have an account?{" "}
               <Link to="/signup" className="text-primary hover:underline">

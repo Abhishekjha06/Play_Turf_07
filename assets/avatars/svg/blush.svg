@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  
+  <defs>
+    <filter id="fur" x="-15%" y="-15%" width="130%" height="130%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.045 0.075" numOctaves="3" seed="7" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="13" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <filter id="furSoft" x="-15%" y="-15%" width="130%" height="130%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.06 0.09" numOctaves="3" seed="10" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="7" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <radialGradient id="bodyGrad" cx="42%" cy="36%" r="75%">
+      <stop offset="0%" stop-color="#F9D2DC"/>
+      <stop offset="52%" stop-color="#F2AFC0"/>
+      <stop offset="100%" stop-color="#DB8FA5"/>
+    </radialGradient>
+    <linearGradient id="armGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F2AFC0"/>
+      <stop offset="100%" stop-color="#DB8FA5"/>
+    </linearGradient>
+    <radialGradient id="bellyGrad" cx="50%" cy="42%" r="70%">
+      <stop offset="0%" stop-color="#FADCE4"/>
+      <stop offset="100%" stop-color="#FADCE4" stop-opacity="0.55"/>
+    </radialGradient>
+  </defs>
+  <!-- furry silhouette group: body + limbs + feet -->
+  <g filter="url(#fur)">
+    <!-- feet -->
+    <ellipse cx="207" cy="438" rx="47" ry="26" fill="#DB8FA5"/>
+    <ellipse cx="305" cy="438" rx="47" ry="26" fill="#DB8FA5"/>
+    <!-- body -->
+    <path d="M 256 92 C 318 92 362 138 380 208 C 398 268 406 322 394 366 C 376 420 322 438 256 438 C 190 438 136 420 118 366 C 106 322 114 268 132 208 C 150 138 194 92 256 92 Z" fill="url(#bodyGrad)"/>
+    <!-- arms (on top of the body so the stubby arms stay visible) -->
+    
+      <ellipse cx="102" cy="318" rx="36" ry="58" transform="rotate(18 102 318)" fill="url(#armGrad)"/>
+      <ellipse cx="410" cy="318" rx="36" ry="58" transform="rotate(-18 410 318)" fill="url(#armGrad)"/>
+  </g>
+  <!-- belly (smooth, no fur displacement) -->
+  <ellipse cx="256" cy="348" rx="97" ry="84" fill="url(#bellyGrad)" filter="url(#furSoft)"/>
+  <!-- fur strands on the head/sides -->
+  <g filter="url(#furSoft)">
+      <path d="M 196 104 q 3 -8 9 -12" stroke="#DB8FA5" stroke-width="5" stroke-linecap="round" fill="none" transform="rotate(-30 196 104)" opacity="0.5"/>
+      <path d="M 220 96 q 3 -8 9 -12" stroke="#DB8FA5" stroke-width="5" stroke-linecap="round" fill="none" transform="rotate(-18 220 96)" opacity="0.5"/>
+      <path d="M 244 92 q 3 -8 9 -12" stroke="#DB8FA5" stroke-width="5" stroke-linecap="round" fill="none" transform="rotate(-6 244 92)" opacity="0.5"/>
+      <path d="M 268 92 q 3 -8 9 -12" stroke="#DB8FA5" stroke-width="5" stroke-linecap="round" fill="none" transform="rotate(6 268 92)" opacity="0.5"/>
+      <path d="M 292 97 q 3 -8 9 -12" stroke="#DB8FA5" stroke-width="5" stroke-linecap="round" fill="none" transform="rotate(18 292 97)" opacity="0.5"/>
+      <path d="M 316 106 q 3 -8 9 -12" stroke="#DB8FA5" stroke-width="5" stroke-linecap="round" fill="none" transform="rotate(30 316 106)" opacity="0.5"/>
+      <path d="M 152 142 q 3 -8 9 -12" stroke="#DB8FA5" stroke-width="5" stroke-linecap="round" fill="none" transform="rotate(-50 152 142)" opacity="0.5"/>
+      <path d="M 360 140 q 3 -8 9 -12" stroke="#DB8FA5" stroke-width="5" stroke-linecap="round" fill="none" transform="rotate(48 360 140)" opacity="0.5"/>
+      <path d="M 132 196 q 3 -8 9 -12" stroke="#DB8FA5" stroke-width="5" stroke-linecap="round" fill="none" transform="rotate(-66 132 196)" opacity="0.5"/>
+      <path d="M 380 192 q 3 -8 9 -12" stroke="#DB8FA5" stroke-width="5" stroke-linecap="round" fill="none" transform="rotate(64 380 192)" opacity="0.5"/>
+      <path d="M 118 258 q 3 -8 9 -12" stroke="#DB8FA5" stroke-width="5" stroke-linecap="round" fill="none" transform="rotate(-82 118 258)" opacity="0.5"/>
+      <path d="M 394 254 q 3 -8 9 -12" stroke="#DB8FA5" stroke-width="5" stroke-linecap="round" fill="none" transform="rotate(80 394 254)" opacity="0.5"/>
+      <path d="M 116 314 q 3 -8 9 -12" stroke="#DB8FA5" stroke-width="5" stroke-linecap="round" fill="none" transform="rotate(-95 116 314)" opacity="0.5"/>
+      <path d="M 396 310 q 3 -8 9 -12" stroke="#DB8FA5" stroke-width="5" stroke-linecap="round" fill="none" transform="rotate(92 396 310)" opacity="0.5"/>
+  </g>
+  <!-- face -->
+  
+      <ellipse cx="214" cy="238" rx="10" ry="13.5" fill="#2A2320"/>
+      <circle cx="210.5" cy="232.5" r="3.4" fill="#FFFFFF"/>
+      <circle cx="217" cy="242" r="1.6" fill="#FFFFFF" opacity="0.7"/>
+      <ellipse cx="298" cy="238" rx="10" ry="13.5" fill="#2A2320"/>
+      <circle cx="294.5" cy="232.5" r="3.4" fill="#FFFFFF"/>
+      <circle cx="301" cy="242" r="1.6" fill="#FFFFFF" opacity="0.7"/>
+      <path d="M 235 278 Q 256 293 277 278" stroke="#3A2E28" stroke-width="7" stroke-linecap="round" fill="none"/>
+      <ellipse cx="182" cy="272" rx="17" ry="11" fill="#E88A9E" opacity="0.55"/>
+      <ellipse cx="330" cy="272" rx="17" ry="11" fill="#E88A9E" opacity="0.55"/>
+</svg>

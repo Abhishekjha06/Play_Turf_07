@@ -67,6 +67,18 @@ export async function addBanner(b: Partial<Banner>): Promise<Banner> {
   return banner;
 }
 
+export async function updateBanner(id: string, patch: Partial<Banner>): Promise<Banner> {
+  const supabase = await getSupabase();
+  const { data, error } = await supabase
+    .from("banners")
+    .update(patch)
+    .eq("id", id)
+    .select()
+    .single();
+  if (error) throw error;
+  return data as Banner;
+}
+
 export async function deleteBanner(id: string): Promise<void> {
   const supabase = await getSupabase();
   const { error } = await supabase
@@ -74,6 +86,34 @@ export async function deleteBanner(id: string): Promise<void> {
     .delete()
     .eq("id", id);
   if (error) throw error;
+}
+
+/** Persists a new slide order by rewriting the `order` column from the array index. */
+export async function reorderBanners(orderedIds: string[]): Promise<void> {
+  const supabase = await getSupabase();
+  const results = await Promise.all(
+    orderedIds.map((id, index) =>
+      supabase.from("banners").update({ order: index }).eq("id", id),
+    ),
+  );
+  const error = results.find((result) => result.error)?.error;
+  if (error) throw error;
+}
+
+/** Uploads a banner image to the public `banners` storage bucket (see supabase_banner_admin.sql). */
+export async function uploadBannerImage(file: File): Promise<string> {
+  const supabase = await getSupabase();
+  const fileExt = file.name.split(".").pop();
+  const fileName = `${uid("bimg")}.${fileExt}`;
+  const filePath = `banners/${fileName}`;
+  const { error: uploadError } = await supabase.storage
+    .from("banners")
+    .upload(filePath, file);
+  if (uploadError) throw uploadError;
+  const { data } = supabase.storage
+    .from("banners")
+    .getPublicUrl(filePath);
+  return data.publicUrl;
 }
 
 export async function addOffer(o: Partial<Offer>): Promise<Offer> {

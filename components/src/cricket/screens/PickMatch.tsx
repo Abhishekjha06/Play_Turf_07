@@ -7,7 +7,6 @@ import { TeamAvatar, getMascotForTeam } from "../components/TeamAvatar";
 import { TeamSearchSelect } from "../components/TeamSearchSelect";
 import { TeamManagerModal } from "../components/TeamManagerModal";
 import { VsBadge } from "../components/VsBadge";
-import { useLuxuryTheme } from "@/luxury/LuxuryThemeProvider";
 
 const PACKAGES = [
   {
@@ -47,7 +46,6 @@ const PACKAGES = [
 
 export function PickMatch() {
   const { state, teamA, teamB, setTeamA, setTeamB, setAmount, setStep, resetFlow } = useCricketBooking();
-  const { theme, themeId } = useLuxuryTheme();
   const [managerOpen, setManagerOpen] = useState(false);
 
   // Derive active package from amount inside the cricket context
@@ -76,56 +74,20 @@ export function PickMatch() {
 
   const isFormValid = !!(teamA && teamB && teamA.id !== teamB.id && selectedPkg);
 
-  // Dynamic card styling mapping based on theme and active state
-  const getCardStyles = (pkgId: string, active: boolean) => {
-    if (themeId === "dusky-white") {
-      return {
-        cardBg: active ? "#FFFDF9" : "#FFF8EE",
-        borderColor: active ? "transparent" : "rgba(212, 175, 55, 0.22)",
-        shadow: active 
-          ? "0 12px 30px rgba(58, 47, 36, 0.09), 0 0 15px rgba(212, 175, 55, 0.2)" 
-          : "0 4px 16px rgba(58, 47, 36, 0.04)",
-        gradientBorder: active ? "var(--gradient-neon)" : "none",
-        iconBg: active ? "rgba(212, 175, 55, 0.12)" : "rgba(58, 47, 36, 0.04)",
-        iconColor: active ? "#A87820" : "#75624C",
-        badgeBg: "rgba(91, 140, 90, 0.12)",
-        badgeText: "#5B8C5A",
-        textColor: "#3A2F24",
-        textSecColor: "#75624C"
-      };
-    } else if (themeId === "midnight-gold") {
-      return {
-        cardBg: active ? "#1a1f2e" : "#131722",
-        borderColor: active ? "transparent" : "rgba(255, 215, 0, 0.12)",
-        shadow: active 
-          ? "0 12px 36px rgba(0, 0, 0, 0.6), 0 0 20px rgba(255, 215, 0, 0.25)" 
-          : "0 6px 20px rgba(0, 0, 0, 0.4)",
-        gradientBorder: active ? "linear-gradient(135deg, #FFD700 0%, #B8860B 100%)" : "none",
-        iconBg: active ? "rgba(255, 215, 0, 0.12)" : "rgba(255, 255, 255, 0.04)",
-        iconColor: active ? "#FFD700" : "#B8B8B8",
-        badgeBg: "rgba(255, 215, 0, 0.15)",
-        badgeText: "#FFD700",
-        textColor: "#FFFFFF",
-        textSecColor: "#B8B8B8"
-      };
-    } else {
-      // amoled-black
-      return {
-        cardBg: active ? "#090909" : "#000000",
-        borderColor: active ? "transparent" : "rgba(255, 255, 255, 0.08)",
-        shadow: active 
-          ? "0 12px 40px rgba(0, 0, 0, 0.8), 0 0 25px rgba(0, 230, 118, 0.3)" 
-          : "none",
-        gradientBorder: active ? "linear-gradient(135deg, #00E676 0%, #FFD700 100%)" : "none",
-        iconBg: active ? "rgba(0, 230, 118, 0.15)" : "rgba(255, 255, 255, 0.03)",
-        iconColor: active ? "#00E676" : "#A0A0A0",
-        badgeBg: "rgba(0, 230, 118, 0.2)",
-        badgeText: "#00E676",
-        textColor: "#FFFFFF",
-        textSecColor: "#A0A0A0"
-      };
-    }
-  };
+  // Token-driven card styling — identical structure in every theme; only the
+  // token values change (brand accent, surfaces, glow).
+  const getCardStyles = (_pkgId: string, active: boolean) => ({
+    cardBg: active ? "var(--l-card)" : "transparent",
+    borderColor: active ? "transparent" : "hsl(var(--border))",
+    shadow: active ? "var(--shadow-neon-lg)" : "none",
+    gradientBorder: active ? "var(--gradient-neon)" : "none",
+    iconBg: active ? "var(--l-accent-soft)" : "hsl(var(--foreground) / 0.04)",
+    iconColor: active ? "var(--l-accent)" : "hsl(var(--foreground-soft))",
+    badgeBg: "var(--l-accent-soft)",
+    badgeText: "var(--l-accent)",
+    textColor: "var(--l-foreground)",
+    textSecColor: "var(--l-foreground-secondary)",
+  });
 
   return (
     <section className="mx-auto grid w-full max-w-6xl gap-6 pb-28 lg:grid-cols-[1.2fr_.8fr] lg:pb-8">
@@ -167,18 +129,31 @@ export function PickMatch() {
           <VsBadge />
         </div>
 
-        {/* Live Match Vs Preview Banner */}
-        <div className="mt-6 rounded-[28px] border border-emerald-500/20 bg-[#050B0F] p-4 md:p-6 lg:p-8 relative overflow-hidden transition-all duration-300 shadow-[0_0_35px_rgba(16,185,129,0.15)]">
-          {/* Subtle green neon spotlight beam */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-32 bg-emerald-500/15 rounded-full blur-[80px] pointer-events-none" />
-          
+        {/* Live Match Vs Preview Banner — token-driven arena panel */}
+        <div className="mt-6 rounded-[28px] border p-4 md:p-6 lg:p-8 relative overflow-hidden transition-all duration-300"
+          style={{
+            borderColor: "hsl(var(--primary) / 0.20)",
+            background: "hsl(var(--panel))",
+            boxShadow: "0 0 35px hsl(var(--primary) / 0.15)",
+          }}
+        >
+          {/* Subtle brand neon spotlight beam */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-32 rounded-full blur-[80px] pointer-events-none" style={{ background: "hsl(var(--primary) / 0.15)" }} />
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-10 items-center justify-items-center relative z-10">
             <TeamPreview side="A" />
-            
+
             {/* VS Section */}
             <div className="flex items-center justify-center py-4 md:py-0 self-center">
-              <div className="w-20 h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 bg-gradient-to-br from-emerald-500/30 to-black rounded-full border border-emerald-400/40 shadow-[0_0_40px_rgba(16,185,129,0.4)] flex items-center justify-center relative">
-                <div className="absolute inset-0 animate-pulse rounded-full bg-emerald-500/10 opacity-30" />
+              <div
+                className="w-20 h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 rounded-full border flex items-center justify-center relative"
+                style={{
+                  background: "linear-gradient(to bottom right, hsl(var(--primary) / 0.30), hsl(var(--background)))",
+                  borderColor: "hsl(var(--primary) / 0.40)",
+                  boxShadow: "0 0 40px hsl(var(--primary) / 0.4)",
+                }}
+              >
+                <div className="absolute inset-0 animate-pulse rounded-full opacity-30" style={{ background: "hsl(var(--primary) / 0.10)" }} />
                 <span className="relative text-2xl md:text-3xl font-black font-display tracking-tight text-white">
                   VS
                 </span>
@@ -263,7 +238,7 @@ export function PickMatch() {
                   </div>
 
                   {/* Features Checklist */}
-                  <div className="mt-5 pt-4 border-t flex flex-col gap-2" style={{ borderTopColor: active ? "rgba(255,255,255,0.06)" : "var(--l-divider)" }}>
+                  <div className="mt-5 pt-4 border-t flex flex-col gap-2" style={{ borderTopColor: "var(--l-divider)" }}>
                     {pkg.features.map((feat) => (
                       <div key={feat} className="flex items-center gap-2">
                         <div className="w-3.5 h-3.5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
@@ -277,17 +252,17 @@ export function PickMatch() {
                   </div>
 
                   {/* Selector indicator */}
-                  <div className="mt-5 pt-3 border-t flex items-center justify-between" style={{ borderTopColor: active ? "rgba(255,255,255,0.06)" : "var(--l-divider)" }}>
+                  <div className="mt-5 pt-3 border-t flex items-center justify-between" style={{ borderTopColor: "var(--l-divider)" }}>
                     <span className="text-[9px] font-extrabold uppercase tracking-wider" style={{ color: styleOpts.textSecColor }}>
                       Premium Tier
                     </span>
                     <div className="flex items-center gap-1.5">
                       {active && (
-                        <span 
+                        <span
                           className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded"
-                          style={{ 
-                            background: themeId === "amoled-black" ? "rgba(0, 230, 118, 0.15)" : "var(--gradient-neon)",
-                            color: themeId === "amoled-black" ? "#00E676" : "var(--primary-foreground)" 
+                          style={{
+                            background: "var(--l-badge-bg)",
+                            color: "var(--l-badge-text)"
                           }}
                         >
                           Active
@@ -295,7 +270,7 @@ export function PickMatch() {
                       )}
                       <div className="w-5 h-5 rounded-full border flex items-center justify-center transition-all duration-300"
                         style={{
-                          borderColor: active ? "var(--primary)" : "rgba(255, 255, 255, 0.2)",
+                          borderColor: active ? "var(--primary)" : "hsl(var(--border))",
                           backgroundColor: active ? "var(--primary)" : "transparent",
                         }}
                       >
@@ -476,24 +451,28 @@ export function PickMatch() {
 
   function TeamPreview({ side }: { side: "A" | "B" }) {
     const team = side === "A" ? teamA : teamB;
-    const teamGlow = team?.colors?.[0] ? `${team.colors[0]}22` : "rgba(16,185,129,0.05)";
+    // Team colors are team-specific brand artwork (semantic constant); the
+    // panel surface/glow fallbacks come from theme tokens.
+    const teamGlow = team?.colors?.[0] ? `${team.colors[0]}22` : "hsl(var(--primary) / 0.05)";
 
     return (
-      <div 
-        className="w-full max-w-[280px] md:max-w-[340px] lg:max-w-[400px] h-auto flex flex-col items-center justify-center bg-[#0B0F14] border border-emerald-500/30 shadow-[0_0_30px_rgba(16,185,129,0.2)] rounded-3xl p-5 md:p-8 transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_50px_rgba(16,185,129,0.35)] relative overflow-hidden"
-        style={{ 
-          boxShadow: team?.colors?.[0] 
-            ? `0 0 30px ${teamGlow}, 0 0 30px rgba(16,185,129,0.2)`
-            : undefined
+      <div
+        className="w-full max-w-[280px] md:max-w-[340px] lg:max-w-[400px] h-auto flex flex-col items-center justify-center border rounded-3xl p-5 md:p-8 transition-all duration-300 hover:scale-[1.02] relative overflow-hidden"
+        style={{
+          background: "hsl(var(--card))",
+          borderColor: "hsl(var(--primary) / 0.30)",
+          boxShadow: team?.colors?.[0]
+            ? `0 0 30px ${teamGlow}, 0 0 30px hsl(var(--primary) / 0.2)`
+            : "0 0 30px hsl(var(--primary) / 0.2)",
         }}
       >
         {/* Subtle diagonal background mesh pattern */}
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]" />
-        
+
         {/* Team Glow spotlight background */}
-        <div 
+        <div
           className="absolute -top-12 -left-12 w-32 h-32 rounded-full blur-[40px] opacity-20 pointer-events-none"
-          style={{ background: team?.colors?.[0] ?? "#10b981" }}
+          style={{ background: team?.colors?.[0] ?? "hsl(var(--primary))" }}
         />
 
         {/* Logo Section */}

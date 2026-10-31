@@ -150,12 +150,14 @@ def check_booking_overlap(
     date: str,
     start_time: str,
     end_time: str,
+    pitch_id: int | None = None,
     exclude_booking_id: int | None = None,
 ) -> bool:
     """
-    Return True if an overlapping active booking exists for the given turf slot.
-    Active = status not in ('cancelled', 'completed').
+    Return True if an overlapping active booking exists
+    for the same turf + pitch + date.
     """
+
     new_start = _to_minutes(start_time)
     new_end = _to_minutes(end_time)
 
@@ -163,17 +165,34 @@ def check_booking_overlap(
         select(Booking)
         .where(Booking.turf_id == turf_id)
         .where(Booking.date == date)
-        .where(Booking.status.notin_([BookingStatus.CANCELLED.value, BookingStatus.COMPLETED.value]))
+        .where(
+            Booking.status.notin_([
+                BookingStatus.CANCELLED.value,
+                BookingStatus.COMPLETED.value,
+            ])
+        )
     )
+
+    # IMPORTANT: check overlap only for the selected pitch
+    if pitch_id is not None:
+        query = query.where(
+            Booking.pitch_id == pitch_id
+        )
+
     if exclude_booking_id is not None:
-        query = query.where(Booking.id != exclude_booking_id)
+        query = query.where(
+            Booking.id != exclude_booking_id
+        )
 
     existing = db.scalars(query).all()
+
     for b in existing:
         b_start = _to_minutes(b.start_time)
         b_end = _to_minutes(b.end_time)
+
         if new_start < b_end and new_end > b_start:
             return True
+
     return False
 
 
@@ -208,12 +227,18 @@ def create_booking(
     total_amount = turf.price_per_hour * payload.hours
 
     # 2. Multi-hour Overlap Check
-    if check_booking_overlap(db, turf.id, payload.date, payload.start_time, end_time):
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="One or more slots in this time range are already booked.",
-        )
-
+    if check_booking_overlap(
+            db,
+            turf.id,
+            payload.date,
+            payload.start_time,
+            end_time,
+            payload.pitch_id,
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="This pitch is already booked for the selected slot.",
+            )
     booking = Booking(
         user_id=user.id,
         turf_id=turf.id,

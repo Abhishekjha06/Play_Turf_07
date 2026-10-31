@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { MobileShell } from "@/layout/MobileShell";
 import { AppHeader } from "@/layout/AppHeader";
 import { BottomNav } from "@/layout/BottomNav";
-import { SearchBar } from "@/home/SearchBar";
 import { HeroCarousel } from "@/home/HeroCarousel";
 import { CategoryPills } from "@/home/CategoryPills";
 import { SectionHeader } from "@/home/SectionHeader";
@@ -214,7 +213,6 @@ const Home = () => {
   return (
     <MobileShell>
       <AppHeader />
-      <SearchBar />
 
       <CategoryPills
         turfs={allTurfs}

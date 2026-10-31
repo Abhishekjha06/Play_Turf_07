@@ -12,6 +12,7 @@ interface BookingMatchSummaryProps {
     total: number;
     cricket: any;
     formatSlotTime: (s: string) => string;
+    selectedSport?: string;
 }
 
 function RowItem({ label, value, icon: Icon }: { label: string; value: string; icon: any }) {
@@ -33,7 +34,8 @@ export function BookingMatchSummary({
     hours,
     total,
     cricket,
-    formatSlotTime
+    formatSlotTime,
+    selectedSport
 }: BookingMatchSummaryProps) {
     return (
         <>
@@ -72,6 +74,7 @@ export function BookingMatchSummary({
 
                         <div className="flex flex-col gap-3.5 border-t border-[var(--border-primary)] pt-5">
                             <RowItem label="Turf" value={turf.name} icon={MapPin} />
+                            {selectedSport && <RowItem label="Sport" value={selectedSport} icon={Trophy} />}
                             <RowItem label="Date" value={new Date(date).toLocaleDateString(undefined, { weekday: "short", year: "numeric", month: "long", day: "numeric" })} icon={Calendar} />
                             <RowItem label="Time" value={slot ? formatSlotTime(slot) : "Not Selected"} icon={Clock} />
                             <RowItem label="Duration" value={`${hours} Hour${hours === 1 ? "" : "s"}`} icon={Clock} />

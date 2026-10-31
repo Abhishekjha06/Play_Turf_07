@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import type { OpenGame } from "@/types/openGames";
 import type { User } from "@/data/seed";
-import { useLuxuryTheme } from "@/luxury/LuxuryThemeProvider";
+import { MascotAvatar } from "@/ui/MascotAvatar";
 import playTurfLogo from "../assets/play-turf-logo.png";
 
 /* ────────────────────────────────────────────────────────────── */
@@ -185,8 +185,6 @@ export const OpenGameCard = memo(function OpenGameCard({
   onManageClick,
 }: OpenGameCardProps) {
   const [pressed, setPressed] = useState(false);
-  const { themeId } = useLuxuryTheme();
-  const isPremium = themeId === "premium-teal";
 
   const sConfig = sportConfig(game.sport);
   const progress = (game.slots_filled / game.slots_total) * 100;
@@ -212,9 +210,7 @@ export const OpenGameCard = memo(function OpenGameCard({
   const timeUntil = getTimeUntil(game.date, game.time);
   const isUrgent = !isFull && !isCancelled && !youAreIn && progress < 50;
 
-  const hostAvatar = game.host_avatar ? (
-    <img src={game.host_avatar} alt={game.host_name} className="w-9 h-9 rounded-full object-cover shrink-0" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
-  ) : null;
+  const hostAvatar = <MascotAvatar avatarId={game.host_avatar} className="w-9 h-9" alt={game.host_name} />;
 
   const skillLevel = game.id.charCodeAt(0) % 3;
   const skillLabels = ["Beginner", "Intermediate", "Competitive"];
@@ -254,12 +250,11 @@ export const OpenGameCard = memo(function OpenGameCard({
               }
             }}
             className="absolute inset-0 h-full w-full object-cover"
-            style={{ opacity: isPremium ? 1.0 : 0.85 }}
           />
         </div>
 
-        {/* Theme-aware overlay - lighter on light theme, deep on amoled */}
-        <div className="absolute inset-0" style={{ background: isPremium ? "linear-gradient(180deg, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.2) 60%, rgba(0,0,0,0.45) 100%)" : "var(--gradient-overlay)" }} />
+        {/* Token-driven overlay — identical in every theme */}
+        <div className="absolute inset-0 bg-gradient-overlay" />
 
         {/* Status badge top-left - dim style */}
         <span
@@ -381,16 +376,12 @@ export const OpenGameCard = memo(function OpenGameCard({
         {/* Host + price */}
         <div className="flex items-center justify-between rounded-xl p-2.5 bg-panel border border-border/40">
           <div className="flex items-center gap-2 min-w-0 flex-1">
-            {hostAvatar || (
-              <div className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm shrink-0 text-primary-foreground" style={{ backgroundColor: sConfig.color }}>
-                {game.host_name.charAt(0).toUpperCase()}
-              </div>
-            )}
+            {hostAvatar}
             <div className="min-w-0 flex-1">
               <p className="text-xs text-foreground-muted uppercase leading-none tracking-wider font-bold">Host</p>
               <p className="text-xs font-bold text-foreground mt-0.5 truncate">{game.host_name}</p>
               <p className="text-xs text-foreground-soft font-medium mt-0.5 flex items-center gap-0.5">
-                <CheckCircle className="h-3 w-3 text-emerald-500/80 shrink-0" /> Verified
+                <CheckCircle className="h-3 w-3 text-[hsl(var(--success)/0.8)] shrink-0" /> Verified
               </p>
             </div>
           </div>
@@ -444,13 +435,13 @@ export const OpenGameCard = memo(function OpenGameCard({
           <button
             onClick={(e) => { e.stopPropagation(); onManageClick(e, game); }}
             className="text-left w-full rounded-xl px-3 py-2 flex items-center gap-2 transition"
-            style={{ backgroundColor: "rgba(245, 158, 11, 0.05)", border: "1px solid rgba(245, 158, 11, 0.15)" }}
+            style={{ backgroundColor: "hsl(var(--color-warning-surface))", border: "1px solid hsl(var(--warning) / 0.15)" }}
           >
-            <AlertCircle className="h-4 w-4 text-amber-500/60 shrink-0" />
-            <span className="text-xs font-medium text-amber-400/70 truncate break-words flex-1 min-w-0">
+            <AlertCircle className="h-4 w-4 text-[hsl(var(--warning)/0.6)] shrink-0" />
+            <span className="text-xs font-medium text-[hsl(var(--warning)/0.7)] truncate break-words flex-1 min-w-0">
               {pendingRequests.length} request{pendingRequests.length > 1 ? "s" : ""} awaiting approval
             </span>
-            <ChevronRight className="h-4 w-4 text-amber-500/50 ml-auto shrink-0" />
+            <ChevronRight className="h-4 w-4 text-[hsl(var(--warning)/0.5)] ml-auto shrink-0" />
           </button>
         )}
       </div>

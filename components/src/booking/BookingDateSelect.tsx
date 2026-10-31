@@ -1,6 +1,14 @@
 import React, { useEffect } from "react";
-import { Calendar, ChevronLeft, ChevronRight, Clock, Check, Lock } from "lucide-react";
-import { toast } from "sonner";
+import {
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  Check,
+  Lock,
+  Bell,
+  BellRing,
+} from "lucide-react";import { toast } from "sonner";
 
 interface DateOption {
     iso: string;
@@ -22,6 +30,8 @@ interface BookingDateSelectProps {
     setHours: (h: number) => void;
     formatSlotTime: (s: string) => string;
     currentTime: Date;
+    remindedSlots: string[];
+onToggleReminder: (slot: string) => void;
 }
 
 export function BookingDateSelect({
@@ -37,7 +47,9 @@ export function BookingDateSelect({
     hours,
     setHours,
     formatSlotTime,
-    currentTime
+    currentTime,
+    remindedSlots,
+onToggleReminder,
 }: BookingDateSelectProps) {
     React.useEffect(() => {
         if (slot) {
@@ -147,68 +159,185 @@ export function BookingDateSelect({
                                         {group.slots.map((s) => {
                                             const booked = bookedSlots.includes(s);
                                             const isSelected = slot === s;
+                                            const isReminderSet = remindedSlots.includes(s);
                                             const formattedTime = formatSlotTime(s);
 
                                             const isExpired = (() => {
-                                                const todayStr = new Date().toLocaleDateString('en-CA');
+                                                const todayStr = new Date().toLocaleDateString("en-CA");
+
                                                 if (date !== todayStr) return false;
+
                                                 const [sh, sm] = s.split(":").map(Number);
                                                 const currentHour = currentTime.getHours();
                                                 const currentMin = currentTime.getMinutes();
-                                                if (currentHour > sh) return true;
-                                                if (currentHour === sh && currentMin > sm) return true;
-                                                return false;
+
+                                                return (
+                                                currentHour > sh ||
+                                                (currentHour === sh && currentMin > sm)
+                                                );
                                             })();
 
                                             const isDisabled = booked || isExpired;
 
+                                            // Bell only for booked slots that are NOT locked/expired
+                                            const showReminder = booked && !isExpired;
+
                                             return (
+                                                <div
+                                                key={s}
+                                                className="relative"
+                                                >
+                                                {/* 🔔 Alert Bell */}
+                                                {showReminder && (
+                                                    <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        onToggleReminder(s);
+                                                    }}
+                                                    aria-label={
+                                                        isReminderSet
+                                                        ? `Cancel alert for ${formattedTime}`
+                                                        : `Alert me when ${formattedTime} becomes available`
+                                                    }
+                                                    title={
+                                                        isReminderSet
+                                                        ? "Cancel alert"
+                                                        : "Notify me when available"
+                                                    }
+                                                    className="
+                                                        absolute
+                                                        -top-1.5
+                                                        -right-1.5
+                                                        z-20
+                                                        w-7
+                                                        h-7
+                                                        rounded-full
+                                                        bg-white
+                                                        border
+                                                        border-white
+                                                        shadow-md
+                                                        flex
+                                                        items-center
+                                                        justify-center
+                                                        transition-all
+                                                        duration-200
+                                                        hover:scale-110
+                                                        active:scale-95
+                                                    "
+                                                    >
+                                                    {isReminderSet ? (
+                                                        <BellRing
+                                                        className="w-3.5 h-3.5"
+                                                        style={{ color: "var(--primary)" }}
+                                                        />
+                                                    ) : (
+                                                        <Bell
+                                                        className="w-3.5 h-3.5"
+                                                        style={{ color: "var(--primary)" }}
+                                                        />
+                                                    )}
+                                                    </button>
+                                                )}
+
+                                                {/* Time Slot */}
                                                 <button
-                                                    key={s}
+                                                    type="button"
                                                     disabled={isDisabled}
-                                                    onClick={() => setSlot(s)}
-                                                    className="pressable relative rounded-2xl border p-3 flex flex-col items-center justify-center gap-1.5 transition-all duration-300 disabled:cursor-not-allowed"
+                                                    onClick={() => {
+                                                    if (!isDisabled) {
+                                                        setSlot(s);
+                                                    }
+                                                    }}
+                                                    className="
+                                                    pressable
+                                                    relative
+                                                    w-full
+                                                    rounded-2xl
+                                                    border
+                                                    p-3
+                                                    flex
+                                                    flex-col
+                                                    items-center
+                                                    justify-center
+                                                    gap-1.5
+                                                    transition-all
+                                                    duration-300
+                                                    disabled:cursor-not-allowed
+                                                    "
                                                     style={{
-                                                        backgroundColor: isSelected
-                                                            ? "var(--l-accent-soft)"
-                                                            : isDisabled
-                                                                ? "var(--bg-secondary)"
-                                                                : "var(--card-bg)",
-                                                        borderColor: isSelected
-                                                            ? "var(--gold-primary)"
-                                                            : isDisabled
-                                                                ? "var(--border-primary)"
-                                                                : "var(--border-primary)",
-                                                        opacity: isDisabled ? 0.45 : 1,
-                                                        boxShadow: isSelected ? "var(--l-shadow-glow)" : "none",
+                                                    backgroundColor: isSelected
+                                                        ? "var(--l-accent-soft)"
+                                                        : isDisabled
+                                                        ? "var(--bg-secondary)"
+                                                        : "var(--card-bg)",
+
+                                                    borderColor: isSelected
+                                                        ? "var(--gold-primary)"
+                                                        : "var(--border-primary)",
+
+                                                    opacity: isDisabled ? 0.45 : 1,
+
+                                                    boxShadow: isSelected
+                                                        ? "var(--l-shadow-glow)"
+                                                        : "none",
                                                     }}
                                                 >
+                                                    {/* Selected Check */}
                                                     {isSelected && (
-                                                        <div className="absolute -top-1.5 -right-1.5 w-4.5 h-4.5 rounded-full bg-primary flex items-center justify-center shadow-md">
-                                                            <Check className="w-3.5 h-3.5 text-primary-foreground" strokeWidth={3.5} />
-                                                        </div>
+                                                    <div className="
+                                                        absolute
+                                                        -top-1.5
+                                                        -right-1.5
+                                                        w-4.5
+                                                        h-4.5
+                                                        rounded-full
+                                                        bg-primary
+                                                        flex
+                                                        items-center
+                                                        justify-center
+                                                        shadow-md
+                                                    ">
+                                                        <Check
+                                                        className="w-3.5 h-3.5 text-primary-foreground"
+                                                        strokeWidth={3.5}
+                                                        />
+                                                    </div>
                                                     )}
 
+                                                    {/* Time */}
                                                     <span className="text-xs font-black text-foreground font-display">
-                                                        {formattedTime}
+                                                    {formattedTime}
                                                     </span>
 
+                                                    {/* Status */}
                                                     {isExpired ? (
-                                                        <span className="flex items-center gap-1 text-[8px] text-red-500 uppercase font-extrabold tracking-wider">
-                                                            <Lock className="w-2.5 h-2.5 text-red-500" /> Lock
-                                                        </span>
+                                                    <span className="flex items-center gap-1 text-[8px] text-red-500 uppercase font-extrabold tracking-wider">
+                                                        <Lock className="w-2.5 h-2.5 text-red-500" />
+                                                        Lock
+                                                    </span>
                                                     ) : booked ? (
-                                                        <span className="flex items-center gap-1 text-[8px] text-muted-foreground uppercase font-extrabold tracking-wider">
-                                                            <Lock className="w-2.5 h-2.5 text-muted-foreground" /> Booked
-                                                        </span>
+                                                    <span className="flex items-center gap-1 text-[8px] text-muted-foreground uppercase font-extrabold tracking-wider">
+                                                        <Lock className="w-2.5 h-2.5 text-muted-foreground" />
+                                                        Booked
+                                                    </span>
                                                     ) : (
-                                                        <span className="flex items-center gap-1 text-[8px] uppercase font-extrabold tracking-wider" style={{ color: isSelected ? "var(--gold-primary)" : "var(--emerald-primary)" }}>
-                                                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-sm animate-pulse" /> Available
-                                                        </span>
+                                                    <span
+                                                        className="flex items-center gap-1 text-[8px] uppercase font-extrabold tracking-wider"
+                                                        style={{
+                                                        color: isSelected
+                                                            ? "var(--gold-primary)"
+                                                            : "var(--emerald-primary)",
+                                                        }}
+                                                    >
+                                                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-sm animate-pulse" />
+                                                        Available
+                                                    </span>
                                                     )}
                                                 </button>
+                                                </div>
                                             );
-                                        })}
+                                            })}
                                     </div>
                                 </div>
                             ))}

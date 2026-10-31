@@ -75,16 +75,63 @@ export const api = {
   clientLogin: (clientId: string, password: string) =>
     authModule.clientLogin(clientId, password, () => authModule.me()),
   logout: () => authModule.logout(),
+  updateAvatar: (avatarId: string) => authModule.updateAvatar(avatarId),
 
   // Bookings
-  createBooking: (payload: Parameters<typeof bookingsModule.createBooking>[0]) =>
-    bookingsModule.createBooking(payload, (id) => turfsModule.getTurf(id), () => authModule.me()),
-  bookedSlots: (turfId: string, date: string) => bookingsModule.bookedSlots(turfId, date),
-  payMock: (bookingId: string) => bookingsModule.payMock(bookingId),
-  myBookings: () => bookingsModule.myBookings(() => authModule.me()),
-  upcomingBookings: () => bookingsModule.upcomingBookings(() => authModule.me()),
-  getBooking: (id: string) => bookingsModule.getBooking(id),
-  cancelBooking: (id: string) => bookingsModule.cancelBooking(id),
+  // Bookings
+// Bookings
+createBooking: (payload: Parameters<typeof bookingsModule.createBooking>[0]) =>
+  bookingsModule.createBooking(
+    payload,
+    (id) => turfsModule.getTurf(id),
+    () => authModule.me()
+  ),
+
+bookedSlots: (
+  turfId: string,
+  date: string,
+  pitchId?: number
+) =>
+  bookingsModule.bookedSlots(
+    turfId,
+    date,
+    pitchId
+  ),
+
+getPitches: (
+  turfDbId: string,
+  sport: string
+) =>
+  bookingsModule.getPitches(
+    turfDbId,
+    sport
+  ),
+
+getCourtAvailability: (
+  turfDbId: number,
+  date: string,
+  sport: string
+) =>
+  bookingsModule.getCourtAvailability(
+    turfDbId,
+    date,
+    sport
+  ),
+
+payMock: (bookingId: string) =>
+  bookingsModule.payMock(bookingId),
+
+myBookings: () =>
+  bookingsModule.myBookings(() => authModule.me()),
+
+upcomingBookings: () =>
+  bookingsModule.upcomingBookings(() => authModule.me()),
+
+getBooking: (id: string) =>
+  bookingsModule.getBooking(id),
+
+cancelBooking: (id: string) =>
+  bookingsModule.cancelBooking(id),
 
   // Feedback
   submitFeedback: (payload: feedbackModule.FeedbackPayload) => feedbackModule.submitFeedback(payload, () => authModule.me()),
@@ -96,7 +143,10 @@ export const api = {
     updateTurf: (id: string, patch: Partial<Turf>) => adminModule.updateTurf(id, patch),
     deleteTurf: (id: string) => adminModule.deleteTurf(id),
     addBanner: (b: Partial<Banner>) => adminModule.addBanner(b),
+    updateBanner: (id: string, patch: Partial<Banner>) => adminModule.updateBanner(id, patch),
     deleteBanner: (id: string) => adminModule.deleteBanner(id),
+    reorderBanners: (orderedIds: string[]) => adminModule.reorderBanners(orderedIds),
+    uploadBannerImage: (file: File) => adminModule.uploadBannerImage(file),
     addOffer: (o: Partial<Offer>) => adminModule.addOffer(o),
     deleteOffer: (id: string) => adminModule.deleteOffer(id),
     addTournament: (t: Partial<Tournament>) => adminModule.addTournament(t),

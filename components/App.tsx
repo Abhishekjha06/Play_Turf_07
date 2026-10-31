@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, Profiler } from "react";
+﻿import React, { lazy, Suspense, Profiler } from "react";
 import { QueryClient, QueryClientProvider, QueryCache, MutationCache } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
 import { toast } from "sonner";
@@ -10,7 +10,7 @@ import { AdminRoute } from "@/components/AdminRoute";
 import { ClientRoute } from "@/components/ClientRoute";
 import { GlobalErrorBoundary } from "@/components/GlobalErrorBoundary";
 import { RealtimeNotificationsProvider } from "@/components/RealtimeNotificationsProvider";
-import { LuxuryThemeProvider } from "@/luxury/LuxuryThemeProvider";
+import { LuxuryThemeProvider, useLuxuryTheme } from "@/luxury/LuxuryThemeProvider";
 import { MultiRoleLoginModal } from "@/components/MultiRoleLoginModal";
 
 const ThemeSelect = lazy(() => import("@/pages/ThemeSelect"));
@@ -27,6 +27,7 @@ const Signup = lazy(() => import("@/pages/Signup"));
 const ForgotPassword = lazy(() => import("@/pages/ForgotPassword"));
 const AuthCallbackRoute = lazy(() => import("@/pages/AuthCallbackRoute"));
 const More = lazy(() => import("@/pages/More"));
+const ChooseAvatar = lazy(() => import("@/pages/ChooseAvatar"));
 const Admin = lazy(() => import("@/pages/Admin"));
 const Receipt = lazy(() => import("@/pages/Receipt"));
 const ClientLogin = lazy(() => import("@/pages/ClientLogin"));
@@ -82,10 +83,16 @@ function LoadingFallback() {
         aria-label="Loading"
       />
       <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.4)" }}>
-        Loading…
+        Loadingâ€¦
       </span>
     </div>
   );
+}
+
+/* Toasts follow the active theme (needs the provider context). */
+function ThemedToaster() {
+  const { isDark } = useLuxuryTheme();
+  return <Sonner position="top-center" theme={isDark ? "dark" : "light"} />;
 }
 
 export default function App() {
@@ -94,7 +101,7 @@ export default function App() {
       <LuxuryThemeProvider>
         <QueryClientProvider client={queryClient}>
           <TooltipProvider>
-            <Sonner position="top-center" theme="dark" />
+            <ThemedToaster />
             <BrowserRouter>
               <AuthCallback>
                 <RealtimeNotificationsProvider>
@@ -116,6 +123,7 @@ export default function App() {
                       <Route path="/forgot-password" element={<ForgotPassword />} />
                       <Route path="/auth/callback" element={<AuthCallbackRoute />} />
                       <Route path="/more" element={<More />} />
+                      <Route path="/avatar" element={<ChooseAvatar />} />
                       <Route path="/receipt" element={<Receipt />} />
                       <Route path="/theme" element={<ThemeSelect />} />
                       <Route path="/luxury/theme" element={<ThemeSelect />} />
@@ -231,3 +239,5 @@ export default function App() {
     </GlobalErrorBoundary>
   );
 }
+// theme+avatar wiring v2
+

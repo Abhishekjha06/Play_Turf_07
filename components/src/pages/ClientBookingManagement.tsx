@@ -23,21 +23,21 @@ const bookings = [
 ];
 
 const statusStyle: Record<string, { bg: string; color: string }> = {
-    confirmed: { bg: "#0d2e1a", color: "#4ade80" },
-    pending: { bg: "#2d1e00", color: "#f5b942" },
-    cancelled: { bg: "#3d1a1a", color: "#f87171" },
+    confirmed: { bg: "hsl(var(--color-success-surface))", color: "hsl(var(--success))" },
+    pending: { bg: "hsl(var(--color-warning-surface))", color: "hsl(var(--warning))" },
+    cancelled: { bg: "hsl(var(--color-danger-surface))", color: "hsl(var(--danger))" },
 };
 const paymentStyle: Record<string, { bg: string; color: string }> = {
-    paid: { bg: "#0d2e1a", color: "#4ade80" },
-    pending: { bg: "#2d1e00", color: "#f5b942" },
-    refunded: { bg: "#1e1040", color: "#b39dfa" },
+    paid: { bg: "hsl(var(--color-success-surface))", color: "hsl(var(--success))" },
+    pending: { bg: "hsl(var(--color-warning-surface))", color: "hsl(var(--warning))" },
+    refunded: { bg: "hsl(var(--color-neutral-surface))", color: "hsl(var(--muted-foreground))" },
 };
 
 const quickStats = [
-    { label: "Total", value: "142", icon: Calendar, color: "#7fb8f5", bg: "#0d2a4a" },
-    { label: "Pending", value: "8", icon: Clock, color: "#f5b942", bg: "#2d1e00" },
-    { label: "Revenue", value: "₹24.5k", icon: IndianRupee, color: "#4ade80", bg: "#062920" },
-    { label: "Cancelled", value: "3", icon: XCircle, color: "#f87171", bg: "#3d1a1a" },
+    { label: "Total", value: "142", icon: Calendar, color: "hsl(var(--primary))", bg: "hsl(var(--primary) / 0.12)" },
+    { label: "Pending", value: "8", icon: Clock, color: "hsl(var(--warning))", bg: "hsl(var(--color-warning-surface))" },
+    { label: "Revenue", value: "₹24.5k", icon: IndianRupee, color: "hsl(var(--success))", bg: "hsl(var(--color-success-surface))" },
+    { label: "Cancelled", value: "3", icon: XCircle, color: "hsl(var(--danger))", bg: "hsl(var(--color-danger-surface))" },
 ];
 
 const ClientBookingManagement = () => {
@@ -180,14 +180,14 @@ const ClientBookingManagement = () => {
                                                         <button
                                                             onClick={() => handleAccept(booking.id)}
                                                             className="flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-xs font-semibold pressable min-h-[44px]"
-                                                            style={{ background: "#0d2e1a", color: "#4ade80", border: "1px solid #4ade8030" }}
+                                                            style={{ background: "hsl(var(--color-success-surface))", color: "hsl(var(--success))", border: "1px solid hsl(var(--success) / 0.19)" }}
                                                         >
                                                             <CheckCircle className="h-3.5 w-3.5" /> Accept
                                                         </button>
                                                         <button
                                                             onClick={() => handleCancel(booking.id)}
                                                             className="flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-xs font-semibold pressable min-h-[44px]"
-                                                            style={{ background: "#3d1a1a", color: "#f87171", border: "1px solid #f8717130" }}
+                                                            style={{ background: "hsl(var(--color-danger-surface))", color: "hsl(var(--danger))", border: "1px solid hsl(var(--danger) / 0.19)" }}
                                                         >
                                                             <XCircle className="h-3.5 w-3.5" /> Cancel
                                                         </button>
@@ -209,15 +209,15 @@ const ClientBookingManagement = () => {
                         <p className="text-xs font-semibold text-muted2 uppercase tracking-wider px-1">Quick Actions</p>
                         <div className="grid grid-cols-1 gap-2">
                             {[
-                                { label: "Add Promo Code", sub: "Create discount offers", icon: DollarSign, color: "#b39dfa", bg: "#1e1040" },
-                                { label: "Manage Holidays", sub: "Set non‑working days", icon: Calendar, color: "#f5b942", bg: "#2d1e00" },
-                                { label: "Peak Hours Pricing", sub: "Adjust rates for peak times", icon: Clock, color: "#3fd6a8", bg: "#062920" },
+                                { label: "Add Promo Code", sub: "Create discount offers", icon: DollarSign, color: "hsl(var(--primary))", bg: "hsl(var(--primary) / 0.12)" },
+                                { label: "Manage Holidays", sub: "Set non‑working days", icon: Calendar, color: "hsl(var(--warning))", bg: "hsl(var(--color-warning-surface))" },
+                                { label: "Peak Hours Pricing", sub: "Adjust rates for peak times", icon: Clock, color: "hsl(var(--success))", bg: "hsl(var(--color-success-surface))" },
                             ].map(({ label, sub, icon: Icon, color, bg }) => (
                                 <button
                                     key={label}
                                     onClick={() => toast.info(`${label} — coming soon`)}
                                     className="flex items-center gap-4 rounded-2xl p-4 text-left pressable min-h-[56px] w-full"
-                                    style={{ backgroundColor: bg, border: `1px solid ${color}25` }}
+                                    style={{ backgroundColor: bg, border: `1px solid color-mix(in srgb, ${color} 15%, transparent)` }}
                                 >
                                     <Icon className="h-5 w-5 shrink-0" style={{ color }} />
                                     <div className="min-w-0">

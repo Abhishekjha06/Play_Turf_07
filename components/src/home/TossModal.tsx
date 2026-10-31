@@ -5,7 +5,6 @@ import { Dialog, DialogContent, DialogTitle } from "@/ui/dialog";
 import headsImg from "@/assets/heads.webp";
 import tailsImg from "@/assets/tails.webp";
 import { MeteorImpactBorder } from "@/app/component2/proui/meteor-impact-border";
-import { useLuxuryTheme } from "@/luxury/LuxuryThemeProvider";
 
 /* ───────────────────────────────────────────────
    Toss Time — Clean & Minimal Coin Toss
@@ -19,7 +18,6 @@ interface TossModalProps {
 }
 
 export function TossModal({ open, onClose }: TossModalProps) {
-    const { themeId } = useLuxuryTheme();
     const [tossing, setTossing] = useState(false);
     const [result, setResult] = useState<TossResult>(null);
     const [showResult, setShowResult] = useState(false);

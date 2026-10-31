@@ -1,16 +1,17 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 import { MobileShell } from "@/layout/MobileShell";
 import { BackButton } from "@/layout/BackButton";
 import { getSupabase } from "@/lib/supabase";
+import { refreshUser } from "@/lib/auth";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import heroNight from "@/assets/hero-night-turf.webp";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signupSchema, type SignupFormValues } from "@/lib/validations";
-import { checkRateLimit } from "@/lib/rate-limit";
+import { checkRateLimit, recordRateLimitAttempt } from "@/lib/rate-limit";
 import { trackEvent, identifyUser } from "@/lib/analytics";
 
 const Signup = () => {
@@ -18,6 +19,7 @@ const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const submittingRef = useRef(false);
 
   useEffect(() => {
     trackEvent("Signup Started");
@@ -33,6 +35,8 @@ const Signup = () => {
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   const onSubmit = async (data: SignupFormValues) => {
+    if (submittingRef.current) return; // synchronous guard — a same-tick double-click must not fire two signUps
+    submittingRef.current = true;
     setLoading(true);
     try {
       const isAllowed = await checkRateLimit(data.email, 'signup', 5, 60);
@@ -40,6 +44,8 @@ const Signup = () => {
         toast.error("Too many signup attempts. Please try again later.");
         return;
       }
+      // Each signup attempt is a write action — record it exactly once.
+      await recordRateLimitAttempt(data.email, 'signup');
 
       const supabase = await getSupabase();
 
@@ -59,16 +65,49 @@ const Signup = () => {
         throw error;
       }
 
-      if (authData.user) {
-        identifyUser(authData.user.id, { email: data.email, full_name: data.fullName });
+      if (authData.session) {
+        // Email confirmation is disabled in the Supabase project — the user is
+        // already signed in, so take them straight into the app.
+        if (authData.user) {
+          identifyUser(authData.user.id, { email: data.email, full_name: data.fullName });
+        }
+        trackEvent("Signup Completed", { method: "email" });
+        await refreshUser();
+        toast.success("Account created — welcome to play_Turf!");
+        navigate("/");
+        return;
       }
+
+      // No session: either email confirmation is required, or this email
+      // already has an account. Supabase reports duplicates as a user with an
+      // EMPTY identities array and NO error — and identities can be missing
+      // entirely on some responses, so "no error" alone never proves that a
+      // new account was created.
+      const identities = authData.user?.identities;
+      const isDuplicate = Array.isArray(identities) && identities.length === 0;
+
+      if (isDuplicate) {
+        toast.info("An account with this email already exists — please sign in instead.");
+        navigate("/login");
+        return;
+      }
+
       trackEvent("Signup Completed", { method: "email" });
 
-      toast.success("Verification email sent! Please check your inbox.");
+      if (authData.user) {
+        // Genuine new account, waiting for email confirmation.
+        identifyUser(authData.user.id, { email: data.email, full_name: data.fullName });
+        toast.success(`We sent a confirmation link to ${data.email}. Click it, then sign in.`);
+      } else {
+        // Ambiguous response (no user, no session, no error) — most likely a
+        // duplicate. Stay honest instead of claiming success.
+        toast.info(`If an account already exists for ${data.email}, please sign in. Otherwise check your inbox for the confirmation link.`);
+      }
       navigate("/login");
     } catch (err: any) {
       toast.error(err.message);
     } finally {
+      submittingRef.current = false;
       setLoading(false);
     }
   };

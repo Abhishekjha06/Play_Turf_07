@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { useNavigate, useParams, useLocation,   useSearchParams } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
+import { getSupabase } from "@/lib/supabase";
+import PushNotificationSettings from "@/components/PushNotificationSettings";
 import {
     CheckCircle2,
     CreditCard,
@@ -31,9 +33,20 @@ import { BookingDateSelect } from "@/booking/BookingDateSelect";
 import { BookingMatchSummary } from "@/booking/BookingMatchSummary";
 import { BookingConfirmPay } from "@/booking/BookingConfirmPay";
 import { BookingSuccessReceipt } from "@/booking/BookingSuccessReceipt";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/ui/dialog";
+import {
+  Bell,
+  BellRing,
+} from "lucide-react";
 
 type Step = "pick" | "confirm" | "success";
-
+/// slot reminder
+////
 const slots = [
     "06:00", "07:00", "08:00", "09:00", "10:00", "11:00",
     "12:00", "13:00", "14:00", "15:00", "16:00", "17:00",
@@ -71,14 +84,36 @@ const formatSlotTime = (timeStr: string) => {
 };
 
 const BookingContent = () => {
+
+    /// slot reminder
+////
+
     const { turfId } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
-    const { user } = useAuth();
-    const cricket = useCricketBooking();
-    const dates = useMemo(dateLabels, []);
+
+    const [searchParams] = useSearchParams();
+
+    const sportFromUrl = searchParams.get("sport") || "";
 
     const [turf, setTurf] = useState<Turf | null>(null);
+
+    const selectedSport =
+    sportFromUrl ||
+    location.state?.selectedSport ||
+    turf?.sport_types?.[0] ||
+    "";
+
+    const normalizedSport = selectedSport.trim();
+
+    const { user } = useAuth();
+    const cricket = useCricketBooking();
+
+    const dates = useMemo(dateLabels, []);
+
+    const turfDbId = turf?.new_id;
+    const [remindedSlots, setRemindedSlots] = useState<string[]>([]);///reminded slot remider
+
     const [step, setStep] = useState<Step>("pick");
     const [date, setDate] = useState(dates[0].iso);
     const [slot, setSlot] = useState<string | null>(null);
@@ -89,56 +124,122 @@ const BookingContent = () => {
     const [activeView, setActiveView] = useState("all");
     const [currentTime, setCurrentTime] = useState(new Date());
 
+    //
+    const [selectedPitch, setSelectedPitch] = useState<any | null>(null);
+    const [showCourtPopup, setShowCourtPopup] = useState(false);
+    const [courtList, setCourtList] = useState<any[]>([]);
+    const [courtLoading, setCourtLoading] = useState(false);
+    //
+
+
+
+///
     useEffect(() => {
         if (turfId) api.getTurf(turfId).then(setTurf);
     }, [turfId]);
 
+
+
+
     // Fetch booked slots on date/turf change
-    useEffect(() => {
-        if (!turfId || !date) return;
-        api.bookedSlots(turfId, date).then((booked) => {
-            setBookedSlots(booked);
-            if (slot && booked.includes(slot)) setSlot(null);
-        });
-    }, [turfId, date, slot]);
+    // Lock a time slot ONLY when ALL pitches are booked
+        useEffect(() => {
+            if (!turfDbId || !date || !normalizedSport) {
+                setBookedSlots([]);
+                return;
+            }
 
-    // Clock tick only — no API calls
-    useEffect(() => {
-        const timer = setInterval(() => setCurrentTime(new Date()), 30000);
-        return () => clearInterval(timer);
-    }, []);
+            const loadFullyBookedSlots = async () => {
+                try {
+                    const result = await api.getCourtAvailability(
+                        Number(turfDbId),
+                        date,
+                        normalizedSport
+                    );
 
-    // Poll slot availability every 30 seconds
-    useEffect(() => {
-        if (!turfId || !date) return;
-        const poll = () => {
-            api.bookedSlots(turfId, date).then((booked) => {
-                setBookedSlots(booked);
-                if (slot && booked.includes(slot)) setSlot(null);
-            });
-        };
-        const timer = setInterval(poll, 30000);
-        return () => clearInterval(timer);
-    }, [turfId, date, slot]);
+                    const pitches = result?.pitches || [];
+                    const bookings = result?.bookings || [];
 
-    // Subscribe to real-time slot changes for this turf
-    useRealtimeSlots(turfId, (event: any) => {
-        if (event.date === date) {
-            api.bookedSlots(turfId!, date).then((booked) => {
-                setBookedSlots(booked);
-                if (slot && booked.includes(slot)) setSlot(null);
-                if (event.status === "confirmed" || event.status === "pending") {
-                    toast.info("Slot availability updated", {
-                        description: `A slot at ${event.start_time} was just booked`,
+                    if (pitches.length === 0) {
+                        setBookedSlots([]);
+                        return;
+                    }
+
+                    const bookedBySlot: Record<string, Set<number>> = {};
+
+                    bookings.forEach((booking: any) => {
+                        const status =
+                            String(booking.status).toLowerCase();
+
+                        if (
+                            status === "cancelled" ||
+                            status === "completed" ||
+                            !booking.pitch_id ||
+                            !booking.start_time
+                        ) {
+                            return;
+                        }
+
+                        const [hour, minute] =
+                            booking.start_time
+                                .split(":")
+                                .map(Number);
+
+                        const hours =
+                            Number(booking.hours) || 1;
+
+                        for (let i = 0; i < hours; i++) {
+                            const slotTime =
+                                `${String(hour + i).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+
+                            if (!bookedBySlot[slotTime]) {
+                                bookedBySlot[slotTime] =
+                                    new Set<number>();
+                            }
+
+                            bookedBySlot[slotTime].add(
+                                Number(booking.pitch_id)
+                            );
+                        }
                     });
-                } else if (event.status === "cancelled" || event.status === "DELETED") {
-                    toast.success("A slot just opened up!", {
-                        description: `The ${event.start_time} slot is now available`,
-                    });
+
+                    // Lock only when every pitch is booked
+                    const fullyBookedSlots =
+                        Object.entries(bookedBySlot)
+                            .filter(
+                                ([, pitchIds]) =>
+                                    pitchIds.size >= pitches.length
+                            )
+                            .map(([slotTime]) => slotTime);
+
+                    setBookedSlots(fullyBookedSlots);
+
+                    // If currently selected slot became fully booked
+                    if (
+                        slot &&
+                        fullyBookedSlots.includes(slot)
+                    ) {
+                        setSlot(null);
+                        setSelectedPitch(null);
+                    }
+
+                } catch (error) {
+                    console.error(
+                        "Failed to load slot availability:",
+                        error
+                    );
+
+                    setBookedSlots([]);
                 }
-            });
-        }
-    });
+            };
+
+            loadFullyBookedSlots();
+        }, [
+            turfDbId,
+            date,
+            normalizedSport,
+            slot,
+        ]);
 
     const total = (turf?.price_per_hour ?? 0) * hours;
     const placedAt = cricket.state.placedAt ? new Date(cricket.state.placedAt) : new Date();
@@ -162,31 +263,248 @@ const BookingContent = () => {
         else navigate("/");
     };
 
-    const selectSlot = (s: string) => {
+ // pitch pop up
+    const selectSlot = async (s: string) => {
+        if (!turfDbId || !date || !selectedSport) {
+            toast.error("Sport information is missing.");
+            return;
+}
+
         setSlot(s);
-        trackEvent("Slot Selected", { turfId: turf?.id, date, time: s });
-    };
+        setSelectedPitch(null);
+        setCourtLoading(true);
+
+        trackEvent("Slot Selected", {
+            turfId: turf?.id,
+            date,
+            time: s,
+            sport: selectedSport,
+        });
+
+        const result = await api.getCourtAvailability(
+            Number(turfDbId),
+            date,
+            selectedSport
+            );
+
+            const booked = (result?.bookings || [])
+            .filter((booking: any) => {
+                if (
+                booking.status === "CANCELLED" ||
+                booking.status === "cancelled"
+                ) {
+                return false;
+                }
+
+                if (selectedPitch?.pitch_id != null) {
+                return booking.pitch_id === selectedPitch.pitch_id;
+                }
+
+                return true;
+            })
+            .flatMap((booking: any) => {
+                const [hour, minute] = booking.start_time
+                .split(":")
+                .map(Number);
+
+                const hours = Number(booking.hours) || 1;
+
+                return Array.from({ length: hours }, (_, i) =>
+                `${String(hour + i).padStart(2, "0")}:${String(minute).padStart(2, "0")}`
+                );
+            });
+
+        try {
+            const result = await api.getCourtAvailability(
+                turfDbId,
+                date,
+                selectedSport
+            );
+
+            console.log("COURT AVAILABILITY:", result);
+
+            const courts = (result?.pitches || []).map((pitch: any) => {
+            const booked = (result?.bookings || []).some(
+                (booking: any) => {
+                if (booking.pitch_id !== pitch.pitch_id) {
+                    return false;
+                }
+
+                if (
+                    booking.status === "CANCELLED" ||
+                    booking.status === "cancelled"
+                ) {
+                    return false;
+                }
+
+                const bookingStart = booking.start_time;
+                const bookingHours = Number(booking.hours) || 1;
+
+                const [bookingHour, bookingMinute] =
+                    bookingStart.split(":").map(Number);
+
+                const [slotHour, slotMinute] =
+                    s.split(":").map(Number);
+
+                const bookingStartMinutes =
+                    bookingHour * 60 + bookingMinute;
+
+                const bookingEndMinutes =
+                    bookingStartMinutes + bookingHours * 60;
+
+                const selectedMinutes =
+                    slotHour * 60 + slotMinute;
+
+                return (
+                    selectedMinutes >= bookingStartMinutes &&
+                    selectedMinutes < bookingEndMinutes
+                );
+                }
+            );
+
+            return {
+                ...pitch,
+                booked,
+            };
+            });
+
+            console.log("COURTS WITH AVAILABILITY:", courts);
+
+            setCourtList(courts);
+
+            // Open pitch/court popup
+            setShowCourtPopup(true);
+
+        } catch (error) {
+
+            console.error(
+                "Failed to load court availability:",
+                error
+            );
+
+            toast.error(
+                "Unable to check court availability."
+            );
+
+        } finally {
+
+            setCourtLoading(false);
+        };
+    }
+ //
+ /// slot reminder
+ const handleToggleReminder = async (slot: string) => {
+  if (!turfDbId || !date || !selectedSport) {
+    toast.error("Missing slot information.");
+    return;
+  }
+
+  try {
+    const supabase = await getSupabase();
+
+    const {
+      data: { user: authUser },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !authUser?.id) {
+      toast.error("Please login to set a reminder.");
+      return;
+    }
+
+    const userId = authUser.id;
+    const isSet = remindedSlots.includes(slot);
+
+    if (isSet) {
+      const { error } = await supabase
+        .from("slot_reminders")
+        .update({ status: "cancelled" })
+        .eq("user_id", userId)
+        .eq("turf_id", turfDbId)
+        .eq("sport", selectedSport)
+        .eq("reminder_date", date)
+        .eq("start_time", slot)
+        .eq("status", "active");
+
+      if (error) throw error;
+
+      setRemindedSlots((prev) =>
+        prev.filter((s) => s !== slot)
+      );
+
+      toast.success("Reminder cancelled.");
+      return;
+    }
+
+    const { error } = await supabase
+      .from("slot_reminders")
+      .insert({
+        user_id: userId,
+        turf_id: turfDbId,
+        sport: selectedSport,
+        reminder_date: date,
+        start_time: slot,
+        push_enabled: true,
+        whatsapp_enabled: false,
+      });
+
+    if (error && error.code !== "23505") {
+      throw error;
+    }
+
+    setRemindedSlots((prev) =>
+      prev.includes(slot) ? prev : [...prev, slot]
+    );
+
+    toast.success("Reminder set.");
+  } catch (error) {
+    console.error("Reminder error:", error);
+    toast.error("Unable to update reminder.");
+  }
+};
+ ///
 
     const proceed = async () => {
+        // 1. Check login
         if (!user) {
             toast.error("Please sign in first");
-            navigate("/login", { state: { from: location.pathname + location.search } });
+            navigate("/login", {
+            state: {
+                from: location.pathname + location.search,
+            },
+            });
             return;
         }
+
+        // 2. Check time slot
         if (!slot) {
             toast.error("Pick a time slot");
             return;
         }
-        if (!cricket.teamA || !cricket.teamB || cricket.teamA.id === cricket.teamB.id) {
+
+        // 3. Check court
+        if (!selectedPitch) {
+            toast.error("Please select a court");
+            return;
+        }
+
+        // 4. Check teams
+        if (
+            !cricket.teamA ||
+            !cricket.teamB ||
+            cricket.teamA.id === cricket.teamB.id
+        ) {
             toast.error("Pick two different teams");
             return;
         }
+
         if (!turf) return;
 
+        // 5. Validate booking
         const validationResult = bookingSchema.safeParse({
             date,
             startTime: slot,
-            hours
+            hours,
         });
 
         if (!validationResult.success) {
@@ -195,14 +513,30 @@ const BookingContent = () => {
         }
 
         try {
-            const b = await api.createBooking({ turf_id: turf.id, date, start_time: slot, hours });
+            // 6. Create booking with selected pitch
+            const b = await api.createBooking({
+            turf_id: turf.id,
+            pitch_id: selectedPitch.pitch_id,
+            date,
+            start_time: slot,
+            hours,
+            sport: normalizedSport,
+            });
+
+            // 7. Move to confirmation
             setBooking(b);
             setStep("confirm");
-            trackEvent("Booking Start", { turf_id: turf.id, turf_name: turf.name, amount: total, hours });
+
+            trackEvent("Booking Start", {
+            turf_id: turf.id,
+            turf_name: turf.name,
+            amount: total,
+            hours,
+            });
         } catch (e) {
             toast.error((e as Error).message);
         }
-    };
+        };
 
     const pay = async () => {
         if (!booking || !turf || !slot) return;
@@ -212,14 +546,14 @@ const BookingContent = () => {
             setBooking(b);
             cricket.completeBooking();
             setStep("success");
-            
+
             trackEvent("Payment Success", { bookingId: b.id, amount: turf.price_per_hour });
             trackEvent("Booking Complete", {
-              turfId: turf.id,
-              bookingId: b.id,
-              date,
-              time: slot,
-              amount: turf.price_per_hour,
+                turfId: turf.id,
+                bookingId: b.id,
+                date,
+                time: slot,
+                amount: turf.price_per_hour,
             });
             toast.success("Payment successful!");
         } catch (e) {
@@ -352,17 +686,25 @@ const BookingContent = () => {
                                         </div>
 
                                         <div className="flex flex-wrap gap-1.5 mt-2.5">
+                                            {selectedSport && (
+                                                <span
+                                                    className="text-xs font-extrabold uppercase tracking-widest px-2.5 py-0.5 rounded-full flex items-center gap-1 text-primary border border-primary/30"
+                                                    style={{ backgroundColor: "var(--l-accent-soft)" }}
+                                                >
+                                                    <Trophy className="h-2.5 w-2.5 text-primary" /> {selectedSport}
+                                                </span>
+                                            )}
+
                                             <span
                                                 className="text-xs font-extrabold uppercase tracking-widest px-2 py-0.5 rounded-full flex items-center gap-1"
                                                 style={{ backgroundColor: "var(--bg-secondary)", border: "1px solid var(--border-primary)" }}
                                             >
-                                                <Trophy className="h-2.5 w-2.5 text-primary" /> Indoor Cage
-                                            </span>
-                                            <span
-                                                className="text-xs font-extrabold uppercase tracking-widest px-2 py-0.5 rounded-full flex items-center gap-1"
-                                                style={{ backgroundColor: "var(--bg-secondary)", border: "1px solid var(--border-primary)" }}
-                                            >
-                                                <Tag className="h-2.5 w-2.5 text-primary" /> ID: {turf.id}
+                                                <Tag className="h-2.5 w-2.5 text-primary" /> 
+                                                  {selectedPitch
+                                                    ? selectedPitch.pitch_name ||
+                                                    selectedPitch.pitch_code ||
+                                                    `Pitch ${selectedPitch.pitch_id}`
+                                                    : "Choose Pitch"}
                                             </span>
                                         </div>
                                     </div>
@@ -382,6 +724,9 @@ const BookingContent = () => {
                         </section>
 
                         {/* Extracted Date & Time Component */}
+                        <div className="mb-4">
+                            <PushNotificationSettings />
+                        </div>
                         <BookingDateSelect
                             dates={dates}
                             date={date}
@@ -396,6 +741,8 @@ const BookingContent = () => {
                             setHours={setHours}
                             formatSlotTime={formatSlotTime}
                             currentTime={currentTime}
+                            remindedSlots={remindedSlots}
+                            onToggleReminder={handleToggleReminder}
                         />
 
                         {/* Extracted Match Summary Component */}
@@ -407,6 +754,7 @@ const BookingContent = () => {
                             total={total}
                             cricket={cricket}
                             formatSlotTime={formatSlotTime}
+                            selectedSport={selectedSport}
                         />
 
                         {/* BOTTOM ACTION BAR */}
@@ -475,7 +823,75 @@ const BookingContent = () => {
                 )}
             </AnimatePresence>
 
-            <TeamManagerModal open={managerOpen} onOpenChange={setManagerOpen} />
+                {/* PITCH SELECTION POPUP */}
+                <Dialog open={showCourtPopup} onOpenChange={setShowCourtPopup}>
+                <DialogContent className="w-[calc(100%-24px)] max-w-[400px] rounded-2xl p-5">
+                    
+                    <DialogHeader>
+                    <DialogTitle>Select Pitch / Court</DialogTitle>
+                    </DialogHeader>
+
+                    <div className="space-y-3 mt-3">
+                    {courtLoading ? (
+                        <p className="text-center text-sm text-muted-foreground">
+                        Checking availability...
+                        </p>
+                    ) : courtList.length === 0 ? (
+                        <p className="text-center text-sm text-muted-foreground">
+                        No pitches available for {selectedSport}.
+                        </p>
+                    ) : (
+                        courtList.map((court) => (
+                        <button
+                            key={court.pitch_id}
+                            type="button"
+                            disabled={court.booked}
+                            onClick={() => {
+                            setSelectedPitch(court);
+                            setShowCourtPopup(false);
+                            }}
+                            className={`w-full rounded-xl border p-4 text-left transition ${
+                            court.booked
+                                ? "opacity-50 cursor-not-allowed"
+                                : "hover:border-primary"
+                            }`}
+                        >
+                            <div className="flex items-center justify-between">
+                            
+                            <div>
+                                <p className="font-bold">
+                                {court.pitch_name || court.pitch_code}
+                                </p>
+
+                                <p className="text-xs text-muted-foreground">
+                                {court.sports}
+                                </p>
+                            </div>
+
+                            <span
+                                className={`text-xs font-bold ${
+                                court.booked
+                                    ? "text-red-500"
+                                    : "text-green-500"
+                                }`}
+                            >
+                                {court.booked ? "BOOKED" : "AVAILABLE"}
+                            </span>
+
+                            </div>
+                        </button>
+                        ))
+                    )}
+                    </div>
+
+                </DialogContent>
+                </Dialog>
+
+                <TeamManagerModal
+                open={managerOpen}
+                onOpenChange={setManagerOpen}
+                />
+            
         </MobileShell>
     );
 };

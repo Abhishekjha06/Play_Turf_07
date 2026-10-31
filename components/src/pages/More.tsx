@@ -18,6 +18,7 @@ import {
   RefreshCw,
   Palette,
   Trophy,
+  Smile,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
@@ -28,6 +29,7 @@ const More = () => {
   const [switching, setSwitching] = useState(false);
 
   const menuItems = [
+    { label: "Choose Avatar", icon: Smile, to: "/avatar", toast: "", action: null },
     { label: "App Appearance", icon: Palette, to: "/theme", toast: "", action: null },
     { label: "Tournaments", icon: Trophy, to: "/tournaments", toast: "", action: null },
     {

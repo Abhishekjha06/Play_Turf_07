@@ -4,7 +4,6 @@ import { CalendarCheck, Tag, Trophy, MoreHorizontal, Users } from "lucide-react"
 import { motion } from "framer-motion";
 import { TossModal } from "./TossModal";
 import { LocationPill } from "./LocationFilter";
-import { useLuxuryTheme } from "@/luxury/LuxuryThemeProvider";
 import { staggerContainer, scaleIn, ease } from "@/lib/motion";
 import type { Turf } from "@/data/seed";
 
@@ -35,18 +34,19 @@ export function CategoryPills({
   onNearMe = () => { },
 }: CategoryPillsProps) {
   const [tossOpen, setTossOpen] = useState(false);
-  const { themeId } = useLuxuryTheme();
-  const isPremium = themeId === "premium-teal";
 
-  const pillStyle = isPremium
-    ? { background: "#FFFFFF", border: "1px solid #E2E8F0", boxShadow: "0 4px 14px rgba(15,23,42,0.08)" }
-    : { background: "hsl(var(--panel-2))", border: "1px solid hsl(var(--primary) / 0.40)", boxShadow: "0 0 18px rgba(198,248,6,0.18)" };
-
-  const labelStyle = {
-    color: isPremium ? "#64748B" : "hsl(var(--foreground-soft))",
+  // Token-driven pill surfaces — identical structure in every theme.
+  const pillStyle = {
+    background: "hsl(var(--card))",
+    border: "1px solid hsl(var(--border))",
+    boxShadow: "var(--shadow-card)",
   };
 
-  const iconColor = isPremium ? "#14B8B0" : "hsl(var(--primary))";
+  const labelStyle = {
+    color: "hsl(var(--foreground-soft))",
+  };
+
+  const iconColor = "hsl(var(--primary))";
 
   const prefersReducedMotion =
     typeof window !== "undefined" &&
@@ -87,11 +87,7 @@ export function CategoryPills({
           <div className="h-14 w-14 rounded-full grid place-items-center" style={pillStyle}>
             <div
               className="h-10 w-10 rounded-full border-2 flex items-center justify-center"
-              style={
-                isPremium
-                  ? { border: "2px solid rgba(20,184,176,0.5)", background: "rgba(20,184,176,0.08)" }
-                  : { border: "2px solid hsl(var(--primary) / 0.50)", background: "hsl(var(--primary) / 0.05)" }
-              }
+              style={{ border: "2px solid hsl(var(--primary) / 0.50)", background: "hsl(var(--primary) / 0.08)" }}
             >
               <span className="text-[10px] font-black tracking-tighter leading-none" style={{ color: iconColor }}>
                 TOSS
