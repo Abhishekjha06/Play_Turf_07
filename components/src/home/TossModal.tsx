@@ -24,14 +24,11 @@ export function TossModal({ open, onClose }: TossModalProps) {
     // Holds either a resting angle (number) or a 3-point keyframe array
     // [start, preLanding, landing] while a toss is in flight.
     const [rotation, setRotation] = useState<number | number[]>(0);
-    const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    // Refs so the animation-completion callback can't race React state.
+    const tossingRef = useRef(false);
+    const pendingOutcomeRef = useRef<TossResult>(null);
 
     const currentRotation = Array.isArray(rotation) ? rotation[rotation.length - 1] : rotation;
-
-    // Clear any pending landing if the modal unmounts mid-flight
-    useEffect(() => () => {
-        if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    }, []);
 
     // Reset state when modal opens
     useEffect(() => {
@@ -55,20 +52,16 @@ export function TossModal({ open, onClose }: TossModalProps) {
 
         // 3-second flight with a fast spin (≈16 turns, ~5.3 rev/s): a steady
         // linear spin covers 92% of the time, then a 0.8s ease-out settle of
-        // the final turn onto the correct face. The result appears the moment
-        // the coin lands.
+        // the final turn onto the correct face. The result is revealed from
+        // onAnimationComplete — strictly AFTER the coin has stopped.
         const currentSpins = Math.floor(currentRotation / 360);
         const nextTargetBase = (currentSpins + 16) * 360;
         const nextRotation = nextTargetBase + (outcome === "TAILS" ? 180 : 0);
 
+        pendingOutcomeRef.current = outcome;
+        tossingRef.current = true;
         setRotation([currentRotation, nextRotation - 360, nextRotation]);
-
-        // Landing logic — must match the flip transition duration below
-        timeoutRef.current = setTimeout(() => {
-            setResult(outcome);
-            setTossing(false);
-            setShowResult(true);
-        }, 3000);
+        setTossing(true);
     }, [tossing, rotation]);
 
     const handleClose = useCallback(() => {
@@ -125,6 +118,14 @@ export function TossModal({ open, onClose }: TossModalProps) {
                                                 ? { duration: 3, times: [0, 0.92, 1], ease: ["linear", "easeOut"] }
                                                 : { duration: 0 }
                                         }
+                                        onAnimationComplete={() => {
+                                            // The spin has fully stopped — only now reveal the result.
+                                            if (!tossingRef.current) return;
+                                            tossingRef.current = false;
+                                            setResult(pendingOutcomeRef.current);
+                                            setTossing(false);
+                                            setShowResult(true);
+                                        }}
                                     >
                                         <div className="absolute inset-0 backface-hidden">
                                             <img src={headsImg} alt="Heads" className="w-full h-full object-contain rounded-full" loading="lazy" decoding="async" />
