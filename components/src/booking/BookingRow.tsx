@@ -28,13 +28,15 @@ export const BookingRow = memo(function BookingRow({
   const duration = booking.durationHours || booking.hours || 1;
   const endTimeStr = booking.end_time || booking.start_time;
 
-  // Determine status (Upcoming, Past, Cancelled)
+  // Determine status (Upcoming, Past, Cancelled) — normalize first, the DB
+  // stores both cases (app lowercase, SQL uppercase).
+  const normalizedStatus = String(booking.status || "").toLowerCase();
   let statusText = "Upcoming";
   let statusColor = "hsl(var(--color-success))";
   let statusBg = "hsl(var(--color-success-surface))";
   let statusBorder = "hsl(var(--color-success) / 0.18)";
 
-  if (booking.status === "cancelled") {
+  if (normalizedStatus === "cancelled") {
     statusText = "Cancelled";
     statusColor = "hsl(var(--color-danger))";
     statusBg = "hsl(var(--color-danger-surface))";
@@ -146,7 +148,9 @@ export const BookingRow = memo(function BookingRow({
           </div>
 
           <div className="flex items-center justify-between mt-2.5 border-t pt-2" style={{ borderColor: "hsl(var(--color-surface-default))" }}>
-            <span className="text-[9px] uppercase font-bold tracking-wider" style={{ color: "hsl(var(--color-text-secondary))" }}>Amount Paid</span>
+            <span className="text-[9px] uppercase font-bold tracking-wider" style={{ color: "hsl(var(--color-text-secondary))" }}>
+              {normalizedStatus === "confirmed" ? "Amount Paid" : "Amount"}
+            </span>
             <p className="text-sm font-extrabold" style={{ color: "hsl(var(--color-primary))" }}>₹{booking.amount}</p>
           </div>
         </div>

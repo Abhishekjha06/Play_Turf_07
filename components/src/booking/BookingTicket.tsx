@@ -144,7 +144,12 @@ function DetailRow({ icon: Icon, label, value, highlight = false, valueColor }: 
 
 export const BookingTicket = React.forwardRef<HTMLDivElement, BookingTicketProps>(
   ({ booking, turf, game, user, qrData, onDownload, onShare, isGenerating }, ref) => {
-    const status = statusConfig[booking.status] || statusConfig.PENDING;
+    // Statuses arrive in both cases (app lowercase, SQL uppercase) —
+    // normalize before the config lookup so paid tickets never print
+    // "Pending Payment".
+    const status =
+      statusConfig[String(booking.status || "").toLowerCase()] ||
+      statusConfig.PENDING;
     const StatusIcon = status.icon;
 
     // QR is generated LOCALLY as a data URL. The previous external service
@@ -169,9 +174,11 @@ export const BookingTicket = React.forwardRef<HTMLDivElement, BookingTicketProps
     const sport = turf?.sport_types?.[0] || game?.sport || "Football";
     const address = turf?.address || game?.venue || turf?.city || "Bangalore";
     const baseAmount = booking.amount;
-    const platformFee = 20;
-    const gst = Math.round(baseAmount * 0.18);
-    const totalPaid = baseAmount + platformFee + gst;
+    // The charge is the booking amount only — no platform fee or GST is
+    // collected anywhere in the flow.
+    const platformFee = 0;
+    const gst = 0;
+    const totalPaid = baseAmount;
     const paymentMethod = game?.players?.find((p) => p.user_id === user?.name)?.payment_method || "UPI";
 
     return (

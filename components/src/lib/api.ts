@@ -76,6 +76,9 @@ export const api = {
     authModule.clientLogin(clientId, password, () => authModule.me()),
   logout: () => authModule.logout(),
   updateAvatar: (avatarId: string) => authModule.updateAvatar(avatarId),
+  getOwnProfile: () => authModule.getOwnProfile(),
+  updateOwnProfile: (fields: { full_name?: string; phone?: string }) => authModule.updateOwnProfile(fields),
+  changePassword: (newPassword: string) => authModule.changePassword(newPassword),
 
   // Bookings
   // Bookings
@@ -83,8 +86,7 @@ export const api = {
 createBooking: (payload: Parameters<typeof bookingsModule.createBooking>[0]) =>
   bookingsModule.createBooking(
     payload,
-    (id) => turfsModule.getTurf(id),
-    () => authModule.me()
+    (id) => turfsModule.getTurf(id)
   ),
 
 bookedSlots: (

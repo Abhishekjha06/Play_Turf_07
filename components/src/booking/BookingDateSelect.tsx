@@ -327,7 +327,10 @@ onToggleReminder,
                                 key={h}
                                 onClick={() => {
                                     if (h === "custom") {
-                                        setHours(Math.max(4, hours + 1));
+                                        // Cap at 12 — matches bookingSchema/createBooking
+                                        // validation ("1 to 12 hours"), otherwise the
+                                        // stepper can select values that always fail.
+                                        setHours(Math.min(12, Math.max(4, hours + 1)));
                                     } else {
                                         setHours(h as number);
                                     }

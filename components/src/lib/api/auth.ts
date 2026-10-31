@@ -175,3 +175,54 @@ export async function updateAvatar(avatarId: string): Promise<void> {
   // real database message (e.g. a missing column) reaches the UI toast.
   if (error) throw new Error(error.message);
 }
+
+/** Profile fields of the signed-in user, straight from Supabase Auth + profiles. */
+export type OwnProfile = {
+  user_id: string;
+  email: string;
+  full_name: string;
+  phone: string;
+  role: string;
+};
+
+/** Loads the signed-in user's own profile (auth email + profiles row). */
+export async function getOwnProfile(): Promise<OwnProfile> {
+  const supabase = await getSupabase();
+  const { data: { user }, error: userError } = await withTimeout(supabase.auth.getUser());
+  if (userError || !user) throw new Error("You need to be signed in.");
+
+  const { data: profile, error } = await withTimeout(
+    supabase.from("profiles").select("full_name, phone, role").eq("id", user.id).maybeSingle(),
+  );
+  if (error) throw new Error(error.message);
+
+  return {
+    user_id: user.id,
+    email: user.email || "",
+    full_name: profile?.full_name ?? user.user_metadata?.full_name ?? "Player",
+    phone: profile?.phone ?? "",
+    role: profile?.role ?? "user",
+  };
+}
+
+/**
+ * Updates the signed-in user's own profile fields (full_name/phone).
+ * RLS ("Users can update own profile") scopes the write to the caller.
+ */
+export async function updateOwnProfile(fields: { full_name?: string; phone?: string }): Promise<void> {
+  const supabase = await getSupabase();
+  const { data: { user }, error: userError } = await withTimeout(supabase.auth.getUser());
+  if (userError || !user) throw new Error("You need to be signed in to update your profile.");
+
+  const { error } = await withTimeout(
+    supabase.from("profiles").update(fields).eq("id", user.id),
+  );
+  if (error) throw new Error(error.message);
+}
+
+/** Changes the signed-in user's password via Supabase Auth. */
+export async function changePassword(newPassword: string): Promise<void> {
+  const supabase = await getSupabase();
+  const { error } = await supabase.auth.updateUser({ password: newPassword });
+  if (error) throw error;
+}

@@ -22,8 +22,7 @@ export async function createBooking(
     sport?: string;
 
   },
-  getTurfById: (id: string) => Promise<any>,
-  userGetter: () => Promise<any>
+  getTurfById: (id: string) => Promise<any>
 ): Promise<Booking> {
 
   const supabase = await getSupabase();
@@ -70,6 +69,16 @@ export async function createBooking(
     .split(":")
     .map(Number);
 
+  /*
+    Bookings cannot cross midnight — the DB stores end_time as a time and
+    hour math past 24 would produce an invalid value (e.g. "25:00").
+  */
+  if (slotH + payload.hours > 24) {
+    throw new Error(
+      "Bookings cannot cross midnight. Please choose an earlier start time."
+    );
+  }
+
   const slotDate = new Date(payload.date);
 
   slotDate.setHours(
@@ -97,14 +106,16 @@ export async function createBooking(
 
   const {
     data: { user },
+    error: authError,
   } = await supabase.auth.getUser();
 
-  const u = await userGetter();
+  if (authError || !user) {
+    throw new Error(
+      "You need to be signed in to make a booking."
+    );
+  }
 
-  const userId =
-    user?.id ||
-    u?.user_id ||
-    "mock_user";
+  const userId = user.id;
 
   /* ---------------- TURF ---------------- */
 
@@ -134,7 +145,11 @@ export async function createBooking(
       .eq("turf_id", turf.id)
       .eq("date", payload.date)
       .eq("start_time", checkTime)
-      .neq("status", "cancelled");
+      /*
+        Statuses exist in both cases (the app writes lowercase, SQL
+        triggers/RPCs write uppercase) — exclude both variants.
+      */
+      .not("status", "in", "(cancelled,CANCELLED)");
 
     /*
       IMPORTANT:
@@ -162,9 +177,9 @@ export async function createBooking(
     } = await query.maybeSingle();
 
     if (slotError) {
-      console.warn(
-        "Pitch availability check error:",
-        slotError
+      // Fail CLOSED: if we cannot verify availability, do not insert.
+      throw new Error(
+        "Could not verify slot availability. Please try again."
       );
     }
 
@@ -194,7 +209,7 @@ export async function createBooking(
       .eq("turf_id", turf.id)
       .eq("date", payload.date)
       .eq("start_time", checkTime)
-      .neq("status", "cancelled");
+      .not("status", "in", "(cancelled,CANCELLED)");
 
     /*
       Same user can theoretically book another
@@ -216,9 +231,9 @@ export async function createBooking(
     } = await query.maybeSingle();
 
     if (duplicateError) {
-      console.warn(
-        "Duplicate booking check error:",
-        duplicateError
+      // Fail CLOSED: if we cannot verify duplicates, do not insert.
+      throw new Error(
+        "Could not verify your existing bookings. Please try again."
       );
     }
 
@@ -428,7 +443,8 @@ export async function getCourtAvailability(
     )
     .eq("turf_id", turf.id)
     .eq("date", date)
-    .neq("status", "CANCELLED");
+    // Statuses exist in both cases (app lowercase, SQL uppercase)
+    .not("status", "in", "(cancelled,CANCELLED,completed,COMPLETED)");
 
   if (bookingError) {
     throw bookingError;
@@ -456,8 +472,8 @@ export async function bookedSlots(
     .select("start_time, hours, status, created_at, pitch_id")
     .eq("turf_id", turfId)
     .eq("date", date)
-    .neq("status", "cancelled")
-    .neq("status", "completed");
+    // Statuses exist in both cases (app lowercase, SQL uppercase)
+    .not("status", "in", "(cancelled,CANCELLED,completed,COMPLETED)");
 
   if (pitchId) {
     query = query.eq("pitch_id", pitchId);
@@ -472,7 +488,7 @@ export async function bookedSlots(
 
   (data || []).forEach((b: any) => {
     if (
-      b.status === "pending" &&
+      String(b.status || "").toLowerCase() === "pending" &&
       b.created_at &&
       new Date(b.created_at).getTime() < staleAfter
     ) {
@@ -520,7 +536,7 @@ export async function payMock(
   }
 
   if (
-    currentBooking.status ===
+    String(currentBooking.status || "").toLowerCase() ===
     "confirmed"
   ) {
     throw new Error(
@@ -531,6 +547,11 @@ export async function payMock(
   const paymentId =
     uid("pay");
 
+  /*
+    The `.eq("status", "pending")` guard makes the confirm atomic: if two
+    confirmations race, only the first UPDATE matches a pending row — the
+    second matches nothing and `.single()` throws instead of double-writing.
+  */
   const {
     data,
     error,
@@ -541,16 +562,25 @@ export async function payMock(
       payment_id: paymentId,
     })
     .eq("id", bookingId)
+    .eq("status", "pending")
     .select()
     .single();
 
   if (error) {
+    if (
+      String(currentBooking.status || "").toLowerCase() ===
+      "confirmed"
+    ) {
+      throw new Error(
+        "This booking has already been paid for."
+      );
+    }
     throw error;
   }
 
   /* Update secondary booking rows */
 
-  await supabase
+  const { error: secondaryError } = await supabase
     .from("bookings")
     .update({
       status: "confirmed",
@@ -560,6 +590,15 @@ export async function payMock(
       "payment_id",
       `parent_${bookingId}`
     );
+
+  if (secondaryError) {
+    // The main row is confirmed — surface the partial failure rather than
+    // silently leaving orphan pending rows that keep blocking slots.
+    console.error(
+      "Failed to confirm secondary booking rows:",
+      secondaryError
+    );
+  }
 
   addNotification({
     type: "booking_confirmed",
@@ -657,10 +696,10 @@ export async function upcomingBookings(
     user?.id ||
     u.user_id;
 
+  // Local date, NOT toISOString() — UTC "today" is yesterday for users
+  // in timezones ahead of UTC (e.g. IST mornings).
   const today =
-    new Date()
-      .toISOString()
-      .slice(0, 10);
+    new Date().toLocaleDateString("en-CA");
 
   const {
     data,
@@ -673,9 +712,11 @@ export async function upcomingBookings(
         "user_id",
         userId
       )
-      .eq(
+      // Both status cases exist in the DB (app writes lowercase,
+      // SQL triggers/RPCs write uppercase).
+      .in(
         "status",
-        "confirmed"
+        ["confirmed", "CONFIRMED"]
       )
       .gte(
         "date",
@@ -759,7 +800,7 @@ export async function cancelBooking(
   }
 
   if (
-    booking.status === "confirmed" &&
+    String(booking.status || "").toLowerCase() === "confirmed" &&
     booking.payment_id
   ) {
 
@@ -800,7 +841,7 @@ export async function cancelBooking(
 
   if (data.payment_id) {
 
-    await supabase
+    const { error: secondaryError } = await supabase
       .from("bookings")
       .update({
         status: "cancelled",
@@ -809,9 +850,18 @@ export async function cancelBooking(
         "payment_id",
         data.payment_id
       );
+
+    if (secondaryError) {
+      // Main row is cancelled — log the partial failure so orphaned
+      // active rows (which keep blocking slots) are diagnosable.
+      console.error(
+        "Failed to cancel secondary booking rows:",
+        secondaryError
+      );
+    }
   }
 
-  await supabase
+  const { error: parentRefError } = await supabase
     .from("bookings")
     .update({
       status: "cancelled",
@@ -820,6 +870,13 @@ export async function cancelBooking(
       "payment_id",
       `parent_${id}`
     );
+
+  if (parentRefError) {
+    console.error(
+      "Failed to cancel child booking rows:",
+      parentRefError
+    );
+  }
 
   addNotification({
     type: "booking_cancelled",

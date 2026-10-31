@@ -4,6 +4,16 @@ import { toast } from 'sonner';
 import { Loader2, ExternalLink } from 'lucide-react';
 import { Badge } from '@/ui/badge';
 
+/** Only allow http(s) URLs — blocks javascript:/data: injection from stored feedback rows. */
+const isSafeHttpUrl = (url: string): boolean => {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "https:" || parsed.protocol === "http:";
+  } catch {
+    return false;
+  }
+};
+
 export const FeedbackDashboard = () => {
   const [feedbacks, setFeedbacks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,8 +76,8 @@ export const FeedbackDashboard = () => {
             
             <p className="text-sm bg-black/20 p-3 rounded-xl min-h-[80px]">{f.message}</p>
 
-            {f.screenshot_url && (
-              <a href={f.screenshot_url} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-xs text-primary hover:underline">
+            {f.screenshot_url && isSafeHttpUrl(f.screenshot_url) && (
+              <a href={f.screenshot_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs text-primary hover:underline">
                 <ExternalLink className="w-3 h-3" /> View Screenshot
               </a>
             )}

@@ -18,10 +18,14 @@ const ClientLogin = () => {
             toast.error("Please enter client ID");
             return;
         }
+        if (!password) {
+            toast.error("Please enter your password");
+            return;
+        }
         setLoading(true);
         try {
             const normalizedClient = clientId.trim().toLowerCase();
-            const u = await api.clientLogin(normalizedClient, password || "123456789");
+            const u = await api.clientLogin(normalizedClient, password);
             toast.success(`Welcome ${u.name}!`);
             navigate("/client/dashboard");
         } catch (error) {

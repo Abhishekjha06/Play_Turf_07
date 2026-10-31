@@ -7,68 +7,110 @@ import { Input } from "@/ui/input";
 import { Label } from "@/ui/label";
 import { Switch } from "@/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/ui/tabs";
-import { Badge } from "@/ui/badge";
 import { toast } from "sonner";
-import { User, Lock, Bell, History, Save, Eye, EyeOff, Key, LogOut, ChevronRight, MessageSquarePlus } from "lucide-react";
-import { clientProfileUpdateSchema } from "@/lib/validations";
+import { User, Lock, Bell, Save, Key, LogOut, ChevronRight, MessageSquarePlus } from "lucide-react";
+import { api } from "@/lib/api";
 import { FeedbackModal } from "@/ui/FeedbackModal";
+
+const NOTIFICATION_PREFS_KEY = "playturf:client-notification-prefs";
+
+const defaultNotifications = {
+    emailNotifications: true,
+    smsNotifications: true,
+    bookingConfirmations: true,
+    bookingCancellations: true,
+};
+
+const loadNotificationPrefs = () => {
+    try {
+        const raw = localStorage.getItem(NOTIFICATION_PREFS_KEY);
+        if (!raw) return defaultNotifications;
+        return { ...defaultNotifications, ...JSON.parse(raw) };
+    } catch {
+        return defaultNotifications;
+    }
+};
+
+/** Accepts "+91 98765 43210" style input; returns 10 digits or null. */
+const normalizePhone = (input: string): string | null => {
+    const digits = input.replace(/\D/g, "");
+    const ten = digits.length === 12 && digits.startsWith("91") ? digits.slice(2) : digits;
+    return ten.length === 10 ? ten : null;
+};
 
 const ClientProfileSettings = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
-    const [showPassword, setShowPassword] = useState(false);
+    const [profileLoading, setProfileLoading] = useState(true);
     const [feedbackOpen, setFeedbackOpen] = useState(false);
 
-    // Profile state
+    // Profile state — populated from the signed-in user's real profile
     const [profile, setProfile] = useState({
-        companyName: "Arena 7 Sports Turf",
-        clientId: "CLIENT_001",
-        email: "owner@arena7.com",
-        phone: "+91 9876543210",
+        companyName: "",
+        clientId: "",
+        email: "",
+        phone: "",
     });
 
     // Password change state
     const [passwordData, setPasswordData] = useState({
-        currentPassword: "",
         newPassword: "",
         confirmPassword: "",
     });
 
-    // Notification preferences
-    const [notifications, setNotifications] = useState({
-        emailNotifications: true,
-        smsNotifications: true,
-        bookingConfirmations: true,
-        bookingCancellations: true,
-    });
-
-    // Audit logs mock data
-    const auditLogs = [
-        { id: 1, action: "Password changed", user: "System", timestamp: "2024-03-15 14:30:22", ip: "192.168.1.105" },
-        { id: 2, action: "Booking accepted", user: "Rajesh Sharma", timestamp: "2024-03-15 11:15:45", ip: "192.168.1.105" },
-        { id: 3, action: "Slot blocked", user: "Rajesh Sharma", timestamp: "2024-03-14 16:45:33", ip: "192.168.1.105" },
-        { id: 4, action: "Profile updated", user: "Rajesh Sharma", timestamp: "2024-03-13 09:22:18", ip: "192.168.1.105" },
-    ];
+    // Notification preferences (persisted locally)
+    const [notifications, setNotifications] = useState(loadNotificationPrefs);
 
     useEffect(() => {
-        // Auth + role are enforced by <ClientRoute>; nothing to gate here.
+        let cancelled = false;
+        (async () => {
+            try {
+                const own = await api.getOwnProfile();
+                if (cancelled) return;
+                // Client accounts sign in as <clientId>@playturf.app — show the
+                // login ID they actually use, not the internal UUID.
+                const clientId = own.email.endsWith("@playturf.app")
+                    ? own.email.slice(0, -"@playturf.app".length)
+                    : own.email;
+                setProfile({
+                    companyName: own.full_name,
+                    clientId,
+                    email: own.email,
+                    phone: own.phone,
+                });
+            } catch (e: any) {
+                if (!cancelled) toast.error(e?.message || "Failed to load your profile");
+            } finally {
+                if (!cancelled) setProfileLoading(false);
+            }
+        })();
+        return () => { cancelled = true; };
     }, []);
 
-    const handleProfileUpdate = () => {
-        const result = clientProfileUpdateSchema.safeParse(profile);
-        if (!result.success) {
-            toast.error(result.error.errors[0].message);
+    const handleProfileUpdate = async () => {
+        const companyName = profile.companyName.trim();
+        if (companyName.length < 2) {
+            toast.error("Company name must be at least 2 characters");
+            return;
+        }
+        const phone = normalizePhone(profile.phone);
+        if (!phone) {
+            toast.error("Phone number must be exactly 10 digits");
             return;
         }
 
         setLoading(true);
-        setTimeout(() => {
+        try {
+            await api.updateOwnProfile({ full_name: companyName, phone });
             toast.success("Profile updated successfully");
+        } catch (e: any) {
+            toast.error(e?.message || "Failed to update profile");
+        } finally {
             setLoading(false);
-        }, 1000);
+        }
     };
 
-    const handlePasswordChange = () => {
+    const handlePasswordChange = async () => {
         if (passwordData.newPassword !== passwordData.confirmPassword) {
             toast.error("New password and confirm password do not match");
             return;
@@ -79,11 +121,15 @@ const ClientProfileSettings = () => {
         }
 
         setLoading(true);
-        setTimeout(() => {
+        try {
+            await api.changePassword(passwordData.newPassword);
             toast.success("Password changed successfully");
-            setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
+            setPasswordData({ newPassword: "", confirmPassword: "" });
+        } catch (e: any) {
+            toast.error(e?.message || "Failed to change password");
+        } finally {
             setLoading(false);
-        }, 1000);
+        }
     };
 
     const handleNotificationToggle = (key: keyof typeof notifications) => {
@@ -94,11 +140,12 @@ const ClientProfileSettings = () => {
     };
 
     const handleSaveNotifications = () => {
-        setLoading(true);
-        setTimeout(() => {
+        try {
+            localStorage.setItem(NOTIFICATION_PREFS_KEY, JSON.stringify(notifications));
             toast.success("Notification preferences saved");
-            setLoading(false);
-        }, 800);
+        } catch {
+            toast.error("Could not save preferences on this device");
+        }
     };
 
     const handleLogout = async () => {
@@ -128,7 +175,7 @@ const ClientProfileSettings = () => {
                 {/* Main Content */}
                 <div className="p-4 pb-8">
                     <Tabs defaultValue="profile" className="w-full">
-                        <TabsList className="mb-5 grid w-full grid-cols-4 bg-panel-2">
+                        <TabsList className="mb-5 grid w-full grid-cols-3 bg-panel-2">
                             <TabsTrigger value="profile" className="flex items-center gap-1.5">
                                 <User className="h-3.5 w-3.5" />
                                 <span className="text-xs">Profile</span>
@@ -140,10 +187,6 @@ const ClientProfileSettings = () => {
                             <TabsTrigger value="notifications" className="flex items-center gap-1.5">
                                 <Bell className="h-3.5 w-3.5" />
                                 <span className="text-xs">Alerts</span>
-                            </TabsTrigger>
-                            <TabsTrigger value="audit" className="flex items-center gap-1.5">
-                                <History className="h-3.5 w-3.5" />
-                                <span className="text-xs">Logs</span>
                             </TabsTrigger>
                         </TabsList>
 
@@ -159,6 +202,7 @@ const ClientProfileSettings = () => {
                                         <Label htmlFor="companyName" className="text-xs text-muted2">Company Name</Label>
                                         <Input id="companyName" value={profile.companyName}
                                             onChange={(e) => setProfile({ ...profile, companyName: e.target.value })}
+                                            disabled={profileLoading}
                                             className="bg-panel border-border min-h-[44px]" />
                                     </div>
                                     <div className="space-y-1.5">
@@ -169,9 +213,9 @@ const ClientProfileSettings = () => {
                                     </div>
                                     <div className="space-y-1.5">
                                         <Label htmlFor="email" className="text-xs text-muted2">Email Address</Label>
-                                        <Input id="email" type="email" value={profile.email}
-                                            onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-                                            className="bg-panel border-border min-h-[44px]" />
+                                        <Input id="email" type="email" value={profile.email} disabled
+                                            className="bg-panel border-border min-h-[44px] opacity-60 cursor-not-allowed" />
+                                        <p className="text-xs text-muted2">Email is managed by your account sign-in</p>
                                     </div>
                                     <div className="space-y-1.5">
                                         <Label htmlFor="phone" className="text-xs text-muted2">Phone Number</Label>
@@ -195,21 +239,6 @@ const ClientProfileSettings = () => {
                                     <h2 className="font-semibold text-sm">Change Password</h2>
                                 </div>
                                 <div className="space-y-3">
-                                    <div className="space-y-1.5">
-                                        <Label htmlFor="currentPassword" className="text-xs text-muted2">Current Password</Label>
-                                        <div className="relative">
-                                            <Input id="currentPassword"
-                                                type={showPassword ? "text" : "password"}
-                                                value={passwordData.currentPassword}
-                                                onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                                                className="bg-panel border-border pr-11 min-h-[44px]" />
-                                            <button type="button"
-                                                className="absolute right-3 top-1/2 -translate-y-1/2 h-7 w-7 grid place-items-center text-muted2"
-                                                onClick={() => setShowPassword(!showPassword)}>
-                                                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                            </button>
-                                        </div>
-                                    </div>
                                     <div className="space-y-1.5">
                                         <Label htmlFor="newPassword" className="text-xs text-muted2">New Password</Label>
                                         <Input id="newPassword" type="password" value={passwordData.newPassword}

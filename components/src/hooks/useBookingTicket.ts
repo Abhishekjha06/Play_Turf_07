@@ -82,7 +82,7 @@ export function useBookingTicket() {
       if (scaledHeight <= pageHeight - margin * 2) {
         pdf.addImage(imgData, "JPEG", margin, margin, availableWidth, scaledHeight);
       } else {
-        let position = margin;
+        const position = margin;
         let sourceY = 0;
         const availableHeight = pageHeight - margin * 2;
         const pageImgHeight = availableHeight / scale;

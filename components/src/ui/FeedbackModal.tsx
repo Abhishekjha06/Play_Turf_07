@@ -184,7 +184,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose })
               <CheckCircle2 className="w-16 h-16 text-green-500" />
             </motion.div>
             <p className="text-lg font-bold">Feedback Submitted!</p>
-            <p className="text-sm text-soft">Thank you for helping us improve Play_Turf.</p>
+            <p className="text-sm text-soft">Thank you for helping us improve PlayTurf.</p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">

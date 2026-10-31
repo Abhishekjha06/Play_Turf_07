@@ -266,14 +266,19 @@ export function useRealtimeSlots(
         if (!turfId) return;
 
         let cleanup: CleanupFn | null = null;
+        let disposed = false;
 
         subscribeTurfSlots(turfId, (event) => {
             savedCallback.current(event);
         }).then((fn) => {
-            cleanup = fn;
+            // Unmounted before the subscription resolved — tear down
+            // immediately so the channel doesn't leak.
+            if (disposed) fn();
+            else cleanup = fn;
         });
 
         return () => {
+            disposed = true;
             if (cleanup) cleanup();
         };
     }, [turfId]);
@@ -296,14 +301,17 @@ export function useRealtimeBookingStatus(
         if (!bookingId) return;
 
         let cleanup: CleanupFn | null = null;
+        let disposed = false;
 
         subscribeBookingStatus(bookingId, (event) => {
             savedCallback.current(event);
         }).then((fn) => {
-            cleanup = fn;
+            if (disposed) fn();
+            else cleanup = fn;
         });
 
         return () => {
+            disposed = true;
             if (cleanup) cleanup();
         };
     }, [bookingId]);
@@ -326,14 +334,17 @@ export function useRealtimeNotifications(
         if (!userId) return;
 
         let cleanup: CleanupFn | null = null;
+        let disposed = false;
 
         subscribeUserNotifications(userId, (event) => {
             savedCallback.current(event);
         }).then((fn) => {
-            cleanup = fn;
+            if (disposed) fn();
+            else cleanup = fn;
         });
 
         return () => {
+            disposed = true;
             if (cleanup) cleanup();
         };
     }, [userId]);
@@ -350,8 +361,11 @@ export function useRealtimeOpenGames(callback: () => void): void {
     useEffect(() => {
         let channelGames: RealtimeChannel | null = null;
         let channelPlayers: RealtimeChannel | null = null;
+        let disposed = false;
 
         getSupabase().then((supabase) => {
+            if (disposed) return; // unmounted before subscribe — don't open channels
+
             // Subscribe to games table updates
             channelGames = supabase
                 .channel("realtime-games")
@@ -378,6 +392,7 @@ export function useRealtimeOpenGames(callback: () => void): void {
         });
 
         return () => {
+            disposed = true;
             getSupabase().then((supabase) => {
                 if (channelGames) supabase.removeChannel(channelGames);
                 if (channelPlayers) supabase.removeChannel(channelPlayers);
