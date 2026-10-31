@@ -31,8 +31,9 @@ export function useBookingTicket() {
     const canvas = await html2canvas(element, {
       scale: 1.5,          /* lower scale = much smaller PDF (was 3, now 1.5) */
       useCORS: true,
-      allowTaint: true,
-      backgroundColor: "#0a0a0a",
+      /* allowTaint must stay OFF: a tainted canvas makes toDataURL throw
+         (SecurityError) and the ticket download silently fails. */
+      backgroundColor: "#ffffff",
       logging: false,
       imageTimeout: 15000,
       onclone: (clonedDoc) => {
@@ -67,7 +68,10 @@ export function useBookingTicket() {
 
       const img = new Image();
       img.src = imgData;
-      await new Promise<void>((resolve) => { img.onload = () => resolve(); });
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = () => reject(new Error("Ticket image failed to render"));
+      });
 
       const imgWidth = img.width;
       const imgHeight = img.height;

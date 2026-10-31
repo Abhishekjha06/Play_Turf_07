@@ -1,4 +1,5 @@
 import React from "react";
+import QRCode from "qrcode";
 import {
   MapPin, Calendar, Clock, Timer, Users, CreditCard, Shield,
   User, Phone, Mail, CheckCircle, AlertCircle, XCircle, Receipt,
@@ -146,9 +147,24 @@ export const BookingTicket = React.forwardRef<HTMLDivElement, BookingTicketProps
     const status = statusConfig[booking.status] || statusConfig.PENDING;
     const StatusIcon = status.icon;
 
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(
-      qrData || `PlayTurf|Verify|${booking.id}|${booking.turf_name}|${booking.date}|${booking.start_time}`
-    )}`;
+    // QR is generated LOCALLY as a data URL. The previous external service
+    // (api.qrserver.com) sends no CORS headers, which tainted the html2canvas
+    // capture and made the PDF download fail with a SecurityError.
+    const [qrDataUrl, setQrDataUrl] = React.useState<string>("");
+    const qrPayload = qrData || `PlayTurf|Verify|${booking.id}|${booking.turf_name}|${booking.date}|${booking.start_time}`;
+    React.useEffect(() => {
+        let cancelled = false;
+        QRCode.toDataURL(qrPayload, { width: 250, margin: 1 })
+            .then((url) => {
+                if (!cancelled) setQrDataUrl(url);
+            })
+            .catch(() => {
+                if (!cancelled) setQrDataUrl("");
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, [qrPayload]);
 
     const sport = turf?.sport_types?.[0] || game?.sport || "Football";
     const address = turf?.address || game?.venue || turf?.city || "Bangalore";
@@ -224,10 +240,9 @@ export const BookingTicket = React.forwardRef<HTMLDivElement, BookingTicketProps
               }}
             >
               <img
-                src={qrUrl}
+                src={qrDataUrl}
                 alt="QR Code"
                 className="w-full h-full object-contain"
-                crossOrigin="anonymous"
                 onError={(e) => {
                   (e.target as HTMLImageElement).style.display = "none";
                 }}
