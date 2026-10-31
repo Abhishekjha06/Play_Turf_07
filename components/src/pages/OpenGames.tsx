@@ -33,7 +33,7 @@ import { trackEvent } from "@/lib/analytics";
 import { pageEnter, staggerContainer, fadeSlideUp } from "@/lib/motion";
 import { useRealtimeOpenGames } from "@/lib/realtime";
 import { addNotification } from "@/lib/notifications";
-import { OpenGameCard, OpenGameCardSkeleton } from "@/open-games";
+import { OpenGameCard, OpenGameCardSkeleton, formatDateDMY } from "@/open-games/OpenGameCard";
 import { MascotAvatar } from "@/ui/MascotAvatar";
 
 // ── Host Open Game wizard constants ──
@@ -505,6 +505,15 @@ const OpenGames = () => {
   const isPlayerOf = (g: OpenGame) =>
     !!user && g.players.some((p) => p.name === user.name || g.host_user_id === user.user_id);
 
+  // Date-based visibility (user's local timezone): keep games scheduled for
+  // today or any future date; past-dated games drop out of the listing.
+  // ISO YYYY-MM-DD strings compare correctly with ">=", and both sides are
+  // built from local date components (never toISOString, which shifts UTC).
+  const visibleGames = useMemo(() => {
+    const today = getLocalDateString();
+    return games.filter((g) => typeof g.date === "string" && g.date.slice(0, 10) >= today);
+  }, [games]);
+
   return (
     <MobileShell>
       <AppHeader />
@@ -586,7 +595,7 @@ const OpenGames = () => {
             <OpenGameCardSkeleton index={1} />
             <OpenGameCardSkeleton index={2} />
           </>
-        ) : games.length === 0 ? (
+        ) : visibleGames.length === 0 ? (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -607,7 +616,7 @@ const OpenGames = () => {
             </button>
           </motion.div>
         ) : (
-          games.map((g, i) => {
+          visibleGames.map((g, i) => {
             const progress = (g.slots_filled / g.slots_total) * 100;
             const isFull = g.status === "full";
             const isCancelled = g.status === "cancelled";
@@ -682,7 +691,7 @@ const OpenGames = () => {
                     Confirm your spot
                   </h3>
                   <p className="text-xs text-muted-foreground mt-1">
-                    {Math.round(activeJoinGame.slots_total / 2)}-a-side {activeJoinGame.sport.toLowerCase()} • {activeJoinGame.date === new Date().toISOString().slice(0, 10) ? "today" : activeJoinGame.date}, {activeJoinGame.time.toLowerCase()}
+                    {Math.round(activeJoinGame.slots_total / 2)}-a-side {activeJoinGame.sport.toLowerCase()} • {activeJoinGame.date === getLocalDateString() ? "today" : formatDateDMY(activeJoinGame.date)}, {activeJoinGame.time.toLowerCase()}
                   </p>
                 </div>
                 <button
@@ -854,7 +863,7 @@ const OpenGames = () => {
                   <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground pt-2 border-t border-border">
                     <div className="flex items-center gap-1.5">
                       <Calendar className="h-3.5 w-3.5 text-muted-foreground/70" />
-                      <span>{manageGame.date === new Date().toISOString().slice(0, 10) ? "Today" : manageGame.date}</span>
+                      <span>{manageGame.date === getLocalDateString() ? "Today" : formatDateDMY(manageGame.date)}</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <Clock className="h-3.5 w-3.5 text-muted-foreground/70" />

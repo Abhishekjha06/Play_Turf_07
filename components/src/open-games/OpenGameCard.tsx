@@ -42,6 +42,15 @@ const getLocalDateString = () => {
   return `${year}-${month}-${date}`;
 };
 
+/* DD-MM-YYYY from a stored ISO date (YYYY-MM-DD). Components are split
+   manually so the value reads exactly as stored — no UTC shifting. */
+export const formatDateDMY = (iso: string): string => {
+  const [y, m, d] = (iso || "").split("-").map(Number);
+  return y && m && d
+    ? `${String(d).padStart(2, "0")}-${String(m).padStart(2, "0")}-${y}`
+    : iso;
+};
+
 const getTimeUntil = (dateStr: string, timeStr: string): string => {
   const now = new Date();
   const [hours, minutes] = timeStr.split(":").map(Number);
@@ -340,7 +349,7 @@ export const OpenGameCard = memo(function OpenGameCard({
           </span>
           <span className="flex items-baseline gap-1 min-w-0">
             <Calendar className="h-3 w-3 shrink-0 self-center" strokeWidth={1.5} />
-            <span className="break-words">{game.date === getLocalDateString() ? "Today" : game.date}</span>
+            <span className="break-words">{game.date === getLocalDateString() ? "Today" : formatDateDMY(game.date)}</span>
           </span>
           <span className="flex items-baseline gap-1 min-w-0">
             <Clock className="h-3 w-3 shrink-0 self-center" strokeWidth={1.5} />
