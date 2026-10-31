@@ -1,3 +1,5 @@
+import { useSeo } from "@/hooks/use-seo";
+import { SITE_NAME } from "@/lib/seo";
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -44,6 +46,12 @@ const HOST_DURATION_OPTIONS = [1, 2, 3, 4];
 const HOST_STEP_LABELS = ["Details", "Schedule", "Cost"];
 
 const OpenGames = () => {
+  useSeo({
+    title: `Open Games — Join & Split Court Costs | ${SITE_NAME}`,
+    description: "Join open games hosted by other players — football, cricket and more. Pay your share of the court instead of the full booking, with host approval for private games.",
+    path: "/open-games",
+  });
+
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -148,7 +156,6 @@ const OpenGames = () => {
     setHostIsPrivate(false);
     setHostStep(1);
     setHostDir(1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hostModalOpen]);
 
   // If the sheet opens before venues finish loading, pick the first one as

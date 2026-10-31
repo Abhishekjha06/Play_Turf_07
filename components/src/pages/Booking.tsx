@@ -1,3 +1,4 @@
+import { useSeo } from "@/hooks/use-seo";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useLocation,   useSearchParams } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
@@ -65,7 +66,10 @@ function dateLabels() {
         const d = new Date();
         d.setDate(d.getDate() + i);
         out.push({
-            iso: d.toISOString().slice(0, 10),
+            // Local date, NOT toISOString() — UTC slicing turns IST mornings
+            // into "yesterday", which then fails createBooking's past-date
+            // validation. en-CA yields YYYY-MM-DD in local time.
+            iso: d.toLocaleDateString("en-CA"),
             day: d.toLocaleDateString(undefined, { weekday: "short" }).toUpperCase(),
             num: String(d.getDate()),
         });
@@ -84,6 +88,8 @@ const formatSlotTime = (timeStr: string) => {
 };
 
 const BookingContent = () => {
+  useSeo({ title: "Complete your booking", description: "Pick your slot and confirm your booking.", path: "/bookings", noindex: true });
+
 
     /// slot reminder
 ////
@@ -135,7 +141,14 @@ const BookingContent = () => {
 
 ///
     useEffect(() => {
-        if (turfId) api.getTurf(turfId).then(setTurf);
+        if (turfId)
+            api
+                .getTurf(turfId)
+                .then(setTurf)
+                .catch((err) => {
+                    console.error("Failed to load turf:", err);
+                    toast.error(err?.message || "Failed to load turf details");
+                });
     }, [turfId]);
 
 
@@ -288,8 +301,6 @@ const BookingContent = () => {
                 selectedSport
             );
 
-            console.log("COURT AVAILABILITY:", result);
-
             const courts = (result?.pitches || []).map((pitch: any) => {
                 const booked = (result?.bookings || []).some(
                     (booking: any) => {
@@ -334,8 +345,6 @@ const BookingContent = () => {
                     booked,
                 };
             });
-
-            console.log("COURTS WITH AVAILABILITY:", courts);
 
             setCourtList(courts);
 
@@ -531,7 +540,7 @@ const BookingContent = () => {
             cricket.completeBooking();
             setStep("success");
 
-            trackEvent("Payment Success", { bookingId: b.id, amount: turf.price_per_hour });
+            trackEvent("Payment Success", { bookingId: b.id, amount: total });
             trackEvent("Booking Complete", {
                 turfId: turf.id,
                 bookingId: b.id,
@@ -801,6 +810,7 @@ const BookingContent = () => {
                         booking={booking}
                         cricket={cricket}
                         total={total}
+                        hours={hours}
                         placedAt={placedAt}
                         navigate={navigate}
                     />

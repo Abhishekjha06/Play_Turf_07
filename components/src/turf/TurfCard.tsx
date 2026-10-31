@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Heart, Star, Clock, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { Turf } from "@/data/seed";
+import { turfPath } from "@/lib/seo";
 import React, { useEffect, useState, useRef } from "react";
 import { api } from "@/lib/api";
 import { Card, CardContent, CardTitle, CardDescription, CardFooter } from "@/ui/card";
@@ -173,7 +174,7 @@ export const TurfCard = React.memo(function TurfCard({
 
           <div className="px-3 pb-3 pt-0">
             <RippleButton
-              to={`/turf/${turf.id}?book=true`}
+              to={`${turfPath(turf)}?book=true`}
               testid={`book-${turf.id}`}
               style={{
                 background: "hsl(var(--color-primary))",

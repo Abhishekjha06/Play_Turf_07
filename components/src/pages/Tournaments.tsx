@@ -1,3 +1,5 @@
+import { useSeo } from "@/hooks/use-seo";
+import { SITE_NAME } from "@/lib/seo";
 import { useEffect, useState } from "react";
 import { MobileShell } from "@/layout/MobileShell";
 import { AppHeader } from "@/layout/AppHeader";
@@ -8,6 +10,12 @@ import { TournamentHeroCarousel } from "@/home/TournamentHeroCarousel";
 import { tournaments as fallbackTournaments } from "@/data/seed";
 
 const Tournaments = () => {
+  useSeo({
+    title: `Tournaments — Compete & Win | ${SITE_NAME}`,
+    description: "Browse upcoming sports tournaments: futsal, box cricket and more. Squad details, entry fees and prize pools.",
+    path: "/tournaments",
+  });
+
   const [list, setList] = useState<Tournament[]>([]);
   useEffect(() => {
     // Fall back to seed data on error — mirrors Home.tsx's banner/turf/offer pattern.

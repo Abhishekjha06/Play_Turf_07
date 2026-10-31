@@ -10,6 +10,11 @@ import type { Review } from "@/data/seed";
 import type { OpenGame } from "@/types/openGames";
 import { trackEvent } from "@/lib/analytics";
 import { useRealtimeOpenGames } from "@/lib/realtime";
+import { useSeo } from "@/hooks/use-seo";
+import {
+  SITE_NAME, breadcrumbJsonLd, buildTurfSlug, matchTurfParam, slugify,
+  turfJsonLd, turfPath,
+} from "@/lib/seo";
 import { Star, MapPin, Clock, Heart, Share2, Users, Calendar, Lock, X, AlertCircle, CreditCard, Smartphone, Wallet,Trophy } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -146,7 +151,9 @@ const TurfDetail = () => {
         setSelectedJoinGame(null);
       } else {
         const { game: updated, booking } = await api.joinOpenGame(gameId, selectedPaymentMethod);
-        toast.success("Payment successful! Redirecting to receipt...");
+        // Payment capture for public games is handled server-side by the join
+        // RPC — the client only confirms the join here.
+        toast.success("You're in! Redirecting to your booking...");
         setSelectedJoinGame(null);
         if (booking) {
           navigate(`/booking/${booking.id}`);
@@ -188,37 +195,60 @@ const TurfDetail = () => {
   }, [carouselApi, slideCount]);
 
   useEffect(() => {
-    if (id) {
-      api.getTurf(id).then((data) => {
-        setTurf(data);
-        trackEvent("Turf Viewed", { turf_id: data.id, turf_name: data.name });
-      }).catch((e) => setError((e as Error).message));
-    }
+    if (!id) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        // 1. Direct id (existing /turf/turf_1 links).
+        const direct = await api.getTurf(id).catch(() => null);
+        if (!cancelled && direct) {
+          setTurf(direct);
+          trackEvent("Turf Viewed", { turf_id: direct.id, turf_name: direct.name });
+          return;
+        }
+        // 2. Otherwise treat the param as a slug (/turf/greenfield-arena-turf-1).
+        const all = await api.listTurfs();
+        const match = matchTurfParam(id, all);
+        if (!cancelled && match) {
+          setTurf(match);
+          trackEvent("Turf Viewed", { turf_id: match.id, turf_name: match.name });
+        } else if (!cancelled) {
+          setError("Turf not found");
+        }
+      } catch (e) {
+        if (!cancelled) setError((e as Error).message);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
-
+  // The resolved turf id — slug URLs must query favorites/reviews/games by
+  // the REAL id, not by the URL slug.
+  const turfId = turf?.id ?? null;
 
   useEffect(() => {
-    if (!id) return;
-    api.listFavorites().then((favorites) => setFavorite(favorites.includes(id)));
-    api.listReviews(id).then(setReviews);
-  }, [id]);
+    if (!turfId) return;
+    api.listFavorites().then((favorites) => setFavorite(favorites.includes(turfId)));
+    api.listReviews(turfId).then(setReviews);
+  }, [turfId]);
 
   const toggleFavorite = async () => {
-    if (!id) return;
-    const next = await api.toggleFavorite(id);
-    const active = next.includes(id);
+    if (!turfId) return;
+    const next = await api.toggleFavorite(turfId);
+    const active = next.includes(turfId);
     setFavorite(active);
     toast.success(active ? "Added to favorites" : "Removed from favorites");
   };
 
   const submitReview = async () => {
-    if (!id) return;
+    if (!turfId) return;
     try {
-      await api.addReview(id, rating, comment);
+      await api.addReview(turfId, rating, comment);
       setComment("");
       setRating(5);
-      setReviews(await api.listReviews(id));
+      setReviews(await api.listReviews(turfId));
       toast.success("Review added");
     } catch (e) {
       toast.error((e as Error).message);
@@ -241,6 +271,33 @@ const TurfDetail = () => {
       toast.success("Turf details copied!");
     }
   };
+
+  // ── SEO: real venue metadata + SportsActivityLocation schema ──
+  // Computed unconditionally (Rules of Hooks); applied when the turf is real.
+  useSeo(
+    turf
+      ? {
+          title: `${turf.name} — ${turf.sport_types?.[0] || "Sports"} Turf in ${turf.city} | ${SITE_NAME}`,
+          description: `Book ${turf.name} in ${turf.city} from ₹${turf.price_per_hour}/hour. ${(turf.sport_types || []).join(", ")} courts, ${(turf.amenities || []).slice(0, 4).join(", ")}. Live slot availability and instant booking.`,
+          path: turfPath(turf),
+          image: /^https?:/i.test(turf.image) ? turf.image : undefined,
+          imageAlt: `${turf.name} — sports turf in ${turf.city}`,
+          jsonLd: [
+            turfJsonLd(turf, reviews),
+            breadcrumbJsonLd([
+              { name: "Home", path: "/" },
+              { name: "Turfs", path: "/turfs" },
+              ...(turf.city
+                ? [{ name: turf.city, path: `/turfs/${slugify(turf.city)}` }]
+                : []),
+              { name: turf.name, path: `/turf/${buildTurfSlug(turf)}` },
+            ]),
+          ],
+        }
+      : error
+        ? { title: "Turf not found", description: "This venue could not be found.", path: "/turfs", noindex: true }
+        : null
+  );
 
   if (error) return <MobileShell><div className="p-6 text-center"><p className="text-soft mb-2">Could not load turf.</p><p className="text-xs text-muted2">{error}</p></div></MobileShell>;
 

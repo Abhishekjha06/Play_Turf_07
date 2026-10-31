@@ -1,3 +1,4 @@
+import { useSeo } from "@/hooks/use-seo";
 import React from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -20,6 +21,8 @@ const THEME_PREVIEWS: Record<LuxuryThemeId, { preview: string; accent: string; i
 };
 
 export default function ThemeSelect() {
+  useSeo({ title: "Theme", description: "Choose your app theme.", path: "/theme", noindex: true });
+
     const { themeId, setTheme, theme } = useLuxuryTheme();
     const navigate = useNavigate();
     const themeIds = Object.keys(THEMES) as LuxuryThemeId[];

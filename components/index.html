@@ -15,11 +15,12 @@
   <meta name="msapplication-config" content="/browserconfig.xml" />
   <meta name="format-detection" content="telephone=no" />
 
+  <!-- Default head — every route overrides title/description/canonical/OG at
+       runtime via src/lib/seo.ts (applySeo). Crawlers that render JavaScript
+       see the per-page values; this block is the site-wide fallback. -->
   <title>PlayTurf — Book Sports Turfs & Tournaments Near You</title>
   <meta name="description"
     content="Book sports turfs, football grounds, cricket pitches, futsal courts, and tournaments near you. Real-time availability, instant booking, and best prices on PlayTurf.">
-  <meta name="keywords"
-    content="sports turf booking, football ground booking, cricket pitch booking, futsal court, badminton court, sports venue, tournament booking, PlayTurf, BookMySports">
   <meta name="author" content="PlayTurf" />
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
   <link rel="canonical" href="https://playturf.app/" />
@@ -35,33 +36,22 @@
   <meta property="og:image" content="https://playturf.app/og-image.jpg">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="PlayTurf — Book sports turfs and tournaments">
+  <meta property="og:image:alt" content="PlayTurf — book sports turfs and tournaments near you">
 
   <!-- Twitter Cards -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:site" content="@playturfapp" />
-  <meta name="twitter:creator" content="@playturfapp" />
   <meta name="twitter:title" content="PlayTurf — Book Sports Turfs & Tournaments Near You">
   <meta name="twitter:description"
     content="Book sports turfs, football grounds, cricket pitches, futsal courts, and tournaments near you. Real-time availability, instant booking, and best prices.">
   <meta name="twitter:image" content="https://playturf.app/og-image.jpg">
-  <meta name="twitter:image:alt" content="PlayTurf — Book sports turfs and tournaments">
+  <meta name="twitter:image:alt" content="PlayTurf — book sports turfs and tournaments near you">
 
   <!-- DNS Prefetch & Preconnect -->
   <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
   <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
-  <link rel="dns-prefetch" href="https://playturf.app" />
   <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-
-  <!-- Preload Critical Fonts -->
-  <link rel="preload" href="https://fonts.gstatic.com/s/plusjakartasans/v8/LDIoa08QlQ7H9G0s5O46qI7J8tQa1Y7q.woff2" as="font" type="font/woff2" crossorigin="anonymous" />
-
-  <!-- Preload Hero Image (LCP optimization) -->
-  <link rel="preload" as="image" href="/assets/hero-tournament.webp" type="image/webp" imagesrcset="/assets/hero-tournament.webp 1x" fetchpriority="high" />
-
-  <!-- Preload Critical CSS -->
-  <link rel="preload" href="/index.css" as="style" />
 
   <!-- Google Fonts -->
   <link rel="stylesheet"
@@ -72,105 +62,39 @@
       href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700;800;900&display=swap" />
   </noscript>
 
-  <!-- JSON-LD: SportsActivityLocation Schema -->
+  <!-- JSON-LD (site-wide): Organization + WebSite.
+       Page-scoped schema (venues, breadcrumbs, articles) is injected by
+       src/lib/seo.ts per route — see the data-seo-page script tags. -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "SportsActivityLocation",
+    "@type": "Organization",
     "name": "PlayTurf",
-    "url": "https://playturf.app",
+    "url": "https://playturf.app/",
     "logo": "https://playturf.app/playturf-logo.webp",
-    "description": "Book sports turfs, football grounds, cricket pitches, futsal courts, and tournaments near you.",
+    "description": "PlayTurf lets players find and book sports turfs — football grounds, cricket pitches, futsal and box-cricket courts — with live slot availability.",
     "sameAs": [
       "https://twitter.com/playturfapp",
       "https://instagram.com/playturfapp"
-    ],
-    "potentialAction": {
-      "@type": "SearchAction",
-      "target": {
-        "@type": "EntryPoint",
-        "urlTemplate": "https://playturf.app/?q={search_term_string}"
-      },
-      "query-input": "required name=search_term_string"
-    },
-    "priceRange": "$$",
-    "paymentAccepted": ["Cash", "Credit Card", "UPI", "Net Banking"],
-    "currenciesAccepted": "INR",
-    "openingHoursSpecification": {
-      "@type": "OpeningHoursSpecification",
-      "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
-      "opens": "06:00",
-      "closes": "23:00"
-    }
-  }
-  </script>
-
-  <!-- JSON-LD: WebSite Breadcrumb -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    "itemListElement": [
-      {
-        "@type": "ListItem",
-        "position": 1,
-        "name": "Home",
-        "item": "https://playturf.app/"
-      },
-      {
-        "@type": "ListItem",
-        "position": 2,
-        "name": "Turfs",
-        "item": "https://playturf.app/turf"
-      },
-      {
-        "@type": "ListItem",
-        "position": 3,
-        "name": "Tournaments",
-        "item": "https://playturf.app/tournaments"
-      },
-      {
-        "@type": "ListItem",
-        "position": 4,
-        "name": "Open Games",
-        "item": "https://playturf.app/open-games"
-      },
-      {
-        "@type": "ListItem",
-        "position": 5,
-        "name": "Offers",
-        "item": "https://playturf.app/offers"
-      }
     ]
   }
   </script>
-
-  <!-- JSON-LD: SoftwareApplication -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
+    "@type": "WebSite",
     "name": "PlayTurf",
-    "applicationCategory": "SportsApplication",
-    "operatingSystem": "Any",
-    "offers": {
-      "@type": "Offer",
-      "price": "0",
-      "priceCurrency": "INR"
-    },
-    "aggregateRating": {
-      "@type": "AggregateRating",
-      "ratingValue": "4.8",
-      "ratingCount": "1250"
-    }
+    "url": "https://playturf.app/",
+    "inLanguage": "en-IN",
+    "publisher": { "@type": "Organization", "name": "PlayTurf" }
   }
   </script>
 
-  <!-- Favicon -->
+  <!-- Favicon (files generated by scripts/generate-seo-assets.mjs) -->
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
-  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
   <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#14b8a6">
 
   <!-- PWA Manifest -->

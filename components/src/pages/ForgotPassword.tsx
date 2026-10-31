@@ -1,3 +1,4 @@
+import { useSeo } from "@/hooks/use-seo";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { MobileShell } from "@/layout/MobileShell";
@@ -9,6 +10,8 @@ import heroNight from "@/assets/hero-night-turf.webp";
 import { checkRateLimit } from "@/lib/rate-limit";
 
 const ForgotPassword = () => {
+  useSeo({ title: "Reset Password", description: "Reset your PlayTurf password.", path: "/forgot-password", noindex: true });
+
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);

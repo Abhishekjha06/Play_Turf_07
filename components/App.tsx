@@ -10,6 +10,7 @@ import { AdminRoute } from "@/components/AdminRoute";
 import { ClientRoute } from "@/components/ClientRoute";
 import { GlobalErrorBoundary } from "@/components/GlobalErrorBoundary";
 import { RealtimeNotificationsProvider } from "@/components/RealtimeNotificationsProvider";
+import { GA4RouteTracker } from "@/components/GA4RouteTracker";
 import { LuxuryThemeProvider, useLuxuryTheme } from "@/luxury/LuxuryThemeProvider";
 import { MultiRoleLoginModal } from "@/components/MultiRoleLoginModal";
 
@@ -29,7 +30,6 @@ const AuthCallbackRoute = lazy(() => import("@/pages/AuthCallbackRoute"));
 const More = lazy(() => import("@/pages/More"));
 const ChooseAvatar = lazy(() => import("@/pages/ChooseAvatar"));
 const Admin = lazy(() => import("@/pages/Admin"));
-const Receipt = lazy(() => import("@/pages/Receipt"));
 const ClientLogin = lazy(() => import("@/pages/ClientLogin"));
 const ClientDashboard = lazy(() => import("@/pages/ClientDashboard"));
 const ClientSlotManagement = lazy(() => import("@/pages/ClientSlotManagement"));
@@ -37,6 +37,16 @@ const ClientBookingManagement = lazy(() => import("@/pages/ClientBookingManageme
 const ClientProfileSettings = lazy(() => import("@/pages/ClientProfileSettings"));
 const ClientPlaceholder = lazy(() => import("@/pages/ClientPlaceholder"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
+
+/* SEO landing pages (public, crawlable) */
+const TurfsIndex = lazy(() => import("@/pages/seo/TurfsIndex").then((m) => ({ default: m.TurfsIndex })));
+const TurfsCity = lazy(() => import("@/pages/seo/TurfsCity").then((m) => ({ default: m.TurfsCity })));
+const TurfsLocality = lazy(() => import("@/pages/seo/TurfsLocality").then((m) => ({ default: m.TurfsLocality })));
+const SportsIndex = lazy(() => import("@/pages/seo/SportsIndex").then((m) => ({ default: m.SportsIndex })));
+const SportCity = lazy(() => import("@/pages/seo/SportCity").then((m) => ({ default: m.SportCity })));
+const OpenGamesCity = lazy(() => import("@/pages/seo/OpenGamesCity").then((m) => ({ default: m.OpenGamesCity })));
+const BlogIndex = lazy(() => import("@/pages/seo/BlogIndex").then((m) => ({ default: m.BlogIndex })));
+const BlogPostPage = lazy(() => import("@/pages/seo/BlogPostPage").then((m) => ({ default: m.BlogPostPage })));
 
 const queryClient = new QueryClient({
   queryCache: new QueryCache({
@@ -105,6 +115,7 @@ export default function App() {
             <BrowserRouter>
               <AuthCallback>
                 <RealtimeNotificationsProvider>
+                  <GA4RouteTracker />
                   <Suspense fallback={<LoadingFallback />}>
                     <MultiRoleLoginModal />
                     <Routes>
@@ -112,11 +123,20 @@ export default function App() {
                     <Route element={<AppLayout />}>
                       <Route index element={<Home />} />
                       <Route path="/turf/:id" element={<TurfDetail />} />
+                      <Route path="/turfs" element={<TurfsIndex />} />
+                      <Route path="/turfs/:city" element={<TurfsCity />} />
+                      <Route path="/turfs/:city/:locality" element={<TurfsLocality />} />
+                      <Route path="/sports" element={<SportsIndex />} />
+                      <Route path="/sports/:sport/:city" element={<SportCity />} />
                       <Route path="/booking/new/:turfId" element={<Booking />} />
                       <Route path="/booking/:id" element={<BookingDetail />} />
                       <Route path="/bookings" element={<Bookings />} />
                       <Route path="/tournaments" element={<Tournaments />} />
                       <Route path="/open-games" element={<OpenGames />} />
+                      <Route path="/open-games/:city" element={<OpenGamesCity />} />
+                      <Route path="/open-games/:city/:sport" element={<OpenGamesCity />} />
+                      <Route path="/blog" element={<BlogIndex />} />
+                      <Route path="/blog/:slug" element={<BlogPostPage />} />
                       <Route path="/offers" element={<Offers />} />
                       <Route path="/login" element={<Login />} />
                       <Route path="/signup" element={<Signup />} />
@@ -124,7 +144,6 @@ export default function App() {
                       <Route path="/auth/callback" element={<AuthCallbackRoute />} />
                       <Route path="/more" element={<More />} />
                       <Route path="/avatar" element={<ChooseAvatar />} />
-                      <Route path="/receipt" element={<Receipt />} />
                       <Route path="/theme" element={<ThemeSelect />} />
                       <Route path="/luxury/theme" element={<ThemeSelect />} />
                       <Route path="*" element={<NotFound />} />

@@ -1,3 +1,5 @@
+import { useSeo } from "@/hooks/use-seo";
+import { SITE_NAME } from "@/lib/seo";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -40,6 +42,12 @@ function closestCity(lat: number, lon: number, cities: string[]) {
 }
 
 const Home = () => {
+  useSeo({
+    title: `Book Sports Turfs & Tournaments Near You — ${SITE_NAME}`,
+    description: "Find and book football grounds, cricket pitches, futsal and box-cricket turfs near you with live slot availability, real hourly rates and instant confirmation.",
+    path: "/",
+  });
+
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const q = params.get("q") || "";
@@ -268,7 +276,7 @@ const Home = () => {
               whileInView="visible"
               viewport={{ once: true, amount: 0.05 }}
             >
-              <SectionHeader title="Popular Turfs" to="/?nearby=1" action="See all" />
+              <SectionHeader title="Popular Turfs" to="/turfs" action="See all" />
               <div className="grid grid-cols-1 min-[360px]:grid-cols-2 gap-3 px-4">
                 {popular.length === 0
                   ? [0, 1, 2, 3].map((k) => <TurfCardSkeleton key={k} />)

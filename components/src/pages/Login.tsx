@@ -1,3 +1,4 @@
+import { useSeo } from "@/hooks/use-seo";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
@@ -17,6 +18,8 @@ import { trackEvent, identifyUser } from "@/lib/analytics";
 
 
 const Login = () => {
+  useSeo({ title: "Sign In", description: "Sign in to book turfs and join games.", path: "/login", noindex: true });
+
   const navigate = useNavigate();
   const location = useLocation();
   const redirectUrl = location.state?.from || "/";
@@ -208,7 +211,7 @@ const Login = () => {
       <div className="relative z-10 px-5 pt-16 flex flex-col items-center text-center">
         <motion.div initial={prefersReducedMotion ? {} : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
           <h1 className="font-display font-extrabold text-4xl">
-            <span className="text-foreground">play</span><span className="neon-text">_Turf</span>
+            <span className="text-foreground">Play</span><span className="neon-text">Turf</span>
           </h1>
           <p className="mt-2 text-soft text-sm tracking-[0.3em] uppercase">BookMySports</p>
         </motion.div>

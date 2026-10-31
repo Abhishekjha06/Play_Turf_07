@@ -1,8 +1,11 @@
+import { useSeo } from "@/hooks/use-seo";
 import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import { MobileShell } from "@/layout/MobileShell";
 
 const NotFound = () => {
+  useSeo({ title: "Page Not Found", description: "This page does not exist.", path: "/404", noindex: true });
+
   const location = useLocation();
 
   useEffect(() => {

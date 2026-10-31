@@ -1,3 +1,4 @@
+import { useSeo } from "@/hooks/use-seo";
 import { Link, useNavigate } from "react-router-dom";
 import { MobileShell } from "@/layout/MobileShell";
 import { AppHeader } from "@/layout/AppHeader";
@@ -19,11 +20,16 @@ import {
   Palette,
   Trophy,
   Smile,
+  MapPin,
+  Activity,
+  BookOpen,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
 
 const More = () => {
+  useSeo({ title: "Account & Settings", description: "Manage your PlayTurf account.", path: "/more", noindex: true });
+
   const { user } = useAuth();
   const navigate = useNavigate();
   const [switching, setSwitching] = useState(false);
@@ -32,6 +38,9 @@ const More = () => {
     { label: "Choose Avatar", icon: Smile, to: "/avatar", toast: "", action: null },
     { label: "App Appearance", icon: Palette, to: "/theme", toast: "", action: null },
     { label: "Tournaments", icon: Trophy, to: "/tournaments", toast: "", action: null },
+    { label: "Browse Turfs", icon: MapPin, to: "/turfs", toast: "", action: null },
+    { label: "Sports Directory", icon: Activity, to: "/sports", toast: "", action: null },
+    { label: "Playing Guides", icon: BookOpen, to: "/blog", toast: "", action: null },
     {
       label: "Notifications",
       icon: Bell,

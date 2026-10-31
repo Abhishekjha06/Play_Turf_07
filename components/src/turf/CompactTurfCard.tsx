@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import type { Turf } from "@/data/seed";
+import { turfPath } from "@/lib/seo";
 import { api } from "@/lib/api";
 import { Card, CardContent, CardTitle, CardDescription } from "@/ui/card";
 
@@ -14,7 +15,7 @@ export function CompactTurfCard({
 
   return (
       <Link
-        to={`/turf/${turf.id}`}
+        to={turfPath(turf)}
         className="shrink-0 w-[40vw] max-w-40 pressable"
         data-testid={`compact-turf-${turf.id}`}
       >

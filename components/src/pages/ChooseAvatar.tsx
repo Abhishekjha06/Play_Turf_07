@@ -1,3 +1,4 @@
+import { useSeo } from "@/hooks/use-seo";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -17,6 +18,8 @@ import { cn } from "@/lib/utils";
  * Black; the artwork itself never changes between themes).
  */
 export default function ChooseAvatar() {
+  useSeo({ title: "Choose Avatar", description: "Pick your player avatar.", path: "/avatar", noindex: true });
+
   const { user, loading } = useAuth();
   const [selectedId, setSelectedId] = useState<string>(user?.avatar_id || DEFAULT_AVATAR_ID);
   const [saving, setSaving] = useState(false);

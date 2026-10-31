@@ -1,3 +1,4 @@
+import { useSeo } from "@/hooks/use-seo";
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import {
@@ -36,6 +37,8 @@ const statusConfig: Record<string, { icon: typeof CheckCircle2; color: string; b
 };
 
 const BookingDetail = () => {
+  useSeo({ title: "Booking Details", description: "Booking details.", path: "/bookings", noindex: true });
+
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const [booking, setBooking] = useState<Booking | null>(null);
@@ -56,16 +59,24 @@ const BookingDetail = () => {
         if (!id) return;
         api
             .getBooking(id)
-            .then(async (b) => {
+            .then(async (raw) => {
+                // Normalize status to lowercase once at the boundary — DB
+                // triggers/RPCs write uppercase ('CONFIRMED'), the app writes
+                // lowercase, and every comparison below expects lowercase.
+                const b = { ...raw, status: String(raw.status || "").toLowerCase() } as Booking;
                 setBooking(b);
                 try {
                     const turfData = await api.getTurf(b.turf_id);
                     setTurf(turfData);
-                } catch {}
+                } catch (turfErr) {
+                    console.warn("Failed to load turf for booking detail:", turfErr);
+                }
                 try {
                     const gameData = await api.getGameByBookingId(b.id);
                     setGame(gameData);
-                } catch {}
+                } catch (gameErr) {
+                    console.warn("Failed to load game for booking detail:", gameErr);
+                }
             })
             .catch((err) => setError(err.message || "Booking not found"))
             .finally(() => setLoading(false));
@@ -108,26 +119,28 @@ const BookingDetail = () => {
     useRealtimeBookingStatus(id, (event) => {
         if (!booking) return;
 
-        const updated = { ...booking, status: event.new_status };
+        const newStatus = String(event.new_status || "").toLowerCase();
+        const oldStatus = String(event.old_status || "").toLowerCase();
+        const updated = { ...booking, status: newStatus };
         setBooking(updated);
 
         // Show a prominent toast notification based on the new status
-        if (event.new_status === "confirmed") {
+        if (newStatus === "confirmed") {
             toast.success("Booking Confirmed!", {
                 description: `Your booking at ${event.turf_name} on ${event.date} at ${event.start_time} has been confirmed.`,
                 duration: 6_000,
             });
-        } else if (event.new_status === "cancelled") {
+        } else if (newStatus === "cancelled") {
             toast.error("Booking Cancelled", {
                 description: `Your booking at ${event.turf_name} on ${event.date} at ${event.start_time} has been cancelled.`,
                 duration: 6_000,
             });
-        } else if (event.new_status === "completed") {
+        } else if (newStatus === "completed") {
             toast.success("Session Completed", {
                 description: `Your session at ${event.turf_name} has been marked as completed.`,
                 duration: 5_000,
             });
-        } else if (event.new_status === "pending" && event.old_status !== "pending") {
+        } else if (newStatus === "pending" && oldStatus !== "pending") {
             toast.info("Payment Required", {
                 description: `Your booking at ${event.turf_name} is awaiting payment.`,
                 duration: 5_000,

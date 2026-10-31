@@ -45,6 +45,11 @@ onTTFB(sendToAnalytics);
 // Initialize error monitoring
 initMonitoring();
 
+// ── SEO analytics (env-gated — no-ops unless configured) ─────────────
+import { initGA4, injectGSCVerification } from "@/lib/ga4";
+injectGSCVerification();
+initGA4();
+
 // ── Environment Variable Guard ────────────────────────────────
 const MISSING_ENVS: string[] = [];
 if (!import.meta.env.VITE_SUPABASE_URL) MISSING_ENVS.push("VITE_SUPABASE_URL");
@@ -69,15 +74,19 @@ if (MISSING_ENVS.length > 0) {
   `;
   console.error("Missing env vars:", MISSING_ENVS);
 } else {
-  // ── Debug: show what env vars are actually loaded ─────────────
+  // Key-format diagnostics are computed unconditionally (the wrong-key error
+  // page below needs them) but only PRINTED in dev — never log env details
+  // to production visitors' consoles.
   const url = import.meta.env.VITE_SUPABASE_URL;
   const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
   const keyPrefix = key?.slice(0, 20) + "..." || "undefined";
   const isJwt = key?.startsWith("eyJ") || false;
 
-  console.log("[ENV DEBUG] VITE_SUPABASE_URL:", url);
-  console.log("[ENV DEBUG] VITE_SUPABASE_ANON_KEY prefix:", keyPrefix);
-  console.log("[ENV DEBUG] Is JWT format (starts with eyJ):", isJwt);
+  if (import.meta.env.DEV) {
+    console.log("[ENV DEBUG] VITE_SUPABASE_URL:", url);
+    console.log("[ENV DEBUG] VITE_SUPABASE_ANON_KEY prefix:", keyPrefix);
+    console.log("[ENV DEBUG] Is JWT format (starts with eyJ):", isJwt);
+  }
 
   // If key is NOT in JWT format (eyJ...), show a warning
   if (!isJwt) {

@@ -1,3 +1,5 @@
+import { useSeo } from "@/hooks/use-seo";
+import { SITE_NAME } from "@/lib/seo";
 import { useQuery } from "@tanstack/react-query";
 import { MobileShell } from "@/layout/MobileShell";
 import { AppHeader } from "@/layout/AppHeader";
@@ -7,6 +9,12 @@ import type { Offer } from "@/data/seed";
 import { motion } from "framer-motion";
 
 const Offers = () => {
+  useSeo({
+    title: `Offers & Deals | ${SITE_NAME}`,
+    description: "Current offers on turf bookings — happy hours, weekend deals and group discounts from listed venues.",
+    path: "/offers",
+  });
+
   const { data: list = [] } = useQuery<Offer[]>({
     queryKey: ["offers"],
     queryFn: () => api.listOffers(),

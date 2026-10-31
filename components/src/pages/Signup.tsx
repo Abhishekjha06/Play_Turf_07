@@ -1,3 +1,4 @@
+import { useSeo } from "@/hooks/use-seo";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
@@ -15,6 +16,8 @@ import { checkRateLimit, recordRateLimitAttempt } from "@/lib/rate-limit";
 import { trackEvent, identifyUser } from "@/lib/analytics";
 
 const Signup = () => {
+  useSeo({ title: "Create Account", description: "Create a PlayTurf account.", path: "/signup", noindex: true });
+
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -73,7 +76,7 @@ const Signup = () => {
         }
         trackEvent("Signup Completed", { method: "email" });
         await refreshUser();
-        toast.success("Account created — welcome to play_Turf!");
+        toast.success("Account created — welcome to PlayTurf!");
         navigate("/");
         return;
       }
@@ -128,7 +131,7 @@ const Signup = () => {
           <h1 className="font-display font-extrabold text-3xl">
             Create Account
           </h1>
-          <p className="mt-2 text-soft text-sm">Join play_Turf today</p>
+          <p className="mt-2 text-soft text-sm">Join PlayTurf today</p>
         </motion.div>
 
         <motion.div

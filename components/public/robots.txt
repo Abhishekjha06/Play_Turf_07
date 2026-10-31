@@ -1,26 +1,27 @@
+# PlayTurf robots.txt
+# Public SEO landing pages (/turfs, /sports, /open-games, /blog) are crawlable.
+# Private dashboards, checkout and user pages are blocked and/or noindexed.
+
 User-agent: *
 Allow: /
 Disallow: /admin
-Disallow: /client/login
-Disallow: /client/dashboard
-Disallow: /client/slots
-Disallow: /client/bookings
-Disallow: /client/settings
-Disallow: /client/photos
-Disallow: /client/pricing
-Disallow: /client/turf/edit
-Disallow: /client/rules
+Disallow: /client/
 Disallow: /auth/callback
+Disallow: /booking/
+Disallow: /bookings
 Disallow: /receipt
-Disallow: /booking/new/
+Disallow: /login
+Disallow: /signup
+Disallow: /forgot-password
+Disallow: /avatar
 Disallow: /theme
 Disallow: /luxury/theme
+Disallow: /more
 
-# Crawl-delay for respectful bots
+# Crawl-delay for respectful bots (Google ignores this directive)
 Crawl-delay: 1
 
-# Sitemap
-Sitemap: https://playturf.app/sitemap.xml
+# AI crawlers: public pages stay open (no explicit disallow above applies).
+# GPTBot, ClaudeBot, PerplexityBot and Google-Extended inherit "Allow: /".
 
-# Host
-Host: https://playturf.app
+Sitemap: https://playturf.app/sitemap.xml

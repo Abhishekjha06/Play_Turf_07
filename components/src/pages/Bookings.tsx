@@ -1,3 +1,4 @@
+import { useSeo } from "@/hooks/use-seo";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { MobileShell } from "@/layout/MobileShell";
@@ -7,6 +8,7 @@ import { BookingRow } from "@/booking/BookingRow";
 import { api } from "@/lib/api";
 import type { Booking } from "@/data/seed";
 import { useAuth } from "@/hooks/use-auth";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/ui/skeleton";
 
@@ -49,6 +51,8 @@ export function groupBookings(bookings: Booking[]): (Booking & { durationHours: 
 }
 
 const Bookings = () => {
+  useSeo({ title: "My Bookings", description: "Your turf bookings.", path: "/bookings", noindex: true });
+
   const { user } = useAuth();
   const [tab, setTab] = useState<Tab>("all");
   const [list, setList] = useState<Booking[]>([]);
@@ -78,7 +82,14 @@ const selectedSport =
   useEffect(() => {
     if (user) {
       setLoading(true);
-      api.myBookings().then(setList).finally(() => setLoading(false));
+      api
+        .myBookings()
+        .then(setList)
+        .catch((err) => {
+          console.error("Failed to load bookings:", err);
+          toast.error(err?.message || "Failed to load your bookings");
+        })
+        .finally(() => setLoading(false));
     } else {
       setLoading(false);
     }
@@ -139,14 +150,16 @@ const selectedSport =
   }, [groupedList]);
 
   const filtered = useMemo(() => {
+    // Statuses exist in both cases in the DB (app lowercase, SQL uppercase).
+    const statusOf = (b: Booking) => String(b.status || "").toLowerCase();
     if (tab === "upcoming") {
-      return sortedList.filter((b) => b.status !== "cancelled" && !isPast(b.date, b.end_time));
+      return sortedList.filter((b) => statusOf(b) !== "cancelled" && !isPast(b.date, b.end_time));
     }
     if (tab === "past") {
-      return sortedList.filter((b) => b.status !== "CANCELLED" && isPast(b.date, b.end_time));
+      return sortedList.filter((b) => statusOf(b) !== "cancelled" && isPast(b.date, b.end_time));
     }
     if (tab === "cancelled") {
-      return sortedList.filter((b) => b.status === "cancelled");
+      return sortedList.filter((b) => statusOf(b) === "cancelled");
     }
     return sortedList; // "all"
   }, [sortedList, tab, currentTime]);
