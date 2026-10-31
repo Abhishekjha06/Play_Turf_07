@@ -53,12 +53,11 @@ export function TossModal({ open, onClose }: TossModalProps) {
 
         const outcome: TossResult = Math.random() < 0.5 ? "HEADS" : "TAILS";
 
-        // 10-second flight: a steady linear spin (≈14 turns) covering 92% of
-        // the time, then a 0.8s ease-out settle of the final turn onto the
-        // correct face. Keyframing this way avoids the long near-stationary
-        // crawl an easeInOut tail produces, which read as a stuck toss.
+        // 10-second flight with a FAST spin (≈25 turns, 2.5 rev/s): a steady
+        // linear spin covers 92% of the time, then a 0.8s ease-out settle of
+        // the final turn onto the correct face.
         const currentSpins = Math.floor(currentRotation / 360);
-        const nextTargetBase = (currentSpins + 14) * 360;
+        const nextTargetBase = (currentSpins + 25) * 360;
         const nextRotation = nextTargetBase + (outcome === "TAILS" ? 180 : 0);
 
         setRotation([currentRotation, nextRotation - 360, nextRotation]);
@@ -117,14 +116,6 @@ export function TossModal({ open, onClose }: TossModalProps) {
                             {/* Coin Section */}
                             <div className="py-8 md:py-10 flex items-center justify-center perspective-1000">
                                 <div className="w-[35vw] h-[35vw] max-w-[160px] max-h-[160px] min-w-[120px] min-h-[120px] relative preserve-3d">
-                                    {/* Glow halo while the coin is airborne — a sibling
-                                        layer, because a filter on the preserve-3d element
-                                        itself would flatten the 3D backface flip. */}
-                                    <motion.div
-                                        className="absolute -inset-5 rounded-full bg-primary/30 blur-xl pointer-events-none"
-                                        animate={{ opacity: tossing ? 1 : 0 }}
-                                        transition={{ duration: 0.8 }}
-                                    />
                                     <motion.div
                                         className="w-full h-full relative preserve-3d"
                                         animate={{ rotateY: rotation }}
