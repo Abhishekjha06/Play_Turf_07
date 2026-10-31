@@ -323,10 +323,29 @@ export const OpenGameCard = memo(function OpenGameCard({
               {game.venue}
             </h3>
           </div>
-          {/* Brand mark — highlighted badge so it pops on any theme */}
-          <div className="shrink-0 rounded-full bg-primary/10 ring-1 ring-primary/30 p-1">
+          {/* Brand mark — highlighted badge that plays a 1s coin-toss flip
+              with a glow bloom at mid-flip, then rests for 6s. */}
+          <motion.div
+            className="shrink-0 rounded-full bg-primary/10 ring-1 ring-primary/30 p-1"
+            animate={{
+              rotateY: [0, 360],
+              boxShadow: [
+                "0 0 0px 0px hsl(var(--primary) / 0)",
+                "0 0 16px 3px hsl(var(--primary) / 0.55)",
+                "0 0 0px 0px hsl(var(--primary) / 0)",
+              ],
+            }}
+            transition={{
+              duration: 1,
+              times: [0, 0.5, 1],
+              ease: "easeInOut",
+              repeat: Infinity,
+              repeatDelay: 6,
+            }}
+            style={{ transformStyle: "preserve-3d" }}
+          >
             <PlayTurfLogo className="w-6 h-6 drop-shadow-[0_0_8px_hsl(var(--primary)/0.5)]" />
-          </div>
+          </motion.div>
         </div>
 
         {/* Tags */}
