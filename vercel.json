@@ -33,8 +33,19 @@
       ]
     },
     {
-      "source": "/(.*\\.(json|xml|txt))",
+      "source": "/sitemap.xml",
       "headers": [{ "key": "Cache-Control", "value": "public, max-age=3600, must-revalidate" }]
+    },
+    {
+      "source": "/robots.txt",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=3600, must-revalidate" }]
+    },
+    {
+      "source": "/manifest.webmanifest",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=3600, must-revalidate" },
+        { "key": "Content-Type", "value": "application/manifest+json" }
+      ]
     },
     {
       "source": "/assets/(.*)",
