@@ -161,14 +161,45 @@ CREATE INDEX IF NOT EXISTS idx_admin_audit_actor ON public.admin_audit_log (acto
 
 ALTER TABLE public.admin_audit_log ENABLE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS "Admins can append audit entries" ON public.admin_audit_log;
-CREATE POLICY "Admins can append audit entries"
-  ON public.admin_audit_log FOR INSERT
-  TO authenticated
-  WITH CHECK (public.is_playturf_admin(auth.uid()));
+-- Audit insertion goes through this SECURITY DEFINER RPC — the actor is
+-- ALWAYS taken from the authenticated JWT, never from the request body, so
+-- an admin cannot attribute actions to someone else. The caller must be an
+-- administrator; the table's own INSERT policy is therefore not needed.
+CREATE OR REPLACE FUNCTION public.log_admin_action(
+  p_action text,
+  p_record_id text DEFAULT NULL,
+  p_old_value jsonb DEFAULT NULL,
+  p_new_value jsonb DEFAULT NULL,
+  p_reason text DEFAULT NULL
+)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_actor uuid := auth.uid();
+BEGIN
+  IF NOT public.is_playturf_admin(v_actor) THEN
+    RAISE EXCEPTION 'Only PlayTurf administrators can write audit entries';
+  END IF;
+  INSERT INTO public.admin_audit_log
+    (actor_id, actor_role, action, record_id, old_value, new_value, reason)
+  VALUES (
+    v_actor,
+    (SELECT role FROM public.profiles WHERE id = v_actor),
+    p_action,
+    p_record_id,
+    p_old_value,
+    p_new_value,
+    p_reason
+  );
+END;
+$$;
 
--- Only super admins read the log; NOBODY updates or deletes (no policy =
--- denied under RLS). History is immutable by construction.
+-- Append-only: SELECT for super admins; NOBODY updates or deletes (no
+-- policy = denied under RLS). Direct client INSERTs are denied by leaving
+-- the insert policy off — the RPC is the only write path.
 DROP POLICY IF EXISTS "Super admins can read audit log" ON public.admin_audit_log;
 CREATE POLICY "Super admins can read audit log"
   ON public.admin_audit_log FOR SELECT

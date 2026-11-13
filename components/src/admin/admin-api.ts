@@ -39,8 +39,10 @@ export type AuditEntry = {
 
 /**
  * Runs a privileged mutation, then records who did what (and old/new values)
- * in admin_audit_log. Audit failures never block the action itself but are
- * surfaced in the Security Center as "audit logging inactive".
+ * via the log_admin_action SECURITY DEFINER RPC — the actor is derived from
+ * the JWT server-side, so attribution cannot be spoofed from the client.
+ * Audit failures never block the action itself but are surfaced in the
+ * Security Center as "audit logging inactive".
  */
 export async function withAudit<T>(
   opts: { action: string; recordId?: string | null; reason?: string; oldValue?: unknown },
@@ -50,21 +52,22 @@ export async function withAudit<T>(
   const result = await mutation();
   try {
     const supabase = await getSupabase();
-    const { data: { user } } = await supabase.auth.getUser();
     const newValue =
       result && typeof result === "object" ? JSON.parse(JSON.stringify(result)) : result ?? null;
-    await supabase.from("admin_audit_log").insert({
-      actor_id: user?.id ?? null,
-      actor_role: role ?? null,
-      action: opts.action,
-      record_id: opts.recordId ?? null,
-      old_value: opts.oldValue ?? null,
-      new_value: newValue,
-      reason: opts.reason ?? null,
+    const oldValue =
+      opts.oldValue && typeof opts.oldValue === "object"
+        ? JSON.parse(JSON.stringify(opts.oldValue))
+        : opts.oldValue ?? null;
+    const { error } = await supabase.rpc("log_admin_action", {
+      p_action: opts.action,
+      p_record_id: opts.recordId ?? null,
+      p_old_value: oldValue,
+      p_new_value: newValue,
+      p_reason: opts.reason ?? null,
     });
+    if (error) throw error;
   } catch (err) {
-    // Missing migration or RLS gap — visible in the Security Center, and the
-    // caller's toast can mention it; never lose the actual action's error.
+    // Missing migration (RPC/table absent) — visible in the Security Center.
     console.warn(`[audit] could not record "${opts.action}":`, err);
   }
   return result;

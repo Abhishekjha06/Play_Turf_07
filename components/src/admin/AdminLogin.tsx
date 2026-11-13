@@ -23,7 +23,9 @@ type Step = "credentials" | "mfa" | "mfa-enroll-hint";
 export default function AdminLogin() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
-  const next = params.get("next") || "/admin";
+  // Only same-origin relative paths may be used as a post-login target.
+  const rawNext = params.get("next") || "/admin";
+  const next = rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/admin";
   const stepRef = useRef(false);
 
   useSeo({

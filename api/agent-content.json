@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-11-13T16:27:02.395Z",
+ "generatedAt": "2026-11-13T16:52:29.713Z",
  "origin": "https://play-turf-git-main-abhishekjha06s-projects.vercel.app",
  "routes": {
   "/": {
@@ -179,11 +179,19 @@
     },
     {
      "h2": "Authentication and sessions",
-     "body": "Sign-in is handled by Supabase Authentication. PlayTurf uses email/password, Google sign-in and phone OTP. Sessions are stored locally in your browser (localStorage) and refreshed automatically; signing out removes them. Administrators can additionally enable a second authentication factor (authenticator app), which Supabase verifies before granting admin access."
+     "body": "Sign-in is handled by Supabase Authentication. PlayTurf supports email/password, Google sign-in and phone OTP. Sessions are stored locally in your browser (localStorage) and refreshed automatically; signing out removes them. Administrators can additionally enroll a second authentication factor (authenticator app), which Supabase verifies before granting admin access."
     },
     {
      "h2": "Payments",
-     "body": "The platform's checkout is currently simulated: bookings are confirmed without payment details being collected. When a live payment gateway is integrated, this policy will be updated to describe exactly which payment data the gateway processes — payment card data is expected to be handled by the payment provider, not by PlayTurf servers."
+     "body": "The platform checkout is currently simulated: bookings are confirmed without payment details being collected and no money moves. When a live payment gateway is integrated, this policy will be updated to describe exactly which payment data the gateway processes — payment card data is expected to be handled by the payment provider, not by PlayTurf servers."
+    },
+    {
+     "h2": "Analytics and error monitoring (third-party processors)",
+     "body": "When configured, PlayTurf uses two third-party services. PostHog (hosted at app.posthog.com) records product analytics events and may record sessions to help improve usability — form inputs are masked during recording. Sentry captures error reports and, on some sessions, replays the technical state of the app when something breaks. Both services receive technical data such as your IP address, device and browser characteristics. Analytics and monitoring are switched off unless the operator has configured them for the deployment you are using."
+    },
+    {
+     "h2": "Hosting and data storage",
+     "body": "PlayTurf data is stored in Supabase (PostgreSQL database, authentication and file storage). Static assets and the site itself are served through Vercel. These providers process data on behalf of PlayTurf as part of operating the service."
     },
     {
      "h2": "Cookies and local storage",
@@ -191,11 +199,15 @@
     },
     {
      "h2": "Who can see your data",
-     "body": "Your profile and bookings are protected by row-level security: database rules restrict each account to its own records, and administrative access is role-restricted and audit-logged. Aggregate, non-identifying statistics (for example total booking counts) may be shown in platform dashboards. Feedback messages are visible to the support team."
+     "body": "Your profile and bookings are protected by row-level security: database rules restrict each account to its own records, and administrative access is role-restricted with privileged actions recorded in an append-only audit log. Aggregate, non-identifying statistics (for example total booking counts) may be shown in platform dashboards. Feedback messages are visible to the support team."
     },
     {
-     "h2": "Deletion and your choices",
-     "body": "You can sign out and clear locally stored data at any time via your browser. Account deletion and data-export requests are handled manually while self-service tooling is built: send a request through the in-app feedback channel and it will be actioned. Retention: booking and feedback records are kept for operational history; the platform does not claim a specific deletion period for backups. This policy will be reviewed by the business owner before formal legal review, and marked updates will be published here."
+     "h2": "Your rights and grievance channel",
+     "body": "You can sign out and clear locally stored data at any time via your browser. Under India’s Digital Personal Data Protection Act, 2023 you can expect to be able to request access, correction and erasure of your personal data and to withdraw consent for future processing. While self-service tooling is being built, send such requests (and any privacy grievances) through the in-app feedback channel and they will be actioned. Booking and feedback records are retained for operational history; the platform does not claim a specific backup-deletion period."
+    },
+    {
+     "h2": "Status of this policy",
+     "body": "This policy describes the platform’s actual behaviour at the time of writing and will be updated as features change (in particular when live payments are introduced). It has not yet been reviewed by legal counsel and does not constitute legal advice; a formal legal review is required before it is treated as the platform’s final privacy policy. A named grievance officer will be published here once appointed."
     }
    ],
    "links": [

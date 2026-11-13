@@ -13,6 +13,7 @@
  */
 
 import type { Turf, Review } from "@/data/seed";
+import { business, hasVerifiedContactInfo } from "@/config/business";
 
 // ---------------------------------------------------------------------------
 // Site constants
@@ -174,25 +175,46 @@ export function applySeo(input: SeoInput): void {
 // ---------------------------------------------------------------------------
 
 export function organizationJsonLd() {
-  return {
+  const data: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": "Organization",
-    name: SITE_NAME,
-    url: SITE_ORIGIN + "/",
-    logo: absoluteUrl("/playturf-logo.webp"),
-    description: `PlayTurf lets players find and book sports turfs — football grounds, cricket pitches, futsal and box-cricket courts — with live slot availability.`,
+    name: business.businessName,
+    url: business.websiteUrl + "/",
+    logo: absoluteUrl(business.logoUrl),
+    description: "PlayTurf lets players find and book sports turfs — football grounds, cricket pitches, futsal and box-cricket courts — with live slot availability.",
     knowsAbout: [
-      'Online Turf Booking',
-      'Sports Turf Booking',
-      'Cricket Turf Booking',
-      'Football Turf Booking',
-      'Sports Facility Discovery',
+      "Online Turf Booking",
+      "Sports Turf Booking",
+      "Cricket Turf Booking",
+      "Football Turf Booking",
+      "Sports Facility Discovery",
     ],
     sameAs: [
       "https://twitter.com/playturfapp",
       "https://instagram.com/playturfapp",
     ],
   };
+  // contactPoint/address are published ONLY when every required value has
+  // been verified by the business owner (see src/config/business.ts).
+  if (hasVerifiedContactInfo()) {
+    data.email = business.supportEmail;
+    data.telephone = business.supportPhone;
+    data.address = {
+      "@type": "PostalAddress",
+      streetAddress: business.streetAddress,
+      addressLocality: business.city,
+      addressRegion: business.state,
+      postalCode: business.postalCode,
+      addressCountry: business.country,
+    };
+    data.contactPoint = {
+      "@type": "ContactPoint",
+      contactType: "customer support",
+      email: business.supportEmail,
+      telephone: business.supportPhone,
+    };
+  }
+  return data;
 }
 
 export function websiteJsonLd() {

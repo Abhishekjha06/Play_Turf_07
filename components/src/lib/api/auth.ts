@@ -106,24 +106,41 @@ export async function exchangeSession(sessionId: string, meGetter: () => Promise
   throw new Error("No active Supabase session.");
 }
 
+/** Role values that may access the admin panel — mirrors src/admin/admin-rbac.ts. */
+const ADMIN_LOGIN_ROLES = ["admin", "super_admin", "finance_admin", "content_admin", "support_admin"];
+
 export async function adminPasswordSignIn(email: string, password: string, meGetter: () => Promise<User | null>): Promise<User> {
   const supabase = await getSupabase();
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) throw error;
-  
+
   if (data.user) {
     const { data: profile, error: profileErr } = await supabase
       .from("profiles")
-      .select("role")
+      .select("role, is_suspended")
       .eq("id", data.user.id)
-      .single();
-      
-    if (profileErr || (profile?.role !== "admin" && profile?.role !== "super_admin")) {
+      .maybeSingle();
+
+    // is_suspended exists only after supabase_admin_rbac.sql — treat a
+    // missing column as "not suspended" rather than locking admins out.
+    const suspended =
+      !profileErr && profile?.is_suspended === true;
+
+    if (
+      profileErr?.code === "PGRST116" || // no row: not an admin at all
+      !profile ||
+      !ADMIN_LOGIN_ROLES.includes(profile.role || "") ||
+      suspended
+    ) {
       await supabase.auth.signOut();
-      throw new Error("Unauthorized. Only administrators are allowed to sign in here.");
+      throw new Error(
+        suspended
+          ? "This administrator account is suspended. Contact a Super Admin."
+          : "Unauthorized. Only administrators are allowed to sign in here."
+      );
     }
   }
-  
+
   const meUser = await meGetter();
   if (!meUser) throw new Error("Failed to load admin profile");
   return meUser;
