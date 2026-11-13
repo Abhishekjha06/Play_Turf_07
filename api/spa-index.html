@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#050505" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="PlayTurf" />
+  <meta name="application-name" content="PlayTurf" />
+  <meta name="msapplication-TileColor" content="#050505" />
+  <meta name="msapplication-config" content="/browserconfig.xml" />
+  <meta name="format-detection" content="telephone=no" />
+
+  <!-- Default head — every route overrides title/description/canonical/OG at
+       runtime via src/lib/seo.ts (applySeo). Crawlers that render JavaScript
+       see the per-page values; this block is the site-wide fallback. -->
+  <title>PlayTurf — Book Sports Turfs & Tournaments Near You</title>
+  <meta name="description"
+    content="Book sports turfs, football grounds, cricket pitches, futsal courts, and tournaments near you. Real-time availability, instant booking, and best prices on PlayTurf.">
+  <meta name="author" content="PlayTurf" />
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+  <link rel="canonical" href="https://play-turf-git-main-abhishekjha06s-projects.vercel.app/" />
+
+  <!-- Open Graph -->
+  <meta property="og:site_name" content="PlayTurf" />
+  <meta property="og:locale" content="en_IN" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://play-turf-git-main-abhishekjha06s-projects.vercel.app/" />
+  <meta property="og:title" content="PlayTurf — Book Sports Turfs & Tournaments Near You">
+  <meta property="og:description"
+    content="Book sports turfs, football grounds, cricket pitches, futsal courts, and tournaments near you. Real-time availability, instant booking, and best prices.">
+  <meta property="og:image" content="https://play-turf-git-main-abhishekjha06s-projects.vercel.app/og-image.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="PlayTurf — book sports turfs and tournaments near you">
+
+  <!-- Twitter Cards -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:site" content="@playturfapp" />
+  <meta name="twitter:title" content="PlayTurf — Book Sports Turfs & Tournaments Near You">
+  <meta name="twitter:description"
+    content="Book sports turfs, football grounds, cricket pitches, futsal courts, and tournaments near you. Real-time availability, instant booking, and best prices.">
+  <meta name="twitter:image" content="https://play-turf-git-main-abhishekjha06s-projects.vercel.app/og-image.jpg">
+  <meta name="twitter:image:alt" content="PlayTurf — book sports turfs and tournaments near you">
+
+  <!-- DNS Prefetch & Preconnect -->
+  <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+  <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+  <!-- Google Fonts -->
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700;800;900&display=swap"
+    media="print" onload="this.media='all'" />
+  <noscript>
+    <link rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700;800;900&display=swap" />
+  </noscript>
+
+  <!-- JSON-LD (site-wide): Organization + WebSite.
+       Page-scoped schema (venues, breadcrumbs, articles) is injected by
+       src/lib/seo.ts per route — see the data-seo-page script tags. -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "PlayTurf",
+    "url": "https://play-turf-git-main-abhishekjha06s-projects.vercel.app/",
+    "logo": "https://play-turf-git-main-abhishekjha06s-projects.vercel.app/playturf-logo.webp",
+    "knowsAbout": [
+      "Online Turf Booking",
+      "Sports Turf Booking",
+      "Cricket Turf Booking",
+      "Football Turf Booking",
+      "Sports Facility Discovery"
+    ],
+    "description": "PlayTurf lets players find and book sports turfs — football grounds, cricket pitches, futsal and box-cricket courts — with live slot availability.",
+    "sameAs": [
+      "https://twitter.com/playturfapp",
+      "https://instagram.com/playturfapp"
+    ]
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "PlayTurf",
+    "url": "https://play-turf-git-main-abhishekjha06s-projects.vercel.app/",
+    "inLanguage": "en-IN",
+    "publisher": { "@type": "Organization", "name": "PlayTurf" }
+  }
+  </script>
+
+  <!-- Favicon (files generated by scripts/generate-seo-assets.mjs) -->
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#14b8a6">
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="/manifest.webmanifest">
+  <script type="module" crossorigin src="/assets/index-Dw78qwcu.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/vendor-react-BJKFH1PH.js">
+  <link rel="modulepreload" crossorigin href="/assets/vendor-monitoring-tMqBajwC.js">
+  <link rel="modulepreload" crossorigin href="/assets/vendor-ui-utils-Dk08qNcD.js">
+  <link rel="modulepreload" crossorigin href="/assets/vendor-misc-0Er60LY0.js">
+  <link rel="modulepreload" crossorigin href="/assets/vendor-framer-DolLvnIV.js">
+  <link rel="modulepreload" crossorigin href="/assets/vendor-pdf-BQa5_G_n.js">
+  <link rel="modulepreload" crossorigin href="/assets/vendor-query-D3PeGz5Y.js">
+  <link rel="modulepreload" crossorigin href="/assets/vendor-router-ziFa7BEe.js">
+  <link rel="modulepreload" crossorigin href="/assets/vendor-radix-C6abcIEZ.js">
+  <link rel="modulepreload" crossorigin href="/assets/vendor-supabase-DqjQW1Sd.js">
+  <link rel="modulepreload" crossorigin href="/assets/vendor-icons-DJl0eAA1.js">
+  <link rel="modulepreload" crossorigin href="/assets/vendor-analytics-QAWwG1JJ.js">
+  <link rel="stylesheet" crossorigin href="/assets/css/index-DUWKW8Jn.css">
+<link rel="manifest" href="/manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="/registerSW.js"></script></head>
+
+<body>
+  <noscript>
+    <div style="padding: 2rem; text-align: center; font-family: system-ui, sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+      <h1 style="font-size: 1.5rem; margin-bottom: 1rem; color: #14b8a6;">JavaScript Required</h1>
+      <p>PlayTurf requires JavaScript to function. Please enable JavaScript in your browser settings to book sports turfs and tournaments.</p>
+    </div>
+  </noscript>
+  <div id="root"></div>
+</body>
+
+</html>

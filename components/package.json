@@ -13,7 +13,8 @@
     "typecheck": "tsc --noEmit",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "postbuild": "node scripts/copy-spa-index.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",

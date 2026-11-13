@@ -20,6 +20,18 @@
  */
 
 const content = require("./agent-content.json");
+const fs = require("fs");
+const path = require("path");
+
+// The built SPA shell, embedded at build time (postbuild copies
+// components/dist/index.html here). Serving it from the function (instead of
+// as a static file) lets `/` participate in content negotiation.
+let SPA_INDEX = null;
+try {
+  SPA_INDEX = fs.readFileSync(path.join(__dirname, "spa-index.html"), "utf8");
+} catch {
+  SPA_INDEX = null; // fallback: fetch at runtime
+}
 
 const ROUTES = content.routes || {};
 const SPA_PATHS = new Set(content.knownSpaPaths || []);
@@ -229,9 +241,10 @@ function privateMarkdown(path_) {
   ].join("\n");
 }
 
-async function getIndexHtml(req) {
-  // The built SPA — served unchanged so the browser experience is identical.
-  const target = new URL("/index.html", `https://${req.headers.host || "playturf.app"}`);
+async function getIndexHtml() {
+  if (SPA_INDEX) return SPA_INDEX;
+  // Fallback only if the embedded shell is missing on this deployment.
+  const target = new URL("/index.html", `https://${content.origin.replace(/^https?:\/\//, "")}`);
   const res = await fetch(target, { headers: { "user-agent": "playturf-serve-fn" } });
   if (!res.ok) throw new Error(`index.html fetch failed: ${res.status}`);
   return res.text();
@@ -268,7 +281,7 @@ module.exports = async (req, res) => {
     const robotsTag = isPrivate(path_) ? "noindex, follow" : "index, follow, max-image-preview:large";
     if (BOT_UA.test(ua)) return sendHtml(200, toHtml(route, path_), robotsTag);
     try {
-      const html = await getIndexHtml(req);
+      const html = await getIndexHtml();
       return sendHtml(200, html, robotsTag);
     } catch (err) {
       return sendHtml(200, toHtml(route, path_), robotsTag);
@@ -276,7 +289,7 @@ module.exports = async (req, res) => {
   }
 
   // 2. Valid browser-only routes (private app pages)
-  if (SPA_PATHS.has(path_) || isPrivate(path_)) {
+  if (SPA_PATHS.has(path_) || path_ === "/index.html" || isPrivate(path_)) {
     if (wantsMarkdown) return sendMarkdown(200, privateMarkdown(path_));
     const robotsTag = "noindex, follow";
     if (BOT_UA.test(ua)) {
@@ -287,7 +300,7 @@ module.exports = async (req, res) => {
       ), robotsTag);
     }
     try {
-      const html = await getIndexHtml(req);
+      const html = await getIndexHtml();
       return sendHtml(200, html, robotsTag);
     } catch (err) {
       return sendHtml(200, notFoundHtml(path_), robotsTag);
