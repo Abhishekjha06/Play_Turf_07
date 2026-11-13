@@ -217,9 +217,22 @@ const privatePrefixes = [
 ];
 
 // ── Write ──────────────────────────────────────────────────────────────────
+// Verified Organization identity (mirrors src/config/business.ts)
+const organization = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'PlayTurf',
+  url: ORIGIN + '/',
+  logo: ORIGIN + '/playturf-logo.webp',
+  description: 'PlayTurf lets players find and book sports turfs — football grounds, cricket pitches, futsal and box-cricket courts — with live slot availability.',
+  knowsAbout: ['Online Turf Booking', 'Sports Turf Booking', 'Cricket Turf Booking', 'Football Turf Booking', 'Sports Facility Discovery'],
+  sameAs: ['https://twitter.com/playturfapp', 'https://instagram.com/playturfapp'],
+};
+
 const out = {
   generatedAt: new Date().toISOString(),
   origin: ORIGIN,
+  organization,
   routes,
   knownSpaPaths,
   privatePrefixes,

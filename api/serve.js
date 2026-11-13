@@ -140,6 +140,7 @@ function toHtml(route, path_, { status = 200 } = {}) {
 <meta property="og:description" content="${escapeHtml(route.description)}">
 <meta property="og:url" content="${ORIGIN}${escapeHtml(path_)}">
 <meta property="og:site_name" content="PlayTurf">
+<script type="application/ld+json">${JSON.stringify(content.organization || {})}</script>
 <style>
   body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;margin:0;background:#070808;color:#e7eceb;line-height:1.6}
   main{max-width:760px;margin:0 auto;padding:2.5rem 1.25rem 4rem}

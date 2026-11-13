@@ -1,6 +1,25 @@
 {
- "generatedAt": "2026-11-13T16:52:29.713Z",
+ "generatedAt": "2026-11-13T17:02:17.721Z",
  "origin": "https://play-turf-git-main-abhishekjha06s-projects.vercel.app",
+ "organization": {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "PlayTurf",
+  "url": "https://play-turf-git-main-abhishekjha06s-projects.vercel.app/",
+  "logo": "https://play-turf-git-main-abhishekjha06s-projects.vercel.app/playturf-logo.webp",
+  "description": "PlayTurf lets players find and book sports turfs — football grounds, cricket pitches, futsal and box-cricket courts — with live slot availability.",
+  "knowsAbout": [
+   "Online Turf Booking",
+   "Sports Turf Booking",
+   "Cricket Turf Booking",
+   "Football Turf Booking",
+   "Sports Facility Discovery"
+  ],
+  "sameAs": [
+   "https://twitter.com/playturfapp",
+   "https://instagram.com/playturfapp"
+  ]
+ },
  "routes": {
   "/": {
    "robots": "index",
