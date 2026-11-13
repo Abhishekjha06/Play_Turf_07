@@ -38,7 +38,7 @@ function readViteEnv() {
 }
 
 const env = { ...readViteEnv(), ...process.env };
-const ORIGIN = (env.VITE_SITE_ORIGIN || "https://playturf.app").replace(/\/$/, "");
+const ORIGIN = (env.VITE_SITE_ORIGIN || "https://play-turf-git-main-abhishekjha06s-projects.vercel.app").replace(/\/$/, "");
 const SB_URL = env.VITE_SUPABASE_URL;
 const SB_KEY = env.VITE_SUPABASE_ANON_KEY;
 
@@ -83,6 +83,9 @@ add("/open-games", { changefreq: "hourly", priority: "0.9" });
 add("/tournaments", { changefreq: "daily", priority: "0.8" });
 add("/offers", { changefreq: "daily", priority: "0.8" });
 add("/blog", { priority: "0.7" });
+add("/about", { priority: "0.6", changefreq: "monthly" });
+add("/contact", { priority: "0.6", changefreq: "monthly" });
+add("/privacy", { priority: "0.5", changefreq: "yearly" });
 
 // 2. Blog guides (static content in src/data/blogPosts.ts)
 try {

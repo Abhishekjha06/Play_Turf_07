@@ -23,7 +23,8 @@ export const SITE_TAGLINE = "Book Sports Turfs & Tournaments Near You";
 
 /** Canonical production origin. Override with VITE_SITE_ORIGIN when previewing. */
 export const SITE_ORIGIN: string =
-  import.meta.env.VITE_SITE_ORIGIN || "https://playturf.app";
+  import.meta.env.VITE_SITE_ORIGIN ||
+  "https://play-turf-git-main-abhishekjha06s-projects.vercel.app";
 
 export const DEFAULT_OG_IMAGE = "/og-image.jpg";
 
@@ -180,6 +181,13 @@ export function organizationJsonLd() {
     url: SITE_ORIGIN + "/",
     logo: absoluteUrl("/playturf-logo.webp"),
     description: `PlayTurf lets players find and book sports turfs — football grounds, cricket pitches, futsal and box-cricket courts — with live slot availability.`,
+    knowsAbout: [
+      'Online Turf Booking',
+      'Sports Turf Booking',
+      'Cricket Turf Booking',
+      'Football Turf Booking',
+      'Sports Facility Discovery',
+    ],
     sameAs: [
       "https://twitter.com/playturfapp",
       "https://instagram.com/playturfapp",

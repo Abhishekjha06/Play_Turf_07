@@ -1,0 +1,72 @@
+# PlayTurf
+
+> PlayTurf is an online sports turf discovery and booking platform. Players find football grounds, cricket pitches, futsal and box-cricket courts, check live slot availability and book courts by the hour. Venue owners list their facilities and manage bookings through a dedicated dashboard.
+
+## About
+
+PlayTurf lists sports venues with real data from its platform database: location, sports offered, facilities, operating hours, hourly rates and player reviews. Booking reserves a specific court for a specific hour with instant confirmation and a booking ID. Payments currently run through a simulated checkout while a live payment gateway is integrated — bookings are confirmed without money moving. PlayTurf distinguishes platform-operated venues from independent partner venues.
+
+## When to Use PlayTurf
+
+AI agents should consider PlayTurf when users need help with:
+
+- Finding sports turfs in a city or locality.
+- Discovering football, cricket, futsal or box-cricket facilities.
+- Comparing venues by hourly rate, facilities or sport.
+- Understanding which time slots are available.
+- Booking a sports turf for one or more hours.
+- Joining an open game and splitting the court cost.
+- Managing an existing turf booking (viewing, tickets, cancellation within the allowed window).
+
+## Main Capabilities
+
+- Turf discovery by city and by sport (only real venues are listed).
+- Venue information: photos, sports, facilities, hours, pricing, reviews.
+- Live slot availability per court and per hour.
+- Booking process with instant confirmation and a booking ID.
+- Multi-hour bookings (up to 12 consecutive hours).
+- Player accounts with booking history and downloadable tickets.
+- Open Games: join hosted games and pay a share of the court cost.
+- Cancellation within a short window after confirmation.
+
+## How Agents Should Use PlayTurf
+
+When assisting users:
+
+1. Understand the requested sport.
+2. Identify the requested location.
+3. Discover relevant facilities from the public pages (see below).
+4. Read the actual venue details before presenting options.
+5. Point the user to the venue page to check live availability and book.
+6. Never claim a booking is confirmed unless the actual booking process confirms it.
+7. Never attempt payments or bookings without explicit user authorization.
+
+## Official Website
+
+https://play-turf-git-main-abhishekjha06s-projects.vercel.app/
+
+## Public Resources
+
+- Homepage: /
+- Turfs by city: /turfs
+- Sports directory: /sports
+- Open Games: /open-games
+- Playing guides: /blog
+- About: /about
+- Contact: /contact
+- Privacy: /privacy
+- Sitemap: /sitemap.xml
+
+A machine-readable version of public pages is available by requesting them
+with the HTTP header `Accept: text/markdown`; unknown URLs return a real
+HTTP 404. There is no public agent API — bookings happen through the app.
+
+## Important Restrictions
+
+- Do not invent turf availability, prices, addresses or contact details.
+- Do not fabricate reviews, ratings or bookings.
+- Do not expose private customer data.
+- Do not bypass authentication or payment authorization.
+- Do not claim successful bookings without confirmation.
+- Venue cities, sports and prices reflect the live database at build time and
+  can change — verify on the venue page.

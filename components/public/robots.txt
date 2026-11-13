@@ -24,4 +24,4 @@ Crawl-delay: 1
 # AI crawlers: public pages stay open (no explicit disallow above applies).
 # GPTBot, ClaudeBot, PerplexityBot and Google-Extended inherit "Allow: /".
 
-Sitemap: https://playturf.app/sitemap.xml
+Sitemap: https://play-turf-git-main-abhishekjha06s-projects.vercel.app/sitemap.xml

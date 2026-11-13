@@ -1,0 +1,1161 @@
+{
+ "generatedAt": "2026-11-13T16:03:56.328Z",
+ "origin": "https://play-turf-git-main-abhishekjha06s-projects.vercel.app",
+ "routes": {
+  "/": {
+   "robots": "index",
+   "title": "PlayTurf – Online Cricket & Sports Turf Booking Platform",
+   "description": "PlayTurf is an online sports turf booking platform: discover cricket, football, futsal and box-cricket turfs near you, check live slot availability, and book courts by the hour — plus open games to join and split costs.",
+   "h1": "PlayTurf – Discover and Book Sports Turfs Online",
+   "sections": [
+    {
+     "h2": "Find Sports Turfs Near You",
+     "body": "PlayTurf lists sports venues with their location, facilities, operating hours and hourly rates. Browse turfs by city, filter by sport, and open a venue page for photos, amenities and genuine player reviews. Discovery pages are built from the platform's live venue database — cities and sports appear only when venues actually exist."
+    },
+    {
+     "h2": "Book Cricket and Football Turfs",
+     "body": "Venues on PlayTurf commonly offer football, cricket, futsal and box-cricket courts. Pick your sport, compare venues and hourly prices, and reserve a specific court for a specific hour. Multi-hour bookings reserve consecutive slots in one go, so nobody can take the hour in between."
+    },
+    {
+     "h2": "Simple Online Turf Booking",
+     "body": "Choose a date, pick a free start slot, select a court, set your duration (1 to 12 hours) and confirm. You receive a booking ID and a downloadable ticket to show at the venue. Bookings can be cancelled within a short window right after confirmation."
+    },
+    {
+     "h2": "Check Turf Availability and Time Slots",
+     "body": "Every venue shows real-time slot availability for the selected date. Booked slots are marked unavailable, venues with several courts show availability per court, and reservations pending payment expire automatically so stale holds never block a free slot."
+    },
+    {
+     "h2": "Manage Your Sports Bookings",
+     "body": "Player accounts keep your booking history: upcoming and past sessions, cancellations, and downloadable tickets. Open Games let you join games hosted by other players and pay your share of the court instead of the full slot price."
+    },
+    {
+     "h2": "Why Use PlayTurf?",
+     "body": "Live availability instead of phone calls, transparent hourly pricing set by venues, instant confirmation with a booking ID, and open games for solo players. PlayTurf distinguishes platform-operated venues from independent partner venues — partner facilities are never presented as PlayTurf-owned."
+    },
+    {
+     "h2": "Frequently Asked Questions",
+     "body": [
+      "What is PlayTurf? An online sports turf discovery and booking platform for five-a-side football, cricket, futsal and more.",
+      "How can I book a cricket turf? Open a cricket venue, pick a date and a free slot, choose the court and confirm — you get an instant booking ID.",
+      "Can I book multiple hours? Yes — up to 12 consecutive hours in a single booking.",
+      "How do I check turf availability? Each venue page shows live slot availability for the date you pick.",
+      "How can I manage my booking? Open it from My Bookings to view, download the ticket or cancel within the allowed window.",
+      "How can I contact PlayTurf? Use the in-app feedback channel — see /contact for details."
+     ]
+    }
+   ],
+   "links": [
+    [
+     "Turfs by city",
+     "/turfs"
+    ],
+    [
+     "Sports directory",
+     "/sports"
+    ],
+    [
+     "Open Games",
+     "/open-games"
+    ],
+    [
+     "Playing guides",
+     "/blog"
+    ],
+    [
+     "About",
+     "/about"
+    ],
+    [
+     "Contact",
+     "/contact"
+    ],
+    [
+     "Privacy",
+     "/privacy"
+    ],
+    [
+     "Sitemap",
+     "/sitemap.xml"
+    ],
+    [
+     "Agent documentation",
+     "/llms.txt"
+    ]
+   ]
+  },
+  "/about": {
+   "robots": "index",
+   "title": "About PlayTurf | PlayTurf",
+   "description": "PlayTurf is an online sports turf discovery and booking platform: find football grounds, cricket pitches, futsal and box-cricket courts, check live slot availability and book by the hour.",
+   "h1": "About PlayTurf",
+   "sections": [
+    {
+     "h2": "What is PlayTurf?",
+     "body": "PlayTurf is an online sports turf discovery and booking platform. Players browse listed venues — football grounds, cricket pitches, futsal courts and box-cricket cages — see each venue's hourly rates, facilities and operating hours, and book a specific court for a specific hour directly from the site. Venue owners list their facilities so local players can find and book them without phone calls or manual coordination."
+    },
+    {
+     "h2": "What problem does PlayTurf solve?",
+     "body": "Booking a turf slot traditionally means calling venues, waiting for confirmation and hoping nobody else took the hour. PlayTurf replaces that with live availability: every venue shows which slots are free for a chosen date, and a confirmed booking reserves that exact court and hour. Multi-hour bookings reserve consecutive slots in one transaction, and Open Games let individual players join hosted games and split the court cost instead of paying for a full slot alone."
+    },
+    {
+     "h2": "Who uses PlayTurf?",
+     "body": "Two groups: players, who discover venues, book slots and join open games; and venue owners (turf partners), who list their facilities, manage their courts and see their bookings through the venue-owner dashboard. The platform serves casual five-a-side groups, box-cricket squads and individual players looking for a game."
+    },
+    {
+     "h2": "How discovery works",
+     "body": "Venues are browsable by city and by sport. Each venue page shows photos, the sports offered, facilities such as floodlights and parking, operating hours, the hourly rate and genuine player reviews. City and sport pages (for example turfs in Bangalore, or football turfs in Mumbai) only list venues that actually exist in the platform's live database."
+    },
+    {
+     "h2": "How booking works",
+     "body": "Pick a venue, choose a date, pick a free start slot, choose the court where the venue has several, set the duration (one to twelve hours) and confirm. Consecutive slots are reserved together so nobody can take the hour in between. Bookings can be cancelled within a short window after confirmation, and every booking gets a downloadable ticket with a unique booking ID."
+    },
+    {
+     "h2": "Platform notes",
+     "body": "Payments on the platform currently run through a simulated checkout — bookings are confirmed without money moving while a live payment gateway is being integrated. Supported sports depend on the venues listed; common ones include football, cricket, futsal and basketball. PlayTurf does not claim venue ownership of partner facilities: each venue's ownership is shown as either PlayTurf-operated or an independent partner."
+    }
+   ],
+   "links": [
+    [
+     "Homepage",
+     "/"
+    ],
+    [
+     "Sitemap",
+     "/sitemap.xml"
+    ],
+    [
+     "Agent documentation",
+     "/llms.txt"
+    ]
+   ]
+  },
+  "/contact": {
+   "robots": "index",
+   "title": "Contact PlayTurf | PlayTurf",
+   "description": "How to reach PlayTurf: in-app support and feedback for players, venue-owner inquiries, and platform contact channels.",
+   "h1": "Contact PlayTurf",
+   "sections": [
+    {
+     "h2": "Player support",
+     "body": "The fastest way to reach PlayTurf support is inside the app: use the Provide Feedback option (found under More → Support and in venue-owner settings) to report a bug, a booking problem or a question. Messages go straight to the support team with your device context attached, and you can attach a screenshot."
+    },
+    {
+     "h2": "Booking-related assistance",
+     "body": "For booking disputes or questions about a specific booking, open the booking from My Bookings — the booking detail page shows the venue, slot, payment record and ticket. Cancellations inside the allowed window can be done directly from the booking page. Anything else, send it through the feedback form and mention the booking ID."
+    },
+    {
+     "h2": "Venue owners and facility inquiries",
+     "body": "Turf owners and facility managers can request a listing through the venue-owner (client) sign-in; the owner dashboard manages courts, slots and bookings for their venue. For listing inquiries or partnership questions, use the same feedback channel and select the appropriate category."
+    },
+    {
+     "h2": "Direct contact details",
+     "body": "A published support email address and telephone line are being finalised and will be listed here once verified — PlayTurf does not publish contact details it cannot verify. Until then, the in-app feedback channel is the official support route and every message reaches the team."
+    }
+   ],
+   "links": [
+    [
+     "Homepage",
+     "/"
+    ],
+    [
+     "Sitemap",
+     "/sitemap.xml"
+    ],
+    [
+     "Agent documentation",
+     "/llms.txt"
+    ]
+   ]
+  },
+  "/privacy": {
+   "robots": "index",
+   "title": "Privacy Policy — PlayTurf | PlayTurf",
+   "description": "How PlayTurf handles your data: account registration, booking details, authentication, storage with Supabase, notifications, and your choices.",
+   "h1": "Privacy Policy — PlayTurf",
+   "sections": [
+    {
+     "h2": "What PlayTurf stores",
+     "body": "An account on PlayTurf consists of an authentication record (email or phone number, managed by Supabase Auth) and a profile row with your display name, phone number and chosen avatar. Bookings you create store the venue, date, time slots, duration, court, a booking ID and a payment reference. Open game participation stores your player name, avatar and join record. Feedback you submit stores the message you write plus technical context (device type, browser, operating system, screen size and the page you were on) to help reproduce issues."
+    },
+    {
+     "h2": "Authentication and sessions",
+     "body": "Sign-in is handled by Supabase Authentication. PlayTurf uses email/password, Google sign-in and phone OTP. Sessions are stored locally in your browser (localStorage) and refreshed automatically; signing out removes them. Administrators can additionally enable a second authentication factor (authenticator app), which Supabase verifies before granting admin access."
+    },
+    {
+     "h2": "Payments",
+     "body": "The platform's checkout is currently simulated: bookings are confirmed without payment details being collected. When a live payment gateway is integrated, this policy will be updated to describe exactly which payment data the gateway processes — payment card data is expected to be handled by the payment provider, not by PlayTurf servers."
+    },
+    {
+     "h2": "Cookies and local storage",
+     "body": "PlayTurf does not use advertising cookies. It uses browser localStorage for your session, your selected theme, notification records and booking reminders. A service worker caches static assets so the app works offline; that cache lives on your device only."
+    },
+    {
+     "h2": "Who can see your data",
+     "body": "Your profile and bookings are protected by row-level security: database rules restrict each account to its own records, and administrative access is role-restricted and audit-logged. Aggregate, non-identifying statistics (for example total booking counts) may be shown in platform dashboards. Feedback messages are visible to the support team."
+    },
+    {
+     "h2": "Deletion and your choices",
+     "body": "You can sign out and clear locally stored data at any time via your browser. Account deletion and data-export requests are handled manually while self-service tooling is built: send a request through the in-app feedback channel and it will be actioned. Retention: booking and feedback records are kept for operational history; the platform does not claim a specific deletion period for backups. This policy will be reviewed by the business owner before formal legal review, and marked updates will be published here."
+    }
+   ],
+   "links": [
+    [
+     "Homepage",
+     "/"
+    ],
+    [
+     "Sitemap",
+     "/sitemap.xml"
+    ],
+    [
+     "Agent documentation",
+     "/llms.txt"
+    ]
+   ]
+  },
+  "/blog": {
+   "robots": "index",
+   "title": "Playing Guides — Turf Booking Tips | PlayTurf",
+   "description": "Practical guides for booking and playing on sports turfs: how to book, what to bring, and when slots are cheapest.",
+   "h1": "Playing Guides",
+   "sections": [
+    {
+     "h2": "How to Book a Football Turf: A Step-by-Step Guide",
+     "body": "Pick your date and start time, choose how many hours you need (most 5-a-side games fit one hour), check that the court is free for that slot, confirm the price before paying, and keep the booking ID for entry. On PlayTurf you can do all of this from a venue's page: choose the date, pick a free slot, select a court, and confirm."
+    },
+    {
+     "h2": "What to Bring to a 5-a-Side Turf Match",
+     "body": "Bring turf shoes or flat-soled trainers (studs are often not allowed on artificial turf), a filled water bottle per player, a dark and a light shirt so teams split easily, and shin guards for football. Most turfs provide the ball and goal nets, and many rent equipment — check the venue's amenities before you pack your own."
+    },
+    {
+     "h2": "Peak vs Off-Peak Turf Slots: When to Book and Save",
+     "body": "Evenings after 6 PM and weekends are the peak hours at most turfs — they fill first and cost the most. Morning and early-afternoon slots on weekdays are the cheapest and quietest. On PlayTurf the price you see for each slot is the venue's own rate; booking a longer morning session often costs less than a single peak-hour slot."
+    }
+   ],
+   "links": [
+    [
+     "Homepage",
+     "/"
+    ],
+    [
+     "How to Book a Football Turf: A Step-by-Step Guide",
+     "/blog/how-to-book-a-football-turf"
+    ],
+    [
+     "What to Bring to a 5-a-Side Turf Match",
+     "/blog/what-to-bring-to-a-turf-game"
+    ],
+    [
+     "Peak vs Off-Peak Turf Slots: When to Book and Save",
+     "/blog/peak-vs-off-peak-turf-slots"
+    ]
+   ]
+  },
+  "/blog/how-to-book-a-football-turf": {
+   "robots": "index",
+   "title": "How to Book a Football Turf: A Step-by-Step Guide | PlayTurf",
+   "description": "A practical walkthrough of booking a football turf — picking the right slot length, checking lighting and surface, splitting costs, and confirming your booking.",
+   "h1": "How to Book a Football Turf: A Step-by-Step Guide",
+   "sections": [
+    {
+     "h2": "Quick answer",
+     "body": "Pick your date and start time, choose how many hours you need (most 5-a-side games fit one hour), check that the court is free for that slot, confirm the price before paying, and keep the booking ID for entry. On PlayTurf you can do all of this from a venue's page: choose the date, pick a free slot, select a court, and confirm."
+    },
+    {
+     "heading": "1. Decide the slot length before you search",
+     "body": [
+      "Most 5-a-side football games fit comfortably into a one-hour slot once you account for warm-up. If you want time for two full games or a longer practice session, book two consecutive hours rather than hoping the next hour stays free — consecutive slots are booked together so nobody else can take the hour in between."
+     ]
+    },
+    {
+     "heading": "2. Check what the venue actually offers",
+     "body": [
+      "Before booking, look for:",
+      [
+       "Surface type and whether floodlights are included in evening slots",
+       "Whether the venue has multiple courts — larger venues let your group book court 2 even when court 1 is taken",
+       "Amenities that matter to your group: parking, washrooms, drinking water, equipment rental"
+      ]
+     ]
+    },
+    {
+     "heading": "3. Book the exact slot and court",
+     "body": [
+      "On PlayTurf, open the venue page, pick your date from the strip, and select a start time. Slots already booked by someone else are shown as unavailable. If the venue has several courts, you pick the specific court — availability is checked per court, per hour, so two groups can play side by side."
+     ]
+    },
+    {
+     "heading": "4. Confirm and keep the booking ID",
+     "body": [
+      "After payment you get a booking with a unique ID and a ticket you can download or share with your group. The ticket shows the venue, date, start and end time, and court — show it at the venue. If your plans change immediately, cancellations are allowed within a short window right after booking; after that the slot belongs to you, so book carefully."
+     ]
+    },
+    {
+     "heading": "5. Splitting the cost with your squad",
+     "body": [
+      "If you don't have a full squad, Open Games lets you join games other players have opened and split the court cost — the host opens a slot, players join, and each player pays their share instead of the full court fee."
+     ]
+    }
+   ],
+   "links": [
+    [
+     "All guides",
+     "/blog"
+    ],
+    [
+     "Homepage",
+     "/"
+    ]
+   ]
+  },
+  "/blog/what-to-bring-to-a-turf-game": {
+   "robots": "index",
+   "title": "What to Bring to a 5-a-Side Turf Match | PlayTurf",
+   "description": "The practical packing list for a box-cricket or 5-a-side football turf game — footwear, hydration, and the small items that save the evening.",
+   "h1": "What to Bring to a 5-a-Side Turf Match",
+   "sections": [
+    {
+     "h2": "Quick answer",
+     "body": "Bring turf shoes or flat-soled trainers (studs are often not allowed on artificial turf), a filled water bottle per player, a dark and a light shirt so teams split easily, and shin guards for football. Most turfs provide the ball and goal nets, and many rent equipment — check the venue's amenities before you pack your own."
+    },
+    {
+     "heading": "Footwear comes first",
+     "body": [
+      "Artificial turf is abrasive and harder on joints than grass. Flat-soled turf shoes give the best grip on rubber-crumb surfaces. Metal or long studs sink into the turf and strain knees — many venues ban them. If you're buying your first pair, mid-range turf shoes are fine to start."
+     ]
+    },
+    {
+     "heading": "Team kit in two colours",
+     "body": [
+      "The fastest way to split a mixed group is dark shirts versus light shirts. Bibs help, but most casual games just ask players to plan ahead. One playing ball per court is usually enough — confirm with the venue whether they provide one or you should bring your own."
+     ]
+    },
+    {
+     "heading": "Hydration and the small stuff",
+     "body": [
+      [
+       "One litre of water per player per hour of play — turf radiates heat, especially in afternoon slots",
+       "A small towel and a change of shirt for after the game",
+       "Shin guards for football; batting gloves if your box-cricket venue doesn't rent them",
+       "A basic first-aid strip: plasters and an elastic bandage cover most turf scrapes"
+      ]
+     ]
+    },
+    {
+     "heading": "Before you leave the venue",
+     "body": [
+      "Turf slots run back-to-back. Finish your game on time, collect bottles and tape, and report anything damaged to the venue staff — the next group's slot starts the moment yours ends."
+     ]
+    }
+   ],
+   "links": [
+    [
+     "All guides",
+     "/blog"
+    ],
+    [
+     "Homepage",
+     "/"
+    ]
+   ]
+  },
+  "/blog/peak-vs-off-peak-turf-slots": {
+   "robots": "index",
+   "title": "Peak vs Off-Peak Turf Slots: When to Book and Save | PlayTurf",
+   "description": "Why the same turf costs different amounts by hour, which slots are usually cheapest, and how to plan around evening rush without losing playing quality.",
+   "h1": "Peak vs Off-Peak Turf Slots: When to Book and Save",
+   "sections": [
+    {
+     "h2": "Quick answer",
+     "body": "Evenings after 6 PM and weekends are the peak hours at most turfs — they fill first and cost the most. Morning and early-afternoon slots on weekdays are the cheapest and quietest. On PlayTurf the price you see for each slot is the venue's own rate; booking a longer morning session often costs less than a single peak-hour slot."
+    },
+    {
+     "heading": "Why prices vary by hour",
+     "body": [
+      "Turf operators set their own hourly rates and typically charge more when demand is highest — weekday evenings when office groups play, and weekend mornings and nights. Floodlit night slots carry the venue's lighting cost. None of this is a surcharge added at checkout: the rate you see for the slot is the venue's rate for that hour."
+     ]
+    },
+    {
+     "heading": "The cheapest good slots",
+     "body": [
+      [
+       "Weekday mornings (roughly 6–10 AM): cool weather, empty courts, lowest rates",
+       "Weekday early afternoons: quiet, though hot in summer — bring extra water",
+       "Late-night slots where the venue runs them: floodlit and often cheaper than prime evening"
+      ],
+      "Prime time — weekday 6–11 PM and weekends — books out first. If your group can only play prime time, book several days ahead."
+     ]
+    },
+    {
+     "heading": "Getting better value without chasing discounts",
+     "body": [
+      "Three habits reliably reduce cost per player: book consecutive hours in one booking (one court fee, longer game), fill the squad (the court fee is per slot, not per player — ten players halve the per-head cost versus five), and use Open Games to split a slot with players you don't know yet."
+     ]
+    }
+   ],
+   "links": [
+    [
+     "All guides",
+     "/blog"
+    ],
+    [
+     "Homepage",
+     "/"
+    ]
+   ]
+  },
+  "/turfs": {
+   "robots": "index",
+   "title": "Browse Sports Turfs by City — PlayTurf",
+   "description": "Every sports turf listed on PlayTurf, grouped by city: football grounds, cricket pitches, futsal and box-cricket courts with hourly rates and live slot availability.",
+   "h1": "Browse Sports Turfs",
+   "sections": [
+    {
+     "h2": "How discovery works",
+     "body": "Venues are grouped by real cities from the live database. Each venue page lists photos, sports, facilities, hourly rates and reviews. Pages appear for cities and sports only when real venues exist."
+    }
+   ],
+   "links": [
+    [
+     "Open Games",
+     "/open-games"
+    ],
+    [
+     "Sports directory",
+     "/sports"
+    ],
+    [
+     "Homepage",
+     "/"
+    ]
+   ]
+  },
+  "/sports": {
+   "robots": "index",
+   "title": "Book Sports by Type — Football, Cricket, Futsal & More | PlayTurf",
+   "description": "Find turfs bookable by the hour for each sport. Pick a sport to see venues, city coverage and hourly rates.",
+   "h1": "Book by Sport",
+   "sections": [
+    {
+     "h2": "Sports on PlayTurf",
+     "body": "Sports pages are derived from the sports each listed venue actually offers — commonly football, cricket, futsal and basketball. Each sport links to city-specific pages with real venues."
+    }
+   ],
+   "links": [
+    [
+     "Turfs by city",
+     "/turfs"
+    ],
+    [
+     "Homepage",
+     "/"
+    ]
+   ]
+  },
+  "/open-games": {
+   "robots": "index",
+   "title": "Open Games — Join & Split Court Costs | PlayTurf",
+   "description": "Join open games hosted by other players — football, cricket and more. Pay your share of the court instead of the full booking.",
+   "h1": "Open Games",
+   "sections": [
+    {
+     "h2": "How Open Games work",
+     "body": "A host opens a slot at a venue, players join, and everyone pays their share of the court fee. Private games require host approval. Live listings update in real time."
+    }
+   ],
+   "links": [
+    [
+     "Turfs",
+     "/turfs"
+    ],
+    [
+     "Homepage",
+     "/"
+    ]
+   ]
+  },
+  "/turfs/delhi": {
+   "robots": "index",
+   "title": "Sports Turfs in Delhi — Book by the Hour | PlayTurf",
+   "description": "1 sports turf in Delhi. See hourly rates from ₹1100, check live slot availability and book instantly.",
+   "h1": "Sports Turfs in Delhi",
+   "sections": [
+    {
+     "h2": "Venues in Delhi",
+     "body": "Futsal Hub — Futsal, Football — ₹1100/hour — Saket, New Delhi"
+    }
+   ],
+   "links": [
+    [
+     "All turfs",
+     "/turfs"
+    ],
+    [
+     "Open games",
+     "/open-games"
+    ],
+    [
+     "Homepage",
+     "/"
+    ]
+   ]
+  },
+  "/turf/futsal-hub-turf-4": {
+   "robots": "index",
+   "title": "Futsal Hub — Futsal Turf in Delhi | PlayTurf",
+   "description": "Book Futsal Hub in Delhi from ₹1100/hour. Futsal, Football courts, AC, Locker, Cafe. Live slot availability and instant booking.",
+   "h1": "Futsal Hub",
+   "sections": [
+    {
+     "h2": "Venue details",
+     "body": "Futsal Hub is a sports turf in Delhi. Address: Saket, New Delhi. Operating hours: 07:00 AM – 11:00 PM."
+    },
+    {
+     "h2": "Sports and facilities",
+     "body": "Sports offered: Futsal, Football. Facilities: AC, Locker, Cafe."
+    },
+    {
+     "h2": "Booking",
+     "body": "Hourly rate: ₹1100 per hour, set by the venue. Choose a date and a free slot on the venue page; consecutive hours can be reserved together. Payments currently use a simulated checkout while a live gateway is integrated."
+    }
+   ],
+   "links": [
+    [
+     "Turfs in Delhi",
+     "/turfs/delhi"
+    ],
+    [
+     "All turfs",
+     "/turfs"
+    ],
+    [
+     "Homepage",
+     "/"
+    ]
+   ]
+  },
+  "/sports/futsal/delhi": {
+   "robots": "index",
+   "title": "Futsal Turfs in Delhi — Book by the Hour | PlayTurf",
+   "description": "1 futsal turf in Delhi with hourly rates from ₹1100. Live availability and instant booking.",
+   "h1": "Futsal Turfs in Delhi",
+   "sections": [
+    {
+     "h2": "Futsal venues",
+     "body": "Futsal Hub — ₹1100/hour — Saket, New Delhi"
+    }
+   ],
+   "links": [
+    [
+     "All sports",
+     "/sports"
+    ],
+    [
+     "Turfs in Delhi",
+     "/turfs/delhi"
+    ],
+    [
+     "Homepage",
+     "/"
+    ]
+   ]
+  },
+  "/sports/football/delhi": {
+   "robots": "index",
+   "title": "Football Turfs in Delhi — Book by the Hour | PlayTurf",
+   "description": "1 football turf in Delhi with hourly rates from ₹1100. Live availability and instant booking.",
+   "h1": "Football Turfs in Delhi",
+   "sections": [
+    {
+     "h2": "Football venues",
+     "body": "Futsal Hub — ₹1100/hour — Saket, New Delhi"
+    }
+   ],
+   "links": [
+    [
+     "All sports",
+     "/sports"
+    ],
+    [
+     "Turfs in Delhi",
+     "/turfs/delhi"
+    ],
+    [
+     "Homepage",
+     "/"
+    ]
+   ]
+  },
+  "/turfs/bangalore": {
+   "robots": "index",
+   "title": "Sports Turfs in Bangalore — Book by the Hour | PlayTurf",
+   "description": "2 sports turfs in Bangalore. See hourly rates from ₹1200, check live slot availability and book instantly.",
+   "h1": "Sports Turfs in Bangalore",
+   "sections": [
+    {
+     "h2": "Venues in Bangalore",
+     "body": "Hilltop Grounds — Football — ₹1800/hour — Whitefield, Bangalore\n\nGreenfield Arena — Football, Futsal — ₹1200/hour — Indiranagar, Bangalore"
+    }
+   ],
+   "links": [
+    [
+     "All turfs",
+     "/turfs"
+    ],
+    [
+     "Open games",
+     "/open-games"
+    ],
+    [
+     "Homepage",
+     "/"
+    ]
+   ]
+  },
+  "/turf/hilltop-grounds-turf-5": {
+   "robots": "index",
+   "title": "Hilltop Grounds — Football Turf in Bangalore | PlayTurf",
+   "description": "Book Hilltop Grounds in Bangalore from ₹1800/hour. Football courts, 7-a-side, Parking, Washroom. Live slot availability and instant booking.",
+   "h1": "Hilltop Grounds",
+   "sections": [
+    {
+     "h2": "Venue details",
+     "body": "Hilltop Grounds is a sports turf in Bangalore. Address: Whitefield, Bangalore. Operating hours: 05:30 AM – 10:00 PM."
+    },
+    {
+     "h2": "Sports and facilities",
+     "body": "Sports offered: Football. Facilities: 7-a-side, Parking, Washroom."
+    },
+    {
+     "h2": "Booking",
+     "body": "Hourly rate: ₹1800 per hour, set by the venue. Choose a date and a free slot on the venue page; consecutive hours can be reserved together. Payments currently use a simulated checkout while a live gateway is integrated."
+    }
+   ],
+   "links": [
+    [
+     "Turfs in Bangalore",
+     "/turfs/bangalore"
+    ],
+    [
+     "All turfs",
+     "/turfs"
+    ],
+    [
+     "Homepage",
+     "/"
+    ]
+   ]
+  },
+  "/turf/greenfield-arena-turf-1": {
+   "robots": "index",
+   "title": "Greenfield Arena — Football Turf in Bangalore | PlayTurf",
+   "description": "Book Greenfield Arena in Bangalore from ₹1200/hour. Football, Futsal courts, Floodlights, Parking, Washroom, Drinking water. Live slot availability and instant booking.",
+   "h1": "Greenfield Arena",
+   "sections": [
+    {
+     "h2": "Venue details",
+     "body": "Greenfield Arena is a sports turf in Bangalore. Address: Indiranagar, Bangalore. Operating hours: 06:00 AM – 11:00 PM."
+    },
+    {
+     "h2": "Sports and facilities",
+     "body": "Sports offered: Football, Futsal. Facilities: Floodlights, Parking, Washroom, Drinking water."
+    },
+    {
+     "h2": "Booking",
+     "body": "Hourly rate: ₹1200 per hour, set by the venue. Choose a date and a free slot on the venue page; consecutive hours can be reserved together. Payments currently use a simulated checkout while a live gateway is integrated."
+    }
+   ],
+   "links": [
+    [
+     "Turfs in Bangalore",
+     "/turfs/bangalore"
+    ],
+    [
+     "All turfs",
+     "/turfs"
+    ],
+    [
+     "Homepage",
+     "/"
+    ]
+   ]
+  },
+  "/sports/football/bangalore": {
+   "robots": "index",
+   "title": "Football Turfs in Bangalore — Book by the Hour | PlayTurf",
+   "description": "2 football turfs in Bangalore with hourly rates from ₹1200. Live availability and instant booking.",
+   "h1": "Football Turfs in Bangalore",
+   "sections": [
+    {
+     "h2": "Football venues",
+     "body": "Hilltop Grounds — ₹1800/hour — Whitefield, Bangalore\n\nGreenfield Arena — ₹1200/hour — Indiranagar, Bangalore"
+    }
+   ],
+   "links": [
+    [
+     "All sports",
+     "/sports"
+    ],
+    [
+     "Turfs in Bangalore",
+     "/turfs/bangalore"
+    ],
+    [
+     "Homepage",
+     "/"
+    ]
+   ]
+  },
+  "/sports/futsal/bangalore": {
+   "robots": "index",
+   "title": "Futsal Turfs in Bangalore — Book by the Hour | PlayTurf",
+   "description": "1 futsal turf in Bangalore with hourly rates from ₹1200. Live availability and instant booking.",
+   "h1": "Futsal Turfs in Bangalore",
+   "sections": [
+    {
+     "h2": "Futsal venues",
+     "body": "Greenfield Arena — ₹1200/hour — Indiranagar, Bangalore"
+    }
+   ],
+   "links": [
+    [
+     "All sports",
+     "/sports"
+    ],
+    [
+     "Turfs in Bangalore",
+     "/turfs/bangalore"
+    ],
+    [
+     "Homepage",
+     "/"
+    ]
+   ]
+  },
+  "/turfs/mumbai": {
+   "robots": "index",
+   "title": "Sports Turfs in Mumbai — Book by the Hour | PlayTurf",
+   "description": "2 sports turfs in Mumbai. See hourly rates from ₹1400, check live slot availability and book instantly.",
+   "h1": "Sports Turfs in Mumbai",
+   "sections": [
+    {
+     "h2": "Venues in Mumbai",
+     "body": "Arena 360 — Football, Basketball — ₹1400/hour — Andheri West, Mumbai\n\nSkyline Rooftop Turf — Cricket, Football — ₹1500/hour — Lower Parel, Mumbai"
+    }
+   ],
+   "links": [
+    [
+     "All turfs",
+     "/turfs"
+    ],
+    [
+     "Open games",
+     "/open-games"
+    ],
+    [
+     "Homepage",
+     "/"
+    ]
+   ]
+  },
+  "/turf/arena-360-turf-6": {
+   "robots": "index",
+   "title": "Arena 360 — Football Turf in Mumbai | PlayTurf",
+   "description": "Book Arena 360 in Mumbai from ₹1400/hour. Football, Basketball courts, AC, LED, Locker. Live slot availability and instant booking.",
+   "h1": "Arena 360",
+   "sections": [
+    {
+     "h2": "Venue details",
+     "body": "Arena 360 is a sports turf in Mumbai. Address: Andheri West, Mumbai. Operating hours: 06:00 AM – 12:00 AM."
+    },
+    {
+     "h2": "Sports and facilities",
+     "body": "Sports offered: Football, Basketball. Facilities: AC, LED, Locker."
+    },
+    {
+     "h2": "Booking",
+     "body": "Hourly rate: ₹1400 per hour, set by the venue. Choose a date and a free slot on the venue page; consecutive hours can be reserved together. Payments currently use a simulated checkout while a live gateway is integrated."
+    }
+   ],
+   "links": [
+    [
+     "Turfs in Mumbai",
+     "/turfs/mumbai"
+    ],
+    [
+     "All turfs",
+     "/turfs"
+    ],
+    [
+     "Homepage",
+     "/"
+    ]
+   ]
+  },
+  "/turf/skyline-rooftop-turf-turf-2": {
+   "robots": "index",
+   "title": "Skyline Rooftop Turf — Cricket Turf in Mumbai | PlayTurf",
+   "description": "Book Skyline Rooftop Turf in Mumbai from ₹1500/hour. Cricket, Football courts, Floodlights, Cafe, Locker, Parking. Live slot availability and instant booking.",
+   "h1": "Skyline Rooftop Turf",
+   "sections": [
+    {
+     "h2": "Venue details",
+     "body": "Skyline Rooftop Turf is a sports turf in Mumbai. Address: Lower Parel, Mumbai. Operating hours: 06:00 AM – 12:00 AM."
+    },
+    {
+     "h2": "Sports and facilities",
+     "body": "Sports offered: Cricket, Football. Facilities: Floodlights, Cafe, Locker, Parking."
+    },
+    {
+     "h2": "Booking",
+     "body": "Hourly rate: ₹1500 per hour, set by the venue. Choose a date and a free slot on the venue page; consecutive hours can be reserved together. Payments currently use a simulated checkout while a live gateway is integrated."
+    }
+   ],
+   "links": [
+    [
+     "Turfs in Mumbai",
+     "/turfs/mumbai"
+    ],
+    [
+     "All turfs",
+     "/turfs"
+    ],
+    [
+     "Homepage",
+     "/"
+    ]
+   ]
+  },
+  "/sports/football/mumbai": {
+   "robots": "index",
+   "title": "Football Turfs in Mumbai — Book by the Hour | PlayTurf",
+   "description": "2 football turfs in Mumbai with hourly rates from ₹1400. Live availability and instant booking.",
+   "h1": "Football Turfs in Mumbai",
+   "sections": [
+    {
+     "h2": "Football venues",
+     "body": "Arena 360 — ₹1400/hour — Andheri West, Mumbai\n\nSkyline Rooftop Turf — ₹1500/hour — Lower Parel, Mumbai"
+    }
+   ],
+   "links": [
+    [
+     "All sports",
+     "/sports"
+    ],
+    [
+     "Turfs in Mumbai",
+     "/turfs/mumbai"
+    ],
+    [
+     "Homepage",
+     "/"
+    ]
+   ]
+  },
+  "/sports/basketball/mumbai": {
+   "robots": "index",
+   "title": "Basketball Turfs in Mumbai — Book by the Hour | PlayTurf",
+   "description": "1 basketball turf in Mumbai with hourly rates from ₹1400. Live availability and instant booking.",
+   "h1": "Basketball Turfs in Mumbai",
+   "sections": [
+    {
+     "h2": "Basketball venues",
+     "body": "Arena 360 — ₹1400/hour — Andheri West, Mumbai"
+    }
+   ],
+   "links": [
+    [
+     "All sports",
+     "/sports"
+    ],
+    [
+     "Turfs in Mumbai",
+     "/turfs/mumbai"
+    ],
+    [
+     "Homepage",
+     "/"
+    ]
+   ]
+  },
+  "/sports/cricket/mumbai": {
+   "robots": "index",
+   "title": "Cricket Turfs in Mumbai — Book by the Hour | PlayTurf",
+   "description": "1 cricket turf in Mumbai with hourly rates from ₹1500. Live availability and instant booking.",
+   "h1": "Cricket Turfs in Mumbai",
+   "sections": [
+    {
+     "h2": "Cricket venues",
+     "body": "Skyline Rooftop Turf — ₹1500/hour — Lower Parel, Mumbai"
+    }
+   ],
+   "links": [
+    [
+     "All sports",
+     "/sports"
+    ],
+    [
+     "Turfs in Mumbai",
+     "/turfs/mumbai"
+    ],
+    [
+     "Homepage",
+     "/"
+    ]
+   ]
+  },
+  "/turfs/dahisar-east": {
+   "robots": "index",
+   "title": "Sports Turfs in Dahisar East — Book by the Hour | PlayTurf",
+   "description": "1 sports turf in Dahisar East. See hourly rates from ₹1000, check live slot availability and book instantly.",
+   "h1": "Sports Turfs in Dahisar East",
+   "sections": [
+    {
+     "h2": "Venues in Dahisar East",
+     "body": "Nine Stars Turfs X SportVot — Cricket, Football — ₹1000/hour — Bhoir Garden, Ghartanpada No 1, Vaishali Nagar, Dahisar Metro Station, Suhasini Pawaskar Road, Dahisar East, Mumbai-400068, Maharashtra"
+    }
+   ],
+   "links": [
+    [
+     "All turfs",
+     "/turfs"
+    ],
+    [
+     "Open games",
+     "/open-games"
+    ],
+    [
+     "Homepage",
+     "/"
+    ]
+   ]
+  },
+  "/turf/nine-stars-turfs-x-sportvot-turf-7-re": {
+   "robots": "index",
+   "title": "Nine Stars Turfs X SportVot — Cricket Turf in Dahisar East | PlayTurf",
+   "description": "Book Nine Stars Turfs X SportVot in Dahisar East from ₹1000/hour. Cricket, Football courts, Drinking Water, First Aid, Flood Lights, Washrooms. Live slot availability and instant booking.",
+   "h1": "Nine Stars Turfs X SportVot",
+   "sections": [
+    {
+     "h2": "Venue details",
+     "body": "Nine Stars Turfs X SportVot is a sports turf in Dahisar East. Address: Bhoir Garden, Ghartanpada No 1, Vaishali Nagar, Dahisar Metro Station, Suhasini Pawaskar Road, Dahisar East, Mumbai-400068, Maharashtra. Operating hours: 06:00 AM – 11:00 PM."
+    },
+    {
+     "h2": "Sports and facilities",
+     "body": "Sports offered: Cricket, Football. Facilities: Drinking Water, First Aid, Flood Lights, Washrooms, Changing Room, Parking Available."
+    },
+    {
+     "h2": "Booking",
+     "body": "Hourly rate: ₹1000 per hour, set by the venue. Choose a date and a free slot on the venue page; consecutive hours can be reserved together. Payments currently use a simulated checkout while a live gateway is integrated."
+    }
+   ],
+   "links": [
+    [
+     "Turfs in Dahisar East",
+     "/turfs/dahisar-east"
+    ],
+    [
+     "All turfs",
+     "/turfs"
+    ],
+    [
+     "Homepage",
+     "/"
+    ]
+   ]
+  },
+  "/sports/cricket/dahisar-east": {
+   "robots": "index",
+   "title": "Cricket Turfs in Dahisar East — Book by the Hour | PlayTurf",
+   "description": "1 cricket turf in Dahisar East with hourly rates from ₹1000. Live availability and instant booking.",
+   "h1": "Cricket Turfs in Dahisar East",
+   "sections": [
+    {
+     "h2": "Cricket venues",
+     "body": "Nine Stars Turfs X SportVot — ₹1000/hour — Bhoir Garden, Ghartanpada No 1, Vaishali Nagar, Dahisar Metro Station, Suhasini Pawaskar Road, Dahisar East, Mumbai-400068, Maharashtra"
+    }
+   ],
+   "links": [
+    [
+     "All sports",
+     "/sports"
+    ],
+    [
+     "Turfs in Dahisar East",
+     "/turfs/dahisar-east"
+    ],
+    [
+     "Homepage",
+     "/"
+    ]
+   ]
+  },
+  "/sports/football/dahisar-east": {
+   "robots": "index",
+   "title": "Football Turfs in Dahisar East — Book by the Hour | PlayTurf",
+   "description": "1 football turf in Dahisar East with hourly rates from ₹1000. Live availability and instant booking.",
+   "h1": "Football Turfs in Dahisar East",
+   "sections": [
+    {
+     "h2": "Football venues",
+     "body": "Nine Stars Turfs X SportVot — ₹1000/hour — Bhoir Garden, Ghartanpada No 1, Vaishali Nagar, Dahisar Metro Station, Suhasini Pawaskar Road, Dahisar East, Mumbai-400068, Maharashtra"
+    }
+   ],
+   "links": [
+    [
+     "All sports",
+     "/sports"
+    ],
+    [
+     "Turfs in Dahisar East",
+     "/turfs/dahisar-east"
+    ],
+    [
+     "Homepage",
+     "/"
+    ]
+   ]
+  },
+  "/turfs/hyderabad": {
+   "robots": "index",
+   "title": "Sports Turfs in Hyderabad — Book by the Hour | PlayTurf",
+   "description": "1 sports turf in Hyderabad. See hourly rates from ₹900, check live slot availability and book instantly.",
+   "h1": "Sports Turfs in Hyderabad",
+   "sections": [
+    {
+     "h2": "Venues in Hyderabad",
+     "body": "BoxCric Cage — Cricket, Football, supabase data test — ₹900/hour — Gachibowli, Hyderabad"
+    }
+   ],
+   "links": [
+    [
+     "All turfs",
+     "/turfs"
+    ],
+    [
+     "Open games",
+     "/open-games"
+    ],
+    [
+     "Homepage",
+     "/"
+    ]
+   ]
+  },
+  "/turf/boxcric-cage-turf-3": {
+   "robots": "index",
+   "title": "BoxCric Cage — Cricket Turf in Hyderabad | PlayTurf",
+   "description": "Book BoxCric Cage in Hyderabad from ₹900/hour. Cricket, Football, supabase data test courts, Nets, Floodlights, Washroom. Live slot availability and instant booking.",
+   "h1": "BoxCric Cage",
+   "sections": [
+    {
+     "h2": "Venue details",
+     "body": "BoxCric Cage is a sports turf in Hyderabad. Address: Gachibowli, Hyderabad. Operating hours: 06:00 AM – 11:00 PM."
+    },
+    {
+     "h2": "Sports and facilities",
+     "body": "Sports offered: Cricket, Football, supabase data test. Facilities: Nets, Floodlights, Washroom."
+    },
+    {
+     "h2": "Booking",
+     "body": "Hourly rate: ₹900 per hour, set by the venue. Choose a date and a free slot on the venue page; consecutive hours can be reserved together. Payments currently use a simulated checkout while a live gateway is integrated."
+    }
+   ],
+   "links": [
+    [
+     "Turfs in Hyderabad",
+     "/turfs/hyderabad"
+    ],
+    [
+     "All turfs",
+     "/turfs"
+    ],
+    [
+     "Homepage",
+     "/"
+    ]
+   ]
+  },
+  "/sports/cricket/hyderabad": {
+   "robots": "index",
+   "title": "Cricket Turfs in Hyderabad — Book by the Hour | PlayTurf",
+   "description": "1 cricket turf in Hyderabad with hourly rates from ₹900. Live availability and instant booking.",
+   "h1": "Cricket Turfs in Hyderabad",
+   "sections": [
+    {
+     "h2": "Cricket venues",
+     "body": "BoxCric Cage — ₹900/hour — Gachibowli, Hyderabad"
+    }
+   ],
+   "links": [
+    [
+     "All sports",
+     "/sports"
+    ],
+    [
+     "Turfs in Hyderabad",
+     "/turfs/hyderabad"
+    ],
+    [
+     "Homepage",
+     "/"
+    ]
+   ]
+  },
+  "/sports/football/hyderabad": {
+   "robots": "index",
+   "title": "Football Turfs in Hyderabad — Book by the Hour | PlayTurf",
+   "description": "1 football turf in Hyderabad with hourly rates from ₹900. Live availability and instant booking.",
+   "h1": "Football Turfs in Hyderabad",
+   "sections": [
+    {
+     "h2": "Football venues",
+     "body": "BoxCric Cage — ₹900/hour — Gachibowli, Hyderabad"
+    }
+   ],
+   "links": [
+    [
+     "All sports",
+     "/sports"
+    ],
+    [
+     "Turfs in Hyderabad",
+     "/turfs/hyderabad"
+    ],
+    [
+     "Homepage",
+     "/"
+    ]
+   ]
+  }
+ },
+ "knownSpaPaths": [
+  "/login",
+  "/signup",
+  "/forgot-password",
+  "/bookings",
+  "/more",
+  "/avatar",
+  "/theme",
+  "/tournaments",
+  "/offers",
+  "/auth/callback",
+  "/client/login",
+  "/admin/login"
+ ],
+ "privatePrefixes": [
+  "/admin",
+  "/client/",
+  "/booking/",
+  "/bookings",
+  "/login",
+  "/signup",
+  "/forgot-password",
+  "/avatar",
+  "/theme",
+  "/luxury/theme",
+  "/more",
+  "/auth/callback",
+  "/api/"
+ ]
+}

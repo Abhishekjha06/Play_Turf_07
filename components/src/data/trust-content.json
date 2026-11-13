@@ -1,0 +1,85 @@
+{
+  "brand": "PlayTurf",
+  "about": {
+    "title": "About PlayTurf",
+    "description": "PlayTurf is an online sports turf discovery and booking platform: find football grounds, cricket pitches, futsal and box-cricket courts, check live slot availability and book by the hour.",
+    "sections": [
+      {
+        "h2": "What is PlayTurf?",
+        "body": "PlayTurf is an online sports turf discovery and booking platform. Players browse listed venues — football grounds, cricket pitches, futsal courts and box-cricket cages — see each venue's hourly rates, facilities and operating hours, and book a specific court for a specific hour directly from the site. Venue owners list their facilities so local players can find and book them without phone calls or manual coordination."
+      },
+      {
+        "h2": "What problem does PlayTurf solve?",
+        "body": "Booking a turf slot traditionally means calling venues, waiting for confirmation and hoping nobody else took the hour. PlayTurf replaces that with live availability: every venue shows which slots are free for a chosen date, and a confirmed booking reserves that exact court and hour. Multi-hour bookings reserve consecutive slots in one transaction, and Open Games let individual players join hosted games and split the court cost instead of paying for a full slot alone."
+      },
+      {
+        "h2": "Who uses PlayTurf?",
+        "body": "Two groups: players, who discover venues, book slots and join open games; and venue owners (turf partners), who list their facilities, manage their courts and see their bookings through the venue-owner dashboard. The platform serves casual five-a-side groups, box-cricket squads and individual players looking for a game."
+      },
+      {
+        "h2": "How discovery works",
+        "body": "Venues are browsable by city and by sport. Each venue page shows photos, the sports offered, facilities such as floodlights and parking, operating hours, the hourly rate and genuine player reviews. City and sport pages (for example turfs in Bangalore, or football turfs in Mumbai) only list venues that actually exist in the platform's live database."
+      },
+      {
+        "h2": "How booking works",
+        "body": "Pick a venue, choose a date, pick a free start slot, choose the court where the venue has several, set the duration (one to twelve hours) and confirm. Consecutive slots are reserved together so nobody can take the hour in between. Bookings can be cancelled within a short window after confirmation, and every booking gets a downloadable ticket with a unique booking ID."
+      },
+      {
+        "h2": "Platform notes",
+        "body": "Payments on the platform currently run through a simulated checkout — bookings are confirmed without money moving while a live payment gateway is being integrated. Supported sports depend on the venues listed; common ones include football, cricket, futsal and basketball. PlayTurf does not claim venue ownership of partner facilities: each venue's ownership is shown as either PlayTurf-operated or an independent partner."
+      }
+    ]
+  },
+  "contact": {
+    "title": "Contact PlayTurf",
+    "description": "How to reach PlayTurf: in-app support and feedback for players, venue-owner inquiries, and platform contact channels.",
+    "sections": [
+      {
+        "h2": "Player support",
+        "body": "The fastest way to reach PlayTurf support is inside the app: use the Provide Feedback option (found under More → Support and in venue-owner settings) to report a bug, a booking problem or a question. Messages go straight to the support team with your device context attached, and you can attach a screenshot."
+      },
+      {
+        "h2": "Booking-related assistance",
+        "body": "For booking disputes or questions about a specific booking, open the booking from My Bookings — the booking detail page shows the venue, slot, payment record and ticket. Cancellations inside the allowed window can be done directly from the booking page. Anything else, send it through the feedback form and mention the booking ID."
+      },
+      {
+        "h2": "Venue owners and facility inquiries",
+        "body": "Turf owners and facility managers can request a listing through the venue-owner (client) sign-in; the owner dashboard manages courts, slots and bookings for their venue. For listing inquiries or partnership questions, use the same feedback channel and select the appropriate category."
+      },
+      {
+        "h2": "Direct contact details",
+        "body": "A published support email address and telephone line are being finalised and will be listed here once verified — PlayTurf does not publish contact details it cannot verify. Until then, the in-app feedback channel is the official support route and every message reaches the team."
+      }
+    ]
+  },
+  "privacy": {
+    "title": "Privacy Policy — PlayTurf",
+    "description": "How PlayTurf handles your data: account registration, booking details, authentication, storage with Supabase, notifications, and your choices.",
+    "sections": [
+      {
+        "h2": "What PlayTurf stores",
+        "body": "An account on PlayTurf consists of an authentication record (email or phone number, managed by Supabase Auth) and a profile row with your display name, phone number and chosen avatar. Bookings you create store the venue, date, time slots, duration, court, a booking ID and a payment reference. Open game participation stores your player name, avatar and join record. Feedback you submit stores the message you write plus technical context (device type, browser, operating system, screen size and the page you were on) to help reproduce issues."
+      },
+      {
+        "h2": "Authentication and sessions",
+        "body": "Sign-in is handled by Supabase Authentication. PlayTurf uses email/password, Google sign-in and phone OTP. Sessions are stored locally in your browser (localStorage) and refreshed automatically; signing out removes them. Administrators can additionally enable a second authentication factor (authenticator app), which Supabase verifies before granting admin access."
+      },
+      {
+        "h2": "Payments",
+        "body": "The platform's checkout is currently simulated: bookings are confirmed without payment details being collected. When a live payment gateway is integrated, this policy will be updated to describe exactly which payment data the gateway processes — payment card data is expected to be handled by the payment provider, not by PlayTurf servers."
+      },
+      {
+        "h2": "Cookies and local storage",
+        "body": "PlayTurf does not use advertising cookies. It uses browser localStorage for your session, your selected theme, notification records and booking reminders. A service worker caches static assets so the app works offline; that cache lives on your device only."
+      },
+      {
+        "h2": "Who can see your data",
+        "body": "Your profile and bookings are protected by row-level security: database rules restrict each account to its own records, and administrative access is role-restricted and audit-logged. Aggregate, non-identifying statistics (for example total booking counts) may be shown in platform dashboards. Feedback messages are visible to the support team."
+      },
+      {
+        "h2": "Deletion and your choices",
+        "body": "You can sign out and clear locally stored data at any time via your browser. Account deletion and data-export requests are handled manually while self-service tooling is built: send a request through the in-app feedback channel and it will be actioned. Retention: booking and feedback records are kept for operational history; the platform does not claim a specific deletion period for backups. This policy will be reviewed by the business owner before formal legal review, and marked updates will be published here."
+      }
+    ]
+  }
+}

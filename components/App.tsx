@@ -52,6 +52,9 @@ const ClientBookingManagement = lazy(() => import("@/pages/ClientBookingManageme
 const ClientProfileSettings = lazy(() => import("@/pages/ClientProfileSettings"));
 const ClientPlaceholder = lazy(() => import("@/pages/ClientPlaceholder"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
+const AboutPage = lazy(() => import("@/pages/AboutPage"));
+const ContactPage = lazy(() => import("@/pages/ContactPage"));
+const PrivacyPage = lazy(() => import("@/pages/PrivacyPage"));
 
 /* SEO landing pages (public, crawlable) */
 const TurfsIndex = lazy(() => import("@/pages/seo/TurfsIndex").then((m) => ({ default: m.TurfsIndex })));
@@ -152,6 +155,9 @@ export default function App() {
                       <Route path="/open-games/:city/:sport" element={<OpenGamesCity />} />
                       <Route path="/blog" element={<BlogIndex />} />
                       <Route path="/blog/:slug" element={<BlogPostPage />} />
+                      <Route path="/about" element={<AboutPage />} />
+                      <Route path="/contact" element={<ContactPage />} />
+                      <Route path="/privacy" element={<PrivacyPage />} />
                       <Route path="/offers" element={<Offers />} />
                       <Route path="/login" element={<Login />} />
                       <Route path="/signup" element={<Signup />} />
