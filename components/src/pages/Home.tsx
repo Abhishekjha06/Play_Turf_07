@@ -101,6 +101,13 @@ const Home = () => {
   const [upcoming, setUpcoming] = useState<Booking[]>([]);
   const [locating, setLocating] = useState(false);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [recentlyViewed, setRecentlyViewed] = useState<{ id: string; name: string; image: string; slug: string }[]>([]);
+
+  useEffect(() => {
+    try {
+      setRecentlyViewed(JSON.parse(localStorage.getItem("playturf:recently-viewed") || "[]"));
+    } catch { /* storage unavailable */ }
+  }, []);
 
   useEffect(() => {
     trackEvent("Landing Page Viewed");
