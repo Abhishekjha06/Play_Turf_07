@@ -801,3 +801,53 @@ html.light .bg-panel-3 {
 }
 
 /* ── landmark css ───────────────────────────────────────────── */
+
+/* ── Admin Control Center scope (AMOLED dark + light variant) ──────────
+   The admin shell owns its palette so it never fights the customer themes.
+   Scoping keeps every rule inside .admin-root / .admin-root.admin-light. */
+.admin-root {
+  background: #050606;
+  color: #e7eceb;
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.admin-root ::selection {
+  background: rgba(20, 184, 166, 0.35);
+}
+.admin-root ::-webkit-scrollbar { width: 8px; height: 8px; }
+.admin-root ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 8px; }
+.admin-root ::-webkit-scrollbar-track { background: transparent; }
+.admin-root.admin-light {
+  background: #f4f6f5;
+  color: #17201e;
+}
+.admin-root.admin-light aside,
+.admin-root.admin-light header {
+  background: #ffffff !important;
+  border-color: rgba(0, 0, 0, 0.07) !important;
+}
+/* Dark panel utility classes → light equivalents inside the admin light theme.
+   Attribute selectors avoid escaping bracket/hex class names in plain CSS. */
+.admin-root.admin-light [class*='bg-[#0d0f0e]'],
+.admin-root.admin-light [class*='bg-[#101312]'],
+.admin-root.admin-light [class*='bg-[#0a0c0b]'],
+.admin-root.admin-light [class*='bg-[#080a09]'],
+.admin-root.admin-light [class*='bg-[#070808]'] {
+  background: #ffffff !important;
+}
+.admin-root.admin-light [class*='border-white'] {
+  border-color: rgba(0, 0, 0, 0.09) !important;
+}
+.admin-root.admin-light .text-white,
+.admin-root.admin-light .text-zinc-100,
+.admin-root.admin-light .text-zinc-200,
+.admin-root.admin-light .text-zinc-300 { color: #1a2422 !important; }
+.admin-root.admin-light .text-zinc-400,
+.admin-root.admin-light .text-zinc-500 { color: #5b6a67 !important; }
+.admin-root.admin-light [class*='bg-white'] { background-color: rgba(0, 0, 0, 0.03) !important; }
+
+/* Legacy admin sub-dashboards rendered inside the shell */
+.admin-legacy-banner-host *,
+.admin-legacy-card-host * {
+  max-width: 100%;
+}

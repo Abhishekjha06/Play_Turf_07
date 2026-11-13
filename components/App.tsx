@@ -16,6 +16,22 @@ import { MultiRoleLoginModal } from "@/components/MultiRoleLoginModal";
 
 const ThemeSelect = lazy(() => import("@/pages/ThemeSelect"));
 const Home = lazy(() => import("@/pages/Home"));
+const AdminLogin = lazy(() => import("@/admin/AdminLogin"));
+const AdminShell = lazy(() => import("@/admin/AdminLayout").then((m) => ({ default: m.AdminShell })));
+const AdminOverview = lazy(() => import("@/admin/pages/AdminOverview"));
+const AdminUsers = lazy(() => import("@/admin/pages/AdminUsers"));
+const AdminVenues = lazy(() => import("@/admin/pages/AdminVenues"));
+const AdminBookings = lazy(() => import("@/admin/pages/AdminBookings"));
+const AdminOpenGames = lazy(() => import("@/admin/pages/AdminOpenGames"));
+const AdminFinance = lazy(() => import("@/admin/pages/AdminFinance"));
+const AdminSeo = lazy(() => import("@/admin/pages/AdminSeo"));
+const AdminCms = lazy(() => import("@/admin/pages/AdminCms"));
+const AdminTournaments = lazy(() => import("@/admin/pages/AdminTournaments"));
+const AdminOffers = lazy(() => import("@/admin/pages/AdminOffers"));
+const AdminSupport = lazy(() => import("@/admin/pages/AdminSupport"));
+const AdminAnalytics = lazy(() => import("@/admin/pages/AdminAnalytics"));
+const AdminSecurity = lazy(() => import("@/admin/pages/AdminSecurity"));
+const AdminSettings = lazy(() => import("@/admin/pages/AdminSettings"));
 const TurfDetail = lazy(() => import("@/pages/TurfDetail"));
 const Booking = lazy(() => import("@/pages/Booking"));
 const BookingDetail = lazy(() => import("@/pages/BookingDetail"));
@@ -29,7 +45,6 @@ const ForgotPassword = lazy(() => import("@/pages/ForgotPassword"));
 const AuthCallbackRoute = lazy(() => import("@/pages/AuthCallbackRoute"));
 const More = lazy(() => import("@/pages/More"));
 const ChooseAvatar = lazy(() => import("@/pages/ChooseAvatar"));
-const Admin = lazy(() => import("@/pages/Admin"));
 const ClientLogin = lazy(() => import("@/pages/ClientLogin"));
 const ClientDashboard = lazy(() => import("@/pages/ClientDashboard"));
 const ClientSlotManagement = lazy(() => import("@/pages/ClientSlotManagement"));
@@ -150,14 +165,30 @@ export default function App() {
                     </Route>
 
                     {/* Admin */}
+                    <Route path="/admin/login" element={<AdminLogin />} />
                     <Route
                       path="/admin"
                       element={
                         <AdminRoute>
-                          <Admin />
+                          <AdminShell />
                         </AdminRoute>
                       }
-                    />
+                    >
+                      <Route index element={<AdminOverview />} />
+                      <Route path="users" element={<AdminUsers />} />
+                      <Route path="venues" element={<AdminVenues />} />
+                      <Route path="bookings" element={<AdminBookings />} />
+                      <Route path="open-games" element={<AdminOpenGames />} />
+                      <Route path="finance" element={<AdminFinance />} />
+                      <Route path="seo" element={<AdminSeo />} />
+                      <Route path="cms" element={<AdminCms />} />
+                      <Route path="tournaments" element={<AdminTournaments />} />
+                      <Route path="offers" element={<AdminOffers />} />
+                      <Route path="support" element={<AdminSupport />} />
+                      <Route path="analytics" element={<AdminAnalytics />} />
+                      <Route path="security" element={<AdminSecurity />} />
+                      <Route path="settings" element={<AdminSettings />} />
+                    </Route>
 
                     {/* Client login */}
                     <Route path="/client/login" element={<ClientLogin />} />
