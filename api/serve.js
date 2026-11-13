@@ -242,20 +242,23 @@ module.exports = async (req, res) => {
   const ua = req.headers["user-agent"] || "";
   const accept = req.headers.accept || "";
   const wantsMarkdown = prefersMarkdown(accept);
-  const varyHeaders = { Vary: "Accept", "X-Content-Type-Options": "nosniff" };
 
+  // Native ServerResponse API only — Vercel's Node functions do NOT provide
+  // Express-style res.set(...)/res.status(...) chaining.
   const sendHtml = (status, body, robotsTag) => {
-    res.status(status).set({
-      ...varyHeaders,
-      "Content-Type": "text/html; charset=utf-8",
-      "X-Robots-Tag": robotsTag,
-    }).send(body);
+    res.statusCode = status;
+    res.setHeader("Vary", "Accept");
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    res.setHeader("X-Robots-Tag", robotsTag);
+    res.end(body);
   };
   const sendMarkdown = (status, body) => {
-    res.status(status).set({
-      ...varyHeaders,
-      "Content-Type": "text/markdown; charset=utf-8",
-    }).send(body);
+    res.statusCode = status;
+    res.setHeader("Vary", "Accept");
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("Content-Type", "text/markdown; charset=utf-8");
+    res.end(body);
   };
 
   // 1. Real content route
