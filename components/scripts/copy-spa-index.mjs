@@ -24,6 +24,13 @@ if (!fs.existsSync(distIndex)) {
 fs.copyFileSync(distIndex, apiTarget);
 fs.rmSync(distIndex);
 
+// The compression plugin leaves precompressed siblings (index.html.br/.gz) —
+// without this, Vercel serves the .br binary at `/` instead of the function.
+for (const ext of [".br", ".gz"]) {
+  const p = distIndex + ext;
+  if (fs.existsSync(p)) fs.rmSync(p);
+}
+
 // Sanity: the copied shell must be complete (has the root + module script)
 const html = fs.readFileSync(apiTarget, "utf8");
 if (!html.includes('id="root"') || !html.includes('type="module"')) {
