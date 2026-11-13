@@ -1,7 +1,7 @@
 import { useSeo } from "@/hooks/use-seo";
 import { SITE_NAME } from "@/lib/seo";
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { MobileShell } from "@/layout/MobileShell";
 import { AppHeader } from "@/layout/AppHeader";

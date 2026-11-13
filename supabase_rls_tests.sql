@@ -125,3 +125,107 @@ ROLLBACK;
 -- error where one was EXPECTED is a pass (the editor shows the error text —
 -- match it against the expectation in the comment).
 -- ============================================================================
+
+-- ============================================================================
+-- TEST 8 — Blocked slots (supabase_client_panel.sql)
+-- Prerequisites: supabase_client_panel.sql run; OWNER_A owns TURF_X
+-- (assign via Admin → Venue Management). PLAYER_A is a separate profile.
+-- ============================================================================
+
+-- 8.1 Owner blocks ONE hour — expect INSERT 1
+-- BEGIN;
+--   CALL test_as_user(:'OWNER_A');
+--   INSERT INTO public.blocked_slots (turf_id, date, start_time, end_time, reason)
+--   VALUES (:'TURF_X', CURRENT_DATE + 1, '10:00', '11:00', 'test 8.1');
+-- ROLLBACK;
+
+-- 8.2 Owner blocks MULTIPLE hours (two rows) — expect INSERT 2
+-- BEGIN;
+--   CALL test_as_user(:'OWNER_A');
+--   INSERT INTO public.blocked_slots (turf_id, date, start_time, end_time)
+--   VALUES (:'TURF_X', CURRENT_DATE + 1, '14:00', '15:00'),
+--          (:'TURF_X', CURRENT_DATE + 1, '15:00', '16:00');
+-- ROLLBACK;
+
+-- 8.3 Date range — app-level blockSlots() expands one row per day/hour;
+--     verify N days × H hours rows exist after using the Venue Panel form.
+
+-- 8.4 Unblock — owner deletes their own row; expect DELETE 1
+-- BEGIN;
+--   CALL test_as_user(:'OWNER_A');
+--   DELETE FROM public.blocked_slots WHERE turf_id = :'TURF_X' AND date = CURRENT_DATE + 1 AND start_time = '10:00';
+-- ROLLBACK;
+
+-- 8.5 Booking a BLOCKED slot must FAIL (trigger guard)
+-- BEGIN;
+--   CALL test_as_user(:'OWNER_A');
+--   INSERT INTO public.blocked_slots (turf_id, date, start_time, end_time)
+--   VALUES (:'TURF_X', CURRENT_DATE + 2, '18:00', '19:00');
+--   CALL test_as_user(:'PLAYER_A');
+--   INSERT INTO public.bookings (id, user_id, turf_id, turf_name, date, start_time, end_time, hours, amount, status)
+--   VALUES ('bkg_blk_test', :'PLAYER_A', :'TURF_X', 'Test', CURRENT_DATE + 2, '18:00', '19:00', 1, 100, 'confirmed');
+--   -- expect ERROR: 'This time range is blocked by the venue and cannot be booked.'
+-- ROLLBACK;
+
+-- 8.6 Booking an AVAILABLE slot still works — expect INSERT 1
+-- BEGIN;
+--   CALL test_as_user(:'PLAYER_A');
+--   INSERT INTO public.bookings (id, user_id, turf_id, turf_name, date, start_time, end_time, hours, amount, status)
+--   VALUES ('bkg_ok_test', :'PLAYER_A', :'TURF_X', 'Test', CURRENT_DATE + 3, '09:00', '10:00', 1, 100, 'confirmed');
+-- ROLLBACK;
+
+-- 8.7 Multi-hour booking where ONE hour is blocked — must FAIL entirely
+-- (multi-hour = one row per hour in one INSERT; a single blocked hour
+--  rejects the WHOLE statement → no partial booking)
+-- BEGIN;
+--   CALL test_as_user(:'OWNER_A');
+--   INSERT INTO public.blocked_slots (turf_id, date, start_time, end_time)
+--   VALUES (:'TURF_X', CURRENT_DATE + 4, '20:00', '21:00');
+--   CALL test_as_user(:'PLAYER_A');
+--   INSERT INTO public.bookings (id, user_id, turf_id, turf_name, date, start_time, end_time, hours, amount, status)
+--   VALUES ('bkg_mh_a', :'PLAYER_A', :'TURF_X', 'Test', CURRENT_DATE + 4, '19:00', '20:00', 1, 100, 'confirmed'),
+--          ('bkg_mh_b', :'PLAYER_A', :'TURF_X', 'Test', CURRENT_DATE + 4, '20:00', '21:00', 1, 100, 'confirmed');
+--   -- expect ERROR on the blocked hour; verify NO bkg_mh_a row persisted (transaction rolled back)
+-- ROLLBACK;
+
+-- 8.8 Overlapping blocked records — duplicate exact block hits
+--     unique_blocked_slot → expect unique violation
+-- BEGIN;
+--   CALL test_as_user(:'OWNER_A');
+--   INSERT INTO public.blocked_slots (turf_id, date, start_time, end_time)
+--   VALUES (:'TURF_X', CURRENT_DATE + 5, '08:00', '09:00');
+--   INSERT INTO public.blocked_slots (turf_id, date, start_time, end_time)
+--   VALUES (:'TURF_X', CURRENT_DATE + 5, '08:00', '09:00');   -- expect ERROR 23505
+-- ROLLBACK;
+
+-- 8.9 Time boundaries — adjacent hours must NOT conflict
+-- BEGIN;
+--   CALL test_as_user(:'OWNER_A');
+--   INSERT INTO public.blocked_slots (turf_id, date, start_time, end_time)
+--   VALUES (:'TURF_X', CURRENT_DATE + 6, '12:00', '13:00');
+--   CALL test_as_user(:'PLAYER_A');
+--   INSERT INTO public.bookings (id, user_id, turf_id, turf_name, date, start_time, end_time, hours, amount, status)
+--   VALUES ('bkg_edge', :'PLAYER_A', :'TURF_X', 'Test', CURRENT_DATE + 6, '13:00', '14:00', 1, 100, 'confirmed');
+--   -- expect INSERT 1 (13:00 starts exactly when the block ends — no overlap)
+-- ROLLBACK;
+
+-- 8.10 Owner isolation — Owner B cannot touch Owner A's blocks
+-- BEGIN;
+--   CALL test_as_user(:'OWNER_A');
+--   INSERT INTO public.blocked_slots (turf_id, date, start_time, end_time)
+--   VALUES (:'TURF_X', CURRENT_DATE + 7, '10:00', '11:00', 'A block');
+--   CALL test_as_user(:'OWNER_B');   -- owns a DIFFERENT turf
+--   UPDATE public.blocked_slots SET reason = 'hacked' WHERE turf_id = :'TURF_X';  -- expect UPDATE 0 (RLS)
+--   DELETE FROM public.blocked_slots WHERE turf_id = :'TURF_X';                    -- expect DELETE 0 (RLS)
+--   INSERT INTO public.blocked_slots (turf_id, date, start_time, end_time)
+--   VALUES (:'TURF_X', CURRENT_DATE + 7, '11:00', '12:00');                        -- expect ERROR (WITH CHECK)
+--   CALL test_as_user(:'PLAYER_A');
+--   INSERT INTO public.blocked_slots (turf_id, date, start_time, end_time)
+--   VALUES (:'TURF_X', CURRENT_DATE + 7, '12:00', '13:00');                        -- expect ERROR (players cannot block)
+-- ROLLBACK;
+
+-- 8.11 Concurrent booking requests — two sessions booking the same slot
+-- simultaneously: the unique_active_booking index lets exactly one commit;
+-- the other receives a duplicate-key error. Verify by running 8.6's INSERT
+-- from two SQL-editor tabs at the same moment — expect one success, one
+-- 'duplicate key value violates unique constraint "unique_active_booking"'.
