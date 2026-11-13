@@ -191,6 +191,41 @@ export async function createBooking(
   }
 
   /* =====================================================
+     CHECK OWNER-BLOCKED SLOTS
+     Venue-blocked periods (maintenance etc.) reject bookings
+     client-side; the DB trigger enforces it server-side too.
+     ===================================================== */
+
+  try {
+    const { data: blocks } = await supabase
+      .from("blocked_slots")
+      .select("start_time,end_time,pitch_id")
+      .eq("turf_id", turf.id)
+      .eq("date", payload.date);
+
+    for (let i = 0; i < payload.hours; i++) {
+      const slotStart = slotH + i;
+      const slotEnd = slotStart + 1;
+      const conflict = (blocks || []).some((b: any) => {
+        if (payload.pitch_id != null && b.pitch_id != null && b.pitch_id !== payload.pitch_id) return false;
+        const [bh] = String(b.start_time).split(":").map(Number);
+        const [eh] = String(b.end_time).split(":").map(Number);
+        return slotStart < eh && slotEnd > bh;
+      });
+      if (conflict) {
+        throw new Error(
+          "This time range is blocked by the venue and cannot be booked."
+        );
+      }
+    }
+  } catch (err) {
+    // Re-throw real conflicts; swallow only "table missing" (migration not run).
+    const msg = (err as Error).message || "";
+    if (msg.includes("blocked by the venue")) throw err;
+    console.warn("[createBooking] blocked_slots unavailable:", err);
+  }
+
+  /* =====================================================
      CHECK USER DUPLICATE BOOKING
      ===================================================== */
 
@@ -504,6 +539,30 @@ export async function bookedSlots(
       );
     }
   });
+
+  /*
+    Owner-blocked periods (blocked_slots table — persistent venue blocks).
+    A NULL pitch block covers every court; a specific pitch only blocks that
+    court. Missing table (migration not run yet) = no blocks, flow continues.
+  */
+  try {
+    const { data: blocks } = await supabase
+      .from("blocked_slots")
+      .select("start_time,end_time,pitch_id")
+      .eq("turf_id", turfId)
+      .eq("date", date);
+
+    (blocks || []).forEach((b: any) => {
+      if (pitchId && b.pitch_id != null && b.pitch_id !== pitchId) return;
+      const [bh, bm] = String(b.start_time).split(":").map(Number);
+      const [eh] = String(b.end_time).split(":").map(Number);
+      for (let h = bh; h < eh; h++) {
+        covered.push(`${String(h).padStart(2, "0")}:${String(bm).padStart(2, "0")}`);
+      }
+    });
+  } catch (blockErr) {
+    console.warn("[bookedSlots] blocked_slots unavailable:", blockErr);
+  }
 
   return covered;
 }

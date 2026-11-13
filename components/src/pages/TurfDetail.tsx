@@ -239,6 +239,20 @@ const TurfDetail = () => {
     };
   }, [id]);
 
+  // Recently viewed — real visit tracking for the Home section.
+  useEffect(() => {
+    if (!turf) return;
+    try {
+      const key = 'playturf:recently-viewed';
+      const list = JSON.parse(localStorage.getItem(key) || '[]') as { id: string; name: string; image: string; slug: string }[];
+      const next = [
+        { id: turf.id, name: turf.name, image: turf.image, slug: buildTurfSlug(turf) },
+        ...list.filter((x) => x.id !== turf.id),
+      ].slice(0, 8);
+      localStorage.setItem(key, JSON.stringify(next));
+    } catch { /* storage unavailable */ }
+  }, [turf?.id]);
+
   // The resolved turf id — slug URLs must query favorites/reviews/games by
   // the REAL id, not by the URL slug.
   const turfId = turf?.id ?? null;

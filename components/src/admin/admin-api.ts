@@ -129,6 +129,7 @@ export type TurfRow = {
   description: string;
   is_popular: boolean | null;
   status: string | null; // requires migration: pending_approval | published | archived
+  owner_id: string | null; // requires migration (client panel)
   ownership: string | null; // requires migration: company | partner
   created_at: string | null;
 };

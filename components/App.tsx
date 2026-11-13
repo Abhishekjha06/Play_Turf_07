@@ -1,6 +1,6 @@
 ﻿import React, { lazy, Suspense, Profiler } from "react";
 import { QueryClient, QueryClientProvider, QueryCache, MutationCache } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Outlet, Navigate } from "react-router-dom";
 import { toast } from "sonner";
 
 import { Toaster as Sonner } from "@/ui/sonner";
@@ -46,9 +46,13 @@ const AuthCallbackRoute = lazy(() => import("@/pages/AuthCallbackRoute"));
 const More = lazy(() => import("@/pages/More"));
 const ChooseAvatar = lazy(() => import("@/pages/ChooseAvatar"));
 const ClientLogin = lazy(() => import("@/pages/ClientLogin"));
-const ClientDashboard = lazy(() => import("@/pages/ClientDashboard"));
-const ClientSlotManagement = lazy(() => import("@/pages/ClientSlotManagement"));
-const ClientBookingManagement = lazy(() => import("@/pages/ClientBookingManagement"));
+const ClientLayout = lazy(() => import("@/client/ClientLayout").then((m) => ({ default: m.ClientLayout })));
+const ClientOverview = lazy(() => import("@/client/pages/ClientOverview"));
+const ClientFacilities = lazy(() => import("@/client/pages/ClientFacilities"));
+const ClientBookingsPanel = lazy(() => import("@/client/pages/ClientBookings"));
+const ClientSlots = lazy(() => import("@/client/pages/ClientSlots"));
+const ClientPricing = lazy(() => import("@/client/pages/ClientPricing"));
+const ClientRevenue = lazy(() => import("@/client/pages/ClientRevenue"));
 const ClientProfileSettings = lazy(() => import("@/pages/ClientProfileSettings"));
 const ClientPlaceholder = lazy(() => import("@/pages/ClientPlaceholder"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
@@ -199,76 +203,29 @@ export default function App() {
                     {/* Client login */}
                     <Route path="/client/login" element={<ClientLogin />} />
 
-                    {/* Client protected pages */}
+                    {/* Client (turf owner) panel — real data, owner-scoped */}
                     <Route
-                      path="/client/dashboard"
+                      path="/client"
                       element={
                         <ClientRoute>
-                            {import.meta.env.DEV ? (
-                              <Profiler
-                                id="ClientDashboard"
-                                onRender={(id, phase, actualDuration) => {
-                                  console.log(
-                                    `[Profiler] ${id} ${phase} took ${actualDuration.toFixed(2)}ms`
-                                  );
-                                }}
-                              >
-                                <ClientDashboard />
-                              </Profiler>
-                            ) : (
-                              <ClientDashboard />
-                            )}
+                          <ClientLayout />
                         </ClientRoute>
                       }
-                    />
+                    >
+                      <Route index element={<ClientOverview />} />
+                      <Route path="facilities" element={<ClientFacilities />} />
+                      <Route path="bookings" element={<ClientBookingsPanel />} />
+                      <Route path="slots" element={<ClientSlots />} />
+                      <Route path="pricing" element={<ClientPricing />} />
+                      <Route path="revenue" element={<ClientRevenue />} />
+                      <Route path="settings" element={<ClientProfileSettings />} />
+                    </Route>
 
-                    <Route
-                      path="/client/slots"
-                      element={
-                        <ClientRoute>
-                          <ClientSlotManagement />
-                        </ClientRoute>
-                      }
-                    />
-
-                    <Route
-                      path="/client/bookings"
-                      element={
-                        <ClientRoute>
-                          <ClientBookingManagement />
-                        </ClientRoute>
-                      }
-                    />
-
-                    <Route
-                      path="/client/settings"
-                      element={
-                        <ClientRoute>
-                          <ClientProfileSettings />
-                        </ClientRoute>
-                      }
-                    />
+                    {/* Legacy client URLs → panel sections */}
+                    <Route path="/client/dashboard" element={<Navigate to="/client" replace />} />
 
                     <Route
                       path="/client/photos"
-                      element={
-                        <ClientRoute>
-                          <ClientPlaceholder />
-                        </ClientRoute>
-                      }
-                    />
-
-                    <Route
-                      path="/client/pricing"
-                      element={
-                        <ClientRoute>
-                          <ClientPlaceholder />
-                        </ClientRoute>
-                      }
-                    />
-
-                    <Route
-                      path="/client/turf/edit"
                       element={
                         <ClientRoute>
                           <ClientPlaceholder />

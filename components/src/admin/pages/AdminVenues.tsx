@@ -45,7 +45,9 @@ export default function AdminVenues() {
   const [editor, setEditor] = useState<EditorState>({ mode: "closed" });
   const [form, setForm] = useState(emptyForm);
   const [busy, setBusy] = useState(false);
+  const [ownerDraft, setOwnerDraft] = useState<string>('');
   const [archiveTarget, setArchiveTarget] = useState<TurfRow | null>(null);
+  const [clients, setClients] = useState<ProfileRow[]>([]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -61,6 +63,13 @@ export default function AdminVenues() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  // Client-role profiles for owner assignment
+  useEffect(() => {
+    listProfiles({ pageSize: 200 })
+      .then(({ rows }) => setClients(rows.filter((r) => r.role === 'client')))
+      .catch(() => {});
+  }, []);
 
   const filtered = rows.filter((r) => {
     if (statusFilter !== "all") {
@@ -90,6 +99,7 @@ export default function AdminVenues() {
       status: row.status || "published",
       is_popular: !!row.is_popular,
     });
+    setOwnerDraft(row.owner_id || '');
     setEditor({ mode: "edit", row });
   };
 
@@ -113,6 +123,7 @@ export default function AdminVenues() {
         ownership: form.ownership,
         status: form.status,
         is_popular: form.is_popular,
+        owner_id: ownerDraft === "" ? null : ownerDraft,
       };
       if (editor.mode === "create") {
         await createVenueAdmin(payload, myRole);
@@ -266,6 +277,24 @@ export default function AdminVenues() {
                 </label>
               ))}
               <label className="block">
+                <span className="mb-1 block text-[10px] font-black uppercase tracking-wider text-zinc-500">Owner (client account)</span>
+                <select
+                  value={ownerDraft}
+                  onChange={(e) => setOwnerDraft(e.target.value)}
+                  className="h-10 w-full rounded-xl border border-white/10 bg-[#0a0c0b] px-3 text-sm text-zinc-100 outline-none focus:border-teal-400/40"
+                >
+                  <option value="">Unassigned (platform-managed)</option>
+                  {clients.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.full_name || c.id.slice(0, 8)}{c.phone ? ` · ${c.phone}` : ""}
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-1 text-[10px] text-zinc-600">
+                  The owner sees this facility in their Venue Panel: edit details/pricing, block slots, view bookings.
+                </p>
+              </label>
+              <label className="block">
                 <span className="mb-1 block text-[10px] font-black uppercase tracking-wider text-zinc-500">Ownership</span>
                 <select
                   value={form.ownership}
@@ -296,6 +325,20 @@ export default function AdminVenues() {
                   rows={3}
                   className="w-full rounded-xl border border-white/10 bg-[#0a0c0b] p-3 text-sm text-zinc-100 outline-none focus:border-teal-400/40"
                 />
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-[10px] font-black uppercase tracking-wider text-zinc-500">Owner (client account)</span>
+                <select
+                  value={ownerDraft}
+                  onChange={(e) => setOwnerDraft(e.target.value)}
+                  className="h-10 w-full rounded-xl border border-white/10 bg-[#0a0c0b] px-3 text-sm text-zinc-100 outline-none focus:border-teal-400/40"
+                >
+                  <option value="">Unassigned (platform-managed)</option>
+                  {clients.map((c) => (
+                    <option key={c.id} value={c.id}>{c.full_name || c.id.slice(0, 8)} {c.phone ? '· ' + c.phone : ''}</option>
+                  ))}
+                </select>
+                <p className="mt-1 text-[10px] text-zinc-600">The owner sees this facility in their Venue Panel and can edit pricing/details and block slots.</p>
               </label>
               <label className="flex items-center gap-2 text-xs text-zinc-300">
                 <input type="checkbox" checked={form.is_popular} onChange={(e) => setForm({ ...form, is_popular: e.target.checked })} className="h-4 w-4 accent-teal-500" />

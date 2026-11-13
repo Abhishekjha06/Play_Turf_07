@@ -19,7 +19,7 @@ export function ClientRoute({ children }: ClientRouteProps) {
 
     if (!user) {
         // User not authenticated, redirect to login
-        return <Navigate to="/more" replace />;
+        return <Navigate to="/client/login" replace />;
     }
 
     if (user.role !== "client" && user.role !== "admin" && user.role !== "super_admin") {

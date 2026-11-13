@@ -41,6 +41,15 @@ function closestCity(lat: number, lon: number, cities: string[]) {
   ).city;
 }
 
+function CompactTurfCardLike({ item }: { item: { id: string; name: string; image: string; slug: string } }) {
+  return (
+    <Link to={`/turf/${item.slug}`} className="pressable block w-40 shrink-0 rounded-2xl border border-[hsl(var(--color-border-default))] overflow-hidden bg-panel">
+      <img src={item.image} alt={item.name} loading="lazy" className="h-24 w-full object-cover" />
+      <p className="truncate px-2.5 py-2 text-[11px] font-bold text-foreground">{item.name}</p>
+    </Link>
+  );
+}
+
 const Home = () => {
   useSeo({
     title: `Book Sports Turfs & Tournaments Near You — ${SITE_NAME}`,
@@ -270,6 +279,23 @@ const Home = () => {
             <HeroCarousel banners={banners} />
 
             {/* ── Popular Turfs ── */}
+            {/* ── Recently Viewed ── */}
+            {recentlyViewed.length > 0 && (
+              <motion.section
+                variants={sectionReveal}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, amount: 0.05 }}
+              >
+                <SectionHeader title="Recently Viewed" to="/turfs" action="Browse" />
+                <div className="flex gap-3 overflow-x-auto no-scrollbar px-4 pb-1">
+                  {recentlyViewed.map((t) => (
+                    <CompactTurfCardLike key={t.id} item={t} />
+                  ))}
+                </div>
+              </motion.section>
+            )}
+
             <motion.section
               variants={sectionReveal}
               initial="hidden"
