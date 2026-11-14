@@ -4,6 +4,13 @@ import {
 } from "@/data/seed";
 import { getSupabase } from "../supabase";
 import { uid } from "./core";
+import {
+  type RecommendationCandidate,
+  type RecommendationResponse,
+  INITIAL_RADIUS_KM,
+  MAX_RECOMMENDATIONS,
+  recommendSimilarTurfs,
+} from "../recommendation";
 
 export function distanceKm(a?: { lat: number; lng: number }, b?: { lat?: number; lng?: number }) {
   if (!a || typeof b?.lat !== "number" || typeof b?.lng !== "number") return Number.POSITIVE_INFINITY;
@@ -153,8 +160,7 @@ export async function toggleFavorite(turfId: string, userGetter: () => Promise<a
   return listFavorites(userGetter);
 }
 
-export async function listReviews(turfId: string): Promise<Review[]> {
-  const supabase = await getSupabase();
+export async function listReviews(turfId: string): Promise<Review[]> {  const supabase = await getSupabase();
   const { data, error } = await supabase
     .from("reviews")
     .select("*")
@@ -186,4 +192,160 @@ export async function addReview(turfId: string, rating: number, comment: string,
     .insert(review);
   if (error) throw error;
   return review;
+}
+
+// ── Play Turf Recommendation Engine V1 (Phases 14 + 16) ─────────────────────
+// Prefers the hardened `get_similar_turfs` RPC (supabase_recommendation_engine.sql).
+// Until that migration is run in the dashboard, it transparently falls back to
+// the same algorithm executed client-side (src/lib/recommendation.ts).
+
+const CACHE_TTL_MS = 5 * 60 * 1000; // Phase 16: short TTL — turfs change rarely, but do change
+const recommendationCache = new Map<string, { expiresAt: number; value: RecommendationResponse }>();
+const inFlight = new Map<string, Promise<RecommendationResponse>>();
+
+/** Phase 16: explicit invalidation (e.g. after a review is added). */
+export function clearRecommendationCache(turfId?: string): void {
+  if (!turfId) {
+    recommendationCache.clear();
+    return;
+  }
+  for (const key of recommendationCache.keys()) {
+    if (key.startsWith(`${turfId}::`)) recommendationCache.delete(key);
+  }
+}
+
+function isValidRecommendationResponse(value: unknown): value is RecommendationResponse {
+  return (
+    !!value &&
+    typeof value === "object" &&
+    Array.isArray((value as RecommendationResponse).recommendations) &&
+    !!(value as RecommendationResponse).metadata
+  );
+}
+
+/** RPC result → RecommendationResponse (the SQL function already returns this shape). */
+function mapRpcResponse(data: unknown): RecommendationResponse | null {
+  if (!isValidRecommendationResponse(data)) return null;
+  return {
+    recommendations: (data.recommendations || []).map((r) => ({
+      ...(r as RecommendationResponse["recommendations"][number]),
+    })),
+    metadata: { ...(data as RecommendationResponse).metadata },
+  };
+}
+
+/** Client-side scoring fallback — same algorithm, no RPC required. */
+async function getSimilarTurfsFallback(
+  currentTurfId: string,
+  selectedSport?: string | null
+): Promise<RecommendationResponse> {
+  const supabase = await getSupabase();
+  const turfs = await listTurfs();
+  const current = turfs.find((t) => t.id === currentTurfId);
+  if (!current) throw new Error("Turf not found");
+
+  // Review aggregates for every turf in one minimal query (id + rating only —
+  // no comments, no customer columns). Replaced by the RPC once migrated.
+  const { data: reviewRows, error: reviewError } = await supabase
+    .from("reviews")
+    .select("turf_id, rating");
+  if (reviewError) throw reviewError;
+  const reviewAgg = new Map<string, { count: number; sum: number }>();
+  for (const row of (reviewRows || []) as { turf_id: string; rating: number }[]) {
+    const agg = reviewAgg.get(row.turf_id) || { count: 0, sum: 0 };
+    agg.count += 1;
+    agg.sum += row.rating;
+    reviewAgg.set(row.turf_id, agg);
+  }
+
+  // Popularity: confirmed bookings in the last 30 days — turf_id only, both
+  // status casings (schema mixes 'confirmed'/'CONFIRMED'). If RLS blocks this
+  // (pending security migrations), popularity is reported unavailable and its
+  // weight is dropped instead of guessing.
+  const since30d = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  const { data: bookingRows, error: bookingError } = await supabase
+    .from("bookings")
+    .select("turf_id")
+    .or("status.eq.confirmed,status.eq.CONFIRMED")
+    .gte("created_at", since30d);
+  const bookingDataAvailable = !bookingError;
+  const bookingCounts = new Map<string, number>();
+  if (bookingDataAvailable) {
+    for (const row of (bookingRows || []) as { turf_id: string }[]) {
+      bookingCounts.set(row.turf_id, (bookingCounts.get(row.turf_id) || 0) + 1);
+    }
+  }
+
+  const toCandidate = (t: Turf): RecommendationCandidate => {
+    const agg = reviewAgg.get(t.id);
+    return {
+      id: t.id,
+      name: t.name,
+      city: t.city,
+      image: t.image,
+      lat: typeof t.lat === "number" ? t.lat : null,
+      lng: typeof t.lng === "number" ? t.lng : null,
+      price_per_hour: typeof t.price_per_hour === "number" ? t.price_per_hour : null,
+      rating: agg && agg.count > 0 ? agg.sum / agg.count : null,
+      review_count: agg?.count ?? 0,
+      sport_types: Array.isArray(t.sport_types) ? t.sport_types : [],
+      amenities: Array.isArray(t.amenities) ? t.amenities : [],
+      confirmed_bookings_30d: bookingDataAvailable ? bookingCounts.get(t.id) ?? 0 : null,
+      distance_km: null,
+    };
+  };
+
+  const globalAvgRating =
+    turfs.length > 0
+      ? turfs.reduce((sum, t) => sum + (typeof t.rating === "number" ? t.rating : 0), 0) / turfs.length
+      : 4.5;
+
+  return recommendSimilarTurfs(toCandidate(current), turfs.map(toCandidate), {
+    selectedSport: selectedSport ?? null,
+    globalAvgRating,
+    bookingDataAvailable,
+  });
+}
+
+export async function getSimilarTurfs(
+  currentTurfId: string,
+  options: { selectedSport?: string | null } = {}
+): Promise<RecommendationResponse> {
+  const cacheKey = `${currentTurfId}::${options.selectedSport ?? ""}`;
+
+  const cached = recommendationCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) return cached.value;
+  recommendationCache.delete(cacheKey);
+
+  const existing = inFlight.get(cacheKey);
+  if (existing) return existing; // Phase 16: prevent duplicate concurrent requests
+
+  const request = (async (): Promise<RecommendationResponse> => {
+    const supabase = await getSupabase();
+    try {
+      const { data, error } = await supabase.rpc("get_similar_turfs", {
+        p_current_turf_id: currentTurfId,
+        p_selected_sport_id: options.selectedSport ?? null,
+        p_search_radius_km: INITIAL_RADIUS_KM,
+        p_result_limit: MAX_RECOMMENDATIONS,
+      });
+      if (!error) {
+        const mapped = mapRpcResponse(data);
+        if (mapped) return mapped;
+      }
+      // RPC missing (not yet migrated) or malformed — fall through to client scoring.
+    } catch {
+      // RPC absent — fall through.
+    }
+    return getSimilarTurfsFallback(currentTurfId, options.selectedSport ?? null);
+  })();
+
+  inFlight.set(cacheKey, request);
+  try {
+    const result = await request;
+    recommendationCache.set(cacheKey, { expiresAt: Date.now() + CACHE_TTL_MS, value: result });
+    return result;
+  } finally {
+    inFlight.delete(cacheKey);
+  }
 }

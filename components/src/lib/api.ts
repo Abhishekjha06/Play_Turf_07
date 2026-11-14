@@ -40,6 +40,11 @@ export const api = {
   getTurf: (id: string) => turfsModule.getTurf(id),
   distanceKm,
 
+  // Recommendations (Recommendation Engine V1)
+  getSimilarTurfs: (turfId: string, options?: { selectedSport?: string | null }) =>
+    turfsModule.getSimilarTurfs(turfId, options),
+  clearRecommendationCache: (turfId?: string) => turfsModule.clearRecommendationCache(turfId),
+
   // Favorites
   listFavorites: () => turfsModule.listFavorites(() => authModule.me()),
   toggleFavorite: (turfId: string) => turfsModule.toggleFavorite(turfId, () => authModule.me()),
