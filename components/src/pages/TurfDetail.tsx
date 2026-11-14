@@ -15,11 +15,16 @@ import {
   SITE_NAME, breadcrumbJsonLd, buildTurfSlug, matchTurfParam, slugify,
   turfJsonLd, turfPath,
 } from "@/lib/seo";
-import { Star, MapPin, Clock, Heart, Share2, Users, Calendar, Lock, X, AlertCircle, CreditCard, Smartphone, Wallet,Trophy } from "lucide-react";
+import {
+  Star, MapPin, Clock, Heart, Share2, Users, Calendar, Lock, X, AlertCircle, CreditCard, Smartphone, Wallet, Trophy, ChevronDown,
+  CircleParking, GlassWater, Toilet, Shirt, Lightbulb, Cctv, Coffee, Snowflake, Wifi, CircleCheck, Camera, Play, IndianRupee, Navigation,
+  type LucideIcon,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from "@/ui/carousel";
 import { MobileGallery } from "@/ui/MobileGallery";
+import { SimilarTurfsNearby } from "@/turf/SimilarTurfsNearby";
 import { formatDateDMY } from "@/open-games/OpenGameCard";
 
 /** "today" / "tomorrow" / DD-MM-YYYY — from the game's real date. */
@@ -35,6 +40,73 @@ const gameDayLabel = (iso: string): string => {
   if (diffDays === 1) return "tomorrow";
   return formatDateDMY(iso);
 };
+/** "06:00 AM" / "6:30 pm" → minutes since midnight; null if unparseable. */
+const parseClock = (s: string): number | null => {
+  const m = s.trim().match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)$/i);
+  if (!m) return null;
+  let h = parseInt(m[1], 10) % 12;
+  if (m[3].toLowerCase() === "pm") h += 12;
+  return h * 60 + (m[2] ? parseInt(m[2], 10) : 0);
+};
+
+/** Minutes since midnight → "11:00 PM". */
+const fmtClock = (mins: number): string => {
+  const h24 = Math.floor(mins / 60) % 24;
+  const m = mins % 60;
+  const ampm = h24 < 12 ? "AM" : "PM";
+  const h12 = h24 % 12 === 0 ? 12 : h24 % 12;
+  return `${h12}:${String(m).padStart(2, "0")} ${ampm}`;
+};
+
+/** Is the venue open right now? Derived from its "OPEN – CLOSE" timing string. */
+const openStateFromTiming = (
+  timing: string
+): { isOpen: boolean; open: number; close: number } | null => {
+  if (!timing) return null;
+  const [from, to] = timing.split(/\s*[–—-]\s*/);
+  const open = parseClock(from ?? "");
+  const close = parseClock(to ?? "");
+  if (open == null || close == null) return null;
+  const now = new Date();
+  const cur = now.getHours() * 60 + now.getMinutes();
+  // A close earlier than open means the window crosses midnight.
+  const isOpen = open <= close ? cur >= open && cur < close : cur >= open || cur < close;
+  return { isOpen, open, close };
+};
+
+/** 2D monoline icon per amenity (EazyDiner-style facility rows). */
+const amenityIcon = (amenity: string): LucideIcon => {
+  const a = amenity.toLowerCase();
+  if (a.includes("parking")) return CircleParking;
+  if (a.includes("water")) return GlassWater;
+  if (a.includes("washroom") || a.includes("toilet") || a.includes("bathroom")) return Toilet;
+  if (a.includes("changing")) return Shirt;
+  if (a.includes("locker") || a.includes("changing room")) return Lock;
+  if (a.includes("floodlight") || a.includes("led") || a.includes("light")) return Lightbulb;
+  if (a.includes("cctv") || a.includes("camera") || a.includes("surveillance")) return Cctv;
+  if (a.includes("cafe") || a.includes("coffee") || a.includes("refreshment")) return Coffee;
+  if (a === "ac" || a.includes("air condition") || a.includes("cooling")) return Snowflake;
+  if (a.includes("wifi") || a.includes("internet")) return Wifi;
+  return CircleCheck;
+};
+
+/** Next 8 days, local time — mirrors Booking's dateLabels() so ?date= lines up. */
+const nextDates = (): { iso: string; day: string; num: string }[] => {
+  const out: { iso: string; day: string; num: string }[] = [];
+  for (let i = 0; i < 8; i++) {
+    const d = new Date();
+    d.setDate(d.getDate() + i);
+    out.push({
+      // Local date, NOT toISOString() — UTC slicing turns IST mornings into
+      // "yesterday" on the booking side (same reason Booking uses en-CA).
+      iso: d.toLocaleDateString("en-CA"),
+      day: d.toLocaleDateString(undefined, { weekday: "short" }).toUpperCase(),
+      num: String(d.getDate()),
+    });
+  }
+  return out;
+};
+
 //pop up import
 
 import {
@@ -82,6 +154,7 @@ const TurfDetail = () => {
 
   const [showSportPopup, setShowSportPopup] = useState(false);
   const [selectedSport, setSelectedSport] = useState<string | null>(null);
+  const [hoursOpen, setHoursOpen] = useState(false);
 
  const handleBookNow = () => {
   setSelectedSport(null);
@@ -275,6 +348,8 @@ const TurfDetail = () => {
     if (!turfId) return;
     try {
       await api.addReview(turfId, rating, comment);
+      // A new review changes the venue's rating — drop cached recommendations.
+      api.clearRecommendationCache(turfId);
       setComment("");
       setRating(5);
       setReviews(await api.listReviews(turfId));
@@ -299,6 +374,77 @@ const TurfDetail = () => {
       await navigator.clipboard.writeText(text);
       toast.success("Turf details copied!");
     }
+  };
+
+  /** Open/closed right now, derived from the venue's timing string. */
+  const hours = useMemo(() => openStateFromTiming(turf?.timing ?? ""), [turf?.timing]);
+
+  // ── Sticky section navigation (Overview / Slots / Facilities / Reviews) ──
+  const overviewRef = useRef<HTMLDivElement>(null);
+  const slotsRef = useRef<HTMLElement>(null);
+  const facilitiesRef = useRef<HTMLElement>(null);
+  const reviewsRef = useRef<HTMLElement>(null);
+  const galleryRef = useRef<HTMLElement>(null);
+  const videosRef = useRef<HTMLElement>(null);
+  const aboutRef = useRef<HTMLElement>(null);
+  const locationRef = useRef<HTMLElement>(null);
+  const nearbyRef = useRef<HTMLElement>(null);
+  const [activeSection, setActiveSection] = useState("overview");
+  // Sticky can't pin inside the shell's overflow-clipped ancestors — the nav
+  // goes `fixed` once its natural spot scrolls past (same trick as the bottom bar).
+  const navMarkerRef = useRef<HTMLDivElement>(null);
+  const [navPinned, setNavPinned] = useState(false);
+
+  const scrollToSection = (ref: React.RefObject<HTMLElement | null>) => {
+    ref.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  useEffect(() => {
+    if (!turf) return;
+    const targets: [string, React.RefObject<HTMLElement | null>][] = [
+      ["overview", overviewRef],
+      ["slots", slotsRef],
+      ["about", aboutRef],
+      ["facilities", facilitiesRef],
+      ["reviews", reviewsRef],
+      ["location", locationRef],
+      ["nearby", nearbyRef],
+    ];
+    const onScroll = () => {
+      let current = "overview";
+      for (const [id, ref] of targets) {
+        if (ref.current && ref.current.getBoundingClientRect().top <= 120) current = id;
+      }
+      // Short trailing sections can never cross the threshold — at page
+      // bottom, highlight the last target instead.
+      if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4) {
+        current = targets[targets.length - 1][0];
+      }
+      setActiveSection(current);
+      if (navMarkerRef.current) {
+        setNavPinned(navMarkerRef.current.getBoundingClientRect().top <= 0);
+      }
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [turf]);
+
+  // ── Booking quick-pick date (passed as ?date= to the booking flow) ──
+  const bookingDates = useMemo(nextDates, []);
+  const [selectedDate, setSelectedDate] = useState(bookingDates[0].iso);
+
+  const openInMaps = () => {
+    if (!turf) return;
+    const q =
+      turf.lat != null && turf.lng != null
+        ? `${turf.lat},${turf.lng}`
+        : `${turf.name}, ${turf.address}`;
+    window.open(
+      `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`,
+      "_blank",
+      "noopener,noreferrer"
+    );
   };
 
   // ── SEO: real venue metadata + SportsActivityLocation schema ──
@@ -331,6 +477,12 @@ const TurfDetail = () => {
   if (error) return <MobileShell><div className="p-6 text-center"><p className="text-soft mb-2">Could not load turf.</p><p className="text-xs text-muted2">{error}</p></div></MobileShell>;
 
   if (!turf) return <MobileShell><div className="p-6 text-soft">Loading…</div></MobileShell>;
+
+  // Map embed + directions target: exact coordinates when present, otherwise name + address.
+  const mapQuery =
+    turf.lat != null && turf.lng != null
+      ? `${turf.lat},${turf.lng}`
+      : `${turf.name}, ${turf.address}`;
 
   return (
     <MobileShell>
@@ -368,59 +520,234 @@ const TurfDetail = () => {
             </button>
           </div>
         </div>
-      </div>
 
-      {slideCount > 1 && (
-        <div className="flex items-center justify-center gap-1.5 mt-3" role="tablist">
-          {headerImages.map((_, i) => (
+        {slideCount > 1 && (
+          <div className="absolute bottom-12 left-0 right-0 z-20 flex items-center justify-center gap-1.5" role="tablist">
+            {headerImages.map((_, i) => (
+              <button
+                key={i}
+                aria-label={`Slide ${i + 1}`}
+                className={`h-1.5 rounded-full transition-all ${currentSlide === i ? "w-7 bg-primary shadow-neon" : "w-1.5 bg-white/25"
+                  }`}
+              />
+            ))}
+          </div>
+        )}
+
+        <div className="absolute bottom-11 right-3 z-20 flex gap-2">
+          {slideCount > 1 && (
             <button
-              key={i}
-              aria-label={`Slide ${i + 1}`}
-              className={`h-1.5 rounded-full transition-all ${currentSlide === i ? "w-7 bg-primary shadow-neon" : "w-1.5 bg-white/25"
-                }`}
-            />
-          ))}
+              type="button"
+              onClick={() => scrollToSection(galleryRef)}
+              className="glass pressable inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold"
+            >
+              <Camera className="h-3.5 w-3.5" /> {slideCount} Photos
+            </button>
+          )}
+          {(turf.videos?.length ?? 0) > 0 && (
+            <button
+              type="button"
+              onClick={() => scrollToSection(videosRef)}
+              className="glass pressable inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold"
+            >
+              <Play className="h-3.5 w-3.5" /> {turf.videos?.length} Videos
+            </button>
+          )}
         </div>
-      )}
+      </div>
 
       <motion.div
         initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-        className="px-4 mt-4 relative z-10"
+        className="px-4 -mt-10 relative z-10"
       >
-        <div className="card-panel rounded-3xl p-4">
+        <div ref={overviewRef} className="card-panel rounded-3xl p-4 scroll-mt-16">
           <div className="flex items-start justify-between gap-3">
-            <div>
-              <h1 className="font-display font-bold text-xl leading-tight">{turf.name}</h1>
-              <p className="text-sm text-muted2 inline-flex items-center gap-1 mt-1">
-                <MapPin className="h-3.5 w-3.5" /> {turf.address}
+            <div className="min-w-0">
+              <h1 className="font-display font-black text-2xl leading-tight">{turf.name}</h1>
+              <p className="text-[15px] text-foreground font-medium flex items-center gap-2 mt-2">
+                <MapPin className="h-4 w-4 text-primary shrink-0" /> {turf.address}
+              </p>
+              <p className="text-[15px] text-foreground font-medium flex items-center gap-2 mt-1.5">
+                <Trophy className="h-4 w-4 text-primary shrink-0" /> {turf.sport_types.join(", ")}
+              </p>
+              <p className="text-[15px] text-foreground font-semibold flex items-center gap-2 mt-1.5">
+                <IndianRupee className="h-4 w-4 text-primary shrink-0" /> {turf.price_per_hour.toLocaleString("en-IN")} per hour
               </p>
             </div>
-            <div className="inline-flex items-center gap-1 bg-primary/15 text-primary border border-primary/40 px-2 py-1 rounded-full text-xs font-semibold">
-              <Star className="h-3 w-3 fill-primary" /> {turf.rating}
+            <div className="shrink-0 rounded-2xl bg-panel-2 border border-white/5 px-3 py-2 text-center min-w-[92px]">
+              <div className="flex items-center justify-center gap-1">
+                <Star className="h-5 w-5 fill-primary text-primary" />
+                <span className="font-bold text-lg leading-none">{turf.rating}</span>
+              </div>
+              <div className="h-px bg-white/10 my-1.5" />
+              <p className="text-xs text-muted2 whitespace-nowrap">
+                {reviews.length > 0 ? `${reviews.length} ratings` : "No ratings"}
+              </p>
             </div>
           </div>
-          <div className="flex items-center gap-2 mt-3 text-sm text-soft">
-            <Clock className="h-4 w-4" /> {turf.timing}
+
+          <div className="flex items-center justify-between gap-2 mt-4">
+            <button
+              type="button"
+              onClick={() => setHoursOpen((v) => !v)}
+              aria-expanded={hoursOpen}
+              className={`pressable inline-flex items-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-bold bg-panel-2 border border-white/5 ${hours?.isOpen ? "text-success" : "text-muted2"}`}
+            >
+              {hours?.isOpen
+                ? `Open till ${fmtClock(hours.close)}`
+                : hours
+                  ? `Opens at ${fmtClock(hours.open)}`
+                  : turf.timing}
+              <ChevronDown className={`h-4 w-4 transition-transform ${hoursOpen ? "rotate-180" : ""}`} />
+            </button>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={handleShare}
+                className="pressable h-11 w-11 rounded-full bg-panel-2 border border-white/5 grid place-items-center text-foreground"
+                aria-label="Share turf"
+              >
+                <Share2 className="h-5 w-5" />
+              </button>
+              <button
+                type="button"
+                onClick={openInMaps}
+                className="pressable h-11 w-11 rounded-full bg-panel-2 border border-white/5 grid place-items-center text-foreground"
+                aria-label="Open in Maps"
+              >
+                <MapPin className="h-5 w-5" />
+              </button>
+            </div>
           </div>
-          <div className="flex flex-wrap gap-2 mt-3">
-            {turf.sport_types.map((s) => (
-              <span key={s} className="text-xs bg-panel-2 px-2 py-1 rounded-full border border-white/5">{s}</span>
-            ))}
-          </div>
+
+          <AnimatePresence initial={false}>
+            {hoursOpen && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden"
+              >
+                <div className="mt-3 flex items-center gap-2 rounded-xl bg-panel-2 border border-white/5 px-3 py-2.5 text-xs text-soft">
+                  <Clock className="h-3.5 w-3.5 text-muted2 shrink-0" />
+                  <span>Open daily · {turf.timing}</span>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
-        <section className="mt-5">
-          <h3 className="font-semibold text-sm">About</h3>
-          <p className="text-soft text-sm mt-1">{turf.description}</p>
+        {/* Section navigation — Overview / Slots / Facilities / Reviews.
+            Marker holds the natural top; nav switches to fixed when scrolled past. */}
+        <div ref={navMarkerRef} aria-hidden="true" />
+        {navPinned && <div aria-hidden="true" className="h-[45px]" />}
+        <div
+          className={`z-30 flex items-center gap-1 overflow-x-auto no-scrollbar border-b ${
+            navPinned
+              ? "fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] md:max-w-[640px] lg:max-w-[768px]"
+              : "-mx-4 px-4 mt-4"
+          }`}
+          style={{
+            background: "hsl(var(--background))",
+            borderColor: "hsl(var(--color-border-default))",
+          }}
+        >
+          {([
+            ["overview", "Overview", overviewRef],
+            ["slots", "Slots", slotsRef],
+            ["about", "About", aboutRef],
+            ["facilities", "Facilities", facilitiesRef],
+            ["reviews", "Reviews", reviewsRef],
+            ["location", "Location", locationRef],
+            ["nearby", "Similar Turfs", nearbyRef],
+          ] as const).map(([id, label, ref]) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => scrollToSection(ref)}
+              className={`shrink-0 px-3 py-3 text-sm font-semibold border-b-2 -mb-px transition-colors cursor-pointer ${
+                activeSection === id ? "text-primary border-primary" : "text-foreground border-transparent"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {/* Booking — date quick-pick, duration & price; live slots on the flow */}
+        <section ref={slotsRef} className="mt-5 scroll-mt-16">
+          <h3 className="font-semibold text-sm">Book a Slot</h3>
+          <div className="card-panel rounded-2xl p-4 mt-2">
+            <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+              {bookingDates.map((d) => {
+                const isSelected = d.iso === selectedDate;
+                return (
+                  <button
+                    key={d.iso}
+                    type="button"
+                    onClick={() => setSelectedDate(d.iso)}
+                    aria-pressed={isSelected}
+                    className={`shrink-0 w-14 rounded-xl py-2 text-center border transition-colors ${
+                      isSelected
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-panel-2 text-foreground border-white/5"
+                    }`}
+                  >
+                    <span className="block text-[10px] font-bold opacity-80">{d.day}</span>
+                    <span className="block text-sm font-black leading-tight">{d.num}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-3 text-sm text-foreground font-semibold">
+              <span className="inline-flex items-center gap-1.5">
+                <IndianRupee className="h-4 w-4 text-primary" /> ₹{turf.price_per_hour.toLocaleString("en-IN")}/hr
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <Clock className="h-4 w-4 text-primary" /> 1-hour slots
+              </span>
+            </div>
+            <p className="text-[11px] text-foreground mt-1.5">Live slot availability and duration on the next step.</p>
+            <button
+              type="button"
+              onClick={handleBookNow}
+              className="pressable mt-3 w-full rounded-full bg-primary py-3 text-sm font-bold text-primary-foreground shadow-neon"
+              data-testid="section-book-now"
+            >
+              Book Now
+            </button>
+          </div>
         </section>
 
-        <section className="mt-5">
-          <h3 className="font-semibold text-sm">Amenities</h3>
+        <section ref={aboutRef} className="mt-5 scroll-mt-16">
+          <h3 className="font-semibold text-sm">About</h3>
+          <p className="text-foreground text-sm mt-1">{turf.description}</p>
+        </section>
+
+        {/* Facilities & amenities — EazyDiner-style 2D icon rows */}
+        <section ref={facilitiesRef} className="mt-5 scroll-mt-16">
+          <h3 className="font-semibold text-sm">Facilities & Amenities</h3>
           <div className="grid grid-cols-2 gap-2 mt-2">
-            {turf.amenities.map((a) => (
-              <div key={a} className="text-xs bg-panel-2 rounded-xl px-3 py-2 border border-white/5">
-                {a}
-              </div>
+            {turf.amenities.map((a) => {
+              const Icon = amenityIcon(a);
+              return (
+                <div key={a} className="flex items-center gap-2.5 bg-panel-2 rounded-xl px-3 py-2.5 border border-white/5">
+                  <span
+                    className="grid place-items-center h-8 w-8 rounded-lg shrink-0"
+                    style={{ background: "hsl(var(--color-border-default))" }}
+                  >
+                    <Icon className="h-4 w-4 text-primary" />
+                  </span>
+                  <span className="text-xs font-semibold">{a}</span>
+                </div>
+              );
+            })}
+          </div>
+          <p className="text-[11px] text-foreground mt-3 font-bold uppercase tracking-wider">Supported sports</p>
+          <div className="flex flex-wrap gap-2 mt-1.5">
+            {turf.sport_types.map((s) => (
+              <span key={s} className="text-xs bg-panel-2 px-3 py-1.5 rounded-full border border-white/5">{s}</span>
             ))}
           </div>
         </section>
@@ -507,14 +834,19 @@ const TurfDetail = () => {
         )}
 
         {turf.gallery.length > 1 && (
-          <section className="mt-5 mb-2">
-            <h3 className="font-semibold text-sm mb-3">Gallery</h3>
+          <section ref={galleryRef} className="mt-5 mb-2 scroll-mt-16">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold text-sm">Photo Gallery</h3>
+              <p className="text-xs text-muted2">
+                {headerImages.length} photos{(turf.videos?.length ?? 0) > 0 ? ` · ${turf.videos?.length} videos` : ""}
+              </p>
+            </div>
             <MobileGallery images={turf.gallery} altPrefix={turf.name} />
           </section>
         )}
 
         {(turf.videos?.length ?? 0) > 0 && (
-          <section className="mt-5">
+          <section ref={videosRef} className="mt-5 scroll-mt-16">
             <h3 className="font-semibold text-sm">Videos</h3>
             <div className="mt-2 flex gap-2 overflow-x-auto no-scrollbar">
               {turf.videos?.map((video, i) => (
@@ -524,8 +856,26 @@ const TurfDetail = () => {
           </section>
         )}
 
-        <section className="mt-5">
+        <section ref={reviewsRef} className="mt-5 scroll-mt-16">
           <h3 className="font-semibold text-sm">Ratings & Reviews</h3>
+          <div className="card-panel mt-2 rounded-2xl p-4 flex items-center gap-4">
+            <div className="text-center shrink-0">
+              <p className="font-display font-black text-3xl leading-none">{turf.rating}</p>
+              <div className="flex gap-0.5 mt-1.5 justify-center">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <Star
+                    key={i}
+                    className={`h-3.5 w-3.5 ${i <= Math.round(turf.rating) ? "fill-primary text-primary" : "text-muted2"}`}
+                  />
+                ))}
+              </div>
+              <p className="text-[11px] text-muted2 mt-1">{reviews.length} ratings</p>
+            </div>
+            <div className="h-10 w-px shrink-0" style={{ background: "hsl(var(--color-border-default))" }} />
+            <p className="text-xs text-foreground">
+              Played here? Rate the turf and tell other players what to expect.
+            </p>
+          </div>
           <div className="card-panel mt-2 rounded-2xl p-3">
             <div className="flex gap-2">
               {[1, 2, 3, 4, 5].map((value) => (
@@ -547,7 +897,7 @@ const TurfDetail = () => {
           </div>
 
           <div className="mt-3 space-y-2">
-            {reviews.length === 0 && <p className="text-sm text-muted2">No reviews yet.</p>}
+            {reviews.length === 0 && <p className="text-sm text-foreground">No reviews yet.</p>}
             {reviews.map((review) => (
               <div key={review.id} className="rounded-2xl border border-white/10 bg-panel-2 p-3">
                 <div className="flex items-center justify-between">
@@ -559,11 +909,42 @@ const TurfDetail = () => {
             ))}
           </div>
         </section>
+
+        {/* Location — address, embedded map, directions */}
+        <section ref={locationRef} className="mt-5 scroll-mt-16">
+          <h3 className="font-semibold text-sm">Location</h3>
+          <div className="mt-2 overflow-hidden rounded-2xl border border-white/5">
+            <iframe
+              title={`Map of ${turf.name}`}
+              src={`https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed`}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              className="w-full h-44 border-0"
+            />
+          </div>
+          <div className="flex items-center justify-between gap-3 mt-3 bg-panel-2 rounded-xl px-3 py-2.5 border border-white/5">
+            <p className="text-xs text-foreground inline-flex items-center gap-1.5 min-w-0">
+              <MapPin className="h-4 w-4 shrink-0 text-primary" /> {turf.address}
+            </p>
+            <button
+              type="button"
+              onClick={openInMaps}
+              className="pressable shrink-0 inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-xs font-bold text-primary-foreground"
+            >
+              <Navigation className="h-3.5 w-3.5" /> Directions
+            </button>
+          </div>
+        </section>
+
+        {/* Similar Turfs Nearby — Recommendation Engine V1 */}
+        <section ref={nearbyRef} className="mt-5 mb-2 scroll-mt-16">
+          <SimilarTurfsNearby currentTurf={turf} selectedSport={selectedSport} />
+        </section>
       </motion.div>
 
       <div className="h-32" />
 
-      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 z-40 w-full max-w-[480px] glass-strong rounded-t-2xl px-4 pt-3 flex items-center justify-between"
+      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 z-40 w-full max-w-[480px] md:max-w-[640px] lg:max-w-[768px] bg-panel rounded-t-2xl px-4 pt-3 flex items-center justify-between"
         style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom, 0px))" }}
       >
         {joinGameId && openGames.find(g => g.id === joinGameId && g.status !== "full" && g.status !== "cancelled") ? (
@@ -588,8 +969,8 @@ const TurfDetail = () => {
         ) : (
           <>
             <div>
-              <p className="text-xs text-muted2">Starting at</p>
-              <p className="font-bold text-lg neon-text">₹{turf.price_per_hour}<span className="text-muted2 text-xs">/hr</span></p>
+              <p className="text-xs text-foreground">Starting at</p>
+              <p className="font-bold text-lg neon-text">₹{turf.price_per_hour}<span className="text-foreground text-xs">/hr</span></p>
             </div>
             <button
               type="button"
@@ -734,7 +1115,7 @@ const TurfDetail = () => {
 
                 setShowSportPopup(false);
 
-                navigate(`/booking/new/${turf.id}?sport=${encodeURIComponent(selectedSport)}`
+                navigate(`/booking/new/${turf.id}?sport=${encodeURIComponent(selectedSport)}&date=${selectedDate}`
               );
               }
             }
@@ -762,7 +1143,7 @@ const TurfDetail = () => {
               animate={{ y: 0, x: "-50%" }}
               exit={{ y: "100%", x: "-50%" }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed bottom-0 left-1/2 z-50 w-full max-w-[480px] bg-panel rounded-t-[2.5rem] border-t border-[hsl(var(--color-border-default))] p-6 space-y-5"
+              className="fixed bottom-0 left-1/2 z-50 w-full max-w-[480px] md:max-w-[640px] lg:max-w-[768px] bg-panel rounded-t-[2.5rem] border-t border-[hsl(var(--color-border-default))] p-6 space-y-5"
               style={{
                 paddingBottom: "calc(1.5rem + env(safe-area-inset-bottom, 0px))"
               }}

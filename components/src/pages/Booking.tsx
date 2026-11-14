@@ -121,7 +121,12 @@ const BookingContent = () => {
     const [remindedSlots, setRemindedSlots] = useState<string[]>([]);///reminded slot remider
 
     const [step, setStep] = useState<Step>("pick");
-    const [date, setDate] = useState(dates[0].iso);
+    const [date, setDate] = useState(() => {
+        // Honor ?date= from the turf detail page — only when it matches a
+        // pickable day; anything else falls back to today.
+        const fromUrl = searchParams.get("date") || "";
+        return dates.some((d) => d.iso === fromUrl) ? fromUrl : dates[0].iso;
+    });
     const [slot, setSlot] = useState<string | null>(null);
     const [hours, setHours] = useState(1);
     const [booking, setBooking] = useState<TurfBooking | null>(null);
