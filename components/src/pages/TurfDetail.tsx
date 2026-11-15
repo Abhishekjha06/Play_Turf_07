@@ -16,7 +16,7 @@ import {
   turfJsonLd, turfPath,
 } from "@/lib/seo";
 import {
-  Star, MapPin, Clock, Heart, Share2, Users, Calendar, Lock, X, AlertCircle, CreditCard, Smartphone, Wallet, Trophy, ChevronDown,
+  Star, MapPin, Clock, Heart, Share2, Users, Calendar, Lock, X, AlertCircle, CreditCard, Smartphone, Wallet, Trophy, ChevronDown, Loader2,
   CircleParking, GlassWater, Toilet, Shirt, Lightbulb, Cctv, Coffee, Snowflake, Wifi, CircleCheck, Camera, Play, IndianRupee, Navigation,
   type LucideIcon,
 } from "lucide-react";
@@ -40,6 +40,20 @@ const gameDayLabel = (iso: string): string => {
   if (diffDays === 1) return "tomorrow";
   return formatDateDMY(iso);
 };
+/** Local-timezone game start from "YYYY-MM-DD" + "HH:MM" (24h); null if unparseable. */
+const gameStartsAt = (g: Pick<OpenGame, "date" | "time">): Date | null => {
+  const [y, m, d] = (g.date || "").split("-").map(Number);
+  const [hh, mm] = (g.time || "").split(":").map(Number);
+  if (!y || !m || !d || !Number.isFinite(hh)) return null;
+  return new Date(y, m - 1, d, hh, mm || 0);
+};
+
+/** Only games that haven't started yet render — past dates and already-begun events are hidden. */
+const isUpcomingGame = (g: OpenGame): boolean => {
+  const start = gameStartsAt(g);
+  return start != null && start.getTime() > Date.now();
+};
+
 /** "06:00 AM" / "6:30 pm" → minutes since midnight; null if unparseable. */
 const parseClock = (s: string): number | null => {
   const m = s.trim().match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)$/i);
@@ -143,6 +157,9 @@ const TurfDetail = () => {
   const [slideCount, setSlideCount] = useState(0);
 
   const [openGames, setOpenGames] = useState<OpenGame[]>([]);
+  // Collapsed by default: one featured (soonest) card, "Load more" pulls the rest from the backend.
+  const [showAllOpenGames, setShowAllOpenGames] = useState(false);
+  const [loadingMoreGames, setLoadingMoreGames] = useState(false);
   const [selectedJoinGame, setSelectedJoinGame] = useState<OpenGame | null>(null);
   const [joiningGame, setJoiningGame] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("UPI");
@@ -200,9 +217,10 @@ const TurfDetail = () => {
     if (turf) {
       try {
         const allGames = await api.listOpenGames();
-        const filtered = allGames.filter(g =>
-          g.venue.toLowerCase().includes(turf.name.toLowerCase())
-        );
+        const filtered = allGames
+          .filter(g => g.venue.toLowerCase().includes(turf.name.toLowerCase()))
+          .filter(isUpcomingGame)
+          .sort((a, b) => (gameStartsAt(a)?.getTime() ?? Infinity) - (gameStartsAt(b)?.getTime() ?? Infinity));
         setOpenGames(filtered);
         if (joinGameId) {
           const matched = filtered.find(g => g.id === joinGameId);
@@ -220,8 +238,20 @@ const TurfDetail = () => {
   useRealtimeOpenGames(fetchOpenGames);
 
   useEffect(() => {
+    setShowAllOpenGames(false);
     fetchOpenGames();
   }, [turf]);
+
+  /** "Load more" — re-fetches the venue's open games from the backend, then reveals them all. */
+  const handleLoadMoreGames = async () => {
+    setLoadingMoreGames(true);
+    try {
+      await fetchOpenGames();
+      setShowAllOpenGames(true);
+    } finally {
+      setLoadingMoreGames(false);
+    }
+  };
 
   const handleJoinOpenGame = async (gameId: string) => {
     if (!user) {
@@ -758,7 +788,7 @@ const TurfDetail = () => {
               <Users className="w-4 h-4 text-primary animate-pulse" /> Open Games at this Venue
             </h3>
             <div className="space-y-4">
-              {openGames.map((g) => {
+              {(showAllOpenGames ? openGames : openGames.slice(0, 1)).map((g) => {
                 const progress = (g.slots_filled / g.slots_total) * 100;
                 return (
                   <div
@@ -830,6 +860,27 @@ const TurfDetail = () => {
                 );
               })}
             </div>
+
+            {!showAllOpenGames && openGames.length > 1 && (
+              <button
+                type="button"
+                onClick={handleLoadMoreGames}
+                disabled={loadingMoreGames}
+                className="pressable mt-4 w-full rounded-full bg-panel-2 border border-white/5 py-3 text-xs font-bold text-foreground flex items-center justify-center gap-1.5 disabled:opacity-60"
+                data-testid="load-more-open-games"
+              >
+                {loadingMoreGames ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading…
+                  </>
+                ) : (
+                  <>
+                    Load more games ({openGames.length - 1} more)
+                    <ChevronDown className="h-3.5 w-3.5" />
+                  </>
+                )}
+              </button>
+            )}
           </section>
         )}
 
