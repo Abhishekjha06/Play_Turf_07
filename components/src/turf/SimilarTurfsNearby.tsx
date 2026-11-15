@@ -54,7 +54,7 @@ export function SimilarTurfsNearby({
       <div className="flex items-center justify-between gap-2">
         <div className="min-w-0">
           <h3 className="font-semibold text-sm">Similar Turfs Nearby</h3>
-          <p className="text-xs text-muted2 mt-0.5">
+          <p className="text-xs text-foreground mt-0.5">
             Explore other turfs that match your sports and budget.
           </p>
         </div>
@@ -114,7 +114,6 @@ export function SimilarTurfsNearby({
 }
 
 function RecommendationCard({ rec }: { rec: SimilarTurfRecommendation }) {
-  const topLabel = rec.explanations[0];
   const shownSports = rec.sport_types.slice(0, 2);
   const extraSports = rec.sport_types.length - shownSports.length;
 
@@ -132,14 +131,6 @@ function RecommendationCard({ rec }: { rec: SimilarTurfRecommendation }) {
           decoding="async"
           className="h-28 w-full object-cover"
         />
-        <span className="absolute top-2 left-2 rounded-full bg-black/60 text-white text-[11px] font-bold px-2 py-0.5">
-          {Math.round(rec.score)}% match
-        </span>
-        {topLabel && (
-          <span className="absolute bottom-2 left-2 rounded-full bg-primary text-primary-foreground text-[11px] font-bold px-2 py-0.5">
-            {topLabel}
-          </span>
-        )}
       </div>
 
       <div className="p-3">
