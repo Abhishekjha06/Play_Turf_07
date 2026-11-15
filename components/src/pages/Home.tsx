@@ -236,7 +236,7 @@ const Home = () => {
 
   return (
     <MobileShell>
-      <AppHeader />
+      <AppHeader withEventBanners />
 
       <CategoryPills
         turfs={allTurfs}

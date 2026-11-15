@@ -11,6 +11,7 @@ import { getSupabase, withTimeout } from "./supabase";
 import { distanceKm } from "./api/turfs";
 
 import * as bannersModule from "./api/banners";
+import * as eventBannersModule from "./api/eventBanners";
 import * as turfsModule from "./api/turfs";
 import * as bookingsModule from "./api/bookings";
 import * as tournamentsModule from "./api/tournaments";
@@ -34,6 +35,8 @@ export const api = {
   hostOpenGame: (payload: Parameters<typeof openGamesModule.hostOpenGame>[0]) => openGamesModule.hostOpenGame(payload),
   // Banners
   listBanners: () => bannersModule.listBanners(),
+  // Event banners (home header area)
+  listEventBanners: () => eventBannersModule.listActiveEventBanners(),
 
   // Turfs
   listTurfs: (opts?: Parameters<typeof turfsModule.listTurfs>[0]) => turfsModule.listTurfs(opts),
@@ -154,6 +157,12 @@ cancelBooking: (id: string) =>
     deleteBanner: (id: string) => adminModule.deleteBanner(id),
     reorderBanners: (orderedIds: string[]) => adminModule.reorderBanners(orderedIds),
     uploadBannerImage: (file: File) => adminModule.uploadBannerImage(file),
+    listEventBanners: () => eventBannersModule.listAllEventBanners(),
+    addEventBanner: (input: Parameters<typeof eventBannersModule.addEventBanner>[0]) => eventBannersModule.addEventBanner(input),
+    updateEventBanner: (id: string, patch: Parameters<typeof eventBannersModule.updateEventBanner>[1]) => eventBannersModule.updateEventBanner(id, patch),
+    deleteEventBanner: (id: string) => eventBannersModule.deleteEventBanner(id),
+    reorderEventBanners: (orderedIds: string[]) => eventBannersModule.reorderEventBanners(orderedIds),
+    uploadEventBannerImage: (file: File) => eventBannersModule.uploadEventBannerImage(file),
     addOffer: (o: Partial<Offer>) => adminModule.addOffer(o),
     deleteOffer: (id: string) => adminModule.deleteOffer(id),
     addTournament: (t: Partial<Tournament>) => adminModule.addTournament(t),

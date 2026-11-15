@@ -1,8 +1,8 @@
 /**
- * /admin/cms — content & marketing: banners (reuses BannerManager), blog
- * guides (static, read-only until the DB-backed CMS migration), and the push
- * notification composer (ported from the legacy admin, same real
- * lib/notifications pipeline).
+ * /admin/cms — content & marketing: banners (reuses BannerManager), event
+ * banners (reuses EventBannerManager), blog guides (static, read-only until
+ * the DB-backed CMS migration), and the push notification composer (ported
+ * from the legacy admin, same real lib/notifications pipeline).
  */
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
@@ -13,14 +13,16 @@ import {
 } from "@/lib/notifications";
 import { blogPosts } from "@/data/blogPosts";
 import { toast } from "sonner";
-import { Bell, FileText, Image, Loader2, Plus, Trash2 } from "lucide-react";
+import { Bell, FileText, Image, ImagePlus, Loader2, Plus, Trash2 } from "lucide-react";
 import { AdminPageHeader, DataTable, StatusBadge } from "../ui";
 import { PermissionGuard } from "../AdminLayout";
 import { BannerManager } from "@/pages/admin/BannerManager";
+import { EventBannerManager } from "@/pages/admin/EventBannerManager";
 import type { Banner } from "@/data/seed";
+import type { EventBanner } from "@/lib/api/eventBanners";
 import type { AdminRole } from "../admin-rbac";
 
-type Tab = "banners" | "blog" | "notifications";
+type Tab = "banners" | "events" | "blog" | "notifications";
 
 export default function AdminCms() {
   const { user } = useAuth();
@@ -35,7 +37,7 @@ export default function AdminCms() {
       />
 
       <div className="mb-4 flex flex-wrap gap-1.5">
-        {([["banners", "Banners", Image], ["blog", "Blog & Guides", FileText], ["notifications", "Push Notifications", Bell]] as const).map(([key, label, Icon]) => (
+        {([["banners", "Banners", Image], ["events", "Event Banners", ImagePlus], ["blog", "Blog & Guides", FileText], ["notifications", "Push Notifications", Bell]] as const).map(([key, label, Icon]) => (
           <button
             key={key}
             onClick={() => setTab(key as Tab)}
@@ -47,6 +49,7 @@ export default function AdminCms() {
       </div>
 
       {tab === "banners" && <BannersTab myRole={myRole} />}
+      {tab === "events" && <EventBannersTab />}
       {tab === "blog" && <BlogTab />}
       {tab === "notifications" && <NotificationsTab />}
     </PermissionGuard>
@@ -74,6 +77,36 @@ function BannersTab({ myRole }: { myRole: AdminRole }) {
   return (
     <div className="admin-legacy-banner-host rounded-2xl border border-white/[0.06] bg-[#0d0f0e] p-4">
       <BannerManager banners={banners} refresh={load} />
+    </div>
+  );
+}
+
+// ── Event banners (home header area) ───────────────────────────────────────
+
+function EventBannersTab() {
+  const [banners, setBanners] = useState<EventBanner[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = () => {
+    api
+      .admin.listEventBanners()
+      .then(setBanners)
+      .catch((e) => toast.error((e as Error).message || "Failed to load event banners"))
+      .finally(() => setLoading(false));
+  };
+  useEffect(() => { load(); }, []);
+
+  if (loading) {
+    return <div className="grid place-items-center rounded-2xl border border-white/[0.06] bg-[#0d0f0e] p-16"><Loader2 className="h-6 w-6 animate-spin text-teal-300" /></div>;
+  }
+  return (
+    <div className="rounded-2xl border border-white/[0.06] bg-[#0d0f0e] p-4">
+      <p className="mb-3 rounded-2xl border border-teal-400/25 bg-teal-400/[0.06] p-3 text-xs leading-relaxed text-teal-200/90">
+        PNG banners uploaded here auto-rotate in the Home header Events Banner area. Activating a
+        banner publishes it instantly — no app release needed. Requires{" "}
+        <code className="text-[11px]">supabase_event_banners.sql</code> to be run in the dashboard.
+      </p>
+      <EventBannerManager banners={banners} refresh={load} />
     </div>
   );
 }

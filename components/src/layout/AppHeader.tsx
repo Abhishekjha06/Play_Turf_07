@@ -8,6 +8,18 @@ import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion"
 import { fadeSlideDown } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { api } from "@/lib/api";
+import type { EventBanner } from "@/lib/api/eventBanners";
+
+/** Auto-rotation interval for the event banner backdrop (ms). */
+const BANNER_ROTATE_MS = 5000;
+
+export function AppHeader({ withEventBanners = false }: { withEventBanners?: boolean }) {
+  const { user } = useAuth();
+
+  return <CollapsingHeader user={user} withEventBanners={withEventBanners} />;
+}
+
 import {
   getNotifications,
   markAllAsRead,
@@ -19,18 +31,14 @@ import {
   type NotificationCategory
 } from "@/lib/notifications";
 
-export function AppHeader() {
-  const { user } = useAuth();
-
-  return <CollapsingHeader user={user} />;
-}
-
 /* ─── Collapsing Header ─────────────────────────────────────────────── */
 
 function CollapsingHeader({
   user,
+  withEventBanners,
 }: {
   user: any;
+  withEventBanners?: boolean;
 }) {
   const { scrollY } = useScroll();
   const navigate = useNavigate();
@@ -54,6 +62,40 @@ function CollapsingHeader({
   // Translate elements up as we scroll (search bar scrolls away with content)
   const greetingY = useTransform(scrollY, [0, 220], [0, -100]);
   const searchBarY = useTransform(scrollY, [0, 220], [0, -180]);
+
+  // Event banner backdrop (Home only, via withEventBanners): rotating
+  // admin-uploaded PNGs render behind the header content as its background.
+  // Error-tolerant — while supabase_event_banners.sql hasn't been run yet,
+  // the themed gradient + wave show exactly as before.
+  const [eventBanners, setEventBanners] = useState<EventBanner[]>([]);
+  const [bannerIndex, setBannerIndex] = useState(0);
+
+  useEffect(() => {
+    if (!withEventBanners) return;
+    let cancelled = false;
+    api
+      .listEventBanners()
+      .then((data) => {
+        if (!cancelled) setEventBanners(data);
+      })
+      .catch(() => {
+        /* banner table not provisioned — gradient fallback */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [withEventBanners]);
+
+  useEffect(() => {
+    if (eventBanners.length < 2) return;
+    const timer = setInterval(
+      () => setBannerIndex((i) => (i + 1) % eventBanners.length),
+      BANNER_ROTATE_MS
+    );
+    return () => clearInterval(timer);
+  }, [eventBanners.length]);
+
+  const hasEventBanners = eventBanners.length > 0;
 
   // Notification states
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
@@ -122,7 +164,26 @@ function CollapsingHeader({
         }}
         data-testid="app-header"
       >
-        {/* Animated SVG wave background — parallax via CSS */}
+        {/* Event banner backdrop — pure background artwork, content renders above it */}
+        {hasEventBanners &&
+          eventBanners.map((banner, i) => (
+            <motion.img
+              key={banner.id}
+              src={banner.image_url}
+              alt=""
+              aria-hidden
+              className="pointer-events-none absolute inset-0 h-full w-full object-cover select-none"
+              initial={false}
+              animate={{ opacity: i === bannerIndex % eventBanners.length ? 1 : 0 }}
+              transition={{ duration: 0.8, ease: "easeInOut" }}
+              loading="eager"
+              decoding="async"
+              draggable={false}
+            />
+          ))}
+
+        {/* Animated SVG wave background — parallax via CSS (skipped while banners are showing) */}
+        {!hasEventBanners && (
         <motion.svg
           className="absolute inset-0 w-full h-full pointer-events-none"
           style={{ opacity: waveOpacity }}
@@ -146,6 +207,7 @@ function CollapsingHeader({
           <line x1="240" y1="0" x2="240" y2="280" stroke="white" strokeWidth="0.6" strokeDasharray="8 6" opacity="0.3" />
           <ellipse cx="240" cy="100" rx="60" ry="28" stroke="white" strokeWidth="0.8" fill="none" opacity="0.35" />
         </motion.svg>
+        )}
 
         {/* Main container */}
         <div className="relative z-10 h-full flex flex-col justify-between px-5 pt-4 pb-5">
