@@ -109,8 +109,8 @@ function NavItem({
         {active && (
           <motion.span
             layoutId="premium-nav-indicator"
-            className="absolute -top-2.5 left-1/2 -translate-x-1/2 h-1 rounded-full"
-            style={{ width: "20px", background: "hsl(var(--color-primary))" }}
+            className="absolute -top-2.5 left-1/2 h-1 rounded-full"
+            style={{ width: "20px", marginLeft: "-10px", background: "hsl(var(--color-primary))" }}
             initial={{ scaleX: 0, opacity: 0 }}
             animate={{ scaleX: 1, opacity: 1 }}
             exit={{ scaleX: 0, opacity: 0 }}

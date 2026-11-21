@@ -517,7 +517,7 @@ const TurfDetail = () => {
   return (
     <MobileShell>
       <div className="relative aspect-[16/9] w-full overflow-hidden rounded-b-3xl shadow-[0_8px_32px_rgba(0,0,0,0.18)]">
-        <Carousel setApi={setCarouselApi} className="w-full h-full" opts={{ loop: true }}>
+        <Carousel setApi={setCarouselApi} className="w-full h-full [&>div]:h-full" opts={{ loop: true }}>
           <CarouselContent className="h-full ml-0">
             {headerImages.map((src, idx) => (
               <CarouselItem key={idx} className="relative h-full pl-0">
