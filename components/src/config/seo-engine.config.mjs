@@ -99,5 +99,11 @@ export function resolveSeoFlags(env = {}) {
     // item 1: opt-in soft fallback for pre-migration environments only.
     allowUnfilteredTurfsFallback:
       bool(env.SEO_ALLOW_UNFILTERED_TURFS) || bool(env.VITE_SEO_ALLOW_UNFILTERED_TURFS),
+    // Round-3 item 3: rating/review markup OFF until reviews are verified
+    // (booking-linked). Enabling is an explicit owner action.
+    ratingMarkupEnabled:
+      bool(env.SEO_RATING_MARKUP_ENABLED) || bool(env.VITE_SEO_RATING_MARKUP_ENABLED),
+    // Phase 4c: Search Console integration is OPTIONAL and OFF by default.
+    gscEnabled: bool(env.SEO_GSC_ENABLED) || bool(env.VITE_SEO_GSC_ENABLED),
   };
 }

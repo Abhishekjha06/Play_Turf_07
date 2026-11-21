@@ -103,26 +103,35 @@ export async function listTurfs(opts: {
   return result;
   }
 
-  // Filtered read first. Owner review item 1: the unfiltered fallback is
-  // OPT-IN via VITE_SEO_ALLOW_UNFILTERED_TURFS (client-visible; pre-migration
-  // environments only) — by default a status-column failure fails LOUD with
-  // the fix in the message.
+  // Filtered read first. Owner round-3 item 1: the BROWSER never hard-fails
+  // on a missing status column — it degrades to the unfiltered read and logs
+  // ONCE (the app must keep working pre-migration). The PREBUILD stays strict:
+  // build scripts fail loud on the same error (they do not use this function).
   try {
     return await runQuery(true);
   } catch (err) {
     const msg = String((err as Error)?.message || "");
     if (/status|column|PGRST/i.test(msg)) {
-      const { resolveSeoFlags } = await import("@/config/seo-engine");
-      if (resolveSeoFlags(import.meta.env as unknown as Record<string, string>).allowUnfilteredTurfsFallback) {
-        return await runQuery(false);
-      }
-      throw new Error(
-        "listTurfs: the turfs.status column is unavailable — apply supabase_seo_001_foundation.sql " +
-          "(or set VITE_SEO_ALLOW_UNFILTERED_TURFS=1 for pre-migration environments). Original error: " + msg
-      );
+      warnStatusMissingOnce();
+      return await runQuery(false);
     }
     throw err;
   }
+}
+
+let _warnedStatusMissing = false;
+function warnStatusMissingOnce() {
+  if (_warnedStatusMissing) return;
+  _warnedStatusMissing = true;
+  console.warn(
+    "[seo] turfs.status column unavailable — showing all rows. " +
+      "Apply supabase_seo_001_foundation.sql to enable published-only filtering."
+  );
+}
+
+/** Exposed for tests: has the once-only warning fired? */
+export function statusWarningFired(): boolean {
+  return _warnedStatusMissing;
 }
 
 export async function getTurf(id: string): Promise<Turf> {

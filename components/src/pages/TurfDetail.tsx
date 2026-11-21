@@ -26,6 +26,7 @@ import { toast } from "sonner";
 import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from "@/ui/carousel";
 import { MobileGallery } from "@/ui/MobileGallery";
 import { SimilarTurfsNearby } from "@/turf/SimilarTurfsNearby";
+import { TurfInternalLinks } from "@/turf/TurfInternalLinks";
 import { formatDateDMY } from "@/open-games/OpenGameCard";
 
 /** "today" / "tomorrow" / DD-MM-YYYY — from the game's real date. */
@@ -994,6 +995,7 @@ const TurfDetail = () => {
 
         {/* Similar Turfs Nearby — Recommendation Engine V1 */}
         <section ref={nearbyRef} className="mt-5 mb-2 scroll-mt-16">
+          <TurfInternalLinks turf={turf} />
           <SimilarTurfsNearby currentTurf={turf} selectedSport={selectedSport} />
         </section>
       </motion.div>

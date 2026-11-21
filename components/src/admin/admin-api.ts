@@ -578,3 +578,182 @@ export async function patchLandingPage(
     role
   );
 }
+
+
+export async function listOutboxJobs(): Promise<{ rows: { id: number; entity_id: string; op: string; status: string; created_at: string }[]; missingSchema: boolean }> {
+  const supabase = await getSupabase();
+  const { data, error } = await supabase
+    .from('seo_generation_jobs')
+    .select('id, entity_id, op, status, created_at')
+    .in('status', ['pending', 'processing'])
+    .order('created_at', { ascending: true })
+    .limit(200);
+  if (error) {
+    if (isMissingSchemaError(error)) return { rows: [], missingSchema: true };
+    throw error;
+  }
+  return { rows: (data || []) as unknown as { id: number; entity_id: string; op: string; status: string; created_at: string }[], missingSchema: false };
+}
+
+
+// ---------------------------------------------------------------------------
+// Phase 4a: per-turf metadata management (edit + 301 + lock + version + rollback)
+// ---------------------------------------------------------------------------
+
+export type TurfSeoMetadataRow = {
+  id: number;
+  entity_id: string;
+  seo_title: string | null;
+  meta_description: string | null;
+  h1: string | null;
+  slug: string | null;
+  canonical_url: string | null;
+  robots_index: boolean;
+  status: string;
+  version: number;
+  locked_fields: string[];
+  updated_at: string;
+};
+
+export async function listTurfSeoMetadata(): Promise<{ rows: TurfSeoMetadataRow[]; missingSchema: boolean }> {
+  const supabase = await getSupabase();
+  const { data, error } = await supabase
+    .from('seo_metadata')
+    .select('id, entity_id, seo_title, meta_description, h1, slug, canonical_url, robots_index, status, version, locked_fields, updated_at')
+    .eq('entity_type', 'turf')
+    .order('updated_at', { ascending: false })
+    .limit(200);
+  if (error) {
+    if (isMissingSchemaError(error)) return { rows: [], missingSchema: true };
+    throw error;
+  }
+  return { rows: (data || []) as unknown as TurfSeoMetadataRow[], missingSchema: false };
+}
+
+/**
+ * Admin edit of a turf's metadata. Master prompt §2.7/§15:
+ *  - the edited fields are LOCKED (never overwritten by regeneration)
+ *  - a version snapshot is stored BEFORE the change (rollback surface)
+ *  - a slug change writes a 301 from the old URL to the new one
+ */
+export async function patchTurfSeoMetadata(
+  id: number,
+  patch: { seo_title?: string; meta_description?: string; slug?: string; robots_index?: boolean },
+  prev: TurfSeoMetadataRow,
+  role?: string | null
+) {
+  return withAudit(
+    { action: 'seo.metadata.patch', recordId: String(id) },
+    async () => {
+      const supabase = await getSupabase();
+      // 1. version snapshot of the CURRENT state
+      await supabase.from('seo_metadata_versions').insert({
+        seo_metadata_id: id,
+        version: prev.version,
+        snapshot: { ...prev },
+        changed_by: role || 'admin',
+        change_reason: 'admin-edit',
+      });
+      // 2. slug change → 301 (old URL keeps working forever)
+      if (patch.slug && prev.slug && patch.slug !== prev.slug) {
+        await supabase.from('seo_redirects').upsert(
+          { from_path: '/turf/' + prev.slug, to_path: '/turf/' + patch.slug, status_code: 301, reason: 'admin_slug_change', target_robots: 'index' },
+          { onConflict: 'from_path' }
+        );
+      }
+      // 3. locked fields accumulate (admin edits win over regeneration)
+      const locked = [...new Set([...(prev.locked_fields || []), ...Object.keys(patch)])];
+      // 4. the update itself (version bumps, content_hash preserved)
+      const { data, error } = await supabase
+        .from('seo_metadata')
+        .update({
+          ...patch,
+          locked_fields: locked,
+          status: patch.robots_index === false ? prev.status : 'published',
+          version: prev.version + 1,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    role
+  );
+}
+
+/** Roll back to a stored version snapshot (master prompt §15 rollback). */
+export async function rollbackTurfSeoMetadata(id: number, version: number, role?: string | null) {
+  return withAudit(
+    { action: 'seo.metadata.rollback', recordId: String(id) + '@' + version },
+    async () => {
+      const supabase = await getSupabase();
+      const { data: snap, error: snapErr } = await supabase
+        .from('seo_metadata_versions')
+        .select('snapshot')
+        .eq('seo_metadata_id', id)
+        .eq('version', version)
+        .maybeSingle();
+      if (snapErr) throw snapErr;
+      if (!snap?.snapshot) throw new Error('version not found');
+      const snapRow = snap.snapshot as Record<string, unknown>;
+      const { data: prev, error: prevErr } = await supabase
+        .from('seo_metadata')
+        .select('version')
+        .eq('id', id)
+        .single();
+      if (prevErr) throw prevErr;
+      const { data, error } = await supabase
+        .from('seo_metadata')
+        .update({
+          seo_title: snapRow.seo_title,
+          meta_description: snapRow.meta_description,
+          slug: snapRow.slug,
+          robots_index: snapRow.robots_index,
+          version: (prev?.version || 0) + 1,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    role
+  );
+}
+
+/** Admin 'Regenerate' — enqueues a fresh outbox job (worker picks it up). */
+export async function regenerateTurfSeo(entityId: string, role?: string | null) {
+  return withAudit(
+    { action: 'seo.metadata.regenerate', recordId: entityId },
+    async () => {
+      const supabase = await getSupabase();
+      const { data, error } = await supabase
+        .from('seo_generation_jobs')
+        .insert({
+          entity_type: 'turf',
+          entity_id: entityId,
+          op: 'updated',
+          content_hash: 'admin-forced:' + Date.now(),
+          payload: { forced: true },
+        });
+      if (error) throw error;
+      return data;
+    },
+    role
+  );
+}
+
+
+export async function listTurfSeoVersions(id: number): Promise<{ rows: { version: number; created_at: string; change_reason: string | null }[] }> {
+  const supabase = await getSupabase();
+  const { data, error } = await supabase
+    .from('seo_metadata_versions')
+    .select('version, created_at, change_reason')
+    .eq('seo_metadata_id', id)
+    .order('version', { ascending: false });
+  if (error) throw error;
+  return { rows: (data || []) as unknown as { version: number; created_at: string; change_reason: string | null }[] };
+}

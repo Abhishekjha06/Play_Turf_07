@@ -13,10 +13,20 @@
 
 name: seo-worker
 
+# NOTE: GitHub runs SCHEDULED workflows only from the DEFAULT branch — on
+# feature branches the schedule is dormant (safe). Production runs are an
+# explicit workflow_dispatch against the 'production' GitHub environment.
 on:
   schedule:
-    - cron: "*/15 * * * *" # every 15 minutes
-  workflow_dispatch: {} # manual run button
+    - cron: "*/15 * * * *" # every 15 minutes (default branch only)
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "GitHub environment (secrets scope)"
+        required: true
+        default: "staging"
+        type: choice
+        options: [staging, production]
 
 concurrency:
   group: seo-worker
@@ -26,6 +36,9 @@ jobs:
   drain-and-alert:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    # Environment selects the secret scope: staging (schedule) or production
+    # (dispatch). Define SEOWORKER_* secrets separately per GitHub environment.
+    environment: ${{ github.event_name == 'schedule' && 'staging' || inputs.environment }}
     env:
       SUPABASE_URL: ${{ secrets.SEOWORKER_SUPABASE_URL }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SEOWORKER_SUPABASE_SERVICE_KEY }}

@@ -16,6 +16,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { siteOrigin, assertProductionOrigin, canonicalizeUrl } from "../src/lib/seo-engine/canonical.shared.mjs";
+import { evaluateLandingPage } from "../src/lib/seo-engine/associations.shared.mjs";
 import { resolveSeoFlags } from "../src/config/seo-engine.config.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -125,7 +126,11 @@ try {
 }
 
 // 3. Data-driven routes from real venues
+// Owner round-3 item 5: city/sport landing URLs are evaluated against the
+// Phase 3 thresholds — only INDEXABLE candidates enter the sitemap, matching
+// the SPA's noindex behaviour exactly (no sitemap/noindex contradiction).
 let turfCount = 0;
+let landingDropped = 0;
 try {
   const turfs = await fetchTurfs();
   turfCount = Array.isArray(turfs) ? turfs.length : 0;
@@ -140,7 +145,15 @@ try {
 
   for (const [city, list] of byCity) {
     const citySlug = slugify(city);
-    add(`/turfs/${citySlug}`, { priority: "0.8" });
+
+    // city page: indexable only when the Phase 3 thresholds pass
+    const cityEval = evaluateLandingPage("location", { listings: list });
+    if (cityEval.indexable) {
+      add(`/turfs/${citySlug}`, { priority: "0.8" });
+    } else {
+      landingDropped += 1;
+    }
+
     for (const t of list) {
       const slug = [slugify(t.name), slugify(t.id)].filter(Boolean).join("-");
       const img = t.image
@@ -148,17 +161,22 @@ try {
         : undefined;
       add(`/turf/${slug}`, { priority: "0.8", changefreq: "weekly", image: img });
     }
-  }
 
-  // sport+city combos that actually exist
-  // (skip obvious test/junk sport names living in the DB)
-  const sportOk = (s) =>
-    /^[a-z][a-z0-9 &-]{1,30}$/i.test(s) && !/test|demo|sample|debug/i.test(s);
-  for (const [city, list] of byCity) {
-    const sports = new Set(list.flatMap((t) => t.sport_types || []).filter(sportOk));
-    for (const s of sports) {
-      add(`/sports/${slugify(s)}/${slugify(city)}`, { priority: "0.7" });
+    // sport+city combos that actually exist — indexable only above thresholds
+    const sportOk = (s) =>
+      /^[a-z0-9][a-z0-9 &-]{1,30}$/i.test(s) && !/test|demo|sample|debug/i.test(s);
+    for (const sport of new Set(list.flatMap((t) => t.sport_types || []).filter(sportOk))) {
+      const sportList = list.filter((t) => (t.sport_types || []).includes(sport));
+      const sportEval = evaluateLandingPage("category_location", { listings: sportList, parentListings: list });
+      if (sportEval.indexable) {
+        add(`/sports/${slugify(sport)}/${citySlug}`, { priority: "0.7" });
+      } else {
+        landingDropped += 1;
+      }
     }
+  }
+  if (landingDropped) {
+    console.warn(`⚠ sitemap: ${landingDropped} landing URL(s) omitted — below Phase 3 thresholds (SPA noindexes them too).`);
   }
 } catch (err) {
   console.warn(`⚠ Could not fetch venues (${err.message}) — sitemap contains static routes only.`);

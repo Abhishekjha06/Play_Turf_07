@@ -23,6 +23,7 @@ const env = { ...readViteEnv(), ...process.env }; // readViteEnv is a hoisted fu
 // Amendment 2: ONE origin source + production build guard (*.vercel.app fails).
 const ORIGIN = siteOrigin(env);
 assertProductionOrigin(env);
+const FLAGS = resolveSeoFlags(env);
 
 function readViteEnv() {
   const env = {};
@@ -228,7 +229,7 @@ for (const [city, list] of byCity) {
     const jsonld = [
       buildTurfJsonLd(
         { ...t, slug },
-        reviewsByTurf.get(t.id) || [],
+        FLAGS.ratingMarkupEnabled ? reviewsByTurf.get(t.id) || [] : [],
         { absoluteUrl: abs }
       ),
       buildBreadcrumbJsonLd(

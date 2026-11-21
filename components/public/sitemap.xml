@@ -1,77 +1,71 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <url>
-    <loc>https://play-turf-git-main-abhishekjha06s-projects.vercel.app/</loc>
+    <loc>https://playturf.example.com/</loc>
     <lastmod>2026-11-21</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
     <image:image>
-      <image:loc>https://play-turf-git-main-abhishekjha06s-projects.vercel.app/og-image.jpg</image:loc>
+      <image:loc>https://playturf.example.com/og-image.jpg</image:loc>
       <image:title>PlayTurf — Book Sports Turfs &amp; Tournaments</image:title>
     </image:image>
   </url>
   <url>
-    <loc>https://play-turf-git-main-abhishekjha06s-projects.vercel.app/turfs/</loc>
+    <loc>https://playturf.example.com/turfs/</loc>
     <lastmod>2026-11-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://play-turf-git-main-abhishekjha06s-projects.vercel.app/sports/</loc>
+    <loc>https://playturf.example.com/sports/</loc>
     <lastmod>2026-11-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://play-turf-git-main-abhishekjha06s-projects.vercel.app/open-games/</loc>
+    <loc>https://playturf.example.com/open-games/</loc>
     <lastmod>2026-11-21</lastmod>
     <changefreq>hourly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://play-turf-git-main-abhishekjha06s-projects.vercel.app/tournaments/</loc>
+    <loc>https://playturf.example.com/tournaments/</loc>
     <lastmod>2026-11-21</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://play-turf-git-main-abhishekjha06s-projects.vercel.app/offers/</loc>
+    <loc>https://playturf.example.com/offers/</loc>
     <lastmod>2026-11-21</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://play-turf-git-main-abhishekjha06s-projects.vercel.app/blog/</loc>
+    <loc>https://playturf.example.com/blog/</loc>
     <lastmod>2026-11-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://play-turf-git-main-abhishekjha06s-projects.vercel.app/about/</loc>
+    <loc>https://playturf.example.com/about/</loc>
     <lastmod>2026-11-21</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://play-turf-git-main-abhishekjha06s-projects.vercel.app/contact/</loc>
+    <loc>https://playturf.example.com/contact/</loc>
     <lastmod>2026-11-21</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://play-turf-git-main-abhishekjha06s-projects.vercel.app/privacy/</loc>
+    <loc>https://playturf.example.com/privacy/</loc>
     <lastmod>2026-11-21</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://play-turf-git-main-abhishekjha06s-projects.vercel.app/turfs/delhi/</loc>
-    <lastmod>2026-11-21</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://play-turf-git-main-abhishekjha06s-projects.vercel.app/turf/futsal-hub-turf-4/</loc>
+    <loc>https://playturf.example.com/turf/futsal-hub-turf-4/</loc>
     <lastmod>2026-11-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
@@ -81,13 +75,7 @@
     </image:image>
   </url>
   <url>
-    <loc>https://play-turf-git-main-abhishekjha06s-projects.vercel.app/turfs/bangalore/</loc>
-    <lastmod>2026-11-21</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://play-turf-git-main-abhishekjha06s-projects.vercel.app/turf/hilltop-grounds-turf-5/</loc>
+    <loc>https://playturf.example.com/turf/hilltop-grounds-turf-5/</loc>
     <lastmod>2026-11-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
@@ -97,7 +85,7 @@
     </image:image>
   </url>
   <url>
-    <loc>https://play-turf-git-main-abhishekjha06s-projects.vercel.app/turf/greenfield-arena-turf-1/</loc>
+    <loc>https://playturf.example.com/turf/greenfield-arena-turf-1/</loc>
     <lastmod>2026-11-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
@@ -107,13 +95,7 @@
     </image:image>
   </url>
   <url>
-    <loc>https://play-turf-git-main-abhishekjha06s-projects.vercel.app/turfs/mumbai/</loc>
-    <lastmod>2026-11-21</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://play-turf-git-main-abhishekjha06s-projects.vercel.app/turf/arena-360-turf-6/</loc>
+    <loc>https://playturf.example.com/turf/arena-360-turf-6/</loc>
     <lastmod>2026-11-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
@@ -123,7 +105,7 @@
     </image:image>
   </url>
   <url>
-    <loc>https://play-turf-git-main-abhishekjha06s-projects.vercel.app/turf/skyline-rooftop-turf-turf-2/</loc>
+    <loc>https://playturf.example.com/turf/skyline-rooftop-turf-turf-2/</loc>
     <lastmod>2026-11-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
@@ -133,13 +115,7 @@
     </image:image>
   </url>
   <url>
-    <loc>https://play-turf-git-main-abhishekjha06s-projects.vercel.app/turfs/dahisar-east/</loc>
-    <lastmod>2026-11-21</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://play-turf-git-main-abhishekjha06s-projects.vercel.app/turf/nine-stars-turfs-x-sportvot-turf-7-re/</loc>
+    <loc>https://playturf.example.com/turf/nine-stars-turfs-x-sportvot-turf-7-re/</loc>
     <lastmod>2026-11-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
@@ -149,13 +125,7 @@
     </image:image>
   </url>
   <url>
-    <loc>https://play-turf-git-main-abhishekjha06s-projects.vercel.app/turfs/hyderabad/</loc>
-    <lastmod>2026-11-21</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://play-turf-git-main-abhishekjha06s-projects.vercel.app/turf/boxcric-cage-turf-3/</loc>
+    <loc>https://playturf.example.com/turf/boxcric-cage-turf-3/</loc>
     <lastmod>2026-11-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
@@ -163,71 +133,5 @@
       <image:loc>https://images.unsplash.com/photo-1531415074968-036ba1b575da?auto=format&amp;fit=crop&amp;q=80&amp;w=1200</image:loc>
       <image:title>BoxCric Cage — sports turf in Hyderabad</image:title>
     </image:image>
-  </url>
-  <url>
-    <loc>https://play-turf-git-main-abhishekjha06s-projects.vercel.app/sports/futsal/delhi/</loc>
-    <lastmod>2026-11-21</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://play-turf-git-main-abhishekjha06s-projects.vercel.app/sports/football/delhi/</loc>
-    <lastmod>2026-11-21</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://play-turf-git-main-abhishekjha06s-projects.vercel.app/sports/football/bangalore/</loc>
-    <lastmod>2026-11-21</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://play-turf-git-main-abhishekjha06s-projects.vercel.app/sports/futsal/bangalore/</loc>
-    <lastmod>2026-11-21</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://play-turf-git-main-abhishekjha06s-projects.vercel.app/sports/football/mumbai/</loc>
-    <lastmod>2026-11-21</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://play-turf-git-main-abhishekjha06s-projects.vercel.app/sports/basketball/mumbai/</loc>
-    <lastmod>2026-11-21</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://play-turf-git-main-abhishekjha06s-projects.vercel.app/sports/cricket/mumbai/</loc>
-    <lastmod>2026-11-21</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://play-turf-git-main-abhishekjha06s-projects.vercel.app/sports/cricket/dahisar-east/</loc>
-    <lastmod>2026-11-21</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://play-turf-git-main-abhishekjha06s-projects.vercel.app/sports/football/dahisar-east/</loc>
-    <lastmod>2026-11-21</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://play-turf-git-main-abhishekjha06s-projects.vercel.app/sports/cricket/hyderabad/</loc>
-    <lastmod>2026-11-21</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://play-turf-git-main-abhishekjha06s-projects.vercel.app/sports/football/hyderabad/</loc>
-    <lastmod>2026-11-21</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
   </url>
 </urlset>

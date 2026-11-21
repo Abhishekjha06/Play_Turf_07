@@ -39,8 +39,6 @@ const args = new Set(process.argv.slice(2));
 const BATCH = Number((process.argv.find((a) => a === "--batch") && process.argv[process.argv.indexOf("--batch") + 1]) || SEO_ENGINE_CONFIG.bulkBatchSize);
 const DRY_RUN = args.has("--dry-run");
 const ONCE = args.has("--once");
-const HEALTH = args.has("--health");
-const STALE_MINUTES = Number((process.argv.find((a) => a === "--stale-minutes") && process.argv[process.argv.indexOf("--stale-minutes") + 1]) || 15);
 
 const here = dirname(fileURLToPath(import.meta.url));
 const env = { ...process.env };
@@ -54,7 +52,11 @@ for (const f of [".env", ".env.local"]) {
 }
 
 const FLAGS = resolveSeoFlags(env);
-if (!FLAGS.enabled) {
+const HEALTH = args.has("--health");
+const STALE_MINUTES = Number((process.argv.find((a) => a === "--stale-minutes") && process.argv[process.argv.indexOf("--stale-minutes") + 1]) || 15);
+// --health runs even when the engine is off (round-3 item 7: backlog ignored,
+// exit 0 — otherwise the scheduled runner would alert forever pre-enablement).
+if (!FLAGS.enabled && !HEALTH) {
   console.log("seo-worker: SEO_ENGINE_ENABLED is off — no-op (pre-engine behaviour).");
   process.exit(0);
 }
@@ -62,6 +64,12 @@ if (!FLAGS.enabled) {
 const SB_URL = env.SUPABASE_URL || env.VITE_SUPABASE_URL;
 const SERVICE_KEY = env.SUPABASE_SERVICE_ROLE_KEY;
 if (!SB_URL || !SERVICE_KEY) {
+  // --health without credentials: with the engine off there is no backlog to
+  // check — report ok instead of alerting forever (round-3 item 7).
+  if (HEALTH && !FLAGS.enabled) {
+    console.log("seo-worker --health: engine off and no DB credentials — backlog ignored (ok).");
+    process.exit(0);
+  }
   console.error("seo-worker: SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY required (jobs are admin-only via RLS).");
   process.exit(1);
 }
@@ -273,6 +281,12 @@ async function processJob(job) {
 }
 
 async function healthCheck() {
+  // Round-3 item 7: with the engine OFF the outbox is expected to sit idle —
+  // report ok instead of alerting (the schedule would otherwise fail forever).
+  if (!FLAGS.enabled) {
+    console.log("seo-worker --health: SEO_ENGINE_ENABLED off — backlog ignored (pre-engine behaviour).");
+    return;
+  }
   // Alert signal (owner round-2 item 3): outbox jobs stuck longer than
   // STALE_MINUTES mean the worker is not running on schedule — exit 1 so the
   // scheduled runner surfaces the failure (GitHub notification).

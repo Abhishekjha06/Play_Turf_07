@@ -12,6 +12,8 @@ import { toast } from "sonner";
 import {
   listSportCategories, listSportAliases, upsertSportAlias, deleteSportAlias,
   listValidationIssues, resolveValidationIssue, listLandingPages, patchLandingPage,
+  listOutboxJobs, listTurfSeoMetadata, patchTurfSeoMetadata, rollbackTurfSeoMetadata,
+  regenerateTurfSeo, listTurfSeoVersions,
 } from "../admin-api";
 import { ExternalLink, Globe, MapPin, Save, Trash2, Trophy } from "lucide-react";
 import {
@@ -24,7 +26,7 @@ import {
 } from "../admin-api";
 import type { AdminRole } from "../admin-rbac";
 
-type Tab = "global" | "pages" | "venues" | "technical" | "aliases" | "queue";
+type Tab = "global" | "pages" | "venues" | "technical" | "aliases" | "queue" | "metadata";
 
 export default function AdminSeo() {
   const { user } = useAuth();
@@ -46,20 +48,28 @@ export default function AdminSeo() {
   const [catRows, setCatRows] = useState<import("../admin-api").SportCategoryRow[]>([]);
   const [issueRows, setIssueRows] = useState<import("../admin-api").ValidationIssueRow[]>([]);
   const [landingRows, setLandingRows] = useState<import("../admin-api").LandingPageRow[]>([]);
+  const [outbox, setOutbox] = useState<{ rows: { id: number; entity_id: string; op: string; status: string; created_at: string }[]; missingSchema: boolean }>({ rows: [], missingSchema: false });
+  const [metaRows, setMetaRows] = useState<import("../admin-api").TurfSeoMetadataRow[]>([]);
+  const [metaMissing, setMetaMissing] = useState(false);
+  const [editingMeta, setEditingMeta] = useState<import("../admin-api").TurfSeoMetadataRow | null>(null);
+  const [metaForm, setMetaForm] = useState({ seo_title: "", meta_description: "", slug: "", robots_index: true });
+  const [metaVersions, setMetaVersions] = useState<{ version: number; created_at: string; change_reason: string | null }[]>([]);
   const [newAlias, setNewAlias] = useState("");
   const [newAliasCat, setNewAliasCat] = useState<number | "">("");
 
   const loadPhase3 = async () => {
-    const [cats, aliases, issues, landings] = await Promise.all([
+    const [cats, aliases, issues, landings, outboxJobs] = await Promise.all([
       listSportCategories().catch(() => ({ rows: [], missingSchema: true })),
       listSportAliases().catch(() => ({ rows: [], missingSchema: true })),
       listValidationIssues(true).catch(() => ({ rows: [], missingSchema: true })),
       listLandingPages().catch(() => ({ rows: [], missingSchema: true })),
+      listOutboxJobs().catch(() => ({ rows: [], missingSchema: true })),
     ]);
     setCatRows(cats.rows);
     setAliasRows(aliases.rows);
     setIssueRows(issues.rows);
     setLandingRows(landings.rows);
+    setOutbox(outboxJobs);
     if (cats.missingSchema || aliases.missingSchema) {
       toast.info("Phase 3 tables missing — apply supabase_seo_001_foundation.sql.");
     }
@@ -108,6 +118,11 @@ export default function AdminSeo() {
   };
 
   useEffect(() => {
+    if (tab === "metadata") {
+      listTurfSeoMetadata()
+        .then((r) => { setMetaRows(r.rows); setMetaMissing(r.missingSchema); })
+        .catch(() => setMetaMissing(true));
+    }
     if (tab === "aliases" || tab === "queue") loadPhase3();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab]);
@@ -180,6 +195,75 @@ export default function AdminSeo() {
       else toast.error((e as Error).message || "Save failed");
     }
   };
+
+  // ── Phase 4a helpers: edit (lock/301/snapshot), rollback, regenerate, validate ──
+  const openMetaEdit = async (row: import("../admin-api").TurfSeoMetadataRow) => {
+    setEditingMeta(row);
+    setMetaForm({
+      seo_title: row.seo_title || "",
+      meta_description: row.meta_description || "",
+      slug: row.slug || "",
+      robots_index: row.robots_index,
+    });
+    try {
+      const v = await listTurfSeoVersions(row.id);
+      setMetaVersions(v.rows);
+    } catch {
+      setMetaVersions([]);
+    }
+  };
+
+  const validateMeta = (m: { seo_title: string; meta_description: string; slug: string }) => {
+    const checks: Array<{ ok: boolean; label: string }> = [
+      { ok: m.seo_title.length > 0 && m.seo_title.length <= 60, label: `title ${m.seo_title.length}/60 chars` },
+      { ok: m.meta_description.length >= 120 && m.meta_description.length <= 160, label: `description ${m.meta_description.length}/160 (min 120)` },
+      { ok: /^[a-z0-9-]+$/.test(m.slug), label: "slug is lowercase-hyphen ASCII" },
+      { ok: !m.meta_description || !/\b(best|cheapest|number one|#1)\b/i.test(m.meta_description), label: "no banned superlatives" },
+    ];
+    return checks;
+  };
+
+  const saveMeta = async () => {
+    if (!editingMeta) return;
+    try {
+      await patchTurfSeoMetadata(
+        editingMeta.id,
+        {
+          seo_title: metaForm.seo_title,
+          meta_description: metaForm.meta_description,
+          slug: metaForm.slug,
+          robots_index: metaForm.robots_index,
+        },
+        editingMeta,
+        user?.role ?? null
+      );
+      toast.success("Metadata saved (version snapshot + field lock + 301 on slug change)");
+      setEditingMeta(null);
+      listTurfSeoMetadata().then((r) => { setMetaRows(r.rows); setMetaMissing(r.missingSchema); });
+    } catch (e) {
+      toast.error("Save failed: " + (e as Error).message);
+    }
+  };
+
+  const rollback = async (id: number, version: number) => {
+    try {
+      await rollbackTurfSeoMetadata(id, version, user?.role ?? null);
+      toast.success(`Rolled back to version ${version}`);
+      listTurfSeoMetadata().then((r) => setMetaRows(r.rows));
+    } catch (e) {
+      toast.error("Rollback failed: " + (e as Error).message);
+    }
+  };
+
+  const regenerate = async (entityId: string) => {
+    try {
+      await regenerateTurfSeo(entityId, user?.role ?? null);
+      toast.success("Regeneration job queued — the worker will pick it up");
+    } catch (e) {
+      toast.error("Queue failed: " + (e as Error).message);
+    }
+  };
+
 
   return (
     <PermissionGuard role={myRole} permission="seo.view">
@@ -306,6 +390,18 @@ export default function AdminSeo() {
             ]}
             emptyLabel="No venues."
           />
+        </div>
+      )}
+
+      {tab === "technical" && (
+        <div className="mb-4 max-w-2xl rounded-2xl border border-white/[0.06] bg-[#0d0f0e] p-4">
+          <h3 className="text-xs font-black uppercase tracking-wider text-zinc-300">Search Console integration — OFF (optional)</h3>
+          <p className="mt-1 text-[11px] text-zinc-500">
+            Impressions/clicks/index-coverage per page type will surface here once
+            <code className="mx-1 rounded bg-white/10 px-1">SEO_GSC_ENABLED=1</code>
+            is set and a service account is configured (runbook §9a). The engine
+            works fully without it — Search Console submission stays a manual step.
+          </p>
         </div>
       )}
 
@@ -437,6 +533,28 @@ export default function AdminSeo() {
       {tab === "queue" && (
         <div className="space-y-4">
           <div className="max-w-4xl rounded-2xl border border-white/[0.06] bg-[#0d0f0e] p-5">
+            <h3 className="mb-2 text-xs font-black uppercase tracking-wider text-zinc-300">Outbox health (seo_generation_jobs)</h3>
+            {(() => {
+              const pending = outbox.rows;
+              const oldest = pending.length
+                ? Math.round((Date.now() - new Date(pending[0].created_at).getTime()) / 60000)
+                : null;
+              const stale = oldest !== null && oldest > 15;
+              return (
+                <div className="flex items-center gap-3 text-xs">
+                  <span className={stale ? "rounded-lg bg-rose-400/15 px-2.5 py-1 font-black text-rose-300" : "rounded-lg bg-teal-400/10 px-2.5 py-1 font-black text-teal-300"}>
+                    {pending.length} pending
+                  </span>
+                  <span className={stale ? "font-bold text-rose-300" : "text-zinc-400"}>
+                    {oldest === null ? "queue empty — worker is keeping up" : `oldest job ${oldest} min old${stale ? " — STALE (worker not running?)" : ""}`}
+                  </span>
+                  {stale && <span className="text-[10px] uppercase tracking-wider text-rose-400">check seo-worker schedule</span>}
+                </div>
+              );
+            })()}
+          </div>
+
+          <div className="max-w-4xl rounded-2xl border border-white/[0.06] bg-[#0d0f0e] p-5">
             <h3 className="mb-2 text-xs font-black uppercase tracking-wider text-zinc-300">Review queue — validation issues</h3>
             <div className="space-y-2">
               {issueRows.map((i) => (
@@ -476,6 +594,143 @@ export default function AdminSeo() {
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+      {tab === "metadata" && (
+        <div className="space-y-4">
+          {metaMissing && <MigrationBanner what="seo_metadata table is not installed — apply supabase_seo_001_foundation.sql, then run the worker to generate metadata." />}
+
+          {!metaMissing && (
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-6">
+              {(() => {
+                const total = metaRows.length;
+                const titles = metaRows.map((r) => r.seo_title || "");
+                const descs = metaRows.map((r) => r.meta_description || "");
+                const dupTitles = total - new Set(titles).size;
+                const dupDescs = total - new Set(descs).size;
+                const indexable = metaRows.filter((r) => r.robots_index).length;
+                const locked = metaRows.filter((r) => (r.locked_fields || []).length > 0).length;
+                const cards: Array<[string, string | number]> = [
+                  ["metadata rows", total],
+                  ["noindex", total - indexable],
+                  ["indexable", indexable],
+                  ["duplicate titles", dupTitles],
+                  ["duplicate descriptions", dupDescs],
+                  ["field-locked", locked],
+                ];
+                return cards.map(([label, value]) => (
+                  <div key={label} className="rounded-2xl border border-white/[0.06] bg-[#0d0f0e] p-4">
+                    <p className="text-[10px] font-black uppercase tracking-wider text-zinc-500">{label}</p>
+                    <p className="mt-1 text-2xl font-black text-zinc-100">{value}</p>
+                  </div>
+                ));
+              })()}
+            </div>
+          )}
+
+          {!metaMissing && (
+            <div className="overflow-x-auto rounded-2xl border border-white/[0.06] bg-[#0d0f0e] p-5">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="text-[10px] uppercase tracking-wider text-zinc-500">
+                    <th className="py-2">Venue</th><th>Title</th><th>Slug</th><th>Robots</th><th>v</th><th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {metaRows.map((row) => (
+                    <tr key={row.id} className="border-t border-white/[0.04]">
+                      <td className="py-2 font-bold text-zinc-100">{row.entity_id}</td>
+                      <td className="max-w-[220px] truncate text-zinc-400">{row.seo_title || "—"}</td>
+                      <td className="text-zinc-400">{row.slug || "—"}</td>
+                      <td>{row.robots_index ? <span className="text-teal-300">index</span> : <span className="text-amber-300">noindex</span>}</td>
+                      <td className="text-zinc-500">v{row.version}</td>
+                      <td className="space-x-1.5 whitespace-nowrap">
+                        <button onClick={() => openMetaEdit(row)} className="rounded-lg border border-white/10 px-2 py-1 text-[10px] font-bold text-teal-300 hover:bg-teal-400/10">Edit</button>
+                        <button onClick={() => regenerate(row.entity_id)} className="rounded-lg border border-white/10 px-2 py-1 text-[10px] font-bold text-zinc-300 hover:bg-white/5">Regenerate</button>
+                        {metaVersions[0] && metaRows.find((r) => r.id === row.id) && (
+                          <select
+                            onChange={(e) => { if (e.target.value) rollback(row.id, Number(e.target.value)); e.target.value = ""; }}
+                            defaultValue=""
+                            className="rounded-lg border border-white/10 bg-[#0a0c0b] px-1.5 py-1 text-[10px] text-zinc-300"
+                          >
+                            <option value="">Rollback…</option>
+                          </select>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                  {!metaRows.length && <tr><td colSpan={6} className="py-3 text-zinc-500">No metadata rows yet — run the worker (Phase 2).</td></tr>}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {editingMeta && (
+            <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/70 p-4 backdrop-blur-sm">
+              <div className="my-8 w-full max-w-2xl rounded-2xl border border-white/10 bg-[#0d0f0e] p-5">
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="text-sm font-black text-zinc-100">Edit metadata — {editingMeta.entity_id} (v{editingMeta.version})</h3>
+                  <button onClick={() => setEditingMeta(null)} className="text-zinc-400 hover:text-zinc-100">✕</button>
+                </div>
+
+                {/* SERP preview (master prompt §15) */}
+                <div className="mb-4 rounded-xl border border-white/[0.06] bg-white p-3 text-[#1a0dab]">
+                  <p className="text-[11px] text-[#006621]">{SITE_ORIGIN.toLowerCase()}/turf/{metaForm.slug || "…"}/</p>
+                  <p className="truncate text-lg font-medium">{metaForm.seo_title || "(no title)"}</p>
+                  <p className="text-xs text-[#545454]">{(metaForm.meta_description || "(no description)").slice(0, 160)}</p>
+                </div>
+
+                <div className="mb-3 space-y-1">
+                  {validateMeta(metaForm).map((c) => (
+                    <p key={c.label} className={c.ok ? "text-[11px] text-teal-300" : "text-[11px] text-amber-300"}>
+                      {c.ok ? "✓" : "✗"} {c.label}
+                    </p>
+                  ))}
+                  <a
+                    href={"https://search.google.com/test/rich-results?url=" + encodeURIComponent(SITE_ORIGIN + "/turf/" + (metaForm.slug || "") + "/")}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-1 inline-block text-[11px] font-bold text-teal-300 underline"
+                  >
+                    Open Google Rich Results Test ↗
+                  </a>
+                </div>
+
+                <div className="space-y-3">
+                  <label className="block">
+                    <span className="mb-1 block text-[10px] font-black uppercase tracking-wider text-zinc-500">Title (≤60 chars — editing locks it from regeneration)</span>
+                    <input value={metaForm.seo_title} onChange={(e) => setMetaForm({ ...metaForm, seo_title: e.target.value })} className="h-10 w-full rounded-xl border border-white/10 bg-[#0a0c0b] px-3 text-sm text-zinc-100 outline-none" />
+                  </label>
+                  <label className="block">
+                    <span className="mb-1 block text-[10px] font-black uppercase tracking-wider text-zinc-500">Meta description (120–160)</span>
+                    <textarea value={metaForm.meta_description} onChange={(e) => setMetaForm({ ...metaForm, meta_description: e.target.value })} rows={3} className="w-full rounded-xl border border-white/10 bg-[#0a0c0b] p-3 text-sm text-zinc-100 outline-none" />
+                  </label>
+                  <label className="block">
+                    <span className="mb-1 block text-[10px] font-black uppercase tracking-wider text-zinc-500">Slug (change writes a 301 from the old URL)</span>
+                    <input value={metaForm.slug} onChange={(e) => setMetaForm({ ...metaForm, slug: e.target.value })} className="h-10 w-full rounded-xl border border-white/10 bg-[#0a0c0b] px-3 text-sm text-zinc-100 outline-none" />
+                  </label>
+                  <label className="flex items-center gap-2 text-xs text-zinc-300">
+                    <input type="checkbox" checked={metaForm.robots_index} onChange={(e) => setMetaForm({ ...metaForm, robots_index: e.target.checked })} className="h-4 w-4 accent-teal-500" />
+                    Indexable (admin noindex always wins over thresholds)
+                  </label>
+                  <label className="block">
+                    <span className="mb-1 block text-[10px] font-black uppercase tracking-wider text-zinc-500">Rollback to version</span>
+                    <select onChange={(e) => { if (e.target.value) { rollback(editingMeta.id, Number(e.target.value)); setEditingMeta(null); } }} defaultValue="" className="h-10 w-full rounded-xl border border-white/10 bg-[#0a0c0b] px-3 text-sm text-zinc-100 outline-none">
+                      <option value="">Choose a version…</option>
+                      {metaVersions.filter((v) => v.version < editingMeta.version).map((v) => (
+                        <option key={v.version} value={v.version}>v{v.version} — {new Date(v.created_at).toLocaleString()} {v.change_reason || ""}</option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+
+                <div className="mt-5 flex justify-end gap-2">
+                  <button onClick={() => setEditingMeta(null)} className="rounded-xl border border-white/10 px-4 py-2 text-xs font-bold text-zinc-300 hover:bg-white/5">Cancel</button>
+                  <button onClick={saveMeta} className="rounded-xl bg-teal-500 px-4 py-2 text-xs font-black uppercase tracking-wider text-[#04110e] hover:bg-teal-400">Save (locks edited fields)</button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </PermissionGuard>

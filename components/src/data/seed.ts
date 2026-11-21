@@ -19,6 +19,7 @@ export type Turf = {
   lat?: number;
   lng?: number;
   land_mark?: string;
+  locality?: string;
   landmark_lat?: number;
   landmark_long?: number;
 

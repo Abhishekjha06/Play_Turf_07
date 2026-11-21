@@ -21,6 +21,7 @@ import {
   evaluateLandingPage,
   uniqueContentWords,
 } from "../src/lib/seo-engine/associations.shared.mjs";
+import { coordsPlausibleForCity } from "../src/lib/seo-engine/locality.shared.mjs";
 import { slugifyBase } from "../src/lib/seo-engine/slug.shared.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -114,9 +115,35 @@ for (const [slug, entry] of cityMap) {
   }
 }
 
-console.log(`seo-landing-report — current data (${rows.length} published turfs)`);
+console.log(`seo-landing-report — ${rows.length} rows (status column not yet applied — migration 001)`);
 console.log(`thresholds: ${SEO_ENGINE_CONFIG.landingMinListings} listings / ${SEO_ENGINE_CONFIG.landingMinUniqueWords} words / overlap ${SEO_ENGINE_CONFIG.cannibalizationOverlapThreshold}`);
-console.log(`RESULT: indexable=${indexable} noindex=${noindex}`);
+
+// ── Per-row demo indicators (owner round-3 item 4) ──────────────────────────
+console.log("\n── rows with seed/demo indicators (archive candidates before indexing) ──");
+const cityPeers = new Map();
+for (const t of rows) {
+  const city = (t.city || "").trim();
+  if (!city) continue;
+  if (!cityPeers.has(city)) cityPeers.set(city, []);
+  if (Number.isFinite(t.lat) && Number.isFinite(t.lng)) cityPeers.get(city).push({ id: t.id, lat: t.lat, lng: t.lng });
+}
+for (const t of rows) {
+  const indicators = [];
+  const cat = resolveCategories(t.sport_types || [], categories, aliases);
+  for (const i of cat.issues) indicators.push(i.code);
+  const plausible = coordsPlausibleForCity(t, cityPeers.get((t.city || "").trim()) || []);
+  if (plausible === false) indicators.push("coords_mismatch_city");
+  if (/images\.unsplash\.com/i.test(t.image || "")) indicators.push("stock_image_unsplash");
+  if (/assets\/turf-\d+\.webp/i.test(t.image || "")) indicators.push("mock_image_local");
+  if (!(t.description || "").trim()) indicators.push("no_description");
+  if (indicators.length) {
+    console.log(`  ${t.id}  "${t.name}" [city=${t.city}] → ${indicators.join(", ")}`);
+  } else {
+    console.log(`  ${t.id}  "${t.name}" [city=${t.city}] → clean`);
+  }
+}
+
+console.log(`\nRESULT: indexable=${indexable} noindex=${noindex}`);
 console.log(lines.sort().join("\n"));
 console.log("\nNOTES: category pages auto-approve above thresholds (autoPublishTemplateSeo).");
 console.log("Location/locality pages NEVER auto-publish — eligible pages await admin approval in AdminSeo → Review queue.");

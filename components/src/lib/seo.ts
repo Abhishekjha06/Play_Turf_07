@@ -26,6 +26,7 @@ export const SITE_TAGLINE = "Book Sports Turfs & Tournaments Near You";
  *  value feeds build scripts, api/serve.js and the synced static files. */
 import { siteOrigin as _siteOrigin, canonicalizeUrl as _canonicalizeUrl } from "./seo-engine/canonical.shared.mjs";
 import { buildTurfJsonLd } from "./seo-engine/jsonld.turf.shared.mjs";
+import { resolveSeoFlags } from "../config/seo-engine.config.mjs";
 export const SITE_ORIGIN: string = _siteOrigin(import.meta.env as unknown as Record<string, string>);
 
 export const DEFAULT_OG_IMAGE = "/og-image.jpg";
@@ -130,8 +131,18 @@ function upsertLink(rel: string, href: string) {
   el.setAttribute("href", href);
 }
 
-/** Apply (idempotently) a page's full head configuration. */
+/** Apply (idempotently) a page's full head configuration.
+ *  Owner round-3 item 2: SEO errors are NEVER page crashes — every failure is
+ *  logged and swallowed; the page renders with whatever head it has. */
 export function applySeo(input: SeoInput): void {
+  try {
+    applySeoInner(input);
+  } catch (e) {
+    console.error("[seo] applySeo failed (page continues without head update):", e);
+  }
+}
+
+function applySeoInner(input: SeoInput): void {
   if (typeof document === "undefined") return;
 
   const robots = input.noindex
@@ -278,18 +289,27 @@ export function openingHoursFromTiming(timing: string | undefined) {
 /**
  * SportsActivityLocation for a venue — delegates to the shared engine builder
  * (lib/seo-engine/jsonld.turf.shared.mjs) so the SPA and the bot-HTML artifact
- * emit byte-identical markup from the same real data. Ratings/reviews are
- * included ONLY when genuine review rows exist (owner round-2 item 7).
+ * emit byte-identical markup from the same real data.
+ *
+ * Owner round-3 item 3: rating/review markup is emitted ONLY when
+ * seo_rating_markup_enabled is ON (default OFF) — and then only from genuine
+ * review rows (never the static rating column). See runbook §9a.
  */
 export function turfJsonLd(
   turf: Turf,
   reviews: Review[] = []
 ): object {
-  return buildTurfJsonLd(
-    { ...turf, slug: buildTurfSlug({ id: turf.id, name: turf.name }) } as Turf & { slug: string },
-    reviews,
-    { absoluteUrl: (p: string) => absoluteUrl(p) }
-  );
+  try {
+    const flags = resolveSeoFlags(import.meta.env as unknown as Record<string, string>);
+    return buildTurfJsonLd(
+      { ...turf, slug: buildTurfSlug({ id: turf.id, name: turf.name }) } as Turf & { slug: string },
+      flags.ratingMarkupEnabled ? reviews : [],
+      { absoluteUrl: (p: string) => absoluteUrl(p) }
+    );
+  } catch (e) {
+    console.error("[seo] turfJsonLd failed — page renders without venue schema:", e);
+    return {};
+  }
 }
 
 /** Article schema for blog guides. */

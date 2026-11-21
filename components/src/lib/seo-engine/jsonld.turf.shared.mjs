@@ -37,7 +37,9 @@ export function openingHoursFromTimingShared(timing) {
  * @param {object} turf real row (name, city, address, sport_types[], amenities[],
  *        price_per_hour, image, gallery[], timing, lat, lng)
  * @param {Array<{rating:number, user_name?:string, comment?:string, created_at?:string}>} reviews
- *        genuine visible review rows — [] means NO rating markup at all
+ *        genuine visible review rows — [] means NO rating markup at all.
+ *        Callers additionally gate on seo_rating_markup_enabled (round-3
+ *        item 3, default OFF) — this builder stays a pure function.
  * @param {{ absoluteUrl: (path: string) => string }} io environment helpers
  */
 export function buildTurfJsonLd(turf, reviews = [], { absoluteUrl }) {

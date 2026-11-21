@@ -238,12 +238,14 @@ describe("seo-engine redirect resolver", () => {
 // ── Feature flags (master prompt rule 5: off = pre-engine behaviour) ────────
 
 describe("seo-engine feature flags", () => {
-  it("default to OFF when no env is set (incl. the strict unfiltered-read gate)", () => {
+  it("default to OFF when no env is set (incl. the strict unfiltered-read + rating-markup gates)", () => {
     const f = resolveSeoFlags({});
     expect(f).toEqual({
       enabled: false, aiEnabled: false, landingPagesEnabled: false,
       sitemapEnabled: false, redirectsEnabled: false,
       allowUnfilteredTurfsFallback: false,
+      ratingMarkupEnabled: false,
+      gscEnabled: false,
     });
   });
 
