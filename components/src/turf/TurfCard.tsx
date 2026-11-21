@@ -66,7 +66,7 @@ export const TurfCard = React.memo(function TurfCard({
         style={{ willChange: "transform" }}
       >
         <div
-          className="flex flex-col w-full overflow-hidden"
+          className="relative flex flex-col w-full overflow-hidden"
           style={{
             background: "hsl(var(--color-surface-elevated))",
             borderRadius: "var(--radius-2xl)",
@@ -74,6 +74,13 @@ export const TurfCard = React.memo(function TurfCard({
             boxShadow: "var(--shadow-card)",
           }}
         >
+          {/* Stretched link — whole card opens the detail page; fav + Book Now sit above it */}
+          <Link
+            to={turfPath(turf)}
+            aria-label={`View ${turf.name} details`}
+            data-testid={`card-link-${turf.id}`}
+            className="absolute inset-0 z-10"
+          />
           {/* Image with zoom on card hover */}
           <div className="relative overflow-hidden flex-shrink-0" style={{ height: "140px" }}>
             <motion.img
@@ -91,7 +98,7 @@ export const TurfCard = React.memo(function TurfCard({
               whileTap={{ scale: 0.85 }}
               onClick={toggleFav}
               aria-label="Favourite"
-              className="absolute top-2.5 right-2.5 h-8 w-8 grid place-items-center rounded-full"
+              className="absolute top-2.5 right-2.5 z-20 h-8 w-8 grid place-items-center rounded-full"
               style={{ background: "hsl(var(--color-surface-elevated) / 0.92)", border: "1px solid hsl(var(--color-border-default))" }}
               data-testid={`fav-${turf.id}`}
             >
@@ -220,7 +227,7 @@ function RippleButton({
       ref={ref}
       to={to}
       onClick={handleTap}
-      className="relative w-full block text-center font-semibold rounded-full py-2 text-xs overflow-hidden"
+      className="relative z-20 w-full block text-center font-semibold rounded-full py-2 text-xs overflow-hidden"
       style={style}
       data-testid={testid}
     >
