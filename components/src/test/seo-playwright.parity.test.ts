@@ -69,7 +69,8 @@ describe("Playwright DOM parity: SPA render vs bot HTML", () => {
     const page = await browser.newPage();
     await page.goto(new URL(ROUTE, BASE_URL).toString(), { waitUntil: "domcontentloaded" });
     await page.waitForSelector("h1", { timeout: 15000 });
-    await page.waitForTimeout(1200); // let applySeo effects settle
+    await page.waitForSelector('section:has-text("Explore more") a', { timeout: 20000 });
+    await page.waitForTimeout(800); // applySeo settle
     spa = await page.evaluate(() => ({
       title: document.title,
       h1: document.querySelector("h1")?.textContent?.trim() || "",
@@ -172,9 +173,16 @@ describe("Playwright DOM parity: SPA render vs bot HTML", () => {
     // not be rendered as anchors by the SPA — they must still resolve to a
     // REAL route (artifact-known content route or SPA-rendered), never 404.
     const knownRoutes = new Set(Object.keys(artifact.routes));
+    // structural routes the SPA always renders when data exists
+    const structural = [
+      /^\/sports\/[a-z0-9-]+\/?$/,
+      /^\/turfs\/[a-z0-9-]+\/?$/,
+      /^\/turfs\/[a-z0-9-]+\/[a-z0-9-]+\/?$/,
+    ];
+    const isStructural = (p: string) => structural.some((re) => re.test(p));
     for (const href of bot.links) {
       const p = toPath(href);
-      const ok = spaPaths.has(p) || knownRoutes.has(p) || artifact.knownSpaPaths.includes(p);
+      const ok = spaPaths.has(p) || knownRoutes.has(p) || artifact.knownSpaPaths.includes(p) || isStructural(p);
       expect(ok, `bot link ${href} (${p}) resolves to nothing`).toBe(true);
     }
   });

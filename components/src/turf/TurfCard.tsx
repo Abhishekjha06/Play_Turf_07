@@ -20,6 +20,17 @@ export const TurfCard = React.memo(function TurfCard({
 }) {
   const [fav, setFav] = useState(false);
   const km = userLocation ? api.distanceKm(userLocation, turf) : null;
+  // Round-3 item 8: the static turfs.rating (admin-set, default 4.5) must not
+  // masquerade as a review aggregate. Show the chip ONLY with a genuine
+  // review count, displaying the real average.
+  const [reviewStat, setReviewStat] = useState<{ avg: number; count: number } | null>(null);
+  useEffect(() => {
+    let alive = true;
+    api.listReviewStats().then((stats) => {
+      if (alive) setReviewStat(stats.get(turf.id) || null);
+    }).catch(() => {});
+    return () => { alive = false; };
+  }, [turf.id]);
 
   const prefersReducedMotion =
     typeof window !== "undefined" &&
@@ -113,15 +124,17 @@ export const TurfCard = React.memo(function TurfCard({
               </motion.div>
             </motion.button>
 
+            {reviewStat && reviewStat.count > 0 && (
             <div
               className="absolute bottom-2.5 left-2.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full"
               style={{ background: "hsl(var(--color-surface-elevated) / 0.92)", border: "1px solid hsl(var(--color-border-default))" }}
             >
               <Star className="h-3 w-3" style={{ color: "hsl(var(--color-warning))", fill: "hsl(var(--color-warning))" }} />
               <span className="text-xs font-semibold" style={{ color: "hsl(var(--color-text-primary))" }}>
-                {turf.rating}
+                {reviewStat.avg}
               </span>
             </div>
+            )}
 
             {km !== null && Number.isFinite(km) && (
               <div

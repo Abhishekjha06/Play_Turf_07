@@ -117,6 +117,8 @@ async function sourceHash(turf) {
 }
 
 const syncCtx = { sb, issue, cache: {} };
+const aiState = { callsThisMinute: 0, minuteStartedAt: Math.floor(Date.now() / 60000) };
+const metaRowsForSimilarity = [];
 
 async function claimJobs() {
   return sb("rpc/seo_claim_jobs", {
@@ -264,7 +266,36 @@ async function processJob(job) {
       { ...turf, slug: turf.slug },
       { originEnv: env }
     );
+    // Phase 5: AI description path — gated by seo_ai_enabled (default OFF).
+    // The stub provider returns null (no network, no cost); when a real
+    // provider lands, its output MUST pass validateAiContent before the row
+    // moves to needs_review (approval in AdminSeo), else the deterministic
+    // template stays published.
+    if (FLAGS.aiEnabled && prev?.status !== 'approved') {
+      const { stubProvider, canCallAI } = await import("../src/lib/seo-engine/ai-provider.shared.mjs");
+      const { validateAiContent, injectionIssues } = await import("../src/lib/seo-engine/ai-validator.shared.mjs");
+      for (const i of injectionIssues(turf)) await issue("turf", turf.id, i.code, i.severity, i.message);
+      const guard = canCallAI(aiState, SEO_ENGINE_CONFIG);
+      if (guard.ok && !injectionIssues(turf).length) {
+        const ai = await stubProvider.generateDescription(turf, {});
+        if (ai && ai.text) {
+          const existing = metaRowsForSimilarity.map((r) => r.meta_description).filter(Boolean);
+          const v = validateAiContent(ai.text, turf, { minChars: 120, maxChars: 200, existingTexts: existing });
+          if (v.ok) {
+            metadata.generated_description = ai.text;
+            metadata.generated_by = "ai";
+            metadata.status = "needs_review"; // approval workflow, never auto-published
+          } else {
+            for (const i of v.issues) await issue("turf", turf.id, i.code, i.severity, i.message);
+          }
+        }
+      }
+    }
+
     await upsertMeta(metadata, prev, hash, FLAGS.enabled && SEO_ENGINE_CONFIG.autoPublishTemplateSeo);
+    if (metadata.meta_description && metaRowsForSimilarity.length < 200) {
+      metaRowsForSimilarity.push({ meta_description: metadata.meta_description });
+    }
     await log("turf", turfId, "turfs_trigger", "metadata", "success", { duration_ms: Date.now() - started });
     await markJob(id, "done");
   } catch (e) {

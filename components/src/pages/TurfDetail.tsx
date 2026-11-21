@@ -613,7 +613,7 @@ const TurfDetail = () => {
             <div className="shrink-0 rounded-2xl bg-panel-2 border border-white/5 px-3 py-2 text-center min-w-[92px]">
               <div className="flex items-center justify-center gap-1">
                 <Star className="h-5 w-5 fill-primary text-primary" />
-                <span className="font-bold text-lg leading-none">{turf.rating}</span>
+                <span className="font-bold text-lg leading-none">{reviews.length ? Math.round((reviews.reduce((s, r) => s + r.rating, 0) / reviews.length) * 10) / 10 : "–"}</span>
               </div>
               <div className="h-px bg-white/10 my-1.5" />
               <p className="text-xs text-muted2 whitespace-nowrap">

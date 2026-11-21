@@ -43,7 +43,7 @@ describe("migration 001 RLS structure (static)", () => {
     }
   });
 
-  it("creates admin-only policies with is_playturf_admin() (DO-block format)", () => {
+  it("creates admin-only policies with is_playturf_admin(auth.uid()) (DO-block format)", () => {
     // Policies are created via EXECUTE format(...) inside a DO block; assert
     // the table lists and the policy shape rather than literal policy names.
     for (const t of adminOnlyTables) {
@@ -52,7 +52,7 @@ describe("migration 001 RLS structure (static)", () => {
     for (const t of contentTables) {
       expect(sql).toMatch(new RegExp(`'${t}'`)); // in the content-tables loop
     }
-    expect(sql).toMatch(/FOR ALL TO authenticated USING \(public\.is_playturf_admin\(\)\) WITH CHECK \(public\.is_playturf_admin\(\)\)/);
+    expect(sql).toMatch(/FOR ALL TO authenticated USING \(public\.is_playturf_admin\(auth\.uid\(\)\)\) WITH CHECK \(public\.is_playturf_admin\(auth\.uid\(\)\)\)/);
   });
 
   it("has NO anon/public read policy on any base seo_* table (views only)", () => {
@@ -75,8 +75,8 @@ describe("migration 001 RLS structure (static)", () => {
   });
 
   it("worker RPCs are guarded and revoked from PUBLIC/anon", () => {
-    expect(sql).toMatch(/seo_worker_set_slug[\s\S]*?is_playturf_admin\(\) OR coalesce\(auth\.role\(\), ''\) = 'service_role'/);
-    expect(sql).toMatch(/seo_claim_jobs[\s\S]*?is_playturf_admin\(\) OR coalesce\(auth\.role\(\), ''\) = 'service_role'/);
+    expect(sql).toMatch(/seo_worker_set_slug[\s\S]*?is_playturf_admin\(auth\.uid\(\)\) OR coalesce\(auth\.role\(\), ''\) = 'service_role'/);
+    expect(sql).toMatch(/seo_claim_jobs[\s\S]*?is_playturf_admin\(auth\.uid\(\)\) OR coalesce\(auth\.role\(\), ''\) = 'service_role'/);
     expect(sql).toMatch(/REVOKE EXECUTE ON FUNCTION public\.seo_worker_set_slug\(text, text\) FROM PUBLIC, anon/);
     expect(sql).toMatch(/REVOKE EXECUTE ON FUNCTION public\.seo_claim_jobs\(integer\) FROM PUBLIC, anon/);
     // transaction-local GUC (pooler-safe): is_local := true, never a bare SET

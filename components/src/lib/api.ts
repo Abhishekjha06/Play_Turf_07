@@ -40,6 +40,7 @@ export const api = {
 
   // Turfs
   listTurfs: (opts?: Parameters<typeof turfsModule.listTurfs>[0]) => turfsModule.listTurfs(opts),
+  listReviewStats: () => turfsModule.listReviewStats(),
   getTurf: (id: string) => turfsModule.getTurf(id),
   distanceKm,
 

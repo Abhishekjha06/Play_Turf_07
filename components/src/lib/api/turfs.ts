@@ -387,3 +387,38 @@ export async function getSimilarTurfs(
     inFlight.delete(cacheKey);
   }
 }
+
+
+/**
+ * Round-3 item 8: the static turfs.rating column (default 4.5) must not be
+ * presented as a review aggregate on public pages. This fetches the genuine
+ * per-turf rating/count from the reviews table so UI can HIDE the rating chip
+ * when a venue has no reviews and REPLACE the value with the real average
+ * when it does. (AggregateRating JSON-LD additionally requires the
+ * seo_rating_markup_enabled flag — see jsonld.turf.shared.mjs.)
+ */
+let _reviewStatsCache: { data: Map<string, { avg: number; count: number }>; at: number } | null = null;
+const REVIEW_STATS_TTL = 60_000;
+
+export async function listReviewStats(): Promise<Map<string, { avg: number; count: number }>> {
+  if (_reviewStatsCache && Date.now() - _reviewStatsCache.at < REVIEW_STATS_TTL) {
+    return _reviewStatsCache.data;
+  }
+  const supabase = await getSupabase();
+  const out = new Map<string, { avg: number; count: number }>();
+  const { data, error } = await supabase.from('reviews').select('turf_id, rating');
+  if (!error) {
+    const sums = new Map<string, { sum: number; count: number }>();
+    for (const r of (data || []) as Array<{ turf_id: string; rating: number }>) {
+      const cur = sums.get(r.turf_id) || { sum: 0, count: 0 };
+      cur.sum += r.rating;
+      cur.count += 1;
+      sums.set(r.turf_id, cur);
+    }
+    for (const [turfId, v] of sums) {
+      out.set(turfId, { avg: Math.round((v.sum / v.count) * 10) / 10, count: v.count });
+    }
+  }
+  _reviewStatsCache = { data: out, at: Date.now() };
+  return out;
+}

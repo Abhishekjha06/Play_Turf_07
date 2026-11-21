@@ -10,8 +10,9 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { siteOrigin, assertProductionOrigin, buildRuntimeSeoConfig, canonicalizeUrl } from "../src/lib/seo-engine/canonical.shared.mjs";
-import { resolveSeoFlags } from "../src/config/seo-engine.config.mjs";
+import { resolveSeoFlags, SEO_DEFAULT_SPORTS, SEO_ENGINE_CONFIG } from "../src/config/seo-engine.config.mjs";
 import { buildTurfJsonLd, buildBreadcrumbJsonLd } from "../src/lib/seo-engine/jsonld.turf.shared.mjs";
+import { buildInternalLinks } from "../src/lib/seo-engine/internal-links.shared.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, "..");
@@ -203,6 +204,42 @@ try {
   // reviews unavailable → routes simply carry no rating markup (never fabricate)
 }
 
+// Phase 4b context for the internal-linking engine (item 6: Explore links
+// are name/locality-based — NEVER raw coordinates).
+const categoriesCtx = SEO_DEFAULT_SPORTS.map((name, i) => ({ id: i + 1, name, slug: slugify(name) }));
+const locationsCtx = [];
+const locIndex = new Map();
+let nextLocId = 10;
+for (const t of turfs) {
+  const city = (t.city || "").trim();
+  if (!city) continue;
+  const cSlug = slugify(city);
+  if (!locIndex.has(cSlug)) {
+    locIndex.set(cSlug, { id: nextLocId++, type: "city", name: city, slug: cSlug, parent_id: null });
+    locationsCtx.push(locIndex.get(cSlug));
+  }
+  const locality = String(t.locality || (t.address || "").split(",")[0] || "").trim();
+  if (locality.length >= 3) {
+    const lSlug = slugify(locality);
+    const key = cSlug + "/" + lSlug;
+    if (!locIndex.has(key)) {
+      locIndex.set(key, { id: nextLocId++, type: "locality", name: locality, slug: lSlug, parent_id: locIndex.get(cSlug).id });
+      locationsCtx.push(locIndex.get(key));
+    }
+  }
+}
+const slugForRow = (row) => slugify(row.name) + "-" + slugify(row.id);
+const turfsWithSlugs = turfs.map((t) => ({ ...t, slug: slugForRow(t) }));
+const linksCtx = {
+  categories: categoriesCtx,
+  locations: locationsCtx,
+  categoryById: new Map(categoriesCtx.map((c) => [c.id, c])),
+  locationById: new Map(locationsCtx.map((l) => [l.id, l])),
+  landings: [],
+  turfs: turfsWithSlugs,
+  knownRoutes: ["/", "/turfs", "/sports"],
+};
+
 const byCity = new Map();
 for (const t of turfs) {
   const city = (t.city || "").trim();
@@ -247,7 +284,19 @@ for (const [city, list] of byCity) {
         { h2: "Sports and facilities", body: `Sports offered: ${(t.sport_types || []).join(", ") || "—"}. Facilities: ${(t.amenities || []).join(", ") || "—"}.` },
         { h2: "Booking", body: `Hourly rate: ₹${t.price_per_hour} per hour, set by the venue. Choose a date and a free slot on the venue page; consecutive hours can be reserved together. Payments currently use a simulated checkout while a live gateway is integrated.` },
       ],
-      links: [["Turfs in " + city, `/turfs/${citySlug}`], ["All turfs", "/turfs"], ["Homepage", "/"]],
+      links: [
+        ...buildInternalLinks({ ...t, slug: slugForRow(t) }, { ...linksCtx, turfs: turfsWithSlugs, maxLinks: SEO_ENGINE_CONFIG.internalLinksMaxPerTurfPage })
+          .map((l) => [l.label, l.path]),
+        ...[
+          ["Turfs in " + city, `/turfs/${citySlug}`],
+          ["All turfs", "/turfs"],
+          ["Homepage", "/"],
+        ].filter(([_, p]) => {
+          const covered = buildInternalLinks({ ...t, slug: slugForRow(t) }, { ...linksCtx, turfs: turfsWithSlugs, maxLinks: SEO_ENGINE_CONFIG.internalLinksMaxPerTurfPage })
+            .map((l) => l.path.replace(/\/+$/, ""));
+          return !covered.includes(String(p).replace(/\/+$/, ""));
+        }),
+      ],
       jsonld,
     });
   }

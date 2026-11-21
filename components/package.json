@@ -14,7 +14,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "postbuild": "node scripts/copy-spa-index.mjs"
+    "postbuild": "node scripts/copy-spa-index.mjs",
+    "artifact:hygiene": "node scripts/check-artifact-hygiene.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",

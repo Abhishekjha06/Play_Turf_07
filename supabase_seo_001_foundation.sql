@@ -167,7 +167,7 @@ CREATE OR REPLACE FUNCTION public.seo_worker_set_slug(p_turf_id text, p_slug tex
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
   -- SECURITY DEFINER bypasses RLS, so guard explicitly: admin or service_role.
-  IF NOT (public.is_playturf_admin() OR coalesce(auth.role(), '') = 'service_role') THEN
+  IF NOT (public.is_playturf_admin(auth.uid()) OR coalesce(auth.role(), '') = 'service_role') THEN
     RAISE EXCEPTION 'seo_worker_set_slug: admin or service_role only';
   END IF;
   PERFORM set_config('app.seo_skip_trigger', 'on', true);
@@ -181,7 +181,7 @@ CREATE OR REPLACE FUNCTION public.seo_claim_jobs(p_batch integer DEFAULT 50)
 RETURNS TABLE (id bigint, entity_id text, op text, payload jsonb, attempts integer)
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
-  IF NOT (public.is_playturf_admin() OR coalesce(auth.role(), '') = 'service_role') THEN
+  IF NOT (public.is_playturf_admin(auth.uid()) OR coalesce(auth.role(), '') = 'service_role') THEN
     RAISE EXCEPTION 'seo_claim_jobs: admin or service_role only';
   END IF;
   PERFORM set_config('app.seo_skip_trigger', 'on', true);
@@ -345,6 +345,7 @@ CREATE TABLE IF NOT EXISTS public.seo_landing_pages (
   listing_count       integer NOT NULL DEFAULT 0,
   unique_content_words integer NOT NULL DEFAULT 0,
   is_indexable        boolean NOT NULL DEFAULT false,
+  route_path          text,  -- the REAL app route this landing page maps to (worker-written; single source for sitemap)
   -- Amendment 9: explicit, dashboard-flagged override to force index below
   -- threshold. Admin-only, audited; always produces a validation issue row.
   override_index      boolean NOT NULL DEFAULT false,
@@ -496,7 +497,7 @@ BEGIN
                            'seo_validation_issues', 'seo_redirects'] LOOP
     EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I', t || '_admin_all', t);
     EXECUTE format(
-      'CREATE POLICY %I ON public.%I FOR ALL TO authenticated USING (public.is_playturf_admin()) WITH CHECK (public.is_playturf_admin())',
+      'CREATE POLICY %I ON public.%I FOR ALL TO authenticated USING (public.is_playturf_admin(auth.uid())) WITH CHECK (public.is_playturf_admin(auth.uid()))',
       t || '_admin_all', t);
   END LOOP;
 
@@ -509,7 +510,7 @@ BEGIN
     EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I', t || '_admin_all', t);
     EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I', t || '_public_read', t);
     EXECUTE format(
-      'CREATE POLICY %I ON public.%I FOR ALL TO authenticated USING (public.is_playturf_admin()) WITH CHECK (public.is_playturf_admin())',
+      'CREATE POLICY %I ON public.%I FOR ALL TO authenticated USING (public.is_playturf_admin(auth.uid())) WITH CHECK (public.is_playturf_admin(auth.uid()))',
       t || '_admin_all', t);
   END LOOP;
 END;
@@ -541,7 +542,7 @@ WHERE status = 'published';
 DROP VIEW IF EXISTS public.seo_public_landing_pages;
 CREATE VIEW public.seo_public_landing_pages AS
 SELECT id, page_type, category_id, location_id, slug, listing_count,
-       unique_content_words, is_indexable, override_index, status, updated_at
+       unique_content_words, is_indexable, override_index, status, route_path, updated_at
 FROM public.seo_landing_pages;
 
 DROP VIEW IF EXISTS public.seo_public_categories;

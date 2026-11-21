@@ -181,6 +181,7 @@ describe("landing candidates (Phase 3)", () => {
       "location", "location", "location",
     ]);
     const banerCricket = c.find((x) => x.pageType === "category_location" && x.listings.length === 2);
-    expect(banerCricket?.slug).toBe("cricket-turf-baner");
+    expect(banerCricket?.routePath).toBe("/sports/cricket/pune/");
+    expect(banerCricket?.slug).toBe("cricket-pune"); // cat + CITY slug = the real /sports/cricket/pune route
   });
 });

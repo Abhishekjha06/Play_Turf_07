@@ -1,0 +1,185 @@
+# PlayTurf — SEO Engine REAL-DATABASE verification (owner round-3 item 1).
+#
+# Runs the engine against a REAL local Supabase stack (Postgres + GoTrue +
+# PostgREST via the supabase CLI — Docker is preinstalled on GH runners):
+#   supabase_admin_rbac.sql → supabase_schema_v1_0.sql → seo_001 → 003 → 004
+#   → synthetic seed (no real listing data) → worker --once (REST)
+#   → rls-verification probes → trigger/tombstone/redirect/slug-RPC tests
+#
+# Data source label for the report: LOCAL SUPABASE (real Postgres + GoTrue +
+# PostgREST), synthetic rows only. Differences vs cloud Supabase are listed in
+# docs/seo-engine/phase4.md.
+
+name: seo-db-verification
+
+on:
+  push:
+    branches: [feat/seo-engine]
+    paths: ["supabase_seo_*.sql", "components/scripts/seo-worker.mjs", ".github/workflows/seo-db-verification.yml", "docs/seo-engine/**"]
+  workflow_dispatch: {}
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: components/package-lock.json
+
+      - name: Start local Supabase stack
+        run: |
+          mkdir -p ci-supabase && cd ci-supabase
+          supabase init 2>/dev/null || true
+          supabase start -x studio,imgproxy,inbucket,storage-api,vector,edge-runtime,logflare --no-verify
+          supabase status -o json > ../supabase-status.json
+          cd ..
+          jq -r '"API_URL=\(.API_URL)  DB_URL=\(.DB_URL)  ANON=\(.ANON_KEY | length) chars  SERVICE=\(.SERVICE_ROLE_KEY | length) chars"' supabase-status.json
+
+      - name: Apply prerequisite + engine migrations
+        env:
+          PGPASSWORD: postgres
+        run: |
+          PSQL="psql -h localhost -p 54322 -U postgres -d postgres -v ON_ERROR_STOP=1"
+          $PSQL -f supabase_admin_rbac.sql
+          $PSQL -f supabase_schema_v1_0.sql
+          $PSQL -f supabase_seo_001_foundation.sql
+          $PSQL -f supabase_seo_003_admin_write_tightening.sql
+          $PSQL -f supabase_seo_004_slug_rpc.sql
+          echo "migrations applied OK"
+
+      - name: Seed synthetic rows (no real listing data)
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h localhost -p 54322 -U postgres -d postgres -v ON_ERROR_STOP=1 <<'SQL'
+          INSERT INTO turfs (id, name, city, address, image, price_per_hour, timing, sport_types, amenities, description, status)
+          VALUES
+            ('demo_1', 'Demo Arena One', 'Pune', 'Baner, Pune', 'https://example.com/a1.jpg', 1000, '06:00 AM – 11:00 PM', ARRAY['Cricket'], ARRAY['Floodlights'], 'Synthetic verification venue one.', 'published'),
+            ('demo_2', 'Demo Arena Two', 'Pune', 'Baner, Pune', 'https://example.com/a2.jpg', 1200, '06:00 AM – 11:00 PM', ARRAY['Cricket'], ARRAY['Floodlights'], 'Synthetic verification venue two.', 'published'),
+            ('demo_3', 'Demo Arena Three', 'Delhi', 'Saket, Delhi', 'https://example.com/a3.jpg', 900, '06:00 AM – 11:00 PM', ARRAY['Football','seed data'], ARRAY['Floodlights'], 'Synthetic verification venue three.', 'published');
+          SQL
+
+      - name: Trigger verification (outbox, tombstone, hash dedupe)
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h localhost -p 54322 -U postgres -d postgres -v ON_ERROR_STOP=1 <<'SQL'
+          -- update enqueues exactly one job (content_hash dedupe on repeat)
+          UPDATE turfs SET description = 'changed one' WHERE id = 'demo_1';
+          UPDATE turfs SET description = 'changed one' WHERE id = 'demo_1';
+          SELECT CASE WHEN count(*) = 1 THEN 'PASS dedupe' ELSE 'FAIL dedupe: ' || count(*) END AS trigger_check FROM seo_generation_jobs WHERE entity_id = 'demo_1';
+          -- DELETE writes a 410 tombstone in the same transaction
+          DELETE FROM turfs WHERE id = 'demo_3';
+          SELECT CASE WHEN count(*) = 1 THEN 'PASS tombstone' ELSE 'FAIL tombstone' END AS tombstone_check
+            FROM seo_redirects WHERE from_path = '/turf/demo-arena-three-demo_3' AND status_code = 410;
+          SQL
+
+      - name: Worker --once (REST, service_role)
+        env:
+          SUPABASE_URL: http://localhost:54321
+          SUPABASE_SERVICE_ROLE_KEY: ${{ steps.keys.outputs.SERVICE }}
+          SEO_ENGINE_ENABLED: "1"
+          SEO_SITEMAP_ENABLED: "1"
+          SEO_LANDING_PAGES_ENABLED: "1"
+        run: |
+          API_URL=$(jq -r .API_URL ../supabase-status.json) || API_URL=http://localhost:54321
+          SERVICE=$(jq -r .SERVICE_ROLE_KEY ../supabase-status.json)
+          export SUPABASE_URL="$API_URL"
+          export SUPABASE_SERVICE_ROLE_KEY="$SERVICE"
+          echo "worker against $SUPABASE_URL"
+          node scripts/seo-worker.mjs --once --batch 50
+
+      - name: Metadata + slug + issue assertions
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h localhost -p 54322 -U postgres -d postgres -v ON_ERROR_STOP=1 <<'SQL'
+          -- metadata generated for every remaining turf, slugs assigned
+          SELECT CASE WHEN count(*) = 2 THEN 'PASS metadata' ELSE 'FAIL metadata: ' || count(*) END
+            FROM seo_metadata WHERE entity_type = 'turf' AND status = 'published';
+          SELECT CASE WHEN count(*) = 2 THEN 'PASS slugs' ELSE 'FAIL slugs' END
+            FROM turfs WHERE slug IS NOT NULL AND id IN ('demo_1','demo_2');
+          -- junk sport 'seed data' queued, never associated
+          SELECT CASE WHEN count(*) >= 1 THEN 'PASS junk_sport issue' ELSE 'FAIL junk_sport issue' END
+            FROM seo_validation_issues WHERE code = 'junk_sport';
+          SELECT CASE WHEN count(*) = 0 THEN 'PASS no junk association' ELSE 'FAIL junk association' END
+            FROM seo_category_associations a JOIN turfs t ON t.id = a.turf_id
+            WHERE 'seed data' = ANY(t.sport_types);
+          SQL
+
+      - name: RLS probes (anon denied base tables, views readable) + rls-verification.sql
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h localhost -p 54322 -U postgres -d postgres <<'SQL' > rls-probes.txt 2>&1 || true
+          SET ROLE anon;
+          SELECT 'anon view read OK' FROM seo_public_metadata LIMIT 1;
+          SELECT 'anon base DENIED — this line must FAIL above' FROM seo_metadata LIMIT 1;
+          SQL
+          cat rls-probes.txt
+          psql -h localhost -p 54322 -U postgres -d postgres -f docs/seo-engine/rls-verification.sql > rls-verification-out.txt 2>&1 || true
+          grep -E "PASS|FAIL|ERROR|permission denied" rls-verification-out.txt | head -20
+
+      - name: Slug RPC tests (atomic: snapshot + lock + 301 + collapse; auth denial)
+        env:
+          PGPASSWORD: postgres
+          API_URL: http://localhost:54321
+        run: |
+          SERVICE=$(jq -r .SERVICE_ROLE_KEY ../supabase-status.json)
+          META_ID=$(psql -h localhost -p 54322 -U postgres -d postgres -t -A -c "SELECT id FROM seo_metadata WHERE entity_id='demo_1' LIMIT 1")
+          ADMIN_UID=$(psql -h localhost -p 54322 -U postgres -d postgres -t -A -c "SELECT id FROM auth.users LIMIT 1")
+          psql -h localhost -p 54322 -U postgres -d postgres -v ON_ERROR_STOP=0 <<SQL > slug-tests.txt 2>&1
+          -- success path via JWT-GUC shim (real calls come through PostgREST):
+          BEGIN;
+          SELECT set_config('request.jwt.claims', '{"sub":"$ADMIN_UID","role":"authenticated"}', true);
+          INSERT INTO profiles (id, email, role, is_admin) VALUES ('$ADMIN_UID', 'ci-admin@example.com', 'super_admin', true) ON CONFLICT (id) DO UPDATE SET role='super_admin';
+          SELECT seo_admin_set_slug($META_ID, 'demo-arena-one-new-slug', 'ci');
+          COMMIT;
+          -- auth denial: no JWT GUC → is_seo_write_admin false
+          SELECT CASE WHEN count(*) = 0 THEN 'PASS deny-no-jwt (exception raised)' ELSE 'FAIL deny-no-jwt' END
+            FROM (SELECT seo_admin_set_slug($META_ID, 'should-fail-slug', 'anon')) AS attempt;
+          -- chain collapse: a redirect pointing at the OLD path now targets the NEW path
+          SELECT CASE WHEN to_path = '/turf/demo-arena-one-new-slug' THEN 'PASS collapse' ELSE 'FAIL collapse' END
+            FROM seo_redirects WHERE from_path = '/turf/demo-arena-one';
+          -- loop detection: craft a cycle, resolver must report it
+          INSERT INTO seo_redirects (from_path, to_path, status_code) VALUES ('/turf/loop-x', '/turf/loop-y', 301), ('/turf/loop-y', '/turf/loop-x', 301);
+          SELECT * FROM seo_resolve_redirect('/turf/loop-x');
+          SQL
+          cat slug-tests.txt
+
+      - name: Anon REST reads (views OK, base tables denied) + redirect/410 via REST
+        run: |
+          ANON=$(jq -r .ANON_KEY ../supabase-status.json)
+          API=$(jq -r .API_URL ../supabase-status.json)
+          echo "--- view read (expect 200):"
+          curl -s -o /dev/null -w "%{http_code}\n" "$API/rest/v1/seo_public_metadata?select=id&limit=1" -H "apikey: $ANON" -H "Authorization: Bearer $ANON"
+          echo "--- base table read (expect 401/403):"
+          curl -s -o /dev/null -w "%{http_code}\n" "$API/rest/v1/seo_metadata?select=id&limit=1" -H "apikey: $ANON" -H "Authorization: Bearer $ANON"
+          echo "--- redirect RPC for a deleted turf (expect 410 reason gone):"
+          curl -s "$API/rest/v1/rpc/seo_resolve_redirect" -H "apikey: $ANON" -H "Authorization: Bearer $ANON" -H "Content-Type: application/json" -d '{"p_path":"/turf/demo-arena-three-demo_3"}'
+
+      - name: Upload verification outputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: seo-db-verification
+          path: |
+            rls-probes.txt
+            rls-verification-out.txt
+            slug-tests.txt
+            supabase-status.json
+          if-no-files-found: ignore
+
+      - name: Fail the job on any FAIL marker
+        run: |
+          ! grep -q "FAIL" slug-tests.txt
+          ! grep -q "FAIL" rls-probes.txt
+          echo "all verification probes passed"

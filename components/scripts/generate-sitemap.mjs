@@ -95,22 +95,23 @@ async function fetchTurfs() {
 const today = new Date().toISOString().slice(0, 10);
 const urls = [];
 
-function add(loc, { changefreq = "weekly", priority = "0.7", lastmod = today, image } = {}) {
-  // Amendment 7: canonical trailing slash consistent with vercel trailingSlash:true.
-  urls.push({ loc: canonicalizeUrl(ORIGIN + loc), changefreq, priority, lastmod, image });
+function add(loc, { lastmod, image } = {}) {
+  // Google ignores priority/changefreq (verified guidance, item 9) — omitted.
+  // lastmod: per-turf real dates when present; build date for rebuilt statics.
+  urls.push({ loc: canonicalizeUrl(ORIGIN + loc), lastmod: lastmod || today, image });
 }
 
 // 1. Static public routes
-add("/", { changefreq: "daily", priority: "1.0", image: { loc: `${ORIGIN}/og-image.jpg`, title: "PlayTurf — Book Sports Turfs & Tournaments" } });
-add("/turfs", { priority: "0.9" });
-add("/sports", { priority: "0.9" });
-add("/open-games", { changefreq: "hourly", priority: "0.9" });
-add("/tournaments", { changefreq: "daily", priority: "0.8" });
-add("/offers", { changefreq: "daily", priority: "0.8" });
-add("/blog", { priority: "0.7" });
-add("/about", { priority: "0.6", changefreq: "monthly" });
-add("/contact", { priority: "0.6", changefreq: "monthly" });
-add("/privacy", { priority: "0.5", changefreq: "yearly" });
+add("/", { image: { loc: `${ORIGIN}/og-image.jpg`, title: "PlayTurf — Book Sports Turfs & Tournaments" } });
+add("/turfs", {});
+add("/sports", {});
+add("/open-games", {});
+add("/tournaments", {});
+add("/offers", {});
+add("/blog", {});
+add("/about", {});
+add("/contact", {});
+add("/privacy", {});
 
 // 2. Blog guides (static content in src/data/blogPosts.ts)
 try {
@@ -119,7 +120,7 @@ try {
     "utf8"
   );
   for (const m of blogSrc.matchAll(/slug:\s*"([a-z0-9-]+)"/g)) {
-    add(`/blog/${m[1]}`, { priority: "0.6", changefreq: "monthly" });
+    add(`/blog/${m[1]}`, {});
   }
 } catch {
   console.warn("blogPosts.ts not readable — skipping blog URLs");
@@ -149,7 +150,7 @@ try {
     // city page: indexable only when the Phase 3 thresholds pass
     const cityEval = evaluateLandingPage("location", { listings: list });
     if (cityEval.indexable) {
-      add(`/turfs/${citySlug}`, { priority: "0.8" });
+      add(`/turfs/${citySlug}`, {});
     } else {
       landingDropped += 1;
     }
@@ -169,7 +170,7 @@ try {
       const sportList = list.filter((t) => (t.sport_types || []).includes(sport));
       const sportEval = evaluateLandingPage("category_location", { listings: sportList, parentListings: list });
       if (sportEval.indexable) {
-        add(`/sports/${slugify(sport)}/${citySlug}`, { priority: "0.7" });
+        add(`/sports/${slugify(sport)}/${citySlug}`, {});
       } else {
         landingDropped += 1;
       }
@@ -190,8 +191,7 @@ ${urls
     (u) => `  <url>
     <loc>${esc(u.loc)}</loc>
     <lastmod>${u.lastmod}</lastmod>
-    <changefreq>${u.changefreq}</changefreq>
-    <priority>${u.priority}</priority>${
+${
       u.image
         ? `
     <image:image>

@@ -33,6 +33,40 @@ concurrency:
   cancel-in-progress: false # never skip a scheduled drain
 
 jobs:
+  # PRODUCTION schedule: DISABLED by default. After staging sign-off, set the
+  # repo VARIABLE SEO_PROD_SCHEDULE_ENABLED=1 and define the production
+  # environment secrets — the schedule entry below then runs on the default
+  # branch. The if-condition keeps it dormant until that explicit opt-in.
+  drain-and-alert-prod:
+    if: vars.SEO_PROD_SCHEDULE_ENABLED == '1'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: production
+    concurrency: seo-worker-prod
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: components/package-lock.json
+      - run: npm ci --prefix components || npm install --prefix components
+      - name: Outbox health check (production)
+        env:
+          SUPABASE_URL: ${{ secrets.SEOWORKER_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SEOWORKER_SUPABASE_SERVICE_KEY }}
+          SEO_ENGINE_ENABLED: "1"
+        run: node components/scripts/seo-worker.mjs --health --stale-minutes 15
+      - name: Drain outbox batch (production)
+        env:
+          SUPABASE_URL: ${{ secrets.SEOWORKER_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SEOWORKER_SUPABASE_SERVICE_KEY }}
+          SEO_ENGINE_ENABLED: "1"
+          SEO_SITEMAP_ENABLED: "1"
+          SEO_REDIRECTS_ENABLED: "1"
+          SEO_LANDING_PAGES_ENABLED: "1"
+        run: node components/scripts/seo-worker.mjs --once --batch 50
+
   drain-and-alert:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -66,3 +100,6 @@ jobs:
       # 2. Drain one batch of pending jobs.
       - name: Drain outbox batch
         run: node components/scripts/seo-worker.mjs --once --batch 50
+
+      # 3. Outbox-age alert is the step above failing on --health; the drained
+      #    batch itself failing also marks the run red (GitHub notification).

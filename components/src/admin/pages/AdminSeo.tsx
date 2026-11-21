@@ -13,7 +13,7 @@ import {
   listSportCategories, listSportAliases, upsertSportAlias, deleteSportAlias,
   listValidationIssues, resolveValidationIssue, listLandingPages, patchLandingPage,
   listOutboxJobs, listTurfSeoMetadata, patchTurfSeoMetadata, rollbackTurfSeoMetadata,
-  regenerateTurfSeo, listTurfSeoVersions,
+  regenerateTurfSeo, listTurfSeoVersions, approveTurfSeoMetadata,
 } from "../admin-api";
 import { ExternalLink, Globe, MapPin, Save, Trash2, Trophy } from "lucide-react";
 import {
@@ -252,6 +252,16 @@ export default function AdminSeo() {
       listTurfSeoMetadata().then((r) => setMetaRows(r.rows));
     } catch (e) {
       toast.error("Rollback failed: " + (e as Error).message);
+    }
+  };
+
+  const approve = async (id: number) => {
+    try {
+      await approveTurfSeoMetadata(id, user?.role ?? null);
+      toast.success("Approved — published");
+      listTurfSeoMetadata().then((r) => setMetaRows(r.rows));
+    } catch (e) {
+      toast.error("Approve failed: " + (e as Error).message);
     }
   };
 
@@ -617,6 +627,9 @@ export default function AdminSeo() {
                   ["duplicate titles", dupTitles],
                   ["duplicate descriptions", dupDescs],
                   ["field-locked", locked],
+                  ["missing ALT", turfs.rows.filter((r) => r.image && !(r.name || "").trim()).length],
+                  ["invalid schema", metaRows.filter((r) => !r.canonical_url || (r.seo_title || "").length > 60).length],
+                  ["sitemap status", "see /sitemap.xml"],
                 ];
                 return cards.map(([label, value]) => (
                   <div key={label} className="rounded-2xl border border-white/[0.06] bg-[#0d0f0e] p-4">
@@ -646,6 +659,9 @@ export default function AdminSeo() {
                       <td className="text-zinc-500">v{row.version}</td>
                       <td className="space-x-1.5 whitespace-nowrap">
                         <button onClick={() => openMetaEdit(row)} className="rounded-lg border border-white/10 px-2 py-1 text-[10px] font-bold text-teal-300 hover:bg-teal-400/10">Edit</button>
+                        {row.status === "needs_review" && (
+                          <button onClick={() => approve(row.id)} className="rounded-lg border border-white/10 px-2 py-1 text-[10px] font-bold text-teal-300 hover:bg-teal-400/10">Approve</button>
+                        )}
                         <button onClick={() => regenerate(row.entity_id)} className="rounded-lg border border-white/10 px-2 py-1 text-[10px] font-bold text-zinc-300 hover:bg-white/5">Regenerate</button>
                         {metaVersions[0] && metaRows.find((r) => r.id === row.id) && (
                           <select

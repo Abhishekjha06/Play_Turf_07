@@ -210,23 +210,27 @@ export function landingCandidates(turfs, categories, categoryAssociations, locat
   const candidates = [];
   for (const [categoryId, list] of byCategoryId) {
     const cat = categories.find((c) => c.id === categoryId);
-    if (cat) candidates.push({ pageType: "category", categoryId, locationId: null, listings: list, slug: `${cat.slug}-turfs` });
+    if (cat) candidates.push({ pageType: "category", categoryId, locationId: null, listings: list, slug: `${cat.slug}-turfs`, routePath: `/sports/${cat.slug}/` });
   }
   for (const [locationId, list] of byLocationId) {
     const loc = locById.get(locationId);
     if (!loc) continue;
-    candidates.push({ pageType: "location", categoryId: null, locationId, listings: list, slug: `${loc.slug}` });
+    candidates.push({ pageType: "location", categoryId: null, locationId, listings: list, slug: `${loc.slug}`, routePath: `/turfs/${loc.slug}/` });
     for (const [catId, catList] of byCategoryId) {
       const shared = catList.filter((t) => list.some((lt) => lt.id === t.id));
       if (shared.length) {
         const cat = categories.find((c) => c.id === catId);
         if (cat) {
+          const cityLoc = loc.type === "locality" ? locById.get(loc.parent_id) : loc;
+          const citySlug = cityLoc ? slugifyBase(cityLoc.name) : "";
+          if (!citySlug) continue;
           candidates.push({
             pageType: "category_location",
             categoryId: catId,
             locationId,
             listings: shared,
-            slug: uniqueSlug(`${cat.slug}-turf-${loc.slug}`, new Set(candidates.map((c) => c.slug))),
+            slug: uniqueSlug(`${cat.slug}-${citySlug}`, new Set(candidates.map((c) => c.slug))),
+            routePath: `/sports/${cat.slug}/${citySlug}/`,
           });
         }
       }

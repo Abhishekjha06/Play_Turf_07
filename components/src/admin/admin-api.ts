@@ -757,3 +757,23 @@ export async function listTurfSeoVersions(id: number): Promise<{ rows: { version
   if (error) throw error;
   return { rows: (data || []) as unknown as { version: number; created_at: string; change_reason: string | null }[] };
 }
+
+
+/** Approval workflow (master prompt §15): needs_review → approved+published. */
+export async function approveTurfSeoMetadata(id: number, role?: string | null) {
+  return withAudit(
+    { action: 'seo.metadata.approve', recordId: String(id) },
+    async () => {
+      const supabase = await getSupabase();
+      const { data, error } = await supabase
+        .from('seo_metadata')
+        .update({ status: 'published', approved_at: new Date().toISOString() })
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    role
+  );
+}

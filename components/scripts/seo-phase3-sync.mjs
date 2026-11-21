@@ -137,6 +137,7 @@ export async function evaluateAndStoreLandings(ctx) {
     });
 
     const upsert = {
+      route_path: cand.routePath,
       page_type: cand.pageType,
       category_id: cand.categoryId,
       location_id: cand.locationId,

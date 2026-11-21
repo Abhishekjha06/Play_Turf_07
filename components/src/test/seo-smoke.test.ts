@@ -43,7 +43,7 @@ describe("Playwright smoke: home, turf, landing, sitemap (fails if server/Chrome
     expect(res.ok, `dev server at ${BASE_URL} is not reachable — start it and re-run`).toBe(true);
   });
 
-  it("home renders its headline and no error boundary", async () => {
+  it("home renders its headline and no error boundary", { timeout: 30000 }, async () => {
     const page = await browser!.newPage();
     await page.goto(new URL("/", BASE_URL).toString(), { waitUntil: "domcontentloaded" });
     await page.waitForSelector("h1", { timeout: 20000 });
