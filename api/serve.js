@@ -93,8 +93,18 @@ function slugifyServe(text) {
   return String(text || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 }
 const STATIC_SITEMAP_ROUTES = Object.keys(ROUTES).filter((p) => !/\.[a-z0-9]{2,5}$/i.test(p));
+// Item 5: seo_landing_pages.is_indexable (worker-written) is the SINGLE source
+// for landing URLs in the sitemap. Empty set when unavailable → prebuild
+// snapshot fallback (never a 500).
+async function fetchNoindexLandingPaths() {
+  const rows = await fetchSeoPublic("seo_public_landing_pages", new URLSearchParams({ select: "route_path,is_indexable" }));
+  if (!rows || !rows.length) return new Set();
+  return new Set(rows.filter((r) => !r.is_indexable && r.route_path).map((r) => String(r.route_path).replace(/\/+$/, "")));
+}
 async function buildSitemapXml() {
-  const staticPart = STATIC_SITEMAP_ROUTES.map(
+  const noindexLandings = await fetchNoindexLandingPaths();
+  const staticRoutes = STATIC_SITEMAP_ROUTES.filter((p) => !noindexLandings.has(p.replace(/\/+$/, "")));
+  const staticPart = staticRoutes.map(
     (p) => `<url><loc>${esc(ORIGIN)}${esc(p === "/" ? "/" : p + "/")}</loc><lastmod>${esc((ROUTES[p] && ROUTES[p].lastmod) || String(content.generatedAt).slice(0, 10))}</lastmod></url>`
   ).join("");
   let turfPart = "";

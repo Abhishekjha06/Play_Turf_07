@@ -19,7 +19,7 @@ BEGIN
     EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I', t || '_seo_write_admin_del', t);
     EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I', t || '_admin_read', t);
     EXECUTE format(
-      'CREATE POLICY %I ON public.%I FOR ALL TO authenticated USING (public.is_playturf_admin()) WITH CHECK (public.is_playturf_admin())',
+      'CREATE POLICY %I ON public.%I FOR ALL TO authenticated USING (public.is_playturf_admin(auth.uid())) WITH CHECK (public.is_playturf_admin(auth.uid()))',
       t || '_admin_all', t);
   END LOOP;
 END;

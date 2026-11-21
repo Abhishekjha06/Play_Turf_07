@@ -39,7 +39,7 @@ BEGIN
     EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I', t || '_seo_write_admin', t);
     -- re-create the broad read policy from 001 first (keeps reads working)
     EXECUTE format(
-      'CREATE POLICY %I ON public.%I FOR SELECT TO authenticated USING (public.is_playturf_admin())',
+      'CREATE POLICY %I ON public.%I FOR SELECT TO authenticated USING (public.is_playturf_admin(auth.uid()))',
       t || '_admin_read', t);
     -- narrow writes to admin/super_admin
     EXECUTE format(

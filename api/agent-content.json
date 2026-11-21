@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-11-21T13:50:26.272Z",
+ "generatedAt": "2026-11-21T16:35:12.885Z",
  "origin": "https://play-turf-git-main-abhishekjha06s-projects.vercel.app",
  "organization": {
   "@context": "https://schema.org",
@@ -552,8 +552,44 @@
    ],
    "links": [
     [
+     "Futsal Turfs",
+     "/sports/futsal"
+    ],
+    [
+     "Football Turfs",
+     "/sports/football"
+    ],
+    [
      "Turfs in Delhi",
      "/turfs/delhi"
+    ],
+    [
+     "Turfs in Saket",
+     "/turfs/delhi/saket"
+    ],
+    [
+     "Hilltop Grounds — Bangalore",
+     "/turf/hilltop-grounds-turf-5"
+    ],
+    [
+     "Arena 360 — Mumbai",
+     "/turf/arena-360-turf-6"
+    ],
+    [
+     "Nine Stars Turfs X SportVot — Dahisar East",
+     "/turf/nine-stars-turfs-x-sportvot-turf-7-re"
+    ],
+    [
+     "Greenfield Arena — Bangalore",
+     "/turf/greenfield-arena-turf-1"
+    ],
+    [
+     "BoxCric Cage — Hyderabad",
+     "/turf/boxcric-cage-turf-3"
+    ],
+    [
+     "Skyline Rooftop Turf — Mumbai",
+     "/turf/skyline-rooftop-turf-turf-2"
     ],
     [
      "All turfs",
@@ -775,8 +811,40 @@
    ],
    "links": [
     [
+     "Football Turfs",
+     "/sports/football"
+    ],
+    [
      "Turfs in Bangalore",
      "/turfs/bangalore"
+    ],
+    [
+     "Turfs in Whitefield",
+     "/turfs/bangalore/whitefield"
+    ],
+    [
+     "Greenfield Arena — Bangalore",
+     "/turf/greenfield-arena-turf-1"
+    ],
+    [
+     "Futsal Hub — Delhi",
+     "/turf/futsal-hub-turf-4"
+    ],
+    [
+     "Arena 360 — Mumbai",
+     "/turf/arena-360-turf-6"
+    ],
+    [
+     "Nine Stars Turfs X SportVot — Dahisar East",
+     "/turf/nine-stars-turfs-x-sportvot-turf-7-re"
+    ],
+    [
+     "BoxCric Cage — Hyderabad",
+     "/turf/boxcric-cage-turf-3"
+    ],
+    [
+     "Skyline Rooftop Turf — Mumbai",
+     "/turf/skyline-rooftop-turf-turf-2"
     ],
     [
      "All turfs",
@@ -918,8 +986,44 @@
    ],
    "links": [
     [
+     "Football Turfs",
+     "/sports/football"
+    ],
+    [
+     "Futsal Turfs",
+     "/sports/futsal"
+    ],
+    [
      "Turfs in Bangalore",
      "/turfs/bangalore"
+    ],
+    [
+     "Turfs in Indiranagar",
+     "/turfs/bangalore/indiranagar"
+    ],
+    [
+     "Hilltop Grounds — Bangalore",
+     "/turf/hilltop-grounds-turf-5"
+    ],
+    [
+     "Futsal Hub — Delhi",
+     "/turf/futsal-hub-turf-4"
+    ],
+    [
+     "Arena 360 — Mumbai",
+     "/turf/arena-360-turf-6"
+    ],
+    [
+     "Nine Stars Turfs X SportVot — Dahisar East",
+     "/turf/nine-stars-turfs-x-sportvot-turf-7-re"
+    ],
+    [
+     "BoxCric Cage — Hyderabad",
+     "/turf/boxcric-cage-turf-3"
+    ],
+    [
+     "Skyline Rooftop Turf — Mumbai",
+     "/turf/skyline-rooftop-turf-turf-2"
     ],
     [
      "All turfs",
@@ -1146,8 +1250,44 @@
    ],
    "links": [
     [
+     "Football Turfs",
+     "/sports/football"
+    ],
+    [
+     "Basketball Turfs",
+     "/sports/basketball"
+    ],
+    [
      "Turfs in Mumbai",
      "/turfs/mumbai"
+    ],
+    [
+     "Turfs in Andheri West",
+     "/turfs/mumbai/andheri-west"
+    ],
+    [
+     "Skyline Rooftop Turf — Mumbai",
+     "/turf/skyline-rooftop-turf-turf-2"
+    ],
+    [
+     "Futsal Hub — Delhi",
+     "/turf/futsal-hub-turf-4"
+    ],
+    [
+     "Hilltop Grounds — Bangalore",
+     "/turf/hilltop-grounds-turf-5"
+    ],
+    [
+     "Nine Stars Turfs X SportVot — Dahisar East",
+     "/turf/nine-stars-turfs-x-sportvot-turf-7-re"
+    ],
+    [
+     "Greenfield Arena — Bangalore",
+     "/turf/greenfield-arena-turf-1"
+    ],
+    [
+     "BoxCric Cage — Hyderabad",
+     "/turf/boxcric-cage-turf-3"
     ],
     [
      "All turfs",
@@ -1291,8 +1431,44 @@
    ],
    "links": [
     [
+     "Cricket Turfs",
+     "/sports/cricket"
+    ],
+    [
+     "Football Turfs",
+     "/sports/football"
+    ],
+    [
      "Turfs in Mumbai",
      "/turfs/mumbai"
+    ],
+    [
+     "Turfs in Lower Parel",
+     "/turfs/mumbai/lower-parel"
+    ],
+    [
+     "Arena 360 — Mumbai",
+     "/turf/arena-360-turf-6"
+    ],
+    [
+     "Futsal Hub — Delhi",
+     "/turf/futsal-hub-turf-4"
+    ],
+    [
+     "Hilltop Grounds — Bangalore",
+     "/turf/hilltop-grounds-turf-5"
+    ],
+    [
+     "Nine Stars Turfs X SportVot — Dahisar East",
+     "/turf/nine-stars-turfs-x-sportvot-turf-7-re"
+    ],
+    [
+     "Greenfield Arena — Bangalore",
+     "/turf/greenfield-arena-turf-1"
+    ],
+    [
+     "BoxCric Cage — Hyderabad",
+     "/turf/boxcric-cage-turf-3"
     ],
     [
      "All turfs",
@@ -1545,8 +1721,44 @@
    ],
    "links": [
     [
+     "Cricket Turfs",
+     "/sports/cricket"
+    ],
+    [
+     "Football Turfs",
+     "/sports/football"
+    ],
+    [
      "Turfs in Dahisar East",
      "/turfs/dahisar-east"
+    ],
+    [
+     "Turfs in Bhoir Garden",
+     "/turfs/dahisar-east/bhoir-garden"
+    ],
+    [
+     "Futsal Hub — Delhi",
+     "/turf/futsal-hub-turf-4"
+    ],
+    [
+     "Hilltop Grounds — Bangalore",
+     "/turf/hilltop-grounds-turf-5"
+    ],
+    [
+     "Arena 360 — Mumbai",
+     "/turf/arena-360-turf-6"
+    ],
+    [
+     "Greenfield Arena — Bangalore",
+     "/turf/greenfield-arena-turf-1"
+    ],
+    [
+     "BoxCric Cage — Hyderabad",
+     "/turf/boxcric-cage-turf-3"
+    ],
+    [
+     "Skyline Rooftop Turf — Mumbai",
+     "/turf/skyline-rooftop-turf-turf-2"
     ],
     [
      "All turfs",
@@ -1781,8 +1993,44 @@
    ],
    "links": [
     [
+     "Cricket Turfs",
+     "/sports/cricket"
+    ],
+    [
+     "Football Turfs",
+     "/sports/football"
+    ],
+    [
      "Turfs in Hyderabad",
      "/turfs/hyderabad"
+    ],
+    [
+     "Turfs in Gachibowli",
+     "/turfs/hyderabad/gachibowli"
+    ],
+    [
+     "Futsal Hub — Delhi",
+     "/turf/futsal-hub-turf-4"
+    ],
+    [
+     "Hilltop Grounds — Bangalore",
+     "/turf/hilltop-grounds-turf-5"
+    ],
+    [
+     "Arena 360 — Mumbai",
+     "/turf/arena-360-turf-6"
+    ],
+    [
+     "Nine Stars Turfs X SportVot — Dahisar East",
+     "/turf/nine-stars-turfs-x-sportvot-turf-7-re"
+    ],
+    [
+     "Greenfield Arena — Bangalore",
+     "/turf/greenfield-arena-turf-1"
+    ],
+    [
+     "Skyline Rooftop Turf — Mumbai",
+     "/turf/skyline-rooftop-turf-turf-2"
     ],
     [
      "All turfs",
