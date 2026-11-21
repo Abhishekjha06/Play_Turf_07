@@ -1,31 +1,38 @@
 -- ============================================================================
--- Play Turf — Dynamic SEO Engine · Phase 1 FOUNDATION
--- File: supabase_seo_engine.sql
+-- Play Turf — Dynamic SEO Engine · Migration 001: FOUNDATION
+-- File: supabase_seo_001_foundation.sql            (idempotent — safe to re-run)
+-- Down:  supabase_seo_001_foundation_down.sql      (commented inline, too)
+-- Test on a STAGING project first (runbook §1). Master prompt §5/§6.
 --
--- Run order: AFTER supabase_admin_rbac.sql (needs is_playturf_admin() and
--- site_settings). Idempotent: safe to re-run. Reversible: see DOWN block at
--- the bottom (kept commented — uncomment and run to roll back).
---
--- Conventions:
---   * Writes happen via service_role (worker, serve.js) or admin (dashboard).
---   * Master prompt §5 tables; spec deviations are documented inline and in
---     docs/seo-engine/00-audit.md §6.
---   * Feature flags default OFF (site_settings) — engine is inert until the
---     runbook enable step.
+-- Amendment-driven changes vs. the Phase 0 design (owner review 2026-11-21):
+--   * turfs.locality column (amendment 6) — no normalized locality existed;
+--     backfill is admin-reviewed (validation queue), never silently trusted.
+--   * Trigger: (a) never blocks/rolls back a turf write (amendment 3a),
+--     (b) fires only on SEO-relevant columns + skips worker writes via a
+--     session GUC (3b), (c) on DELETE writes a 410 tombstone into
+--     seo_redirects in the same transaction (3c).
+--   * RLS: base seo_* tables are ADMIN-ONLY (is_playturf_admin); public reads
+--     happen ONLY through published-only views (amendment 4) — serve.js uses
+--     the anon key against those views, never service-role.
+--   * Landing pages carry override_index for the explicit "force index below
+--     threshold" override (amendment 9).
+--   * Slugs stay id-suffixed ({name}-{id}) and are stored in turfs.slug
+--     (amendment 7); legacy raw-id URLs are 301'd by serve.js later, and any
+--     future slug change writes a 301 here.
 -- ============================================================================
 
 -- ----------------------------------------------------------------------------
--- 1. turfs: slug + updated_at (reversible, non-destructive additions)
+-- 1. turfs: slug, locality, updated_at (reversible, non-destructive)
 -- ----------------------------------------------------------------------------
 
 ALTER TABLE public.turfs ADD COLUMN IF NOT EXISTS slug text;
+ALTER TABLE public.turfs ADD COLUMN IF NOT EXISTS locality text;
 ALTER TABLE public.turfs ADD COLUMN IF NOT EXISTS updated_at timestamptz NOT NULL DEFAULT now();
 
--- Partial unique index: multiple NULLs allowed before backfill fills slugs in.
 CREATE UNIQUE INDEX IF NOT EXISTS turfs_slug_unique_idx
   ON public.turfs (slug) WHERE slug IS NOT NULL;
-
 CREATE INDEX IF NOT EXISTS turfs_status_idx ON public.turfs (status);
+CREATE INDEX IF NOT EXISTS turfs_locality_idx ON public.turfs (city, locality);
 
 -- updated_at maintained by trigger, not by client code.
 CREATE OR REPLACE FUNCTION public.seo_touch_updated_at()
@@ -41,11 +48,20 @@ CREATE TRIGGER turfs_touch_updated_at
   BEFORE INSERT OR UPDATE ON public.turfs
   FOR EACH ROW EXECUTE FUNCTION public.seo_touch_updated_at();
 
+-- SQL-side slugify for legacy {name}-{id} paths (DELETE tombstones for rows
+-- that never had a slug). Mirrors slug.shared.mjs for plain ASCII names.
+CREATE OR REPLACE FUNCTION public.seo_slugify(v text)
+RETURNS text LANGUAGE sql IMMUTABLE AS $$
+  SELECT trim(regexp_replace(
+    regexp_replace(lower(coalesce(v, '')), '[^a-z0-9]+', '-', 'g'),
+    '-+$', ''));
+$$;
+
 -- ----------------------------------------------------------------------------
--- 2. Outbox: every turf write enqueues an idempotent SEO job
---    (covers ALL write paths — admin API, legacy admin lib, owner panel,
---    bulk backfills — see 00-audit.md §3. Booking writes never touch turfs,
---    so bookings can never enqueue SEO work; master prompt §14.)
+-- 2. Outbox: SEO-relevant turf writes enqueue an idempotent job.
+--    Amendment 3: exception-safe (a write can NEVER fail because of SEO),
+--    column-scoped (b), worker writes skipped via session GUC, and DELETE
+--    writes a 410 tombstone in the same transaction (c).
 -- ----------------------------------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS public.seo_generation_jobs (
@@ -53,8 +69,8 @@ CREATE TABLE IF NOT EXISTS public.seo_generation_jobs (
   entity_type   text NOT NULL DEFAULT 'turf' CHECK (entity_type IN ('turf')),
   entity_id     text NOT NULL,
   op            text NOT NULL CHECK (op IN ('created', 'updated', 'deleted')),
-  content_hash  text NOT NULL,                -- md5 of row text; skips no-op regenerations
-  payload       jsonb NOT NULL DEFAULT '{}'::jsonb,  -- snapshot for DELETE (slug, name, locality)
+  content_hash  text NOT NULL,
+  payload       jsonb NOT NULL DEFAULT '{}'::jsonb,
   status        text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'done', 'failed', 'skipped')),
   attempts      integer NOT NULL DEFAULT 0,
   last_error    text,
@@ -72,42 +88,68 @@ DECLARE
   v_hash  text;
   v_op    text;
   v_id    text;
-  v_slug  text;
-  v_name  text;
+  v_path  text;
 BEGIN
-  IF (TG_OP = 'DELETE') THEN
-    v_id   := OLD.id;
-    v_slug := OLD.slug;
-    v_name := OLD.name;
-    v_op   := 'deleted';
-    v_hash := md5(coalesce(OLD.slug, '') || '|' || coalesce(OLD.name, '') || '|' || coalesce(OLD.status, '') || '|deleted');
-  ELSE
-    v_id   := NEW.id;
-    v_slug := NEW.slug;
-    v_name := NEW.name;
-    v_op   := CASE WHEN TG_OP = 'INSERT' THEN 'created' ELSE 'updated' END;
-    -- status/is_popular/is_nearby change surfaces but not content: still hashed,
-    -- the worker decides what to regenerate (robots vs full metadata).
-    v_hash := md5(NEW::text);
+  -- (b) worker/bulk writes opt out explicitly; everything else is processed.
+  IF coalesce(current_setting('app.seo_skip_trigger', true), '') = 'on' THEN
+    RETURN NULL;
   END IF;
 
-  INSERT INTO public.seo_generation_jobs (entity_type, entity_id, op, content_hash, payload)
-  VALUES ('turf', v_id, v_op, v_hash,
-          jsonb_build_object('slug', v_slug, 'name', v_name, 'op', v_op))
-  ON CONFLICT (entity_type, entity_id, content_hash)
-  DO UPDATE SET status = 'pending', attempts = 0, last_error = NULL, created_at = now();
+  -- (a) SEO must never block or fail a turf write: swallow everything.
+  BEGIN
+    IF (TG_OP = 'DELETE') THEN
+      v_id  := OLD.id;
+      v_op  := 'deleted';
+      v_hash := md5(coalesce(OLD.slug, '') || '|' || coalesce(OLD.name, '') || '|' || 'deleted');
+      -- (c) 410 tombstone in the same transaction: old URL dies with the turf.
+      v_path := '/turf/' || coalesce(
+        OLD.slug,
+        trim(regexp_replace(regexp_replace(lower(coalesce(OLD.name, '')), '[^a-z0-9]+', '-', 'g'), '-+$', ''))
+          || '-' || trim(regexp_replace(regexp_replace(lower(OLD.id), '[^a-z0-9]+', '-', 'g'), '-+$', ''))
+      );
+      INSERT INTO public.seo_redirects (from_path, to_path, status_code, reason)
+      VALUES (v_path, NULL, 410, 'turf_deleted')
+      ON CONFLICT (from_path) DO UPDATE
+        SET status_code = 410, to_path = NULL, reason = 'turf_deleted';
+    ELSE
+      v_id  := NEW.id;
+      v_op  := CASE WHEN TG_OP = 'INSERT' THEN 'created' ELSE 'updated' END;
+      v_hash := md5(NEW::text);
+    END IF;
+
+    INSERT INTO public.seo_generation_jobs (entity_type, entity_id, op, content_hash, payload)
+    VALUES ('turf', v_id, v_op, v_hash,
+            jsonb_build_object(
+              'slug', CASE WHEN TG_OP = 'DELETE' THEN NULL ELSE NEW.slug END,
+              'legacy_path', CASE WHEN TG_OP = 'DELETE' THEN v_path ELSE NULL END,
+              'name', CASE WHEN TG_OP = 'DELETE' THEN OLD.name ELSE NEW.name END,
+              'city', CASE WHEN TG_OP = 'DELETE' THEN NULL ELSE NEW.city END,
+              'op', v_op))
+    ON CONFLICT (entity_type, entity_id, content_hash)
+    DO UPDATE SET status = 'pending', attempts = 0, last_error = NULL, created_at = now();
+  EXCEPTION WHEN OTHERS THEN
+    -- Never re-raise: the turf write must always succeed (amendment 3a).
+    NULL;
+  END;
 
   RETURN NULL;
 END;
 $$;
 
+-- (b) fire only on SEO-relevant columns. INSERT cannot be column-scoped in
+-- Postgres, so it always fires; hash-dedup keeps it cheap.
 DROP TRIGGER IF EXISTS turfs_seo_outbox ON public.turfs;
 CREATE TRIGGER turfs_seo_outbox
-  AFTER INSERT OR UPDATE OR DELETE ON public.turfs
+  AFTER INSERT
+  OR UPDATE OF name, city, address, locality, slug, image, gallery, videos,
+               sport_types, amenities, description, price_per_hour, timing,
+               lat, lng, status
+  OR DELETE
+  ON public.turfs
   FOR EACH ROW EXECUTE FUNCTION public.seo_turf_changed();
 
 -- ----------------------------------------------------------------------------
--- 3. Sport categories + aliases (no taxonomy existed — see 00-audit.md §6)
+-- 3. Sport categories + aliases (no taxonomy existed — 00-audit.md §6)
 -- ----------------------------------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS public.seo_sport_categories (
@@ -137,9 +179,9 @@ CREATE TABLE IF NOT EXISTS public.seo_category_associations (
 CREATE INDEX IF NOT EXISTS seo_category_assoc_category_idx
   ON public.seo_category_associations (category_id);
 
--- Seed defaults: only the four sports seen in live data, plus the ONE alias
--- mapping the master prompt itself sanctions (§8 Box Cricket under Cricket).
--- Futsal→Football etc. is NOT guessed — admins add aliases in the dashboard.
+-- Seed defaults: only the four sports seen in live data + the single alias the
+-- master prompt sanctions (Box Cricket under Cricket). Futsal→Football is NOT
+-- guessed — admins add aliases in the dashboard (master prompt §8).
 INSERT INTO public.seo_sport_categories (name, slug) VALUES
   ('Cricket', 'cricket'),
   ('Football', 'football'),
@@ -152,7 +194,7 @@ SELECT 'Box Cricket', c.id FROM public.seo_sport_categories c WHERE c.slug = 'cr
 ON CONFLICT (alias) DO NOTHING;
 
 -- ----------------------------------------------------------------------------
--- 4. Normalized locations (none existed — see 00-audit.md §6)
+-- 4. Normalized locations
 -- ----------------------------------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS public.seo_locations (
@@ -167,7 +209,6 @@ CREATE TABLE IF NOT EXISTS public.seo_locations (
   created_at timestamptz NOT NULL DEFAULT now(),
   UNIQUE (parent_id, slug)
 );
--- country roots have NULL parent: UNIQUE(parent_id, slug) does not dedupe them.
 CREATE UNIQUE INDEX IF NOT EXISTS seo_locations_root_slug_idx
   ON public.seo_locations (slug) WHERE parent_id IS NULL;
 CREATE INDEX IF NOT EXISTS seo_locations_type_idx ON public.seo_locations (type);
@@ -184,7 +225,7 @@ CREATE INDEX IF NOT EXISTS seo_location_assoc_location_idx
   ON public.seo_location_associations (location_id);
 
 -- ----------------------------------------------------------------------------
--- 5. Per-entity metadata + version history (master prompt §5)
+-- 5. Per-entity metadata + version history
 -- ----------------------------------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS public.seo_metadata (
@@ -205,13 +246,13 @@ CREATE TABLE IF NOT EXISTS public.seo_metadata (
   twitter_description text,
   focus_keyword       text,
   secondary_keywords  jsonb NOT NULL DEFAULT '[]'::jsonb,
-  generated_description text,          -- AI output, only after approval
+  generated_description text,
   status              text NOT NULL DEFAULT 'draft'
                       CHECK (status IN ('draft', 'generated', 'needs_review', 'approved', 'published')),
   generated_by        text NOT NULL DEFAULT 'template' CHECK (generated_by IN ('template', 'ai', 'admin')),
-  content_hash        text,            -- source-data hash; unchanged hash skips regeneration
+  content_hash        text,
   source_version      integer NOT NULL DEFAULT 1,
-  locked_fields       jsonb NOT NULL DEFAULT '[]'::jsonb,  -- admin-edited fields, never overwritten
+  locked_fields       jsonb NOT NULL DEFAULT '[]'::jsonb,
   version             integer NOT NULL DEFAULT 1,
   approved_by         text,
   approved_at         timestamptz,
@@ -222,7 +263,6 @@ CREATE TABLE IF NOT EXISTS public.seo_metadata (
 CREATE UNIQUE INDEX IF NOT EXISTS seo_metadata_slug_scope_idx
   ON public.seo_metadata (entity_type, slug) WHERE slug IS NOT NULL;
 CREATE INDEX IF NOT EXISTS seo_metadata_status_idx ON public.seo_metadata (status);
-CREATE INDEX IF NOT EXISTS seo_metadata_robots_idx ON public.seo_metadata (robots_index);
 
 CREATE TABLE IF NOT EXISTS public.seo_metadata_versions (
   id             bigserial PRIMARY KEY,
@@ -236,7 +276,7 @@ CREATE TABLE IF NOT EXISTS public.seo_metadata_versions (
 );
 
 -- ----------------------------------------------------------------------------
--- 6. Landing pages (records for Turf in {City}, {Sport} Turf in {City}, …)
+-- 6. Landing pages — with the amendment-9 override flag
 -- ----------------------------------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS public.seo_landing_pages (
@@ -248,12 +288,15 @@ CREATE TABLE IF NOT EXISTS public.seo_landing_pages (
   listing_count       integer NOT NULL DEFAULT 0,
   unique_content_words integer NOT NULL DEFAULT 0,
   is_indexable        boolean NOT NULL DEFAULT false,
+  -- Amendment 9: explicit, dashboard-flagged override to force index below
+  -- threshold. Admin-only, audited; always produces a validation issue row.
+  override_index      boolean NOT NULL DEFAULT false,
+  override_by         text,
   status              text NOT NULL DEFAULT 'candidate'
                       CHECK (status IN ('candidate', 'approved', 'rejected', 'archived')),
   approved_by         text,
   approved_at         timestamptz,
   last_evaluated_at   timestamptz,
-  -- NULLs in Postgres UNIQUE never collide, so pin the pair via a generated key:
   uniq_key            text GENERATED ALWAYS AS (
                         coalesce(category_id::text, '-') || ':' || coalesce(location_id::text, '-')
                       ) STORED,
@@ -264,23 +307,22 @@ CREATE INDEX IF NOT EXISTS seo_landing_pages_indexable_idx
   ON public.seo_landing_pages (is_indexable) WHERE is_indexable;
 
 -- ----------------------------------------------------------------------------
--- 7. Redirects (master prompt §5/§13 — collapsed chains, no noindex targets)
+-- 7. Redirects (chains stored pre-collapsed; 410 tombstones written by the
+--    trigger; request-time resolver in SQL for serve.js's single round trip)
 -- ----------------------------------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS public.seo_redirects (
   id          bigserial PRIMARY KEY,
   from_path   text NOT NULL UNIQUE,
-  to_path     text,                        -- NULL for 410
+  to_path     text,
   status_code smallint NOT NULL DEFAULT 301 CHECK (status_code IN (301, 410)),
   reason      text,
-  target_robots text,                     -- 'index' | 'noindex' at write time
+  target_robots text DEFAULT 'index',
   created_at  timestamptz NOT NULL DEFAULT now(),
   last_hit_at timestamptz,
   hit_count   bigint NOT NULL DEFAULT 0
 );
 
--- Request-time resolver used by api/serve.js: collapses chains server-side,
--- detects loops, enforces depth. Returns no rows when there is no redirect.
 CREATE OR REPLACE FUNCTION public.seo_resolve_redirect(p_path text)
 RETURNS TABLE (to_path text, status_code smallint, reason text)
 LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public AS $$
@@ -328,15 +370,15 @@ END;
 $$;
 
 -- ----------------------------------------------------------------------------
--- 8. Logs + validation issues (master prompt §5)
+-- 8. Logs + validation issues
 -- ----------------------------------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS public.seo_generation_logs (
   id            bigserial PRIMARY KEY,
   entity_type   text NOT NULL,
   entity_id     text NOT NULL,
-  trigger       text NOT NULL,             -- 'turfs_trigger' | 'admin' | 'bulk' | 'worker'
-  component     text NOT NULL,             -- 'metadata' | 'jsonld' | 'sitemap' | 'associations' | 'redirects'
+  trigger       text NOT NULL,
+  component     text NOT NULL,
   status        text NOT NULL CHECK (status IN ('success', 'failed', 'skipped')),
   error_message text,
   duration_ms   integer,
@@ -351,7 +393,9 @@ CREATE TABLE IF NOT EXISTS public.seo_validation_issues (
   id          bigserial PRIMARY KEY,
   entity_type text NOT NULL,
   entity_id   text NOT NULL,
-  code        text NOT NULL,               -- e.g. 'missing_locality', 'junk_sport', 'dup_title'
+  code        text NOT NULL,   -- 'missing_locality', 'locality_needs_review',
+                               -- 'implausible_coords', 'junk_sport',
+                               -- 'forced_index_below_threshold', 'dup_title', …
   severity    text NOT NULL DEFAULT 'warning' CHECK (severity IN ('info', 'warning', 'error')),
   message     text NOT NULL,
   detected_at timestamptz NOT NULL DEFAULT now(),
@@ -361,8 +405,11 @@ CREATE INDEX IF NOT EXISTS seo_validation_issues_open_idx
   ON public.seo_validation_issues (entity_type, entity_id) WHERE resolved_at IS NULL;
 
 -- ----------------------------------------------------------------------------
--- 9. RLS (admin = existing is_playturf_admin(); worker/serve.js use service_role
---    which bypasses RLS; public read only where the SPA needs it)
+-- 9. RLS + public views (amendment 4)
+--    Base seo_* tables: ADMIN-ONLY writes, and NO direct public reads.
+--    Public reads happen ONLY through published-only views; serve.js uses the
+--    anon key against these views (2s timeout + CDN cache + build fallback),
+--    NEVER service-role.
 -- ----------------------------------------------------------------------------
 
 ALTER TABLE public.seo_generation_jobs   ENABLE ROW LEVEL SECURITY;
@@ -381,39 +428,79 @@ ALTER TABLE public.seo_validation_issues ENABLE ROW LEVEL SECURITY;
 DO $$
 DECLARE
   t text;
-  admin_only text[] := ARRAY['seo_generation_jobs', 'seo_generation_logs', 'seo_validation_issues'];
-  rec record;
 BEGIN
-  -- Admin-only tables: admin full access, everyone else nothing.
-  FOREACH t IN ARRAY admin_only LOOP
+  -- Admin-only tables (jobs/logs/issues + redirects): no public policies at all.
+  FOREACH t IN ARRAY ARRAY['seo_generation_jobs', 'seo_generation_logs',
+                           'seo_validation_issues', 'seo_redirects'] LOOP
     EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I', t || '_admin_all', t);
     EXECUTE format(
       'CREATE POLICY %I ON public.%I FOR ALL TO authenticated USING (public.is_playturf_admin()) WITH CHECK (public.is_playturf_admin())',
       t || '_admin_all', t);
   END LOOP;
 
-  -- Public-readable tables: anon/authenticated SELECT, admin full access.
-  FOREACH rec IN ARRAY ARRAY[
-    ROW('seo_metadata'::text), ROW('seo_metadata_versions'::text),
-    ROW('seo_sport_categories'::text), ROW('seo_category_aliases'::text),
-    ROW('seo_category_associations'::text), ROW('seo_locations'::text),
-    ROW('seo_location_associations'::text), ROW('seo_landing_pages'::text)
-  ] LOOP
-    EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I', rec.t || '_public_read', rec.t);
-    EXECUTE format('CREATE POLICY %I ON public.%I FOR SELECT USING (true)', rec.t || '_public_read', rec.t);
-    EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I', rec.t || '_admin_all', rec.t);
+  -- Content tables: admin full access; NO anon SELECT on the base tables —
+  -- the public reads the published-only views below.
+  FOREACH t IN ARRAY ARRAY['seo_metadata', 'seo_metadata_versions',
+                           'seo_sport_categories', 'seo_category_aliases',
+                           'seo_category_associations', 'seo_locations',
+                           'seo_location_associations', 'seo_landing_pages'] LOOP
+    EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I', t || '_admin_all', t);
+    EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I', t || '_public_read', t);
     EXECUTE format(
       'CREATE POLICY %I ON public.%I FOR ALL TO authenticated USING (public.is_playturf_admin()) WITH CHECK (public.is_playturf_admin())',
-      rec.t || '_admin_all', rec.t);
+      t || '_admin_all', t);
   END LOOP;
-
-  -- seo_redirects: admin-only reads too (serve.js uses service_role).
-  EXECUTE 'DROP POLICY IF EXISTS seo_redirects_admin_all ON public.seo_redirects';
-  EXECUTE 'CREATE POLICY seo_redirects_admin_all ON public.seo_redirects FOR ALL TO authenticated USING (public.is_playturf_admin()) WITH CHECK (public.is_playturf_admin())';
 END;
 $$;
 
-GRANT EXECUTE ON FUNCTION public.seo_resolve_redirect(text) TO service_role, authenticated;
+-- Public views (definer-owned → bypass base RLS deliberately; Supabase linter
+-- warning is expected and intended — see runbook §8).
+-- Amendment 1 interplay: turfs.status filtering happens here at the view level
+-- so the anon/serve path can never leak unpublished rows even before the
+-- turfs-table RLS tightening (migration 002, awaiting owner confirmation).
+
+DROP VIEW IF EXISTS public.seo_public_metadata;
+CREATE VIEW public.seo_public_metadata AS
+SELECT id, entity_type, entity_id, seo_title, meta_description, h1, slug,
+       canonical_url, robots_index, robots_follow, og_title, og_description,
+       og_image, twitter_title, twitter_description, focus_keyword,
+       secondary_keywords, status, generated_by, version, updated_at
+FROM public.seo_metadata
+WHERE status = 'published' AND robots_index;
+
+DROP VIEW IF EXISTS public.seo_public_turfs;
+CREATE VIEW public.seo_public_turfs AS
+SELECT id, name, slug, city, locality, address, image, gallery, videos,
+       sport_types, amenities, description, price_per_hour, timing, rating,
+       lat, lng, is_popular, status, updated_at
+FROM public.turfs
+WHERE status = 'published';
+
+DROP VIEW IF EXISTS public.seo_public_landing_pages;
+CREATE VIEW public.seo_public_landing_pages AS
+SELECT id, page_type, category_id, location_id, slug, listing_count,
+       unique_content_words, is_indexable, override_index, status, updated_at
+FROM public.seo_landing_pages;
+
+DROP VIEW IF EXISTS public.seo_public_categories;
+CREATE VIEW public.seo_public_categories AS
+SELECT id, name, slug, parent_id FROM public.seo_sport_categories;
+
+DROP VIEW IF EXISTS public.seo_public_locations;
+CREATE VIEW public.seo_public_locations AS
+SELECT id, type, parent_id, name, slug, aliases, latitude, longitude
+FROM public.seo_locations;
+
+DROP VIEW IF EXISTS public.seo_public_redirects;
+CREATE VIEW public.seo_public_redirects AS
+SELECT from_path, to_path, status_code FROM public.seo_redirects;
+
+GRANT SELECT ON public.seo_public_metadata TO anon, authenticated;
+GRANT SELECT ON public.seo_public_turfs TO anon, authenticated;
+GRANT SELECT ON public.seo_public_landing_pages TO anon, authenticated;
+GRANT SELECT ON public.seo_public_categories TO anon, authenticated;
+GRANT SELECT ON public.seo_public_locations TO anon, authenticated;
+GRANT SELECT ON public.seo_public_redirects TO anon, authenticated;
 
 -- ----------------------------------------------------------------------------
 -- 10. Feature flags (default OFF — engine inert until the runbook enables it)
@@ -429,26 +516,5 @@ VALUES
 ON CONFLICT (key) DO NOTHING;
 
 -- ============================================================================
--- DOWN (rollback) — uncomment to revert everything this migration added.
+-- DOWN — also available uncommented in supabase_seo_001_foundation_down.sql
 -- ============================================================================
--- DROP TRIGGER IF EXISTS turfs_seo_outbox ON public.turfs;
--- DROP TRIGGER IF EXISTS turfs_touch_updated_at ON public.turfs;
--- DROP FUNCTION IF EXISTS public.seo_turf_changed();
--- DROP FUNCTION IF EXISTS public.seo_touch_updated_at();
--- DROP FUNCTION IF EXISTS public.seo_resolve_redirect(text);
--- DROP TABLE IF EXISTS public.seo_validation_issues;
--- DROP TABLE IF EXISTS public.seo_generation_logs;
--- DROP TABLE IF EXISTS public.seo_redirects;
--- DROP TABLE IF EXISTS public.seo_landing_pages;
--- DROP TABLE IF EXISTS public.seo_location_associations;
--- DROP TABLE IF EXISTS public.seo_locations;
--- DROP TABLE IF EXISTS public.seo_category_associations;
--- DROP TABLE IF EXISTS public.seo_category_aliases;
--- DROP TABLE IF EXISTS public.seo_sport_categories;
--- DROP TABLE IF EXISTS public.seo_metadata_versions;
--- DROP TABLE IF EXISTS public.seo_metadata;
--- DROP TABLE IF EXISTS public.seo_generation_jobs;
--- DELETE FROM public.site_settings WHERE key LIKE 'seo_%';
--- ALTER TABLE public.turfs DROP COLUMN IF EXISTS updated_at;
--- DROP INDEX IF EXISTS turfs_slug_unique_idx;
--- ALTER TABLE public.turfs DROP COLUMN IF EXISTS slug;

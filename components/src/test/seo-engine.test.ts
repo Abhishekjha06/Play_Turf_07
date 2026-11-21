@@ -9,8 +9,13 @@ import {
   absoluteUrl,
   canonicalizeUrl,
   hasTrackingOrFilterParams,
+  assertProductionOrigin,
   resolveRedirect,
   collapseRedirectChains,
+  deriveLocality,
+  distanceKm,
+  coordsPlausibleForCity,
+  localityValidationIssues,
   seoFlags,
   SEO_CONFIG,
 } from "@/lib/seo-engine";
@@ -44,7 +49,6 @@ describe("seo-engine slug service", () => {
     );
     expect(long.length).toBeLessThanOrEqual(40);
     expect(long.endsWith("-")).toBe(false);
-    expect(long).not.toMatch(/[a-z]-[a-z]*$/ ? /-$|-$/ : /$/);
   });
 
   it("keeps the legacy {name}-{id} pattern byte-identical to the pre-engine builder", () => {
@@ -79,14 +83,16 @@ describe("seo-engine canonical builder", () => {
     expect(siteOrigin({})).toMatch(/^https:\/\/.+vercel\.app$/);
   });
 
-  it("forces https, lowercase host, strips params/hash/trailing slash", () => {
+  it("forces https, lowercase host, strips params/hash — page paths keep a trailing slash (vercel trailingSlash:true, amendment 7)", () => {
     expect(canonicalizeUrl("http://Example.com/Turfs/?utm_source=x&sort=asc#top", { VITE_SITE_ORIGIN: "https://example.com" }))
-      .toBe("https://example.com/Turfs");
+      .toBe("https://example.com/Turfs/");
   });
 
-  it("keeps the root slash and strips others", () => {
+  it("keeps the root slash and adds it to page paths, but not file paths", () => {
     expect(canonicalizeUrl("https://example.com/", { VITE_SITE_ORIGIN: "https://example.com" })).toBe("https://example.com/");
-    expect(canonicalizeUrl("https://example.com/turf/x/", { VITE_SITE_ORIGIN: "https://example.com" })).toBe("https://example.com/turf/x");
+    expect(canonicalizeUrl("https://example.com/turf/x/", { VITE_SITE_ORIGIN: "https://example.com" })).toBe("https://example.com/turf/x/");
+    expect(canonicalizeUrl("https://example.com/sitemap.xml/", { VITE_SITE_ORIGIN: "https://example.com" })).toBe("https://example.com/sitemap.xml");
+    expect(canonicalizeUrl("https://example.com/robots.txt", { VITE_SITE_ORIGIN: "https://example.com" })).toBe("https://example.com/robots.txt");
   });
 
   it("strips the known tracking/filter/sort/pagination params", () => {
@@ -95,9 +101,74 @@ describe("seo-engine canonical builder", () => {
     expect(hasTrackingOrFilterParams("/turfs")).toBe(false);
   });
 
-  it("absoluteUrl never double-slashes", () => {
-    expect(absoluteUrl("/turfs", { VITE_SITE_ORIGIN: "https://example.com" })).toBe("https://example.com/turfs");
-    expect(absoluteUrl("turfs", { VITE_SITE_ORIGIN: "https://example.com" })).toBe("https://example.com/turfs");
+  it("absoluteUrl never double-slashes and follows the trailing-slash policy", () => {
+    expect(absoluteUrl("/turfs", { VITE_SITE_ORIGIN: "https://example.com" })).toBe("https://example.com/turfs/");
+    expect(absoluteUrl("turfs", { VITE_SITE_ORIGIN: "https://example.com" })).toBe("https://example.com/turfs/");
+  });
+
+  it("assertProductionOrigin fails production builds on *.vercel.app origins (amendment 2)", () => {
+    const prodEnv = { NODE_ENV: "production", VITE_SITE_ORIGIN: "https://play-turf-git-main-x.vercel.app" };
+    expect(() => assertProductionOrigin(prodEnv)).toThrow(/real production domain/);
+    // custom domain passes
+    expect(assertProductionOrigin({ NODE_ENV: "production", VITE_SITE_ORIGIN: "https://playturf.in" })).toBe("https://playturf.in");
+    // dev/preview builds never throw, even on vercel origins
+    expect(assertProductionOrigin({ VITE_SITE_ORIGIN: "https://play-turf-git-main-x.vercel.app" })).toBe("https://play-turf-git-main-x.vercel.app");
+    expect(assertProductionOrigin({ VERCEL_ENV: "preview", VITE_SITE_ORIGIN: "https://play-turf-git-main-x.vercel.app" }))
+      .toBe("https://play-turf-git-main-x.vercel.app");
+  });
+});
+
+// ── Locality + coordinate plausibility (amendment 6) ────────────────────────
+
+describe("seo-engine locality helpers", () => {
+  it("derives locality from the 'Locality, City' address convention", () => {
+    expect(deriveLocality("Indiranagar, Bangalore")).toBe("Indiranagar");
+    expect(deriveLocality("No comma here")).toBe(null);
+    expect(deriveLocality("ab, City")).toBe(null); // needle < 3 chars
+    expect(deriveLocality("")).toBe(null);
+  });
+
+  it("computes haversine distance", () => {
+    // Mumbai → Bangalore ≈ 840km; Dahisar → Lower Parel ≈ 30km
+    const d = distanceKm(19.05, 72.85, 12.97, 77.59);
+    expect(d).toBeGreaterThan(700);
+    expect(distanceKm(19.05, 72.85, 19.05, 72.85)).toBeCloseTo(0);
+    expect(distanceKm(NaN, 72.85, 12.97, 77.59)).toBe(null);
+  });
+
+  it("flags implausible city coordinates (amendment 6: omit geo unless plausible)", () => {
+    // Virar turf (19.4, 72.8) with Bangalore coords (12.97, 77.59) — the real
+    // data defect from 00-audit.md §5.3.
+    const peers = [
+      { id: "t1", lat: 19.3, lng: 72.85 },
+      { id: "t2", lat: 19.45, lng: 72.75 },
+    ];
+    const turf = { id: "t3", city: "Vasai-Virar", lat: 12.97, lng: 77.59 };
+    expect(coordsPlausibleForCity(turf, peers)).toBe(false);
+    // same-city peers → plausible
+    expect(coordsPlausibleForCity({ ...turf, lat: 19.42, lng: 72.8 }, peers)).toBe(true);
+    // no peers / no coords → unknown, geo omitted
+    expect(coordsPlausibleForCity(turf, [])).toBe(null);
+    expect(coordsPlausibleForCity({ ...turf, lat: undefined, lng: undefined }, peers)).toBe(null);
+  });
+
+  it("emits the admin review-queue validation issues", () => {
+    const peers = [{ id: "t1", lat: 19.3, lng: 72.85 }];
+    const issues = localityValidationIssues(
+      { id: "t7", address: "Bhoir Garden, Dahisar East", locality: null, city: "Mumbai", lat: 19.25, lng: 72.86 },
+      peers,
+    );
+    expect(issues.map((i) => i.code)).toEqual(["locality_needs_review"]);
+    const implausible = localityValidationIssues(
+      { id: "t8", address: "Indiranagar, Bangalore", locality: null, city: "Bangalore", lat: 19.05, lng: 72.85 },
+      [{ id: "t1", lat: 12.97, lng: 77.59 }],
+    );
+    expect(implausible.map((i) => i.code)).toEqual(["locality_needs_review", "implausible_coords"]);
+    const missing = localityValidationIssues(
+      { id: "t9", address: "", locality: null, city: "Mumbai", lat: null, lng: null },
+      [],
+    );
+    expect(missing.map((i) => i.code)).toEqual(["missing_locality", "missing_coords"]);
   });
 });
 

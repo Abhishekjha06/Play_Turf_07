@@ -1,87 +1,118 @@
 # Play Turf — SEO Engine Runbook
 
 How to enable, disable, roll back and verify the Dynamic SEO Engine.
-See `00-audit.md` for the audit/design that led to this file.
+See `00-audit.md` (design) and `booking-payment-smoke.md` (pre-migration
+regression). Amended 2026-11-21 per owner review (11 amendments).
 
 ---
 
-## 1. Apply order (Supabase dashboard → SQL Editor)
+## 1. Migration order (Supabase dashboard → SQL Editor)
 
-Migrations are dashboard-run (no CLI migrations in this repo). All files are
-idempotent — safe to re-run.
+Migrations are **numbered, idempotent and have explicit down scripts**.
+⚠️ Apply on a **staging project first**; take a backup before every application
+on the production project.
 
-1. `supabase_admin_rbac.sql` — **prerequisite** (already applied: provides `is_playturf_admin()`, `site_settings`).
-2. `supabase_seo_engine.sql` — Phase 1 foundation (this engine).
-3. Backfill slugs (see §3).
-4. Phase 2+ migrations when they land (documented here as they ship).
-
-## 2. Feature flags
-
-| site_settings key | env mirror | Effect when ON |
+| Order | File | Status |
 |---|---|---|
-| `seo_engine_enabled` | `SEO_ENGINE_ENABLED` | master switch — everything below is inert while OFF |
-| `seo_ai_enabled` | `SEO_AI_ENABLED` | AI generation pipeline (Phase 5) |
-| `seo_landing_pages_enabled` | `SEO_LANDING_PAGES_ENABLED` | landing page evaluation/publication (Phase 3) |
-| `seo_sitemap_enabled` | `SEO_SITEMAP_ENABLED` | dynamic sitemap regeneration (Phase 2) |
-| `seo_redirects_enabled` | `SEO_REDIRECTS_ENABLED` | 301/410 serving from `seo_redirects` (Phase 2) |
+| 0 | `supabase_admin_rbac.sql` | prerequisite (`is_playturf_admin()`, `site_settings`) |
+| 1 | `supabase_seo_001_foundation.sql` (+ `_down.sql`) | engine tables, outbox trigger, views, flags — **default OFF** |
+| 2 | `supabase_seo_002_rls_tightening.sql` (+ `_down.sql`) | ⚠️ **PREPARED, DO NOT APPLY without explicit owner confirmation** — tightens turfs anon read to `status='published'` (owner/booking-holder/admin access kept) |
+| 3 | backfill slugs (§3) | one-time |
 
-- **Env vars are the build/edge boundary** (Vercel → `api/serve.js`, prebuild
-  scripts). `site_settings` values are what the admin can flip at runtime; the
-  worker/build honor them on their next run.
-- **Master OFF = the platform behaves exactly as before the engine** — no
-  metadata rows are consumed, sitemaps/agent-content keep the pre-engine
-  behaviour, serve.js ignores redirects. This is enforced by flag checks at
-  every consumer and covered by tests.
+Code-side safeguards (listTurfs published filter, generators) degrade
+gracefully on pre-migration databases — they retry unfiltered, so applying the
+code before the SQL is safe.
 
-## 3. Slug backfill (one-time, after applying `supabase_seo_engine.sql`)
+## 2. Site origin (amendment 2)
+
+- **Single source:** `components/src/lib/seo-engine/canonical.shared.mjs`
+  `siteOrigin(env)` → `VITE_SITE_ORIGIN` env, else the documented fallback.
+- **Production builds FAIL** when the origin resolves to `*.vercel.app`
+  (`assertProductionOrigin` runs in prebuild). Dev/preview builds never fail.
+- Before merging to main: set `VITE_SITE_ORIGIN` (Vercel env + local `.env`)
+  to the real production domain `[YOUR DOMAIN]` and run `npm run build` locally
+  once to sync `index.html` / `robots.txt`.
+- **Preview deployments are noindexed at the edge** (`api/serve.js` reads
+  `VERCEL_ENV` / the generated `seo-config.json`; every HTML response gets
+  `X-Robots-Tag: noindex, nofollow` on previews).
+
+## 3. Slug backfill (one-time, after 001)
 
 ```bash
 cd components
-# preview (no writes; works with anon key):
-node scripts/backfill-seo-slugs.mjs --dry-run
-# write (needs service key in env/.env.local):
-node scripts/backfill-seo-slugs.mjs
+node scripts/backfill-seo-slugs.mjs --dry-run   # preview (anon key is enough)
+node scripts/backfill-seo-slugs.mjs             # writes (needs service key)
 ```
 
-- Batched (`bulkBatchSize`=50), resumable (re-runs skip rows with a slug;
-  `--force` rewrites), per-item error capture (exit code 2 on failures).
-- **Phase 1 writes the legacy pattern `{name}-{id}`** — byte-identical to the
-  URLs already live, so nothing breaks. The master-prompt pattern
-  `{name}-{locality}-{city}` ships in Phase 2 behind
-  `seo_engine_enabled` + a 301 map from these legacy slugs in `seo_redirects`.
+- Id-suffixed slugs (`{name}-{id}`) are **kept** (amendment 7) — zero URL
+  changes. Slugs land in `turfs.slug` with a unique index; legacy forms
+  (raw-id `/turf/turf_1`) get 301s in Phase 2's serve.js redirect layer.
+- Batched (50), resumable, `--force` to rewrite, exit code 2 on failures.
 
-## 4. Runtime prerequisites for request-time SEO (Phase 2)
+## 4. Feature flags
 
-Set in **Vercel → Settings → Environment Variables** (server-side only, never
-`VITE_`-prefixed):
+| site_settings key | env mirror | Effect when ON |
+|---|---|---|
+| `seo_engine_enabled` | `SEO_ENGINE_ENABLED` | master switch |
+| `seo_ai_enabled` | `SEO_AI_ENABLED` | AI pipeline (Phase 5) |
+| `seo_landing_pages_enabled` | `SEO_LANDING_PAGES_ENABLED` | landing page evaluation (Phase 3) |
+| `seo_sitemap_enabled` | `SEO_SITEMAP_ENABLED` | DB-backed sitemap part |
+| `seo_redirects_enabled` | `SEO_REDIRECTS_ENABLED` | 301/410 serving (Phase 2) |
+
+Env wins at the build/edge boundary; `site_settings` is what the admin flips at
+runtime. **Master OFF = exact pre-engine behaviour** (covered by tests).
+
+## 5. Runtime env for the edge (serve.js — amendment 4/5)
+
+Vercel env vars (server-side, never `VITE_`-prefixed, **no service-role key in
+the request path**):
 
 | Var | Purpose |
 |---|---|
-| `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` | `api/serve.js` reads `seo_redirects` + per-turf metadata at request time (service_role bypasses RLS) |
-| `SEO_ENGINE_ENABLED` | master flag for the edge layer |
+| `SUPABASE_URL` (+ `SUPABASE_ANON_KEY`) | serve.js reads the published-only VIEWS with the anon key, `AbortSignal.timeout(2000)`, build-time fallback on any failure |
+| `SEO_ENGINE_ENABLED`, `SEO_SITEMAP_ENABLED`, `SEO_REDIRECTS_ENABLED` | edge flags |
 
-Without them, serve.js falls back to build-time `agent-content.json` —
-the pre-engine behaviour.
+Views (001): `seo_public_metadata` (published+indexable only), `seo_public_turfs`
+(published only), `seo_public_landing_pages`, `seo_public_categories`,
+`seo_public_locations`, `seo_public_redirects`. Base `seo_*` tables have **no
+public policies at all** — admin writes via `is_playturf_admin()`, worker via
+service-role (outbox processing only, never request path).
 
-## 5. Disable / roll back
+## 6. Sitemap without a deploy (amendment 5)
 
-- **Turn off:** set `seo_engine_enabled` → `false` in `site_settings` (and/or
-  remove the env vars). Everything reverts to pre-engine behaviour immediately.
-- **Full rollback (destructive):** run the commented **DOWN** block at the
-  bottom of `supabase_seo_engine.sql`. This drops every `seo_*` table, the
-  triggers and the `turfs.slug`/`updated_at` columns. Take a backup first
-  (Supabase → Database → Backups) — the master prompt requires a backup before
-  any bulk job on real data.
+`/sitemap.xml` is a forced rewrite to `/api/serve` which reads the DB
+(2s timeout) and the prebuild static routes, cached at the CDN
+(`s-maxage=3600, stale-while-revalidate=86400`). Turf URLs get real
+`updated_at` lastmod. DB down / flags off → falls back to the prebuild data.
+The static `public/sitemap.xml` remains as the prebuild artifact.
 
-## 6. Live-data quality checks (owner; addresses Phase 0 §9 pending items)
+## 7. Disable / roll back
 
-Run in the dashboard SQL editor; results feed the dashboard issues list:
+- **Turn off:** `seo_engine_enabled` → `false` (runtime env + site_settings).
+- **Partial:** flip only the sub-flag you want off.
+- **Full rollback:** run `supabase_seo_001_foundation_down.sql` (then, if 002
+  was applied, `supabase_seo_002_rls_tightening_down.sql`). Backup first.
+
+## 8. Known intentional warnings
+
+- Supabase linter will flag the `seo_public_*` views as "views bypass RLS" —
+  intended (they are the published-only public read surface; base tables are
+  locked).
+- `listTurfs`/generators log a warning about "status column unavailable" until
+  migration 001 is applied — expected pre-migration degradation, not an error.
+
+## 9. Live-data quality checks (owner)
+
+Run in the dashboard SQL editor after 001 (feeds the dashboard review queue):
 
 ```sql
--- turfs missing locality (address must follow the "Locality, City" convention)
+-- turfs missing locality (address must follow "Locality, City")
 SELECT id, name, address FROM turfs WHERE address IS NULL OR position(',' in address) = 0;
 
--- junk sport values (anything outside the seeded categories)
+-- derived localities pending review (queue feeds AdminSeo in Phase 4)
+SELECT id, name, address FROM turfs WHERE locality IS NULL AND address LIKE '%,%';
+
+-- junk sport values (never silently mapped; aliases added by admin)
 SELECT DISTINCT s FROM turfs, unnest(sport_types) s
 WHERE s NOT IN (SELECT name FROM seo_sport_categories)
   AND s NOT IN (SELECT alias FROM seo_category_aliases);
@@ -89,22 +120,26 @@ WHERE s NOT IN (SELECT name FROM seo_sport_categories)
 -- turfs with no slug after backfill
 SELECT id, name FROM turfs WHERE slug IS NULL;
 
--- coordinates that contradict their city (needs manual review)
+-- coordinate sanity (engine omits geo + nearby links when implausible)
 SELECT id, name, city, lat, lng FROM turfs WHERE lat IS NULL OR lng IS NULL;
 
 -- duplicate names (slug uniqueness still holds via id suffix)
 SELECT name, count(*) FROM turfs GROUP BY name HAVING count(*) > 1;
 ```
 
-## 7. Where things live
+## 10. Where things live
 
 | Piece | Path |
 |---|---|
 | Central config (single source) | `components/src/config/seo-engine.config.mjs` |
 | Typed app API | `components/src/lib/seo-engine/index.ts` |
 | Slug service | `components/src/lib/seo-engine/slug.shared.mjs` |
-| Canonical builder | `components/src/lib/seo-engine/canonical.shared.mjs` |
+| Canonical + origin guard | `components/src/lib/seo-engine/canonical.shared.mjs` |
 | Redirect resolver | `components/src/lib/seo-engine/redirects.shared.mjs` |
-| Migration | `supabase_seo_engine.sql` |
+| Locality/geo plausibility | `components/src/lib/seo-engine/locality.shared.mjs` |
+| Migrations | `supabase_seo_001_foundation.sql` (+down), `supabase_seo_002_rls_tightening.sql` (+down) |
 | Slug backfill | `components/scripts/backfill-seo-slugs.mjs` |
-| Tests | `components/src/test/seo-engine.test.ts` |
+| Origin sync (index.html/robots.txt) | `components/scripts/sync-site-origin.mjs` (prebuild) |
+| Edge runtime config artifact | `api/seo-config.json` (prebuild) |
+| Tests | `components/src/test/seo-engine.test.ts`, `components/src/test/seo-parity.test.ts` |
+| Booking/payment smoke | `docs/seo-engine/booking-payment-smoke.md` |

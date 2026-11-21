@@ -10,11 +10,13 @@
  *   - address lines: the registered business address, if PlayTurf operates one
  *   - legalEntityName: the registered business name, if applicable
  */
+import { siteOrigin as _siteOrigin } from "@/lib/seo-engine/canonical.shared.mjs";
+
 export const business = {
   /** Verified public brand name. */
   businessName: "PlayTurf",
-  /** Canonical production origin (confirmed live deployment). */
-  websiteUrl: "https://play-turf-git-main-abhishekjha06s-projects.vercel.app",
+  /** Canonical production origin — single source (lib/seo-engine/canonical.shared.mjs). */
+  websiteUrl: _siteOrigin(import.meta.env as unknown as Record<string, string>),
   /** Public logo (generated asset, served from the site itself). */
   logoUrl: "/playturf-logo.webp",
 

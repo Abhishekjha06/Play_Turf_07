@@ -22,10 +22,10 @@ import { business, hasVerifiedContactInfo } from "@/config/business";
 export const SITE_NAME = "PlayTurf";
 export const SITE_TAGLINE = "Book Sports Turfs & Tournaments Near You";
 
-/** Canonical production origin. Override with VITE_SITE_ORIGIN when previewing. */
-export const SITE_ORIGIN: string =
-  import.meta.env.VITE_SITE_ORIGIN ||
-  "https://play-turf-git-main-abhishekjha06s-projects.vercel.app";
+/** Canonical production origin — single source (SEO amendment 2); the same
+ *  value feeds build scripts, api/serve.js and the synced static files. */
+import { siteOrigin as _siteOrigin } from "./seo-engine/canonical.shared.mjs";
+export const SITE_ORIGIN: string = _siteOrigin(import.meta.env as unknown as Record<string, string>);
 
 export const DEFAULT_OG_IMAGE = "/og-image.jpg";
 

@@ -15,6 +15,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { siteOrigin, assertProductionOrigin, canonicalizeUrl } from "../src/lib/seo-engine/canonical.shared.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.resolve(__dirname, "..", "public");
@@ -38,7 +39,9 @@ function readViteEnv() {
 }
 
 const env = { ...readViteEnv(), ...process.env };
-const ORIGIN = (env.VITE_SITE_ORIGIN || "https://play-turf-git-main-abhishekjha06s-projects.vercel.app").replace(/\/$/, "");
+// Amendment 2: ONE origin source + production build guard (*.vercel.app fails).
+const ORIGIN = siteOrigin(env);
+assertProductionOrigin(env);
 const SB_URL = env.VITE_SUPABASE_URL;
 const SB_KEY = env.VITE_SUPABASE_ANON_KEY;
 
@@ -61,18 +64,32 @@ function esc(s) {
 
 async function fetchTurfs() {
   if (!SB_URL || !SB_KEY) throw new Error("Supabase env not configured");
-  const res = await fetch(`${SB_URL}/rest/v1/turfs?select=*`, {
-    headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` },
-  });
-  if (!res.ok) throw new Error(`Supabase responded ${res.status}`);
-  return res.json();
+  // Amendment 1: published-only. Graceful degradation: before migration 001
+  // adds the status column, the filtered read 400s — retry unfiltered so the
+  // build never loses its venue URLs.
+  const attempt = async (filtered) => {
+    const qs = filtered ? "select=*&status=eq.published" : "select=*";
+    const res = await fetch(`${SB_URL}/rest/v1/turfs?${qs}`, {
+      headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` },
+    });
+    if (!res.ok) throw new Error(`Supabase responded ${res.status}${filtered ? " (filtered)" : ""}`);
+    return res.json();
+  };
+  try {
+    return await attempt(true);
+  } catch (e) {
+    if (!/filtered/.test(e.message)) throw e;
+    console.warn("⚠ sitemap: status column unavailable (migration 001 unapplied) — falling back to unfiltered read.");
+    return await attempt(false);
+  }
 }
 
 const today = new Date().toISOString().slice(0, 10);
 const urls = [];
 
 function add(loc, { changefreq = "weekly", priority = "0.7", lastmod = today, image } = {}) {
-  urls.push({ loc: ORIGIN + loc, changefreq, priority, lastmod, image });
+  // Amendment 7: canonical trailing slash consistent with vercel trailingSlash:true.
+  urls.push({ loc: canonicalizeUrl(ORIGIN + loc), changefreq, priority, lastmod, image });
 }
 
 // 1. Static public routes

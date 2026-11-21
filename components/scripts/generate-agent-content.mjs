@@ -9,6 +9,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { siteOrigin, assertProductionOrigin, buildRuntimeSeoConfig } from "../src/lib/seo-engine/canonical.shared.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, "..");
@@ -16,7 +17,10 @@ const apiDir = path.resolve(root, "..", "api");
 const trust = JSON.parse(fs.readFileSync(path.resolve(root, "src", "data", "trust-content.json"), "utf8"));
 const blogPosts = JSON.parse(fs.readFileSync(path.resolve(root, "src", "data", "blogPosts.json"), "utf8"));
 
-const ORIGIN = (process.env.VITE_SITE_ORIGIN || "https://play-turf-git-main-abhishekjha06s-projects.vercel.app").replace(/\/$/, "");
+const env = { ...readViteEnv(), ...process.env }; // readViteEnv is a hoisted function declaration
+// Amendment 2: ONE origin source + production build guard (*.vercel.app fails).
+const ORIGIN = siteOrigin(env);
+assertProductionOrigin(env);
 
 function readViteEnv() {
   const env = {};
@@ -44,15 +48,30 @@ const sportOk = (s) => /^[a-z][a-z0-9 &-]{1,30}$/i.test(s) && !/test|demo|sample
 async function fetchTurfs() {
   const env = { ...readViteEnv(), ...process.env };
   if (!env.VITE_SUPABASE_URL || !env.VITE_SUPABASE_ANON_KEY) return [];
-  try {
-    const res = await fetch(`${env.VITE_SUPABASE_URL}/rest/v1/turfs?select=*`, {
+  // Amendment 1: published-only, with graceful degradation before migration
+  // 001 adds the status column to the live DB.
+  const attempt = async (filtered) => {
+    const qs = filtered ? "select=*&status=eq.published" : "select=*";
+    const res = await fetch(`${env.VITE_SUPABASE_URL}/rest/v1/turfs?${qs}`, {
       headers: { apikey: env.VITE_SUPABASE_ANON_KEY, Authorization: `Bearer ${env.VITE_SUPABASE_ANON_KEY}` },
     });
-    if (!res.ok) throw new Error(String(res.status));
+    if (!res.ok) throw new Error(String(res.status) + (filtered ? " (filtered)" : ""));
     return res.json();
+  };
+  try {
+    return await attempt(true);
   } catch (err) {
-    console.warn(`⚠ agent-content: could not fetch venues (${err.message}) — venue routes omitted this build.`);
-    return [];
+    if (!/\(filtered\)/.test(err.message)) {
+      console.warn(`⚠ agent-content: could not fetch venues (${err.message}) — venue routes omitted this build.`);
+      return [];
+    }
+    console.warn("⚠ agent-content: status column unavailable (migration 001 unapplied) — falling back to unfiltered read.");
+    try {
+      return await attempt(false);
+    } catch (err2) {
+      console.warn(`⚠ agent-content: could not fetch venues (${err2.message}) — venue routes omitted this build.`);
+      return [];
+    }
   }
 }
 
@@ -239,6 +258,10 @@ const out = {
 };
 if (!fs.existsSync(apiDir)) fs.mkdirSync(apiDir, { recursive: true });
 fs.writeFileSync(path.join(apiDir, "agent-content.json"), JSON.stringify(out, null, 1));
+
+// Amendment 2/4/5: runtime config snapshot for api/serve.js (CommonJS cannot
+// import the ESM shared modules) — origin, flags and limits, same source.
+fs.writeFileSync(path.join(apiDir, "seo-config.json"), JSON.stringify(buildRuntimeSeoConfig(env), null, 1));
 
 // Sanity: the function requires this map to be parseable
 JSON.parse(fs.readFileSync(path.join(apiDir, "agent-content.json"), "utf8"));

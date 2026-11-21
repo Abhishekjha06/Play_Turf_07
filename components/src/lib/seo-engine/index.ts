@@ -17,8 +17,16 @@ import {
   absoluteUrl,
   canonicalizeUrl,
   hasTrackingOrFilterParams,
+  assertProductionOrigin,
+  buildRuntimeSeoConfig,
 } from "./canonical.shared.mjs";
 import { resolveRedirect, collapseRedirectChains } from "./redirects.shared.mjs";
+import {
+  deriveLocality,
+  distanceKm,
+  coordsPlausibleForCity,
+  localityValidationIssues,
+} from "./locality.shared.mjs";
 import { SEO_CONFIG, seoFlags, FALLBACK_ORIGIN, type SeoFlags } from "@/config/seo-engine";
 
 export {
@@ -31,8 +39,14 @@ export {
   absoluteUrl,
   canonicalizeUrl,
   hasTrackingOrFilterParams,
+  assertProductionOrigin,
+  buildRuntimeSeoConfig,
   resolveRedirect,
   collapseRedirectChains,
+  deriveLocality,
+  distanceKm,
+  coordsPlausibleForCity,
+  localityValidationIssues,
   SEO_CONFIG,
   seoFlags,
   FALLBACK_ORIGIN,

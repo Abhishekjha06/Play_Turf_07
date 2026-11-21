@@ -51,7 +51,14 @@ export async function listTurfs(opts: {
   userLocation?: { lat: number; lng: number };
 } = {}): Promise<Turf[]> {
   const supabase = await getSupabase();
-  let query = supabase.from("turfs").select("*");
+  // SEO amendment 1: archived / pending_approval turfs must never surface on
+  // public surfaces (they were leaking — see 00-audit.md §5.9). Graceful
+  // degradation: until supabase_seo_001_foundation.sql adds the status column
+  // to the live DB, the filtered query fails — fall back to the pre-engine
+  // unfiltered read instead of breaking the app.
+  const runQuery = async (filtered: boolean): Promise<Turf[]> => {
+    let query = supabase.from("turfs").select("*");
+    if (filtered) query = query.eq("status", "published");
 
   if (opts.popular) {
     query = query.eq("is_popular", true);
@@ -94,6 +101,18 @@ export async function listTurfs(opts: {
     result = [...result].sort((a, b) => distanceKm(opts.userLocation, a) - distanceKm(opts.userLocation, b));
   }
   return result;
+  }
+
+  // Filtered read first; if the live DB predates migration 001 (no status
+  // column yet), retry the pre-engine unfiltered read.
+  try {
+    return await runQuery(true);
+  } catch (err) {
+    if (String((err as Error)?.message || "").match(/status|column|PGRST/i)) {
+      return await runQuery(false);
+    }
+    throw err;
+  }
 }
 
 export async function getTurf(id: string): Promise<Turf> {

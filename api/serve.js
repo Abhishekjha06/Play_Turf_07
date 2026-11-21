@@ -36,7 +36,90 @@ try {
 const ROUTES = content.routes || {};
 const SPA_PATHS = new Set(content.knownSpaPaths || []);
 const PRIVATE_PREFIXES = content.privatePrefixes || [];
-const ORIGIN = content.origin || "https://playturf.app";
+// Amendment 2: origin + flags come from the build-time seo-config.json
+// (generated from the single config source); agent-content.origin is the
+// pre-engine fallback.
+let SEO_CFG = null;
+try {
+  SEO_CFG = require("./seo-config.json");
+} catch {
+  SEO_CFG = null; // pre-engine deployment without the snapshot — keep old behaviour
+}
+const ORIGIN = (SEO_CFG && SEO_CFG.origin) || content.origin || "https://playturf.app";
+const SEO_FLAGS = (SEO_CFG && SEO_CFG.flags) || { enabled: false, sitemapEnabled: false, redirectsEnabled: false };
+
+// Amendment 2: preview deployments are noindexed at the edge. Production
+// builds fail earlier at prebuild if the origin is a *.vercel.app URL — here
+// we only log loudly (the function must still serve whatever it can).
+const ORIGIN_IS_VERCEL = /(^|\.)vercel\.app$/.test(new URL(ORIGIN).hostname);
+const IS_PREVIEW = Boolean(
+  (SEO_CFG && SEO_CFG.isPreview) ||
+    (process.env.VERCEL_ENV && process.env.VERCEL_ENV !== "production") ||
+    (ORIGIN_IS_VERCEL && process.env.VERCEL_ENV !== "production")
+);
+if (!IS_PREVIEW && ORIGIN_IS_VERCEL) {
+  console.error("[serve] WARNING: production origin is a vercel.app URL — set VITE_SITE_ORIGIN to the real domain.");
+}
+
+// Amendment 4: anon-key reads against the published-only views, 2s timeout,
+// never service-role. Any failure returns null → caller falls back to the
+// build-time data.
+const SB_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+const SB_ANON = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+async function fetchSeoPublic(view, qs) {
+  if (!SB_URL || !SB_ANON) return null;
+  try {
+    const res = await fetch(`${SB_URL}/rest/v1/${view}?${qs}`, {
+      headers: { apikey: SB_ANON, Authorization: `Bearer ${SB_ANON}` },
+      signal: AbortSignal.timeout(2000),
+    });
+    if (!res.ok) return null;
+    return res.json();
+  } catch {
+    return null;
+  }
+}
+
+// Amendment 5: /sitemap.xml served from a cached route reading the DB
+// (published turfs only, real updated_at lastmod), static pages still from
+// the prebuild artifact. Falls back to agent-content routes when the DB is
+// unreachable, the engine is off, or the flag disables it.
+function esc(str) {
+  return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+function slugifyServe(text) {
+  return String(text || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+}
+const STATIC_SITEMAP_ROUTES = Object.keys(ROUTES).filter((p) => !/\.[a-z0-9]{2,5}$/i.test(p));
+async function buildSitemapXml() {
+  const staticPart = STATIC_SITEMAP_ROUTES.map(
+    (p) => `<url><loc>${esc(ORIGIN)}${esc(p === "/" ? "/" : p + "/")}</loc><lastmod>${esc((ROUTES[p] && ROUTES[p].lastmod) || String(content.generatedAt).slice(0, 10))}</lastmod></url>`
+  ).join("");
+  let turfPart = "";
+  if (SEO_FLAGS.enabled && SEO_FLAGS.sitemapEnabled) {
+    const turfs = await fetchSeoPublic(
+      "seo_public_turfs",
+      new URLSearchParams({
+        select: "id,name,slug,city,image,updated_at",
+        order: "updated_at.desc",
+      })
+    );
+    if (turfs && turfs.length) {
+      // seo_public_turfs already filters status='published' (amendment 1/4).
+      turfPart = turfs
+        .map((t) => {
+          const slug = t.slug || [t.name, t.id].filter(Boolean).map(slugifyServe).filter(Boolean).join("-");
+          const lastmod = String(t.updated_at || "").slice(0, 10);
+          const img = t.image ? `<image:image><image:loc>${esc(/^https?:/i.test(t.image) ? t.image : ORIGIN + t.image)}</image:loc></image:image>` : "";
+          return `<url><loc>${esc(ORIGIN)}/turf/${esc(slug)}/</loc>${lastmod ? `<lastmod>${esc(lastmod)}</lastmod>` : ""}${img}</url>`;
+        })
+        .join("");
+    }
+  }
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">${staticPart}${turfPart}
+</urlset>`;
+}
 
 const BOT_UA =
   /(bot|crawler|spider|slurp|googlebot|bingbot|yandex|baiduspider|duckduckbot|facebookexternalhit|linkedinbot|twitterbot|whatsapp|telegrambot|gptbot|claudebot|anthropic-ai|perplexity|oai-httpclient|chatgpt|openai|applebot|semrush|ahrefs|mj12bot|petalbot|bytespider|amazonbot|diffbot|smartproxy|serp)/i;
@@ -275,11 +358,36 @@ module.exports = async (req, res) => {
     res.end(body);
   };
 
+  // 0. Amendment 5: dynamic sitemap — cached at the CDN, refreshed hourly
+  //    without a deploy (DB read with 2s timeout; prebuild statics always kept).
+  if (path_ === "/sitemap.xml") {
+    let xml;
+    try {
+      xml = await buildSitemapXml();
+    } catch {
+      xml = null;
+    }
+    if (xml) {
+      res.statusCode = 200;
+      res.setHeader("Content-Type", "application/xml; charset=utf-8");
+      res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=86400");
+      res.setHeader("X-Robots-Tag", "noindex"); // sitemaps are not indexable pages
+      res.end(xml);
+      return;
+    }
+    // DB failure → fall through: Vercel serves the prebuilt static file.
+  }
+
   // 1. Real content route
   const route = ROUTES[path_];
   if (route) {
     if (wantsMarkdown) return sendMarkdown(200, toMarkdown(route, path_));
-    const robotsTag = isPrivate(path_) ? "noindex, follow" : "index, follow, max-image-preview:large";
+    // Amendment 2: preview deployments are noindexed regardless of route.
+    const robotsTag = IS_PREVIEW
+      ? "noindex, nofollow"
+      : isPrivate(path_)
+        ? "noindex, follow"
+        : "index, follow, max-image-preview:large";
     if (BOT_UA.test(ua)) return sendHtml(200, toHtml(route, path_), robotsTag);
     try {
       const html = await getIndexHtml();

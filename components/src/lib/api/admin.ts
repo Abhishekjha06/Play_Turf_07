@@ -41,10 +41,14 @@ export async function updateTurf(id: string, patch: Partial<Turf>): Promise<Turf
 }
 
 export async function deleteTurf(id: string): Promise<void> {
+  // SEO amendment 3: legacy hard delete converted to archive. The row stays
+  // (listTurfs / sitemap / agent-content filter status='published'), and the
+  // DELETE trigger on turfs only writes 410 tombstones for real row deletes —
+  // archiving keeps URLs alive for the 301/410 decision to be made later.
   const supabase = await getSupabase();
   const { error } = await supabase
     .from("turfs")
-    .delete()
+    .update({ status: "archived" })
     .eq("id", id);
   if (error) throw error;
 }
