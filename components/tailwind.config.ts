@@ -7,6 +7,7 @@ export default {
   theme: {
     container: { center: true, padding: "1rem", screens: { "2xl": "1400px" } },
     extend: {
+      screens: { "3xl": "1792px" },
       fontFamily: {
         sans: ["Plus Jakarta Sans", "system-ui", "sans-serif"],
         display: ["Plus Jakarta Sans", "system-ui", "sans-serif"],

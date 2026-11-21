@@ -55,7 +55,7 @@ export function CategoryPills({
   return (
     <section className="mt-5" aria-label="Quick actions" data-testid="category-pills">
       <motion.div
-        className="flex gap-3 overflow-x-auto no-scrollbar px-4"
+        className="flex gap-3 overflow-x-auto no-scrollbar px-4 md:justify-between"
         variants={prefersReducedMotion ? {} : staggerContainer(0.07, 0.15)}
         initial="hidden"
         animate="visible"

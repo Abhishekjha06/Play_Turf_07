@@ -23,7 +23,7 @@ export function BottomNav() {
           aria-hidden
         />
         <nav
-          className="fixed bottom-0 left-1/2 -translate-x-1/2 z-40 w-full max-w-[480px] md:max-w-[640px] lg:max-w-[768px] flex items-center justify-between"
+          className="fixed bottom-0 left-1/2 -translate-x-1/2 z-40 w-full max-w-[480px] md:max-w-[640px] lg:max-w-[min(94vw,1600px)] flex items-center justify-between"
           style={{
             height: "auto",
             minHeight: "66px",

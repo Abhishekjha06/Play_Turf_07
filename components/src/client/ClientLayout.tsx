@@ -114,7 +114,9 @@ export function ClientLayout() {
         </header>
 
         <main className="flex-1 p-4 lg:p-6">
-          <Outlet />
+          <div className="mx-auto w-full max-w-[1600px]">
+            <Outlet />
+          </div>
         </main>
 
         <footer className="border-t border-white/[0.06] px-6 py-3 text-center text-[10px] text-zinc-600">

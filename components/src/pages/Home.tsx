@@ -259,7 +259,7 @@ const Home = () => {
           >
             <SectionHeader title={q ? `Results for "${q}"` : selectedArea ? selectedArea : selectedCity ? selectedCity : "Near you"} />
             <motion.div
-              className="grid grid-cols-1 min-[360px]:grid-cols-2 gap-3 px-4"
+              className="grid grid-cols-1 min-[360px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 px-4"
               variants={staggerContainer(0.06)}
               initial="hidden"
               animate="visible"
@@ -268,7 +268,7 @@ const Home = () => {
               {results.length === 0 && (
                 <motion.p
                   variants={fadeSlideUp}
-                  className="col-span-2 text-sm text-muted2 text-center py-8"
+                  className="col-span-full text-sm text-muted2 text-center py-8"
                 >
                   No turfs found.
                 </motion.p>
@@ -310,7 +310,7 @@ const Home = () => {
               viewport={{ once: true, amount: 0.05 }}
             >
               <SectionHeader title="Popular Turfs" to="/turfs" action="See all" />
-              <div className="grid grid-cols-1 min-[360px]:grid-cols-2 gap-3 px-4">
+              <div className="grid grid-cols-1 min-[360px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 px-4">
                 {popular.length === 0
                   ? [0, 1, 2, 3].map((k) => <TurfCardSkeleton key={k} />)
                   : popular.slice(0, 4).map((t, i) => (

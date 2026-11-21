@@ -154,7 +154,7 @@ export function HeroCarousel({ banners }: { banners: Banner[] }) {
   if (!banners.length) {
     return (
       <section className="px-4 mt-4">
-        <Shimmer className="h-[240px] w-full rounded-[24px]" rounded="rounded-none" />
+        <Shimmer className="h-[240px] md:h-[280px] lg:h-[320px] xl:h-[360px] 3xl:h-[400px] w-full rounded-[24px]" rounded="rounded-none" />
         <div className="flex items-center justify-center gap-1.5 mt-3">
           {[0, 1, 2].map((idx) => (
             <Shimmer key={idx} className={idx === 0 ? "h-1.5 w-[28px]" : "h-1.5 w-[6px]"} rounded="rounded-full" />
@@ -180,7 +180,7 @@ export function HeroCarousel({ banners }: { banners: Banner[] }) {
         {/* Native scroll-snap viewport — swipe (touch) and drag (mouse) surface */}
         <div
           ref={scrollerRef}
-          className="flex h-[240px] w-full snap-x snap-mandatory scroll-smooth overflow-x-auto overflow-y-hidden no-scrollbar select-none cursor-grab active:cursor-grabbing rounded-[24px]"
+          className="flex h-[240px] md:h-[280px] lg:h-[320px] xl:h-[360px] 3xl:h-[400px] w-full snap-x snap-mandatory scroll-smooth overflow-x-auto overflow-y-hidden no-scrollbar select-none cursor-grab active:cursor-grabbing rounded-[24px]"
           style={{ WebkitOverflowScrolling: "touch" }}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}

@@ -85,7 +85,7 @@ export function QuickFacts({
 
 export function VenueGrid({ turfs }: { turfs: Turf[] }) {
   return (
-    <div className="px-4 mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+    <div className="px-4 mt-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
       {turfs.map((t) => (
         <Link
           key={t.id}
@@ -156,12 +156,14 @@ export function EmptySeoState({
 export function SeoPageShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-dvh bg-background text-foreground pb-24">
-      <header className="px-4 pt-6">
-        <Link to="/" className="text-[11px] font-bold uppercase tracking-[0.25em] text-muted2 hover:text-primary">
-          {SITE_NAME}
-        </Link>
-      </header>
-      {children}
+      <div className="max-w-3xl mx-auto">
+        <header className="px-4 pt-6">
+          <Link to="/" className="text-[11px] font-bold uppercase tracking-[0.25em] text-muted2 hover:text-primary">
+            {SITE_NAME}
+          </Link>
+        </header>
+        {children}
+      </div>
     </div>
   );
 }

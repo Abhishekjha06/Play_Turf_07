@@ -675,7 +675,7 @@ const TurfDetail = () => {
         <div
           className={`z-30 flex items-center gap-1 overflow-x-auto no-scrollbar border-b ${
             navPinned
-              ? "fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] md:max-w-[640px] lg:max-w-[768px]"
+              ? "fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] md:max-w-[640px] lg:max-w-[min(94vw,1600px)]"
               : "-mx-4 px-4 mt-4"
           }`}
           style={{
@@ -758,7 +758,7 @@ const TurfDetail = () => {
         {/* Facilities & amenities — EazyDiner-style 2D icon rows */}
         <section ref={facilitiesRef} className="mt-5 scroll-mt-16">
           <h3 className="font-semibold text-sm">Facilities & Amenities</h3>
-          <div className="grid grid-cols-2 gap-2 mt-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2 mt-2">
             {turf.amenities.map((a) => {
               const Icon = amenityIcon(a);
               return (
@@ -995,7 +995,7 @@ const TurfDetail = () => {
 
       <div className="h-32" />
 
-      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 z-40 w-full max-w-[480px] md:max-w-[640px] lg:max-w-[768px] bg-panel rounded-t-2xl px-4 pt-3 flex items-center justify-between"
+      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 z-40 w-full max-w-[480px] md:max-w-[640px] lg:max-w-[min(94vw,1600px)] bg-panel rounded-t-2xl px-4 pt-3 flex items-center justify-between"
         style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom, 0px))" }}
       >
         {joinGameId && openGames.find(g => g.id === joinGameId && g.status !== "full" && g.status !== "cancelled") ? (
@@ -1194,7 +1194,7 @@ const TurfDetail = () => {
               animate={{ y: 0, x: "-50%" }}
               exit={{ y: "100%", x: "-50%" }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed bottom-0 left-1/2 z-50 w-full max-w-[480px] md:max-w-[640px] lg:max-w-[768px] bg-panel rounded-t-[2.5rem] border-t border-[hsl(var(--color-border-default))] p-6 space-y-5"
+              className="fixed bottom-0 left-1/2 z-50 w-full max-w-[480px] md:max-w-[640px] lg:max-w-[min(94vw,1600px)] bg-panel rounded-t-[2.5rem] border-t border-[hsl(var(--color-border-default))] p-6 space-y-5"
               style={{
                 paddingBottom: "calc(1.5rem + env(safe-area-inset-bottom, 0px))"
               }}

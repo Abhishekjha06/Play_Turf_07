@@ -156,7 +156,7 @@ function CollapsingHeader({
         variants={fadeSlideDown}
         initial="hidden"
         animate="visible"
-        className="fixed top-0 md:top-4 left-1/2 w-full max-w-[480px] md:max-w-[640px] lg:max-w-[768px] md:rounded-t-[2rem] z-40 overflow-hidden"
+        className="fixed top-0 md:top-4 left-1/2 w-full max-w-[480px] md:max-w-[640px] lg:max-w-[min(94vw,1600px)] md:rounded-t-[2rem] z-40 overflow-hidden"
         style={{
           height: headerHeight,
           x: "-50%",
@@ -347,22 +347,22 @@ function CollapsingHeader({
       <AnimatePresence>
         {isNotifOpen && (
           <>
-            {/* Backdrop */}
+            {/* Backdrop — clamped to the shell column */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsNotifOpen(false)}
-              className="fixed inset-y-0 z-50 bg-black/60 backdrop-blur-sm max-w-[480px] md:max-w-[640px] lg:max-w-[768px] w-full left-1/2 -translate-x-1/2"
-            />
-
-            {/* Panel */}
+              className="fixed inset-y-0 z-50 bg-black/60 backdrop-blur-sm max-w-[480px] md:max-w-[640px] lg:max-w-[min(94vw,1600px)] w-full left-1/2 -translate-x-1/2"
+            >
+            {/* Panel — anchored to the column's right edge, slides within it */}
             <motion.div
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed right-0 top-0 bottom-0 z-50 w-[85%] max-w-[400px] border-l backdrop-blur-xl flex flex-col"
+              onClick={(e) => e.stopPropagation()}
+              className="absolute right-0 top-0 bottom-0 z-50 w-[85%] max-w-[400px] border-l backdrop-blur-xl flex flex-col"
               style={{
                 backgroundColor: "var(--card-bg)",
                 borderColor: "var(--border-primary)",
@@ -481,6 +481,7 @@ function CollapsingHeader({
 
 
             </motion.div>
+            </motion.div>
           </>
         )}
       </AnimatePresence>
@@ -492,7 +493,7 @@ function CollapsingHeader({
             {/* Backdrop */}
             <div
               onClick={() => setSelectedNotifForDetail(null)}
-              className="fixed inset-y-0 z-[60] bg-black/80 backdrop-blur-md max-w-[480px] md:max-w-[640px] lg:max-w-[768px] w-full left-1/2 -translate-x-1/2"
+              className="fixed inset-y-0 z-[60] bg-black/80 backdrop-blur-md max-w-[480px] md:max-w-[640px] lg:max-w-[min(94vw,1600px)] w-full left-1/2 -translate-x-1/2"
             />
             
             {/* Modal Container */}

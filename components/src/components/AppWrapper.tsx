@@ -29,7 +29,7 @@ const AppWrapper: React.FC = () => {
             {/* Global Feedback Trigger */}
             <button
               onClick={() => setFeedbackOpen(true)}
-              className="fixed bottom-20 right-4 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-neon transition-transform hover:scale-105 active:scale-95 md:bottom-6"
+              className="fixed bottom-20 right-4 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-neon transition-transform hover:scale-105 active:scale-95 md:bottom-24 md:right-[calc((100vw-640px)/2)] lg:right-[3vw]"
               aria-label="Send Feedback"
             >
               <MessageSquarePlus className="h-5 w-5" />

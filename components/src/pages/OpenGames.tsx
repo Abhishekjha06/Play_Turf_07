@@ -595,7 +595,7 @@ const OpenGames = () => {
       </section>
 
       {/* ── Game Card Feed ── */}
-      <div className="px-4 mt-6 flex flex-col gap-3">
+      <div className="px-4 mt-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 3xl:grid-cols-4 gap-3">
         {loading ? (
           <>
             <OpenGameCardSkeleton index={0} />
@@ -606,7 +606,7 @@ const OpenGames = () => {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="glass rounded-3xl p-8 text-center flex flex-col items-center gap-4 mt-2 border-border/40"
+            className="glass rounded-3xl p-8 text-center flex flex-col items-center gap-4 mt-2 border-border/40 md:col-span-2 xl:col-span-3 3xl:col-span-4"
           >
             <Users className="h-12 w-12 text-textMuted/30 animate-pulse" />
             <div>
