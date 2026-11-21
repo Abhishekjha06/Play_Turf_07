@@ -18,6 +18,10 @@
  *
  * Usage:
  *   node scripts/seo-worker.mjs [--batch 50] [--dry-run] [--once]
+ *   node scripts/seo-worker.mjs --health [--stale-minutes 15]
+ *     --health: no processing; exits 1 when outbox jobs have sat pending or
+ *     processing for longer than --stale-minutes (alert signal for the
+ *     production runner — GitHub Actions workflow .github/workflows/seo-worker.yml).
  * Env:
  *   SUPABASE_URL / VITE_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
  *   SEO_ENGINE_ENABLED (default off — worker no-ops when off)
@@ -29,11 +33,14 @@ import { resolveSeoFlags, SEO_ENGINE_CONFIG } from "../src/config/seo-engine.con
 import { generateTurfMetadata } from "../src/lib/seo-engine/generate.shared.mjs";
 import { buildLegacyTurfSlug, uniqueSlug } from "../src/lib/seo-engine/slug.shared.mjs";
 import { deriveLocality } from "../src/lib/seo-engine/locality.shared.mjs";
+import { syncTurfAssociations, evaluateAndStoreLandings } from "./seo-phase3-sync.mjs";
 
 const args = new Set(process.argv.slice(2));
 const BATCH = Number((process.argv.find((a) => a === "--batch") && process.argv[process.argv.indexOf("--batch") + 1]) || SEO_ENGINE_CONFIG.bulkBatchSize);
 const DRY_RUN = args.has("--dry-run");
 const ONCE = args.has("--once");
+const HEALTH = args.has("--health");
+const STALE_MINUTES = Number((process.argv.find((a) => a === "--stale-minutes") && process.argv[process.argv.indexOf("--stale-minutes") + 1]) || 15);
 
 const here = dirname(fileURLToPath(import.meta.url));
 const env = { ...process.env };
@@ -100,6 +107,8 @@ async function sourceHash(turf) {
   const { createHash } = await import("node:crypto");
   return createHash("sha256").update(JSON.stringify(turf)).digest("hex");
 }
+
+const syncCtx = { sb, issue, cache: {} };
 
 async function claimJobs() {
   return sb("rpc/seo_claim_jobs", {
@@ -228,6 +237,15 @@ async function processJob(job) {
     const hash = await sourceHash(turf);
     const prev = await fetchExistingMeta(turfId);
     if (prev && prev.content_hash === hash && (prev.locked_fields || []).length >= 0 && !DRY_RUN) {
+      // Phase 3: association + location sync (idempotent, stale removal).
+      // A sync failure is logged as an issue — it must not fail the metadata job.
+      try {
+        const syncRes = await syncTurfAssociations(turf, syncCtx);
+        console.log("  assoc sync:", JSON.stringify(syncRes));
+      } catch (e) {
+        await issue("turf", turf.id, "assoc_sync_failed", "warning", "Association sync failed: " + e.message).catch(() => {});
+      }
+
       // unchanged source → nothing to regenerate (master prompt §7)
       await markJob(id, "done");
       await log("turf", turfId, "turfs_trigger", "metadata", "skipped", { duration_ms: Date.now() - started });
@@ -254,7 +272,36 @@ async function processJob(job) {
   }
 }
 
+async function healthCheck() {
+  // Alert signal (owner round-2 item 3): outbox jobs stuck longer than
+  // STALE_MINUTES mean the worker is not running on schedule — exit 1 so the
+  // scheduled runner surfaces the failure (GitHub notification).
+  if (!SB_URL || !SERVICE_KEY) {
+    console.error("seo-worker --health: SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY not configured");
+    process.exit(1);
+  }
+  const qs = new URLSearchParams({
+    select: "id,entity_id,op,status,created_at",
+    status: "in.(pending,processing)",
+    created_at: "lt." + new Date(Date.now() - STALE_MINUTES * 60000).toISOString(),
+  });
+  const res = await fetch(SB_URL + "/rest/v1/seo_generation_jobs?" + qs, {
+    headers: { apikey: SERVICE_KEY, Authorization: "Bearer " + SERVICE_KEY },
+  });
+  if (!res.ok) {
+    console.error("seo-worker --health: jobs read failed", res.status);
+    process.exit(1);
+  }
+  const stale = await res.json();
+  if (stale.length) {
+    console.error("seo-worker ALERT: " + stale.length + " outbox job(s) older than " + STALE_MINUTES + "m: " + stale.map((j) => j.entity_id + "/" + j.op).join(", "));
+    process.exit(1);
+  }
+  console.log("seo-worker --health: ok (no jobs older than " + STALE_MINUTES + "m)");
+}
+
 async function main() {
+  if (HEALTH) return healthCheck();
   console.log(`seo-worker: batch=${BATCH} dry-run=${DRY_RUN} strict=${!FLAGS.allowUnfilteredTurfsFallback}`);
   let processed = 0;
   do {
@@ -267,6 +314,14 @@ async function main() {
     }
   } while (!ONCE);
   console.log(`seo-worker: processed ${processed} job(s)${DRY_RUN ? " (DRY RUN)" : ""}`);
+
+  // Phase 3: landing evaluation pass (thresholds + approval + cannibalization).
+  if (FLAGS.landingPagesEnabled) {
+    const summary = await evaluateAndStoreLandings(syncCtx);
+    console.log("seo-worker landings:", JSON.stringify(summary));
+  } else {
+    console.log("seo-worker landings: skipped (SEO_LANDING_PAGES_ENABLED off)");
+  }
 }
 
 main().catch((e) => {

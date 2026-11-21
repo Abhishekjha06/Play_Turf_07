@@ -25,7 +25,7 @@ export const SITE_TAGLINE = "Book Sports Turfs & Tournaments Near You";
 /** Canonical production origin — single source (SEO amendment 2); the same
  *  value feeds build scripts, api/serve.js and the synced static files. */
 import { siteOrigin as _siteOrigin, canonicalizeUrl as _canonicalizeUrl } from "./seo-engine/canonical.shared.mjs";
-import { buildTurfJsonLd as _buildTurfJsonLd } from "./seo-engine/jsonld.turf.shared.mjs";
+import { buildTurfJsonLd } from "./seo-engine/jsonld.turf.shared.mjs";
 export const SITE_ORIGIN: string = _siteOrigin(import.meta.env as unknown as Record<string, string>);
 
 export const DEFAULT_OG_IMAGE = "/og-image.jpg";

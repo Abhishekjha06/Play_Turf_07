@@ -1,0 +1,55 @@
+# PlayTurf — production SEO worker runner (owner review round-2 item 3).
+#
+# Chosen runner: GitHub Actions schedule. Rationale over Supabase cron+Edge:
+# the worker is Node ESM sharing the app's own modules — GH Actions runs it
+# verbatim (no Deno port), runs are visible in the Actions tab, and failures
+# (including the outbox-age alert) email/notify through GitHub without any
+# Supabase plan dependency.
+#
+# Secrets required (repo → Settings → Secrets → Actions):
+#   SEOWORKER_SUPABASE_URL            staging/production project URL
+#   SEOWORKER_SUPABASE_SERVICE_KEY    service key (RLS bypass for outbox RPCs)
+# Non-secret vars (repo → Variables → Actions): SEO_ENGINE_ENABLED, etc.
+
+name: seo-worker
+
+on:
+  schedule:
+    - cron: "*/15 * * * *" # every 15 minutes
+  workflow_dispatch: {} # manual run button
+
+concurrency:
+  group: seo-worker
+  cancel-in-progress: false # never skip a scheduled drain
+
+jobs:
+  drain-and-alert:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SUPABASE_URL: ${{ secrets.SEOWORKER_SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SEOWORKER_SUPABASE_SERVICE_KEY }}
+      SEO_ENGINE_ENABLED: ${{ vars.SEO_ENGINE_ENABLED || '0' }}
+      SEO_SITEMAP_ENABLED: ${{ vars.SEO_SITEMAP_ENABLED || '0' }}
+      SEO_REDIRECTS_ENABLED: ${{ vars.SEO_REDIRECTS_ENABLED || '0' }}
+      SEO_LANDING_PAGES_ENABLED: ${{ vars.SEO_LANDING_PAGES_ENABLED || '0' }}
+      SEO_AI_ENABLED: "0"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: components/package-lock.json
+
+      - name: Install (root workspace)
+        run: npm ci --prefix components || npm install --prefix components
+
+      # 1. Alert first: outbox jobs older than 15 minutes = worker not keeping up.
+      - name: Outbox health check
+        run: node components/scripts/seo-worker.mjs --health --stale-minutes 15
+
+      # 2. Drain one batch of pending jobs.
+      - name: Drain outbox batch
+        run: node components/scripts/seo-worker.mjs --once --batch 50

@@ -8,6 +8,7 @@ import {
   groupByCity, isPublishableSport, priceRange,
 } from "./shared";
 import { SITE_NAME, breadcrumbJsonLd, slugify } from "@/lib/seo";
+import { useLandingOverride } from "@/lib/seo-engine/useLandingOverride";
 
 /** /sports/:sport/:city/ — venues offering that sport in that city. */
 export function SportCity() {

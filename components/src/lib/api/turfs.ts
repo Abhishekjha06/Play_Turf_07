@@ -104,20 +104,21 @@ export async function listTurfs(opts: {
   }
 
   // Filtered read first. Owner review item 1: the unfiltered fallback is
-  // OPT-IN via SEO_ALLOW_UNFILTERED_TURFS (pre-migration environments only);
-  // by default a status-column failure fails LOUD with the fix in the message.
+  // OPT-IN via VITE_SEO_ALLOW_UNFILTERED_TURFS (client-visible; pre-migration
+  // environments only) — by default a status-column failure fails LOUD with
+  // the fix in the message.
   try {
     return await runQuery(true);
   } catch (err) {
     const msg = String((err as Error)?.message || "");
     if (/status|column|PGRST/i.test(msg)) {
       const { resolveSeoFlags } = await import("@/config/seo-engine");
-      if (resolveSeoFlags().allowUnfilteredTurfsFallback) {
+      if (resolveSeoFlags(import.meta.env as unknown as Record<string, string>).allowUnfilteredTurfsFallback) {
         return await runQuery(false);
       }
       throw new Error(
         "listTurfs: the turfs.status column is unavailable — apply supabase_seo_001_foundation.sql " +
-          "(or set SEO_ALLOW_UNFILTERED_TURFS=1 for pre-migration environments). Original error: " + msg
+          "(or set VITE_SEO_ALLOW_UNFILTERED_TURFS=1 for pre-migration environments). Original error: " + msg
       );
     }
     throw err;

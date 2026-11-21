@@ -440,3 +440,141 @@ export function isAdmin(role: string | null | undefined): boolean {
 }
 
 export type { AdminRole };
+
+
+// ---------------------------------------------------------------------------
+// SEO Engine Phase 3: aliases, review queue, landing pages
+// ---------------------------------------------------------------------------
+
+export type SportCategoryRow = { id: number; name: string; slug: string; parent_id: number | null };
+export type SportAliasRow = { id: number; alias: string; category_id: number; created_by: string | null };
+export type ValidationIssueRow = {
+  id: number;
+  entity_type: string;
+  entity_id: string;
+  code: string;
+  severity: string;
+  message: string;
+  detected_at: string;
+  resolved_at: string | null;
+};
+export type LandingPageRow = {
+  id: number;
+  page_type: string;
+  category_id: number | null;
+  location_id: number | null;
+  slug: string;
+  listing_count: number;
+  unique_content_words: number;
+  is_indexable: boolean;
+  override_index: boolean;
+  status: string;
+};
+
+export async function listSportCategories(): Promise<{ rows: SportCategoryRow[]; missingSchema: boolean }> {
+  const supabase = await getSupabase();
+  const { data, error } = await supabase.from('seo_sport_categories').select('*').order('name');
+  if (error) {
+    if (isMissingSchemaError(error)) return { rows: [], missingSchema: true };
+    throw error;
+  }
+  return { rows: (data || []) as unknown as SportCategoryRow[], missingSchema: false };
+}
+
+export async function listSportAliases(): Promise<{ rows: SportAliasRow[]; missingSchema: boolean }> {
+  const supabase = await getSupabase();
+  const { data, error } = await supabase.from('seo_category_aliases').select('*').order('alias');
+  if (error) {
+    if (isMissingSchemaError(error)) return { rows: [], missingSchema: true };
+    throw error;
+  }
+  return { rows: (data || []) as unknown as SportAliasRow[], missingSchema: false };
+}
+
+export async function upsertSportAlias(alias: string, categoryId: number, role?: string | null) {
+  return withAudit(
+    { action: 'seo.alias.upsert', recordId: alias },
+    async () => {
+      const supabase = await getSupabase();
+      const { data, error } = await supabase
+        .from('seo_category_aliases')
+        .upsert({ alias, category_id: categoryId }, { onConflict: 'alias' })
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    role
+  );
+}
+
+export async function deleteSportAlias(id: number, role?: string | null) {
+  return withAudit(
+    { action: 'seo.alias.delete', recordId: String(id) },
+    async () => {
+      const supabase = await getSupabase();
+      const { error } = await supabase.from('seo_category_aliases').delete().eq('id', id);
+      if (error) throw error;
+    },
+    role
+  );
+}
+
+export async function listValidationIssues(openOnly = true): Promise<{ rows: ValidationIssueRow[]; missingSchema: boolean }> {
+  const supabase = await getSupabase();
+  let q = supabase.from('seo_validation_issues').select('*').order('detected_at', { ascending: false }).limit(100);
+  if (openOnly) q = q.is('resolved_at', null);
+  const { data, error } = await q;
+  if (error) {
+    if (isMissingSchemaError(error)) return { rows: [], missingSchema: true };
+    throw error;
+  }
+  return { rows: (data || []) as unknown as ValidationIssueRow[], missingSchema: false };
+}
+
+export async function resolveValidationIssue(id: number, role?: string | null) {
+  return withAudit(
+    { action: 'seo.issue.resolve', recordId: String(id) },
+    async () => {
+      const supabase = await getSupabase();
+      const { error } = await supabase
+        .from('seo_validation_issues')
+        .update({ resolved_at: new Date().toISOString() })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    role
+  );
+}
+
+export async function listLandingPages(): Promise<{ rows: LandingPageRow[]; missingSchema: boolean }> {
+  const supabase = await getSupabase();
+  const { data, error } = await supabase.from('seo_landing_pages').select('*').order('slug');
+  if (error) {
+    if (isMissingSchemaError(error)) return { rows: [], missingSchema: true };
+    throw error;
+  }
+  return { rows: (data || []) as unknown as LandingPageRow[], missingSchema: false };
+}
+
+export async function patchLandingPage(
+  id: number,
+  patch: { override_index?: boolean; status?: string },
+  role?: string | null
+) {
+  return withAudit(
+    { action: 'seo.landing.patch', recordId: String(id) },
+    async () => {
+      const supabase = await getSupabase();
+      const { data, error } = await supabase
+        .from('seo_landing_pages')
+        .update({ ...patch, approved_at: patch.status === 'approved' ? new Date().toISOString() : undefined })
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    role
+  );
+}

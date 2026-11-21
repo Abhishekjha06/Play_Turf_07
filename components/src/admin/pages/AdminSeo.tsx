@@ -9,6 +9,10 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { SITE_ORIGIN, absoluteUrl } from "@/lib/seo";
 import { toast } from "sonner";
+import {
+  listSportCategories, listSportAliases, upsertSportAlias, deleteSportAlias,
+  listValidationIssues, resolveValidationIssue, listLandingPages, patchLandingPage,
+} from "../admin-api";
 import { ExternalLink, Globe, MapPin, Save, Trash2, Trophy } from "lucide-react";
 import {
   AdminPageHeader, DataTable, MigrationBanner, StatusBadge,
@@ -20,7 +24,7 @@ import {
 } from "../admin-api";
 import type { AdminRole } from "../admin-rbac";
 
-type Tab = "global" | "pages" | "venues" | "technical";
+type Tab = "global" | "pages" | "venues" | "technical" | "aliases" | "queue";
 
 export default function AdminSeo() {
   const { user } = useAuth();
@@ -36,6 +40,77 @@ export default function AdminSeo() {
   const [global, setGlobal] = useState({ site_title_tagline: "", default_meta_description: "", canonical_domain: SITE_ORIGIN, robots_extra: "" });
   const [globalMissing, setGlobalMissing] = useState(false);
   const [savingGlobal, setSavingGlobal] = useState(false);
+
+  // ── Phase 3: sport aliases + review queue + landing pages ──
+  const [aliasRows, setAliasRows] = useState<import("../admin-api").SportAliasRow[]>([]);
+  const [catRows, setCatRows] = useState<import("../admin-api").SportCategoryRow[]>([]);
+  const [issueRows, setIssueRows] = useState<import("../admin-api").ValidationIssueRow[]>([]);
+  const [landingRows, setLandingRows] = useState<import("../admin-api").LandingPageRow[]>([]);
+  const [newAlias, setNewAlias] = useState("");
+  const [newAliasCat, setNewAliasCat] = useState<number | "">("");
+
+  const loadPhase3 = async () => {
+    const [cats, aliases, issues, landings] = await Promise.all([
+      listSportCategories().catch(() => ({ rows: [], missingSchema: true })),
+      listSportAliases().catch(() => ({ rows: [], missingSchema: true })),
+      listValidationIssues(true).catch(() => ({ rows: [], missingSchema: true })),
+      listLandingPages().catch(() => ({ rows: [], missingSchema: true })),
+    ]);
+    setCatRows(cats.rows);
+    setAliasRows(aliases.rows);
+    setIssueRows(issues.rows);
+    setLandingRows(landings.rows);
+    if (cats.missingSchema || aliases.missingSchema) {
+      toast.info("Phase 3 tables missing — apply supabase_seo_001_foundation.sql.");
+    }
+  };
+
+  const addAlias = async () => {
+    if (!newAlias.trim() || newAliasCat === "") return;
+    try {
+      await upsertSportAlias(newAlias.trim(), Number(newAliasCat), user?.role ?? null);
+      toast.success("Alias mapped");
+      setNewAlias("");
+      setNewAliasCat("");
+      loadPhase3();
+    } catch (e) {
+      toast.error("Alias save failed: " + (e as Error).message);
+    }
+  };
+
+  const removeAlias = async (id: number) => {
+    try {
+      await deleteSportAlias(id, user?.role ?? null);
+      toast.success("Alias removed");
+      loadPhase3();
+    } catch (e) {
+      toast.error("Alias delete failed: " + (e as Error).message);
+    }
+  };
+
+  const resolveIssue = async (id: number) => {
+    try {
+      await resolveValidationIssue(id, user?.role ?? null);
+      loadPhase3();
+    } catch (e) {
+      toast.error("Resolve failed: " + (e as Error).message);
+    }
+  };
+
+  const setLanding = async (id: number, patch: { override_index?: boolean; status?: string }) => {
+    try {
+      await patchLandingPage(id, patch, user?.role ?? null);
+      toast.success("Landing page updated");
+      loadPhase3();
+    } catch (e) {
+      toast.error("Landing update failed: " + (e as Error).message);
+    }
+  };
+
+  useEffect(() => {
+    if (tab === "aliases" || tab === "queue") loadPhase3();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab]);
 
   // Page editor
   const [editing, setEditing] = useState<Partial<SeoPageRow> | null>(null);
@@ -320,6 +395,86 @@ export default function AdminSeo() {
                 <Save className="h-3.5 w-3.5" /> Save
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {tab === "aliases" && (
+        <div className="max-w-3xl space-y-3 rounded-2xl border border-white/[0.06] bg-[#0d0f0e] p-5">
+          <p className="text-xs text-zinc-400">
+            Map free-text sport values (Futsal, 5-a-side, Box Cricket…) to canonical categories.
+            Unmapped values queue in the Review queue — they are never guessed.
+          </p>
+          <div className="flex flex-wrap items-end gap-2">
+            <label className="block">
+              <span className="mb-1 block text-[10px] font-black uppercase tracking-wider text-zinc-500">Sport alias</span>
+              <input value={newAlias} onChange={(e) => setNewAlias(e.target.value)} placeholder="e.g. 5-a-side" className="h-10 w-44 rounded-xl border border-white/10 bg-[#0a0c0b] px-3 text-sm text-zinc-100 outline-none" />
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-[10px] font-black uppercase tracking-wider text-zinc-500">Category</span>
+              <select value={newAliasCat} onChange={(e) => setNewAliasCat(e.target.value ? Number(e.target.value) : "")} className="h-10 w-44 rounded-xl border border-white/10 bg-[#0a0c0b] px-3 text-sm text-zinc-100 outline-none">
+                <option value="">Choose…</option>
+                {catRows.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </label>
+            <button onClick={addAlias} disabled={!newAlias.trim() || newAliasCat === ""} className="h-10 rounded-xl bg-teal-500 px-4 text-xs font-black uppercase tracking-wider text-[#04110e] disabled:opacity-40">Map alias</button>
+          </div>
+          <table className="w-full text-left text-xs">
+            <thead><tr className="text-[10px] uppercase tracking-wider text-zinc-500"><th className="py-2">Alias</th><th>Category</th><th></th></tr></thead>
+            <tbody>
+              {aliasRows.map((a) => (
+                <tr key={a.id} className="border-t border-white/[0.04]">
+                  <td className="py-2 font-bold text-zinc-100">{a.alias}</td>
+                  <td className="text-zinc-400">{catRows.find((c) => c.id === a.category_id)?.name || a.category_id}</td>
+                  <td className="text-right"><button onClick={() => removeAlias(a.id)} className="rounded-lg border border-white/10 px-2.5 py-1 text-[10px] font-bold text-rose-300 hover:bg-rose-400/10">Remove</button></td>
+                </tr>
+              ))}
+              {!aliasRows.length && <tr><td colSpan={3} className="py-3 text-zinc-500">No aliases yet.</td></tr>}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {tab === "queue" && (
+        <div className="space-y-4">
+          <div className="max-w-4xl rounded-2xl border border-white/[0.06] bg-[#0d0f0e] p-5">
+            <h3 className="mb-2 text-xs font-black uppercase tracking-wider text-zinc-300">Review queue — validation issues</h3>
+            <div className="space-y-2">
+              {issueRows.map((i) => (
+                <div key={i.id} className="flex items-start justify-between gap-3 rounded-xl border border-white/[0.05] bg-white/[0.02] p-3">
+                  <div>
+                    <span className={`mr-2 rounded px-1.5 py-0.5 text-[10px] font-black uppercase ${i.severity === "error" ? "bg-rose-400/15 text-rose-300" : i.severity === "warning" ? "bg-amber-400/15 text-amber-300" : "bg-white/10 text-zinc-300"}`}>{i.code}</span>
+                    <span className="text-xs text-zinc-300">{i.message}</span>
+                  </div>
+                  <button onClick={() => resolveIssue(i.id)} className="shrink-0 rounded-lg border border-white/10 px-2.5 py-1 text-[10px] font-bold text-zinc-300 hover:bg-white/5">Resolve</button>
+                </div>
+              ))}
+              {!issueRows.length && <p className="py-2 text-xs text-zinc-500">Queue empty — no open validation issues.</p>}
+            </div>
+          </div>
+
+          <div className="max-w-4xl rounded-2xl border border-white/[0.06] bg-[#0d0f0e] p-5">
+            <h3 className="mb-2 text-xs font-black uppercase tracking-wider text-zinc-300">Landing pages — thresholds & approval</h3>
+            <p className="mb-3 text-[11px] text-zinc-500">Indexable requires: ≥3 listings, ≥150 unique content words, no &gt;80% overlap — and (for location pages) admin approval. Override is flagged and always reported.</p>
+            <table className="w-full text-left text-xs">
+              <thead><tr className="text-[10px] uppercase tracking-wider text-zinc-500"><th className="py-2">Slug</th><th>Type</th><th>Listings</th><th>Words</th><th>Indexable</th><th>Actions</th></tr></thead>
+              <tbody>
+                {landingRows.map((l) => (
+                  <tr key={l.id} className="border-t border-white/[0.04]">
+                    <td className="py-2 font-bold text-zinc-100">{l.slug}</td>
+                    <td className="text-zinc-400">{l.page_type}</td>
+                    <td className="text-zinc-400">{l.listing_count}</td>
+                    <td className="text-zinc-400">{l.unique_content_words}</td>
+                    <td>{l.is_indexable ? <span className="text-teal-300">index</span> : <span className="text-amber-300">noindex</span>}{l.override_index && <span className="ml-1 rounded bg-amber-400/15 px-1 text-[10px] text-amber-300">OVERRIDE</span>}</td>
+                    <td className="space-x-1.5">
+                      {!l.is_indexable && <button onClick={() => setLanding(l.id, { status: "approved" })} className="rounded-lg border border-white/10 px-2 py-1 text-[10px] font-bold text-teal-300 hover:bg-teal-400/10">Approve</button>}
+                      {l.is_indexable && <button onClick={() => setLanding(l.id, { status: "rejected" })} className="rounded-lg border border-white/10 px-2 py-1 text-[10px] font-bold text-amber-300 hover:bg-amber-400/10">Noindex</button>}
+                      <button onClick={() => setLanding(l.id, { override_index: !l.override_index })} className="rounded-lg border border-white/10 px-2 py-1 text-[10px] font-bold text-zinc-300 hover:bg-white/5">{l.override_index ? "Clear override" : "Force index"}</button>
+                    </td>
+                  </tr>
+                ))}
+                {!landingRows.length && <tr><td colSpan={6} className="py-3 text-zinc-500">No landing pages evaluated yet — run the worker with SEO_LANDING_PAGES_ENABLED=1.</td></tr>}
+              </tbody>
+            </table>
           </div>
         </div>
       )}

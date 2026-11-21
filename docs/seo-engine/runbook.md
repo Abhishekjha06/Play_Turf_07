@@ -127,6 +127,43 @@ SELECT id, name, city, lat, lng FROM turfs WHERE lat IS NULL OR lng IS NULL;
 SELECT name, count(*) FROM turfs GROUP BY name HAVING count(*) > 1;
 ```
 
+## 9a. Reviews: data source, cache window, moderation (round-2 item 5)
+
+- **Single data source:** the genuine `reviews` table rows. AggregateRating/Review
+  markup is built ONLY from those rows (never the static turfs.rating column).
+  All three surfaces read the same table: the build artifact (agent-content,
+  refreshed per deploy), the request-time bot HTML, and the SPA (live fetch).
+- **Cache window:** bot HTML for turf pages is CDN-cached (s-maxage=3600 +
+  stale-while-revalidate) — a new review appears in bot markup within ~1h (or
+  at the next deploy for the artifact). The SPA always shows live data. The
+  sitemap lastmod uses turfs.updated_at, not review time.
+- **Moderation (current truth, no fabrication):** reviews are self-reported
+  (user_id + user_name), inserted client-side; there is NO moderation pipeline
+  and no booking linkage today. The engine therefore (a) emits aggregates only
+  when genuine rows exist, (b) never invents or round-ends ratings, and
+  (c) treats review counts as reportable but unverified. Wiring reviews to
+  bookings (booking_id FK + verified flag) needs a migration — a Phase 4
+  decision for the owner.
+
+## 9b. Deploy order (round-2 item 6)
+
+1. Set `VITE_SITE_ORIGIN` = [YOUR DOMAIN] (Vercel env + local .env).
+   Production builds FAIL while it resolves to *.vercel.app — that is the guard.
+2. Apply `supabase_seo_001_foundation.sql` on PRODUCTION (after the staging
+   pass and a backup).
+3. Run the slug backfill on production.
+4. THEN merge feat/seo-engine to main (Vercel auto-deploys).
+5. Set `SEO_ENGINE_ENABLED` / `SEO_SITEMAP_ENABLED` / `SEO_REDIRECTS_ENABLED` = 1
+   (Vercel env + site_settings) when ready to serve engine output.
+
+**Temporary fallback `VITE_SEO_ALLOW_UNFILTERED_TURFS=1`** (client-visible env):
+- ALLOWED only in the window BETWEEN merging the engine code and applying
+  migration 001 on that environment — it restores the pre-engine unfiltered
+  turfs read so the site does not break pre-migration.
+- REMOVE it immediately after 001 is applied (listTurfs fails loud without it —
+  a failing filtered read is then a real signal, not a missing column).
+- Never set it on an environment whose database has migration 001 applied.
+
 ## 10. Phase 2 staging setup (owner review round 2, item 5)
 
 Phase 2 (worker + per-turf bot HTML) requires **exactly one migration** on the

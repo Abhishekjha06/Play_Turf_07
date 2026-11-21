@@ -81,7 +81,10 @@ export const SEO_DEFAULT_SPORT_ALIASES = [
 /** Fallback origin — mirrors the pre-engine hardcoded value everywhere. */
 export const SEO_FALLBACK_ORIGIN = "https://play-turf-git-main-abhishekjha06s-projects.vercel.app";
 
-/** env → flag resolution, shared by app, scripts and serve.js. */
+/** env → flag resolution, shared by app, scripts and serve.js.
+ *  The turfs fallback accepts BOTH names: VITE_-prefixed vars are the only
+ *  ones Vite exposes to client code (import.meta.env), unprefixed ones work
+ *  for Node scripts / Vercel functions. */
 export function resolveSeoFlags(env = {}) {
   const bool = (v) => {
     const s = String(v).toLowerCase();
@@ -94,6 +97,7 @@ export function resolveSeoFlags(env = {}) {
     sitemapEnabled: bool(env.SEO_SITEMAP_ENABLED),
     redirectsEnabled: bool(env.SEO_REDIRECTS_ENABLED),
     // item 1: opt-in soft fallback for pre-migration environments only.
-    allowUnfilteredTurfsFallback: bool(env.SEO_ALLOW_UNFILTERED_TURFS),
+    allowUnfilteredTurfsFallback:
+      bool(env.SEO_ALLOW_UNFILTERED_TURFS) || bool(env.VITE_SEO_ALLOW_UNFILTERED_TURFS),
   };
 }

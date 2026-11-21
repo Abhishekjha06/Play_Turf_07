@@ -8,6 +8,7 @@ import {
   groupByCity, uniqueSports, priceRange,
 } from "./shared";
 import { SITE_NAME, breadcrumbJsonLd, slugify } from "@/lib/seo";
+import { useLandingOverride } from "@/lib/seo-engine/useLandingOverride";
 
 /**
  * /turfs/:city/:locality/ — venues in a locality of a real city.
@@ -41,6 +42,10 @@ export function TurfsLocality() {
 
   const known = turfs !== null && !failed;
   const exists = localityTurfs.length > 0;
+  const override = useLandingOverride(
+    "location",
+    known ? slugify(realCity || cityParam) + "/" + slugify(localityParam) : null
+  );
   const sports = localityTurfs.length ? uniqueSports(localityTurfs) : [];
   const range = localityTurfs.length ? priceRange(localityTurfs) : {};
   const localityName = needle
@@ -54,8 +59,9 @@ export function TurfsLocality() {
       ? null
       : exists
         ? {
-            title: `Sports Turfs in ${localityName}, ${realCity} | ${SITE_NAME}`,
-            description: `${localityTurfs.length} sports ${localityTurfs.length === 1 ? "turf" : "turfs"} in ${localityName}, ${realCity}. Hourly rates from ₹${range.priceMin ?? "—"}, ${sports.slice(0, 3).join(", ")} — check live availability and book.`,
+            title: override?.title || `Sports Turfs in ${localityName}, ${realCity} | ${SITE_NAME}`,
+            description: override?.description || `${localityTurfs.length} sports ${localityTurfs.length === 1 ? "turf" : "turfs"} in ${localityName}, ${realCity}. Hourly rates from ₹${range.priceMin ?? "—"}, ${sports.slice(0, 3).join(", ")} — check live availability and book.`,
+            noindex: override?.forceNoindex || undefined,
             path,
             jsonLd: [
               breadcrumbJsonLd([

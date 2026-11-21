@@ -8,6 +8,7 @@ import {
   groupByCity, uniqueSports, priceRange,
 } from "./shared";
 import { SITE_NAME, breadcrumbJsonLd, slugMatches, slugify } from "@/lib/seo";
+import { useLandingOverride } from "@/lib/seo-engine/useLandingOverride";
 
 /** /turfs/:city/ — venues in a real city only (noindex when the city has none). */
 export function TurfsCity() {
@@ -29,14 +30,16 @@ export function TurfsCity() {
   const range = cityTurfs.length ? priceRange(cityTurfs) : {};
   const known = turfs !== null && !failed;
   const cityExists = known && cityTurfs.length > 0;
+  const override = useLandingOverride("location", realCity ? slugify(realCity) : null);
 
   useSeo(
     !known
       ? null
       : cityExists
         ? {
-            title: `Sports Turfs in ${realCity} — Book by the Hour | ${SITE_NAME}`,
-            description: `${cityTurfs.length} sports ${cityTurfs.length === 1 ? "turf" : "turfs"} in ${realCity} offering ${sports.slice(0, 3).join(", ")}. See hourly rates from ₹${range.priceMin ?? "—"}, check live slot availability and book instantly.`,
+            title: override?.title || `Sports Turfs in ${realCity} — Book by the Hour | ${SITE_NAME}`,
+            description: override?.description || `${cityTurfs.length} sports ${cityTurfs.length === 1 ? "turf" : "turfs"} in ${realCity} offering ${sports.slice(0, 3).join(", ")}. See hourly rates from ₹${range.priceMin ?? "—"}, check live slot availability and book instantly.`,
+            noindex: override?.forceNoindex || undefined,
             path: `/turfs/${slugify(realCity!)}`,
             jsonLd: [
               breadcrumbJsonLd([
