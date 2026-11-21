@@ -38,6 +38,13 @@ export const SEO_ENGINE_CONFIG = {
   autoPublishTemplateSeo: true,
   autoApproveAiText: false,
 
+  // ── Pre-migration fallback (owner review round 2, item 1) ─────
+  // Strict (default): a `status`-filtered read that fails = loud failure.
+  // Set SEO_ALLOW_UNFILTERED_TURFS=1 ONLY on environments whose database has
+  // not had supabase_seo_001_foundation.sql applied yet — it permits the old
+  // unfiltered read so dev/preview don't break pre-migration.
+  allowUnfilteredTurfsFallback: false,
+
   // ── AI pipeline (Phase 5 — off until a provider is configured) ─
   aiMaxRetries: 3,
   aiRateLimitPerMin: 10,
@@ -86,5 +93,7 @@ export function resolveSeoFlags(env = {}) {
     landingPagesEnabled: bool(env.SEO_LANDING_PAGES_ENABLED),
     sitemapEnabled: bool(env.SEO_SITEMAP_ENABLED),
     redirectsEnabled: bool(env.SEO_REDIRECTS_ENABLED),
+    // item 1: opt-in soft fallback for pre-migration environments only.
+    allowUnfilteredTurfsFallback: bool(env.SEO_ALLOW_UNFILTERED_TURFS),
   };
 }

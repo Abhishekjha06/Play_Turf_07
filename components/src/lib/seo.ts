@@ -24,7 +24,8 @@ export const SITE_TAGLINE = "Book Sports Turfs & Tournaments Near You";
 
 /** Canonical production origin — single source (SEO amendment 2); the same
  *  value feeds build scripts, api/serve.js and the synced static files. */
-import { siteOrigin as _siteOrigin } from "./seo-engine/canonical.shared.mjs";
+import { siteOrigin as _siteOrigin, canonicalizeUrl as _canonicalizeUrl } from "./seo-engine/canonical.shared.mjs";
+import { buildTurfJsonLd as _buildTurfJsonLd } from "./seo-engine/jsonld.turf.shared.mjs";
 export const SITE_ORIGIN: string = _siteOrigin(import.meta.env as unknown as Record<string, string>);
 
 export const DEFAULT_OG_IMAGE = "/og-image.jpg";
@@ -32,7 +33,9 @@ export const DEFAULT_OG_IMAGE = "/og-image.jpg";
 export function absoluteUrl(path: string): string {
   if (!path) return SITE_ORIGIN + "/";
   if (/^https?:\/\//i.test(path)) return path;
-  return SITE_ORIGIN + (path.startsWith("/") ? path : `/${path}`);
+  // Amendment 7: canonical trailing-slash policy applied everywhere (SPA
+  // canonicals, og:url and JSON-LD urls match the bot HTML exactly).
+  return _canonicalizeUrl(SITE_ORIGIN + (path.startsWith("/") ? path : `/${path}`));
 }
 
 /** Full-bleed default robots directive. */
@@ -273,101 +276,20 @@ export function openingHoursFromTiming(timing: string | undefined) {
 }
 
 /**
- * SportsActivityLocation for a venue. Ratings/reviews are included ONLY when
- * real review rows exist. Aggregates are computed from those rows.
+ * SportsActivityLocation for a venue — delegates to the shared engine builder
+ * (lib/seo-engine/jsonld.turf.shared.mjs) so the SPA and the bot-HTML artifact
+ * emit byte-identical markup from the same real data. Ratings/reviews are
+ * included ONLY when genuine review rows exist (owner round-2 item 7).
  */
 export function turfJsonLd(
   turf: Turf,
   reviews: Review[] = []
 ): object {
-  const data: Record<string, unknown> = {
-    "@context": "https://schema.org",
-    "@type": "SportsActivityLocation",
-    name: turf.name,
-    url: absoluteUrl(turfPath(turf)),
-    description:
-      turf.description ||
-      `${turf.name} is a sports turf in ${turf.city} offering ${
-        (turf.sport_types || []).join(", ") || "sports"
-      } bookings by the hour.`,
-    image: [turf.image, ...(turf.gallery || [])]
-      .filter(Boolean)
-      .map((src: string) => (/^https?:/i.test(src) ? src : absoluteUrl(src)))
-      .slice(0, 10),
-    address: {
-      "@type": "PostalAddress",
-      streetAddress: turf.address,
-      addressLocality: turf.city,
-      addressCountry: "IN",
-    },
-    sport: turf.sport_types || [],
-    publicAccess: true,
-    priceRange: `₹${turf.price_per_hour}/hour`,
-    isAccessibleForFree: false,
-  };
-
-  if (typeof turf.lat === "number" && typeof turf.lng === "number") {
-    data.geo = {
-      "@type": "GeoCoordinates",
-      latitude: turf.lat,
-      longitude: turf.lng,
-    };
-  }
-
-  const hours = openingHoursFromTiming(turf.timing);
-  if (hours.length) data.openingHoursSpecification = hours;
-
-  if ((turf.amenities || []).length) {
-    data.amenityFeature = turf.amenities.map((a: string) => ({
-      "@type": "LocationFeatureSpecification",
-      name: a,
-      value: true,
-    }));
-  }
-
-  // Genuine reviews only — no fabricated aggregates.
-  const real = (reviews || []).filter(
-    (r) => r && typeof r.rating === "number" && r.rating > 0
+  return buildTurfJsonLd(
+    { ...turf, slug: buildTurfSlug({ id: turf.id, name: turf.name }) } as Turf & { slug: string },
+    reviews,
+    { absoluteUrl: (p: string) => absoluteUrl(p) }
   );
-  if (real.length > 0) {
-    const avg =
-      real.reduce((sum, r) => sum + r.rating, 0) / real.length;
-    data.aggregateRating = {
-      "@type": "AggregateRating",
-      ratingValue: Math.round(avg * 10) / 10,
-      reviewCount: real.length,
-      bestRating: 5,
-      worstRating: 1,
-    };
-    data.review = real.slice(0, 8).map((r) => ({
-      "@type": "Review",
-      author: { "@type": "Person", name: r.user_name || "Player" },
-      datePublished: (r.created_at || "").slice(0, 10) || undefined,
-      reviewBody: r.comment,
-      reviewRating: {
-        "@type": "Rating",
-        ratingValue: r.rating,
-        bestRating: 5,
-        worstRating: 1,
-      },
-    }));
-  }
-
-  data.potentialAction = {
-    "@type": "ReserveAction",
-    target: {
-      "@type": "EntryPoint",
-      urlTemplate: absoluteUrl(`${turfPath(turf)}?book=true`),
-      inLanguage: "en-IN",
-      actionPlatform: [
-        "http://schema.org/DesktopWebPlatform",
-        "http://schema.org/MobileWebPlatform",
-      ],
-    },
-    result: { "@type": "Reservation", name: `Book ${turf.name}` },
-  };
-
-  return data;
 }
 
 /** Article schema for blog guides. */

@@ -9,7 +9,9 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { siteOrigin, assertProductionOrigin, buildRuntimeSeoConfig } from "../src/lib/seo-engine/canonical.shared.mjs";
+import { siteOrigin, assertProductionOrigin, buildRuntimeSeoConfig, canonicalizeUrl } from "../src/lib/seo-engine/canonical.shared.mjs";
+import { resolveSeoFlags } from "../src/config/seo-engine.config.mjs";
+import { buildTurfJsonLd, buildBreadcrumbJsonLd } from "../src/lib/seo-engine/jsonld.turf.shared.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, "..");
@@ -65,13 +67,18 @@ async function fetchTurfs() {
       console.warn(`⚠ agent-content: could not fetch venues (${err.message}) — venue routes omitted this build.`);
       return [];
     }
-    console.warn("⚠ agent-content: status column unavailable (migration 001 unapplied) — falling back to unfiltered read.");
-    try {
-      return await attempt(false);
-    } catch (err2) {
-      console.warn(`⚠ agent-content: could not fetch venues (${err2.message}) — venue routes omitted this build.`);
-      return [];
+    if (resolveSeoFlags(env).allowUnfilteredTurfsFallback) {
+      console.warn("⚠ agent-content: SEO_ALLOW_UNFILTERED_TURFS=1 — falling back to unfiltered read (pre-migration mode).");
+      try {
+        return await attempt(false);
+      } catch (err2) {
+        console.warn(`⚠ agent-content: could not fetch venues (${err2.message}) — venue routes omitted this build.`);
+        return [];
+      }
     }
+    // Item 1: fail loud by default.
+    console.error("✗ agent-content: turfs.status unavailable — apply supabase_seo_001_foundation.sql (or set SEO_ALLOW_UNFILTERED_TURFS=1).");
+    process.exit(1);
   }
 }
 
@@ -175,6 +182,26 @@ addRoute("/open-games", {
 
 // ── Venue/city/sport pages from live data ─────────────────────────────────
 const turfs = await fetchTurfs();
+
+// Phase 2 (item 7): per-turf JSON-LD built by the SHARED builder — the same
+// function the SPA uses — so bot HTML and SPA emit identical markup. Reviews
+// are fetched for the real aggregate; empty reviews → NO rating markup at all.
+let reviewsByTurf = new Map();
+try {
+  const revEnv = { ...readViteEnv(), ...process.env };
+  const res = await fetch(`${revEnv.VITE_SUPABASE_URL}/rest/v1/reviews?select=turf_id,rating,comment,user_name,created_at`, {
+    headers: { apikey: revEnv.VITE_SUPABASE_ANON_KEY, Authorization: `Bearer ${revEnv.VITE_SUPABASE_ANON_KEY}` },
+  });
+  if (res.ok) {
+    for (const r of await res.json()) {
+      if (!reviewsByTurf.has(r.turf_id)) reviewsByTurf.set(r.turf_id, []);
+      reviewsByTurf.get(r.turf_id).push(r);
+    }
+  }
+} catch {
+  // reviews unavailable → routes simply carry no rating markup (never fabricate)
+}
+
 const byCity = new Map();
 for (const t of turfs) {
   const city = (t.city || "").trim();
@@ -197,6 +224,18 @@ for (const [city, list] of byCity) {
 
   for (const t of list) {
     const slug = [slugify(t.name), slugify(t.id)].filter(Boolean).join("-");
+    const abs = (p) => canonicalizeUrl(`${ORIGIN}${p}`);
+    const jsonld = [
+      buildTurfJsonLd(
+        { ...t, slug },
+        reviewsByTurf.get(t.id) || [],
+        { absoluteUrl: abs }
+      ),
+      buildBreadcrumbJsonLd(
+        [["Home", "/"], ["Turfs", "/turfs"], [city, `/turfs/${citySlug}`], [t.name, `/turf/${slug}`]],
+        { absoluteUrl: abs }
+      ),
+    ];
     addRoute(`/turf/${slug}`, {
       robots: "index",
       title: `${t.name} — ${(t.sport_types || ["Sports"])[0]} Turf in ${city} | PlayTurf`,
@@ -208,6 +247,7 @@ for (const [city, list] of byCity) {
         { h2: "Booking", body: `Hourly rate: ₹${t.price_per_hour} per hour, set by the venue. Choose a date and a free slot on the venue page; consecutive hours can be reserved together. Payments currently use a simulated checkout while a live gateway is integrated.` },
       ],
       links: [["Turfs in " + city, `/turfs/${citySlug}`], ["All turfs", "/turfs"], ["Homepage", "/"]],
+      jsonld,
     });
   }
 

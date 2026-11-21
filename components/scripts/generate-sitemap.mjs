@@ -16,6 +16,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { siteOrigin, assertProductionOrigin, canonicalizeUrl } from "../src/lib/seo-engine/canonical.shared.mjs";
+import { resolveSeoFlags } from "../src/config/seo-engine.config.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.resolve(__dirname, "..", "public");
@@ -79,8 +80,14 @@ async function fetchTurfs() {
     return await attempt(true);
   } catch (e) {
     if (!/filtered/.test(e.message)) throw e;
-    console.warn("⚠ sitemap: status column unavailable (migration 001 unapplied) — falling back to unfiltered read.");
-    return await attempt(false);
+    if (resolveSeoFlags(env).allowUnfilteredTurfsFallback) {
+      console.warn("⚠ sitemap: SEO_ALLOW_UNFILTERED_TURFS=1 — falling back to unfiltered read (pre-migration mode).");
+      return await attempt(false);
+    }
+    // Item 1: fail loud by default — the deploy must not silently publish an
+    // unfiltered sitemap.
+    console.error("✗ sitemap: turfs.status unavailable — apply supabase_seo_001_foundation.sql (or set SEO_ALLOW_UNFILTERED_TURFS=1).");
+    process.exit(1);
   }
 }
 

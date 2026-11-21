@@ -238,11 +238,12 @@ describe("seo-engine redirect resolver", () => {
 // ── Feature flags (master prompt rule 5: off = pre-engine behaviour) ────────
 
 describe("seo-engine feature flags", () => {
-  it("default to OFF when no env is set", () => {
+  it("default to OFF when no env is set (incl. the strict unfiltered-read gate)", () => {
     const f = resolveSeoFlags({});
     expect(f).toEqual({
       enabled: false, aiEnabled: false, landingPagesEnabled: false,
       sitemapEnabled: false, redirectsEnabled: false,
+      allowUnfilteredTurfsFallback: false,
     });
   });
 
@@ -251,6 +252,7 @@ describe("seo-engine feature flags", () => {
     expect(resolveSeoFlags({ SEO_ENGINE_ENABLED: "1" }).enabled).toBe(true);
     expect(resolveSeoFlags({ SEO_ENGINE_ENABLED: "0" }).enabled).toBe(false);
     expect(resolveSeoFlags({ SEO_ENGINE_ENABLED: "off" }).enabled).toBe(false);
+    expect(resolveSeoFlags({ SEO_ALLOW_UNFILTERED_TURFS: "1" }).allowUnfilteredTurfsFallback).toBe(true);
   });
 });
 

@@ -48,14 +48,16 @@ try {
 const ORIGIN = (SEO_CFG && SEO_CFG.origin) || content.origin || "https://playturf.app";
 const SEO_FLAGS = (SEO_CFG && SEO_CFG.flags) || { enabled: false, sitemapEnabled: false, redirectsEnabled: false };
 
-// Amendment 2: preview deployments are noindexed at the edge. Production
-// builds fail earlier at prebuild if the origin is a *.vercel.app URL — here
-// we only log loudly (the function must still serve whatever it can).
+// Amendment 2: preview deployments are noindexed at the edge. Preview = a
+// Vercel environment that is explicitly set and not production (locally unset
+// VERCEL_ENV must NOT trigger noindex — the pre-migration fallback origin is
+// itself a vercel URL). Production builds fail earlier at prebuild if the
+// origin is a *.vercel.app URL; here we only log loudly.
 const ORIGIN_IS_VERCEL = /(^|\.)vercel\.app$/.test(new URL(ORIGIN).hostname);
+const VERCEL_ENV_SET = Boolean(process.env.VERCEL_ENV);
 const IS_PREVIEW = Boolean(
   (SEO_CFG && SEO_CFG.isPreview) ||
-    (process.env.VERCEL_ENV && process.env.VERCEL_ENV !== "production") ||
-    (ORIGIN_IS_VERCEL && process.env.VERCEL_ENV !== "production")
+    (VERCEL_ENV_SET && process.env.VERCEL_ENV !== "production")
 );
 if (!IS_PREVIEW && ORIGIN_IS_VERCEL) {
   console.error("[serve] WARNING: production origin is a vercel.app URL — set VITE_SITE_ORIGIN to the real domain.");
@@ -204,12 +206,23 @@ function toHtml(route, path_, { status = 200 } = {}) {
       const body = Array.isArray(s.body)
         ? `<ul>${s.body.map((b) => `<li>${escapeHtml(b)}</li>`).join("")}</ul>`
         : `<p>${escapeHtml(s.body)}</p>`;
-      return `<section><h2>${escapeHtml(s.h2)}</h2>${body}</section>`;
+      const heading = s.h2 || s.heading;
+      return `<section>${heading ? `<h2>${escapeHtml(heading)}</h2>` : ""}${body}</section>`;
     })
     .join("\n");
   const links = (route.links || [])
     .map(([label, href]) => `<li><a href="${escapeHtml(href)}">${escapeHtml(label)}</a></li>`)
     .join("");
+  // Phase 2: per-route canonical (from seo_metadata) overrides ORIGIN+path;
+  // per-route JSON-LD (built at build time from the shared builder) joins the
+  // Organization block. `</` is escaped so JSON can never close the script tag.
+  // Canonical trailing-slash policy (amendment 7): page paths end with "/",
+  // file paths don't — same rules as canonicalizeUrl in the shared builder.
+  const isFile = /\.[a-z0-9]{2,5}$/i.test(path_);
+  const canonicalHref = route.canonical || `${ORIGIN}${escapeHtml(path_)}${!isFile && !path_.endsWith("/") && path_ !== "/" ? "/" : ""}`;
+  const routeJsonLd = (route.jsonld || [])
+    .map((obj) => `<script type="application/ld+json">${JSON.stringify(obj).replace(/<\//g, "<\\/")}</script>`)
+    .join("\n");
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -218,12 +231,13 @@ function toHtml(route, path_, { status = 200 } = {}) {
 <title>${escapeHtml(route.title)}</title>
 <meta name="description" content="${escapeHtml(route.description)}">
 <meta name="robots" content="${robots}">
-<link rel="canonical" href="${ORIGIN}${escapeHtml(path_)}">
+<link rel="canonical" href="${escapeHtml(canonicalHref)}">
 <meta property="og:title" content="${escapeHtml(route.title)}">
 <meta property="og:description" content="${escapeHtml(route.description)}">
-<meta property="og:url" content="${ORIGIN}${escapeHtml(path_)}">
+<meta property="og:url" content="${escapeHtml(canonicalHref)}">
 <meta property="og:site_name" content="PlayTurf">
 <script type="application/ld+json">${JSON.stringify(content.organization || {})}</script>
+${routeJsonLd}
 <style>
   body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;margin:0;background:#070808;color:#e7eceb;line-height:1.6}
   main{max-width:760px;margin:0 auto;padding:2.5rem 1.25rem 4rem}
@@ -364,7 +378,8 @@ module.exports = async (req, res) => {
     let xml;
     try {
       xml = await buildSitemapXml();
-    } catch {
+    } catch (err) {
+      console.error("[serve] sitemap build failed:", err && err.message);
       xml = null;
     }
     if (xml) {
@@ -376,6 +391,112 @@ module.exports = async (req, res) => {
       return;
     }
     // DB failure → fall through: Vercel serves the prebuilt static file.
+  }
+
+  // 0.7 Phase 2: /turf/:slug — DB-backed metadata (engine-gated), 301/410
+  // tombstones first, then published-only metadata; falls through to the
+  // pre-engine 404 when the engine is off or the DB is unreachable.
+  const turfMatch = SEO_FLAGS.enabled && /^\/turf\/([^/]+)$/.exec(path_);
+  if (turfMatch) {
+    let slug;
+    try {
+      slug = decodeURIComponent(turfMatch[1]);
+    } catch {
+      slug = turfMatch[1];
+    }
+
+    // (a) redirects: 301 chains collapsed server-side (seo_resolve_redirect
+    // is read-only over seo_redirects, granted to anon), 410 = gone.
+    const redirectRows = await fetchSeoPublic(
+      "rpc/seo_resolve_redirect",
+      `p_path=${encodeURIComponent("/turf/" + slug)}`
+    );
+    if (redirectRows && redirectRows.length) {
+      const rd = redirectRows[0];
+      if (rd.status_code === 410 || rd.reason === "gone") {
+        if (wantsMarkdown) return sendMarkdown(410, notFoundMarkdown(path_));
+        return sendHtml(410, notFoundHtml(path_), "noindex");
+      }
+      if (rd.reason === "resolved" && rd.to_path) {
+        res.statusCode = 301;
+        res.setHeader("Location", `${ORIGIN}${rd.to_path}/`);
+        res.setHeader("Cache-Control", "public, s-maxage=86400, stale-while-revalidate=604800");
+        res.setHeader("X-Robots-Tag", "noindex");
+        res.end();
+        return;
+      }
+      // loop/chain_too_long → fall through to a 404 (never serve a redirect loop)
+    }
+
+    // (b) published-only metadata
+    const metaRows = await fetchSeoPublic(
+      "seo_public_metadata",
+      new URLSearchParams({ select: "*", entity_type: "eq.turf", slug: `eq.${slug}` })
+    );
+    const meta = metaRows && metaRows[0];
+    if (meta) {
+      const turfRows = await fetchSeoPublic(
+        "seo_public_turfs",
+        new URLSearchParams({ select: "*", slug: `eq.${slug}` })
+      );
+      const turf = (turfRows && turfRows[0]) || {};
+      const citySlug = slugifyServe(turf.city || "");
+      const routeObj = {
+        title: meta.seo_title,
+        description: meta.meta_description,
+        h1: meta.h1,
+        robots: meta.robots_index ? "index" : "noindex",
+        canonical: meta.canonical_url,
+        jsonld: (ROUTES[path_] && ROUTES[path_].jsonld) || [],
+        sections: [
+          { h2: "About this venue", body: turf.description || meta.h1 },
+          { h2: "Facilities", body: turf.amenities || [] },
+          { h2: "Supported sports", body: turf.sport_types || [] },
+          {
+            h2: "Booking",
+            body: [
+              `Starting at ₹${turf.price_per_hour}/hour — 1-hour slots.`,
+              turf.timing ? `Open ${turf.timing}.` : "Timings as listed on the venue page.",
+            ],
+          },
+        ],
+        links: [
+          ["Homepage", "/"],
+          ["All turfs", "/turfs"],
+          ...(citySlug ? [[`Turfs in ${turf.city}`, `/turfs/${citySlug}`]] : []),
+        ],
+      };
+      // Amendment 2: previews stay noindexed even for published metadata.
+      const robotsTag = IS_PREVIEW
+        ? "noindex, nofollow"
+        : meta.robots_index
+          ? "index, follow, max-image-preview:large"
+          : "noindex, follow";
+      if (wantsMarkdown) return sendMarkdown(200, toMarkdown(routeObj, path_));
+      if (BOT_UA.test(ua)) return sendHtml(200, toHtml(routeObj, path_), robotsTag);
+      try {
+        const html = await getIndexHtml();
+        return sendHtml(200, html, robotsTag);
+      } catch (err) {
+        return sendHtml(200, toHtml(routeObj, path_), robotsTag);
+      }
+    }
+
+    // (c) legacy raw-id form (/turf/turf_1) → 301 to the canonical slug path
+    // (amendment 7). Only for rows that are actually published.
+    const legacy = await fetchSeoPublic(
+      "seo_public_turfs",
+      new URLSearchParams({ select: "slug", id: `eq.${slug}` })
+    );
+    if (legacy && legacy[0] && legacy[0].slug) {
+      res.statusCode = 301;
+      res.setHeader("Location", `${ORIGIN}/turf/${legacy[0].slug}/`);
+      res.setHeader("Cache-Control", "public, s-maxage=86400, stale-while-revalidate=604800");
+      res.setHeader("X-Robots-Tag", "noindex");
+      res.end();
+      return;
+    }
+    // otherwise → real 404 below (pre-engine behaviour)
   }
 
   // 1. Real content route

@@ -16,6 +16,8 @@ DROP FUNCTION IF EXISTS public.seo_turf_changed();
 DROP FUNCTION IF EXISTS public.seo_touch_updated_at();
 DROP FUNCTION IF EXISTS public.seo_resolve_redirect(text);
 DROP FUNCTION IF EXISTS public.seo_slugify(text);
+DROP FUNCTION IF EXISTS public.seo_worker_set_slug(text, text);
+DROP FUNCTION IF EXISTS public.seo_claim_jobs(integer);
 
 DROP TABLE IF EXISTS public.seo_validation_issues;
 DROP TABLE IF EXISTS public.seo_generation_logs;

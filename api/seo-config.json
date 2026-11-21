@@ -1,12 +1,13 @@
 {
- "generatedAt": "2026-11-21T06:13:56.135Z",
+ "generatedAt": "2026-11-21T11:17:56.130Z",
  "origin": "https://play-turf-git-main-abhishekjha06s-projects.vercel.app",
  "flags": {
   "enabled": false,
   "aiEnabled": false,
   "landingPagesEnabled": false,
   "sitemapEnabled": false,
-  "redirectsEnabled": false
+  "redirectsEnabled": false,
+  "allowUnfilteredTurfsFallback": true
  },
  "sitemapMaxUrlsPerFile": 10000,
  "isPreview": false

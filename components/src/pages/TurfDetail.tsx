@@ -11,6 +11,7 @@ import type { OpenGame } from "@/types/openGames";
 import { trackEvent } from "@/lib/analytics";
 import { useRealtimeOpenGames } from "@/lib/realtime";
 import { useSeo } from "@/hooks/use-seo";
+import { usePublicSeoMetadata } from "@/lib/seo-engine/usePublicSeoMetadata";
 import {
   SITE_NAME, breadcrumbJsonLd, buildTurfSlug, matchTurfParam, slugify,
   turfJsonLd, turfPath,
@@ -478,12 +479,16 @@ const TurfDetail = () => {
   };
 
   // ── SEO: real venue metadata + SportsActivityLocation schema ──
-  // Computed unconditionally (Rules of Hooks); applied when the turf is real.
+  // Phase 2 DOM parity: when the engine has published metadata for this slug,
+  // the SPA serves the SAME title/description the bot HTML does
+  // (usePublicSeoMetadata ← seo_public_metadata view); otherwise the local
+  // template keeps the pre-engine behaviour. Hooks run unconditionally.
+  const publicMeta = usePublicSeoMetadata(turf ? buildTurfSlug(turf) : null);
   useSeo(
     turf
       ? {
-          title: `${turf.name} — ${turf.sport_types?.[0] || "Sports"} Turf in ${turf.city} | ${SITE_NAME}`,
-          description: `Book ${turf.name} in ${turf.city} from ₹${turf.price_per_hour}/hour. ${(turf.sport_types || []).join(", ")} courts, ${(turf.amenities || []).slice(0, 4).join(", ")}. Live slot availability and instant booking.`,
+          title: publicMeta?.seo_title || `${turf.name} — ${turf.sport_types?.[0] || "Sports"} Turf in ${turf.city} | ${SITE_NAME}`,
+          description: publicMeta?.meta_description || `Book ${turf.name} in ${turf.city} from ₹${turf.price_per_hour}/hour. ${(turf.sport_types || []).join(", ")} courts, ${(turf.amenities || []).slice(0, 4).join(", ")}. Live slot availability and instant booking.`,
           path: turfPath(turf),
           image: /^https?:/i.test(turf.image) ? turf.image : undefined,
           imageAlt: `${turf.name} — sports turf in ${turf.city}`,

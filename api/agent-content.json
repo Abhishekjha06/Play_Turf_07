@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-11-21T06:13:56.134Z",
+ "generatedAt": "2026-11-21T11:17:56.127Z",
  "origin": "https://play-turf-git-main-abhishekjha06s-projects.vercel.app",
  "organization": {
   "@context": "https://schema.org",
@@ -563,6 +563,117 @@
      "Homepage",
      "/"
     ]
+   ],
+   "jsonld": [
+    {
+     "@context": "https://schema.org",
+     "@type": "SportsActivityLocation",
+     "name": "Futsal Hub",
+     "url": "https://play-turf-git-main-abhishekjha06s-projects.vercel.app/turf/futsal-hub-turf-4/",
+     "description": "Indoor futsal arena, AC, FIFA-grade flooring.",
+     "image": [
+      "https://images.unsplash.com/photo-1575361204480-aadea25e6e68?auto=format&fit=crop&q=80&w=1200",
+      "https://images.unsplash.com/photo-1575361204480-aadea25e6e68?auto=format&fit=crop&q=80&w=800",
+      "https://images.unsplash.com/photo-1459865264687-595d652de67e?auto=format&fit=crop&q=80&w=800"
+     ],
+     "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "Saket, New Delhi",
+      "addressLocality": "Delhi",
+      "addressCountry": "IN"
+     },
+     "sport": [
+      "Futsal",
+      "Football"
+     ],
+     "publicAccess": true,
+     "priceRange": "₹1100/hour",
+     "isAccessibleForFree": false,
+     "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": 28.5245,
+      "longitude": 77.2066
+     },
+     "openingHoursSpecification": [
+      {
+       "@type": "OpeningHoursSpecification",
+       "dayOfWeek": [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday"
+       ],
+       "opens": "07:00",
+       "closes": "23:00"
+      }
+     ],
+     "amenityFeature": [
+      {
+       "@type": "LocationFeatureSpecification",
+       "name": "AC",
+       "value": true
+      },
+      {
+       "@type": "LocationFeatureSpecification",
+       "name": "Locker",
+       "value": true
+      },
+      {
+       "@type": "LocationFeatureSpecification",
+       "name": "Cafe",
+       "value": true
+      }
+     ],
+     "potentialAction": {
+      "@type": "ReserveAction",
+      "target": {
+       "@type": "EntryPoint",
+       "urlTemplate": "https://play-turf-git-main-abhishekjha06s-projects.vercel.app/turf/futsal-hub-turf-4/",
+       "inLanguage": "en-IN",
+       "actionPlatform": [
+        "http://schema.org/DesktopWebPlatform",
+        "http://schema.org/MobileWebPlatform"
+       ]
+      },
+      "result": {
+       "@type": "Reservation",
+       "name": "Book Futsal Hub"
+      }
+     }
+    },
+    {
+     "@context": "https://schema.org",
+     "@type": "BreadcrumbList",
+     "itemListElement": [
+      {
+       "@type": "ListItem",
+       "position": 1,
+       "name": "Home",
+       "item": "https://play-turf-git-main-abhishekjha06s-projects.vercel.app/"
+      },
+      {
+       "@type": "ListItem",
+       "position": 2,
+       "name": "Turfs",
+       "item": "https://play-turf-git-main-abhishekjha06s-projects.vercel.app/turfs/"
+      },
+      {
+       "@type": "ListItem",
+       "position": 3,
+       "name": "Delhi",
+       "item": "https://play-turf-git-main-abhishekjha06s-projects.vercel.app/turfs/delhi/"
+      },
+      {
+       "@type": "ListItem",
+       "position": 4,
+       "name": "Futsal Hub",
+       "item": "https://play-turf-git-main-abhishekjha06s-projects.vercel.app/turf/futsal-hub-turf-4/"
+      }
+     ]
+    }
    ]
   },
   "/sports/futsal/delhi": {
@@ -675,6 +786,139 @@
      "Homepage",
      "/"
     ]
+   ],
+   "jsonld": [
+    {
+     "@context": "https://schema.org",
+     "@type": "SportsActivityLocation",
+     "name": "Hilltop Grounds",
+     "url": "https://play-turf-git-main-abhishekjha06s-projects.vercel.app/turf/hilltop-grounds-turf-5/",
+     "description": "Scenic 7-a-side ground with mountain backdrop.",
+     "image": [
+      "https://images.unsplash.com/photo-1518063319789-7217e6706b04?auto=format&fit=crop&q=80&w=1200",
+      "https://images.unsplash.com/photo-1518063319789-7217e6706b04?auto=format&fit=crop&q=80&w=800"
+     ],
+     "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "Whitefield, Bangalore",
+      "addressLocality": "Bangalore",
+      "addressCountry": "IN"
+     },
+     "sport": [
+      "Football"
+     ],
+     "publicAccess": true,
+     "priceRange": "₹1800/hour",
+     "isAccessibleForFree": false,
+     "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": 12.9698,
+      "longitude": 77.75
+     },
+     "openingHoursSpecification": [
+      {
+       "@type": "OpeningHoursSpecification",
+       "dayOfWeek": [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday"
+       ],
+       "opens": "05:30",
+       "closes": "22:00"
+      }
+     ],
+     "amenityFeature": [
+      {
+       "@type": "LocationFeatureSpecification",
+       "name": "7-a-side",
+       "value": true
+      },
+      {
+       "@type": "LocationFeatureSpecification",
+       "name": "Parking",
+       "value": true
+      },
+      {
+       "@type": "LocationFeatureSpecification",
+       "name": "Washroom",
+       "value": true
+      }
+     ],
+     "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": 5,
+      "reviewCount": 1,
+      "bestRating": 5,
+      "worstRating": 1
+     },
+     "review": [
+      {
+       "@type": "Review",
+       "author": {
+        "@type": "Person",
+        "name": "Moms Moko"
+       },
+       "datePublished": "2026-09-19",
+       "reviewBody": "Abhishek ",
+       "reviewRating": {
+        "@type": "Rating",
+        "ratingValue": 5,
+        "bestRating": 5,
+        "worstRating": 1
+       }
+      }
+     ],
+     "potentialAction": {
+      "@type": "ReserveAction",
+      "target": {
+       "@type": "EntryPoint",
+       "urlTemplate": "https://play-turf-git-main-abhishekjha06s-projects.vercel.app/turf/hilltop-grounds-turf-5/",
+       "inLanguage": "en-IN",
+       "actionPlatform": [
+        "http://schema.org/DesktopWebPlatform",
+        "http://schema.org/MobileWebPlatform"
+       ]
+      },
+      "result": {
+       "@type": "Reservation",
+       "name": "Book Hilltop Grounds"
+      }
+     }
+    },
+    {
+     "@context": "https://schema.org",
+     "@type": "BreadcrumbList",
+     "itemListElement": [
+      {
+       "@type": "ListItem",
+       "position": 1,
+       "name": "Home",
+       "item": "https://play-turf-git-main-abhishekjha06s-projects.vercel.app/"
+      },
+      {
+       "@type": "ListItem",
+       "position": 2,
+       "name": "Turfs",
+       "item": "https://play-turf-git-main-abhishekjha06s-projects.vercel.app/turfs/"
+      },
+      {
+       "@type": "ListItem",
+       "position": 3,
+       "name": "Bangalore",
+       "item": "https://play-turf-git-main-abhishekjha06s-projects.vercel.app/turfs/bangalore/"
+      },
+      {
+       "@type": "ListItem",
+       "position": 4,
+       "name": "Hilltop Grounds",
+       "item": "https://play-turf-git-main-abhishekjha06s-projects.vercel.app/turf/hilltop-grounds-turf-5/"
+      }
+     ]
+    }
    ]
   },
   "/turf/greenfield-arena-turf-1": {
@@ -709,6 +953,191 @@
      "Homepage",
      "/"
     ]
+   ],
+   "jsonld": [
+    {
+     "@context": "https://schema.org",
+     "@type": "SportsActivityLocation",
+     "name": "Greenfield Arena",
+     "url": "https://play-turf-git-main-abhishekjha06s-projects.vercel.app/turf/greenfield-arena-turf-1/",
+     "description": "Premium 5-a-side floodlit turf in the heart of Indiranagar.",
+     "image": [
+      "https://images.pexels.com/photos/114296/pexels-photo-114296.jpeg?auto=compress&cs=tinysrgb&w=1920",
+      "https://images.pexels.com/photos/114296/pexels-photo-114296.jpeg?auto=compress&cs=tinysrgb&w=1920",
+      "https://images.pexels.com/photos/47730/the-ball-stadion-football-the-pitch-47730.jpeg?auto=compress&cs=tinysrgb&w=1920"
+     ],
+     "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "Indiranagar, Bangalore",
+      "addressLocality": "Bangalore",
+      "addressCountry": "IN"
+     },
+     "sport": [
+      "Football",
+      "Futsal"
+     ],
+     "publicAccess": true,
+     "priceRange": "₹1200/hour",
+     "isAccessibleForFree": false,
+     "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": 12.9784,
+      "longitude": 77.6408
+     },
+     "openingHoursSpecification": [
+      {
+       "@type": "OpeningHoursSpecification",
+       "dayOfWeek": [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday"
+       ],
+       "opens": "06:00",
+       "closes": "23:00"
+      }
+     ],
+     "amenityFeature": [
+      {
+       "@type": "LocationFeatureSpecification",
+       "name": "Floodlights",
+       "value": true
+      },
+      {
+       "@type": "LocationFeatureSpecification",
+       "name": "Parking",
+       "value": true
+      },
+      {
+       "@type": "LocationFeatureSpecification",
+       "name": "Washroom",
+       "value": true
+      },
+      {
+       "@type": "LocationFeatureSpecification",
+       "name": "Drinking water",
+       "value": true
+      }
+     ],
+     "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": 4,
+      "reviewCount": 4,
+      "bestRating": 5,
+      "worstRating": 1
+     },
+     "review": [
+      {
+       "@type": "Review",
+       "author": {
+        "@type": "Person",
+        "name": "Abhishek Jha"
+       },
+       "datePublished": "2026-06-09",
+       "reviewBody": "👍🏼",
+       "reviewRating": {
+        "@type": "Rating",
+        "ratingValue": 3,
+        "bestRating": 5,
+        "worstRating": 1
+       }
+      },
+      {
+       "@type": "Review",
+       "author": {
+        "@type": "Person",
+        "name": "Abhishek Jha"
+       },
+       "datePublished": "2026-06-09",
+       "reviewBody": "",
+       "reviewRating": {
+        "@type": "Rating",
+        "ratingValue": 4,
+        "bestRating": 5,
+        "worstRating": 1
+       }
+      },
+      {
+       "@type": "Review",
+       "author": {
+        "@type": "Person",
+        "name": "Kritika Gupta"
+       },
+       "datePublished": "2026-06-09",
+       "reviewBody": "",
+       "reviewRating": {
+        "@type": "Rating",
+        "ratingValue": 4,
+        "bestRating": 5,
+        "worstRating": 1
+       }
+      },
+      {
+       "@type": "Review",
+       "author": {
+        "@type": "Person",
+        "name": "Moms Moko"
+       },
+       "datePublished": "2026-11-17",
+       "reviewBody": "Good ",
+       "reviewRating": {
+        "@type": "Rating",
+        "ratingValue": 5,
+        "bestRating": 5,
+        "worstRating": 1
+       }
+      }
+     ],
+     "potentialAction": {
+      "@type": "ReserveAction",
+      "target": {
+       "@type": "EntryPoint",
+       "urlTemplate": "https://play-turf-git-main-abhishekjha06s-projects.vercel.app/turf/greenfield-arena-turf-1/",
+       "inLanguage": "en-IN",
+       "actionPlatform": [
+        "http://schema.org/DesktopWebPlatform",
+        "http://schema.org/MobileWebPlatform"
+       ]
+      },
+      "result": {
+       "@type": "Reservation",
+       "name": "Book Greenfield Arena"
+      }
+     }
+    },
+    {
+     "@context": "https://schema.org",
+     "@type": "BreadcrumbList",
+     "itemListElement": [
+      {
+       "@type": "ListItem",
+       "position": 1,
+       "name": "Home",
+       "item": "https://play-turf-git-main-abhishekjha06s-projects.vercel.app/"
+      },
+      {
+       "@type": "ListItem",
+       "position": 2,
+       "name": "Turfs",
+       "item": "https://play-turf-git-main-abhishekjha06s-projects.vercel.app/turfs/"
+      },
+      {
+       "@type": "ListItem",
+       "position": 3,
+       "name": "Bangalore",
+       "item": "https://play-turf-git-main-abhishekjha06s-projects.vercel.app/turfs/bangalore/"
+      },
+      {
+       "@type": "ListItem",
+       "position": 4,
+       "name": "Greenfield Arena",
+       "item": "https://play-turf-git-main-abhishekjha06s-projects.vercel.app/turf/greenfield-arena-turf-1/"
+      }
+     ]
+    }
    ]
   },
   "/sports/football/bangalore": {
@@ -821,6 +1250,117 @@
      "Homepage",
      "/"
     ]
+   ],
+   "jsonld": [
+    {
+     "@context": "https://schema.org",
+     "@type": "SportsActivityLocation",
+     "name": "Arena 360",
+     "url": "https://play-turf-git-main-abhishekjha06s-projects.vercel.app/turf/arena-360-turf-6/",
+     "description": "Hybrid indoor arena for football and basketball.",
+     "image": [
+      "https://images.unsplash.com/photo-1505666287802-931dc83948e9?auto=format&fit=crop&q=80&w=1200",
+      "https://images.unsplash.com/photo-1505666287802-931dc83948e9?auto=format&fit=crop&q=80&w=800",
+      "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&q=80&w=800"
+     ],
+     "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "Andheri West, Mumbai",
+      "addressLocality": "Mumbai",
+      "addressCountry": "IN"
+     },
+     "sport": [
+      "Football",
+      "Basketball"
+     ],
+     "publicAccess": true,
+     "priceRange": "₹1400/hour",
+     "isAccessibleForFree": false,
+     "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": 19.1364,
+      "longitude": 72.8296
+     },
+     "openingHoursSpecification": [
+      {
+       "@type": "OpeningHoursSpecification",
+       "dayOfWeek": [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday"
+       ],
+       "opens": "06:00",
+       "closes": "00:00"
+      }
+     ],
+     "amenityFeature": [
+      {
+       "@type": "LocationFeatureSpecification",
+       "name": "AC",
+       "value": true
+      },
+      {
+       "@type": "LocationFeatureSpecification",
+       "name": "LED",
+       "value": true
+      },
+      {
+       "@type": "LocationFeatureSpecification",
+       "name": "Locker",
+       "value": true
+      }
+     ],
+     "potentialAction": {
+      "@type": "ReserveAction",
+      "target": {
+       "@type": "EntryPoint",
+       "urlTemplate": "https://play-turf-git-main-abhishekjha06s-projects.vercel.app/turf/arena-360-turf-6/",
+       "inLanguage": "en-IN",
+       "actionPlatform": [
+        "http://schema.org/DesktopWebPlatform",
+        "http://schema.org/MobileWebPlatform"
+       ]
+      },
+      "result": {
+       "@type": "Reservation",
+       "name": "Book Arena 360"
+      }
+     }
+    },
+    {
+     "@context": "https://schema.org",
+     "@type": "BreadcrumbList",
+     "itemListElement": [
+      {
+       "@type": "ListItem",
+       "position": 1,
+       "name": "Home",
+       "item": "https://play-turf-git-main-abhishekjha06s-projects.vercel.app/"
+      },
+      {
+       "@type": "ListItem",
+       "position": 2,
+       "name": "Turfs",
+       "item": "https://play-turf-git-main-abhishekjha06s-projects.vercel.app/turfs/"
+      },
+      {
+       "@type": "ListItem",
+       "position": 3,
+       "name": "Mumbai",
+       "item": "https://play-turf-git-main-abhishekjha06s-projects.vercel.app/turfs/mumbai/"
+      },
+      {
+       "@type": "ListItem",
+       "position": 4,
+       "name": "Arena 360",
+       "item": "https://play-turf-git-main-abhishekjha06s-projects.vercel.app/turf/arena-360-turf-6/"
+      }
+     ]
+    }
    ]
   },
   "/turf/skyline-rooftop-turf-turf-2": {
@@ -855,6 +1395,122 @@
      "Homepage",
      "/"
     ]
+   ],
+   "jsonld": [
+    {
+     "@context": "https://schema.org",
+     "@type": "SportsActivityLocation",
+     "name": "Skyline Rooftop Turf",
+     "url": "https://play-turf-git-main-abhishekjha06s-projects.vercel.app/turf/skyline-rooftop-turf-turf-2/",
+     "description": "Rooftop turf with skyline views and cafe lounge.",
+     "image": [
+      "https://images.unsplash.com/photo-1459865264687-595d652de67e?auto=format&fit=crop&q=80&w=1200",
+      "https://images.unsplash.com/photo-1459865264687-595d652de67e?auto=format&fit=crop&q=80&w=800",
+      "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&q=80&w=800"
+     ],
+     "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "Lower Parel, Mumbai",
+      "addressLocality": "Mumbai",
+      "addressCountry": "IN"
+     },
+     "sport": [
+      "Cricket",
+      "Football"
+     ],
+     "publicAccess": true,
+     "priceRange": "₹1500/hour",
+     "isAccessibleForFree": false,
+     "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": 18.9936,
+      "longitude": 72.8258
+     },
+     "openingHoursSpecification": [
+      {
+       "@type": "OpeningHoursSpecification",
+       "dayOfWeek": [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday"
+       ],
+       "opens": "06:00",
+       "closes": "00:00"
+      }
+     ],
+     "amenityFeature": [
+      {
+       "@type": "LocationFeatureSpecification",
+       "name": "Floodlights",
+       "value": true
+      },
+      {
+       "@type": "LocationFeatureSpecification",
+       "name": "Cafe",
+       "value": true
+      },
+      {
+       "@type": "LocationFeatureSpecification",
+       "name": "Locker",
+       "value": true
+      },
+      {
+       "@type": "LocationFeatureSpecification",
+       "name": "Parking",
+       "value": true
+      }
+     ],
+     "potentialAction": {
+      "@type": "ReserveAction",
+      "target": {
+       "@type": "EntryPoint",
+       "urlTemplate": "https://play-turf-git-main-abhishekjha06s-projects.vercel.app/turf/skyline-rooftop-turf-turf-2/",
+       "inLanguage": "en-IN",
+       "actionPlatform": [
+        "http://schema.org/DesktopWebPlatform",
+        "http://schema.org/MobileWebPlatform"
+       ]
+      },
+      "result": {
+       "@type": "Reservation",
+       "name": "Book Skyline Rooftop Turf"
+      }
+     }
+    },
+    {
+     "@context": "https://schema.org",
+     "@type": "BreadcrumbList",
+     "itemListElement": [
+      {
+       "@type": "ListItem",
+       "position": 1,
+       "name": "Home",
+       "item": "https://play-turf-git-main-abhishekjha06s-projects.vercel.app/"
+      },
+      {
+       "@type": "ListItem",
+       "position": 2,
+       "name": "Turfs",
+       "item": "https://play-turf-git-main-abhishekjha06s-projects.vercel.app/turfs/"
+      },
+      {
+       "@type": "ListItem",
+       "position": 3,
+       "name": "Mumbai",
+       "item": "https://play-turf-git-main-abhishekjha06s-projects.vercel.app/turfs/mumbai/"
+      },
+      {
+       "@type": "ListItem",
+       "position": 4,
+       "name": "Skyline Rooftop Turf",
+       "item": "https://play-turf-git-main-abhishekjha06s-projects.vercel.app/turf/skyline-rooftop-turf-turf-2/"
+      }
+     ]
+    }
    ]
   },
   "/sports/football/mumbai": {
@@ -993,6 +1649,130 @@
      "Homepage",
      "/"
     ]
+   ],
+   "jsonld": [
+    {
+     "@context": "https://schema.org",
+     "@type": "SportsActivityLocation",
+     "name": "Nine Stars Turfs X SportVot",
+     "url": "https://play-turf-git-main-abhishekjha06s-projects.vercel.app/turf/nine-stars-turfs-x-sportvot-turf-7-re/",
+     "description": "Year of Establishment - 2018",
+     "image": [
+      "https://images.unsplash.com/photo-1518063319789-7217e6706b04?auto=format&fit=crop&q=80&w=800"
+     ],
+     "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "Bhoir Garden, Ghartanpada No 1, Vaishali Nagar, Dahisar Metro Station, Suhasini Pawaskar Road, Dahisar East, Mumbai-400068, Maharashtra",
+      "addressLocality": "Dahisar East",
+      "addressCountry": "IN"
+     },
+     "sport": [
+      "Cricket",
+      "Football"
+     ],
+     "publicAccess": true,
+     "priceRange": "₹1000/hour",
+     "isAccessibleForFree": false,
+     "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": 19.2530834,
+      "longitude": 72.8697619
+     },
+     "openingHoursSpecification": [
+      {
+       "@type": "OpeningHoursSpecification",
+       "dayOfWeek": [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday"
+       ],
+       "opens": "06:00",
+       "closes": "23:00"
+      }
+     ],
+     "amenityFeature": [
+      {
+       "@type": "LocationFeatureSpecification",
+       "name": "Drinking Water",
+       "value": true
+      },
+      {
+       "@type": "LocationFeatureSpecification",
+       "name": "First Aid",
+       "value": true
+      },
+      {
+       "@type": "LocationFeatureSpecification",
+       "name": "Flood Lights",
+       "value": true
+      },
+      {
+       "@type": "LocationFeatureSpecification",
+       "name": "Washrooms",
+       "value": true
+      },
+      {
+       "@type": "LocationFeatureSpecification",
+       "name": "Changing Room",
+       "value": true
+      },
+      {
+       "@type": "LocationFeatureSpecification",
+       "name": "Parking Available",
+       "value": true
+      }
+     ],
+     "potentialAction": {
+      "@type": "ReserveAction",
+      "target": {
+       "@type": "EntryPoint",
+       "urlTemplate": "https://play-turf-git-main-abhishekjha06s-projects.vercel.app/turf/nine-stars-turfs-x-sportvot-turf-7-re/",
+       "inLanguage": "en-IN",
+       "actionPlatform": [
+        "http://schema.org/DesktopWebPlatform",
+        "http://schema.org/MobileWebPlatform"
+       ]
+      },
+      "result": {
+       "@type": "Reservation",
+       "name": "Book Nine Stars Turfs X SportVot"
+      }
+     }
+    },
+    {
+     "@context": "https://schema.org",
+     "@type": "BreadcrumbList",
+     "itemListElement": [
+      {
+       "@type": "ListItem",
+       "position": 1,
+       "name": "Home",
+       "item": "https://play-turf-git-main-abhishekjha06s-projects.vercel.app/"
+      },
+      {
+       "@type": "ListItem",
+       "position": 2,
+       "name": "Turfs",
+       "item": "https://play-turf-git-main-abhishekjha06s-projects.vercel.app/turfs/"
+      },
+      {
+       "@type": "ListItem",
+       "position": 3,
+       "name": "Dahisar East",
+       "item": "https://play-turf-git-main-abhishekjha06s-projects.vercel.app/turfs/dahisar-east/"
+      },
+      {
+       "@type": "ListItem",
+       "position": 4,
+       "name": "Nine Stars Turfs X SportVot",
+       "item": "https://play-turf-git-main-abhishekjha06s-projects.vercel.app/turf/nine-stars-turfs-x-sportvot-turf-7-re/"
+      }
+     ]
+    }
    ]
   },
   "/sports/cricket/dahisar-east": {
@@ -1105,6 +1885,118 @@
      "Homepage",
      "/"
     ]
+   ],
+   "jsonld": [
+    {
+     "@context": "https://schema.org",
+     "@type": "SportsActivityLocation",
+     "name": "BoxCric Cage",
+     "url": "https://play-turf-git-main-abhishekjha06s-projects.vercel.app/turf/boxcric-cage-turf-3/",
+     "description": "Box cricket arena with pro-grade matting and nets.",
+     "image": [
+      "https://images.unsplash.com/photo-1531415074968-036ba1b575da?auto=format&fit=crop&q=80&w=1200",
+      "https://images.unsplash.com/photo-1531415074968-036ba1b575da?auto=format&fit=crop&q=80&w=800",
+      "https://images.unsplash.com/photo-1518063319789-7217e6706b04?auto=format&fit=crop&q=80&w=800"
+     ],
+     "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "Gachibowli, Hyderabad",
+      "addressLocality": "Hyderabad",
+      "addressCountry": "IN"
+     },
+     "sport": [
+      "Cricket",
+      "Football",
+      "supabase data test"
+     ],
+     "publicAccess": true,
+     "priceRange": "₹900/hour",
+     "isAccessibleForFree": false,
+     "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": 17.4401,
+      "longitude": 78.3489
+     },
+     "openingHoursSpecification": [
+      {
+       "@type": "OpeningHoursSpecification",
+       "dayOfWeek": [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday"
+       ],
+       "opens": "06:00",
+       "closes": "23:00"
+      }
+     ],
+     "amenityFeature": [
+      {
+       "@type": "LocationFeatureSpecification",
+       "name": "Nets",
+       "value": true
+      },
+      {
+       "@type": "LocationFeatureSpecification",
+       "name": "Floodlights",
+       "value": true
+      },
+      {
+       "@type": "LocationFeatureSpecification",
+       "name": "Washroom",
+       "value": true
+      }
+     ],
+     "potentialAction": {
+      "@type": "ReserveAction",
+      "target": {
+       "@type": "EntryPoint",
+       "urlTemplate": "https://play-turf-git-main-abhishekjha06s-projects.vercel.app/turf/boxcric-cage-turf-3/",
+       "inLanguage": "en-IN",
+       "actionPlatform": [
+        "http://schema.org/DesktopWebPlatform",
+        "http://schema.org/MobileWebPlatform"
+       ]
+      },
+      "result": {
+       "@type": "Reservation",
+       "name": "Book BoxCric Cage"
+      }
+     }
+    },
+    {
+     "@context": "https://schema.org",
+     "@type": "BreadcrumbList",
+     "itemListElement": [
+      {
+       "@type": "ListItem",
+       "position": 1,
+       "name": "Home",
+       "item": "https://play-turf-git-main-abhishekjha06s-projects.vercel.app/"
+      },
+      {
+       "@type": "ListItem",
+       "position": 2,
+       "name": "Turfs",
+       "item": "https://play-turf-git-main-abhishekjha06s-projects.vercel.app/turfs/"
+      },
+      {
+       "@type": "ListItem",
+       "position": 3,
+       "name": "Hyderabad",
+       "item": "https://play-turf-git-main-abhishekjha06s-projects.vercel.app/turfs/hyderabad/"
+      },
+      {
+       "@type": "ListItem",
+       "position": 4,
+       "name": "BoxCric Cage",
+       "item": "https://play-turf-git-main-abhishekjha06s-projects.vercel.app/turf/boxcric-cage-turf-3/"
+      }
+     ]
+    }
    ]
   },
   "/sports/cricket/hyderabad": {

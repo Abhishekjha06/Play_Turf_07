@@ -51,11 +51,11 @@ export async function listTurfs(opts: {
   userLocation?: { lat: number; lng: number };
 } = {}): Promise<Turf[]> {
   const supabase = await getSupabase();
-  // SEO amendment 1: archived / pending_approval turfs must never surface on
-  // public surfaces (they were leaking — see 00-audit.md §5.9). Graceful
-  // degradation: until supabase_seo_001_foundation.sql adds the status column
-  // to the live DB, the filtered query fails — fall back to the pre-engine
-  // unfiltered read instead of breaking the app.
+  // SEO amendment 1 + owner round-2 req 1: archived / pending_approval turfs
+  // must never surface on public surfaces (00-audit.md §5.9). STRICT by
+  // default — a failing status-filtered read throws (see the try/catch below;
+  // the unfiltered fallback requires SEO_ALLOW_UNFILTERED_TURFS on environments
+  // whose database predates supabase_seo_001_foundation.sql).
   const runQuery = async (filtered: boolean): Promise<Turf[]> => {
     let query = supabase.from("turfs").select("*");
     if (filtered) query = query.eq("status", "published");
@@ -103,13 +103,22 @@ export async function listTurfs(opts: {
   return result;
   }
 
-  // Filtered read first; if the live DB predates migration 001 (no status
-  // column yet), retry the pre-engine unfiltered read.
+  // Filtered read first. Owner review item 1: the unfiltered fallback is
+  // OPT-IN via SEO_ALLOW_UNFILTERED_TURFS (pre-migration environments only);
+  // by default a status-column failure fails LOUD with the fix in the message.
   try {
     return await runQuery(true);
   } catch (err) {
-    if (String((err as Error)?.message || "").match(/status|column|PGRST/i)) {
-      return await runQuery(false);
+    const msg = String((err as Error)?.message || "");
+    if (/status|column|PGRST/i.test(msg)) {
+      const { resolveSeoFlags } = await import("@/config/seo-engine");
+      if (resolveSeoFlags().allowUnfilteredTurfsFallback) {
+        return await runQuery(false);
+      }
+      throw new Error(
+        "listTurfs: the turfs.status column is unavailable — apply supabase_seo_001_foundation.sql " +
+          "(or set SEO_ALLOW_UNFILTERED_TURFS=1 for pre-migration environments). Original error: " + msg
+      );
     }
     throw err;
   }

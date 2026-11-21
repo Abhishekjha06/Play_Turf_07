@@ -127,7 +127,37 @@ SELECT id, name, city, lat, lng FROM turfs WHERE lat IS NULL OR lng IS NULL;
 SELECT name, count(*) FROM turfs GROUP BY name HAVING count(*) > 1;
 ```
 
-## 10. Where things live
+## 10. Phase 2 staging setup (owner review round 2, item 5)
+
+Phase 2 (worker + per-turf bot HTML) requires **exactly one migration** on the
+staging project:
+
+| Migration | Provides |
+|---|---|
+| `supabase_seo_001_foundation.sql` (+ the prerequisite `supabase_admin_rbac.sql`, already applied) | outbox trigger + `seo_generation_jobs`, `seo_claim_jobs` / `seo_worker_set_slug` RPCs, `seo_resolve_redirect`, published views, `turfs.slug/locality/updated_at` |
+
+No new migrations ship with Phase 2 — review aggregates are computed at
+read/build time from genuine `reviews` rows (item 7), never stored.
+
+Staging discipline:
+
+```bash
+# .env.staging (never commit) — worker + harness point at staging only:
+#   SUPABASE_URL=https://<staging-ref>.supabase.co
+#   SUPABASE_SERVICE_ROLE_KEY=<staging service key>
+#   VITE_SITE_ORIGIN=<staging domain>          # production guard still applies
+#   SEO_ENGINE_ENABLED=1  SEO_SITEMAP_ENABLED=1  SEO_REDIRECTS_ENABLED=1
+
+node scripts/seo-worker.mjs --dry-run --once   # preview jobs (staging env active)
+node scripts/seo-worker.mjs --once             # drain one batch
+node scripts/serve-harness.mjs sitemap.xml bot # live-style route checks
+node scripts/serve-harness.mjs turf/<slug> bot # per-turf bot HTML check
+```
+
+Production runs of the worker are explicit owner actions after the smoke
+checklist passes on staging.
+
+## 11. Where things live
 
 | Piece | Path |
 |---|---|

@@ -148,6 +148,63 @@ CREATE TRIGGER turfs_seo_outbox
   ON public.turfs
   FOR EACH ROW EXECUTE FUNCTION public.seo_turf_changed();
 
+-- Worker entry points (owner review round 2, item 2).
+--
+-- The worker skips the outbox trigger via the `app.seo_skip_trigger` GUC.
+-- Through the Supabase POOLER (transaction mode) a session-level SET would
+-- leak across tenants and a two-statement sequence (SET then UPDATE) may run
+-- on different connections — so the skip MUST be transaction-local:
+--   set_config(..., is_local := true)  inside the SAME transaction as the
+--   write. These SECURITY DEFINER RPCs make that atomic: one RPC call = one
+--   transaction = GUC + write together, on whatever pooled connection serves
+--   it. Workers MUST go through these functions; a direct
+--   supabase.from('turfs').update() from the worker WILL fire the trigger.
+--
+-- Verified on staging before production (runbook §1); pooler behaviour
+-- documented here and in docs/seo-engine/phase2.md.
+
+CREATE OR REPLACE FUNCTION public.seo_worker_set_slug(p_turf_id text, p_slug text)
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  -- SECURITY DEFINER bypasses RLS, so guard explicitly: admin or service_role.
+  IF NOT (public.is_playturf_admin() OR coalesce(auth.role(), '') = 'service_role') THEN
+    RAISE EXCEPTION 'seo_worker_set_slug: admin or service_role only';
+  END IF;
+  PERFORM set_config('app.seo_skip_trigger', 'on', true);
+  UPDATE public.turfs SET slug = p_slug WHERE id = p_turf_id;
+END;
+$$;
+
+-- Claim one batch of pending jobs atomically (FOR UPDATE SKIP LOCKED keeps
+-- concurrent workers safe through the pooler too).
+CREATE OR REPLACE FUNCTION public.seo_claim_jobs(p_batch integer DEFAULT 50)
+RETURNS TABLE (id bigint, entity_id text, op text, payload jsonb, attempts integer)
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  IF NOT (public.is_playturf_admin() OR coalesce(auth.role(), '') = 'service_role') THEN
+    RAISE EXCEPTION 'seo_claim_jobs: admin or service_role only';
+  END IF;
+  PERFORM set_config('app.seo_skip_trigger', 'on', true);
+  DROP TABLE IF EXISTS pg_temp.claimed_jobs;
+  CREATE TEMP TABLE claimed_jobs ON COMMIT DROP AS
+    SELECT j.id, j.entity_id, j.op, j.payload, j.attempts
+    FROM public.seo_generation_jobs j
+    WHERE j.status = 'pending'
+    ORDER BY j.created_at
+    LIMIT GREATEST(1, LEAST(p_batch, 500))
+    FOR UPDATE SKIP LOCKED;
+  UPDATE public.seo_generation_jobs j
+    SET status = 'processing', attempts = j.attempts + 1
+    FROM claimed_jobs c WHERE j.id = c.id;
+  RETURN QUERY SELECT * FROM claimed_jobs;
+END;
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.seo_worker_set_slug(text, text) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.seo_claim_jobs(integer) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.seo_worker_set_slug(text, text) TO service_role, authenticated;
+GRANT EXECUTE ON FUNCTION public.seo_claim_jobs(integer) TO service_role, authenticated;
+
 -- ----------------------------------------------------------------------------
 -- 3. Sport categories + aliases (no taxonomy existed — 00-audit.md §6)
 -- ----------------------------------------------------------------------------
@@ -368,6 +425,11 @@ BEGIN
   END LOOP;
 END;
 $$;
+
+-- anon grant: serve.js resolves redirects with the anon key in the request
+-- path (amendment 4 — no service-role). Read-only over seo_redirects; leaks
+-- nothing but public redirect behaviour.
+GRANT EXECUTE ON FUNCTION public.seo_resolve_redirect(text) TO service_role, authenticated, anon;
 
 -- ----------------------------------------------------------------------------
 -- 8. Logs + validation issues
